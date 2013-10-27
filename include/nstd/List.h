@@ -57,6 +57,39 @@ public:
     return _end;
   }
   
+  void_t prepend(const T& value)
+  {
+    Item* item;
+    if(freeItem)
+    {
+      item = freeItem;
+      freeItem = freeItem->next;
+    }
+    else
+    {
+      size_t allocatedSize;
+      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
+      itemBlock->next = blocks;
+      blocks = itemBlock;
+      item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
+
+      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+      {
+        i->next = freeItem;
+        freeItem = i;
+      }
+    }
+
+    item->Item::Item();
+    item->value = value;
+
+    item->prev = 0;
+    (item->next = _begin.item)->prev = item;
+    _begin.item = item;
+
+    ++_size;
+  }
+
   void_t append(const T& value)
   {
     Item* item;

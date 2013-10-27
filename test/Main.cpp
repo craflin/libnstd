@@ -212,15 +212,19 @@ void_t testList()
   myList.append("string1");
   myList.append("string2");
   myList.append("string3");
+  ASSERT(myList.size() == 3);
   ASSERT(myList.find("string2") != myList.end());
   ASSERT(myList.find("string4") == myList.end());
   myList.remove("string2");
+  ASSERT(myList.size() == 2);
   ASSERT(myList.find("string2") == myList.end());
   List<String>::Iterator it = myList.begin();
   ASSERT(*it == "string1");
   ASSERT(*(++it) == "string3");
   *it = "abbba";
   ASSERT(*it == "abbba");
+  myList.prepend("string7");
+  ASSERT(*myList.begin() == "string7");
 }
 
 void_t testHashMap()
