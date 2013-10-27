@@ -7,6 +7,7 @@
 #include <nstd/String.h>
 #include <nstd/HashSet.h>
 #include <nstd/List.h>
+#include <nstd/HashMap.h>
 
 void_t testMutexRecursion()
 {
@@ -222,6 +223,15 @@ void_t testList()
   ASSERT(*it == "abbba");
 }
 
+void_t testHashMap()
+{
+  HashMap<String, int_t> myMap;
+  myMap.insert("123", 123);
+  myMap.insert("123", 125);
+  ASSERT(*myMap.find("123") == 125);
+
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing..."); 
@@ -237,6 +247,7 @@ int_t main(int_t argc, char_t* argv[])
   testHashSetDestructor();
   testHashSetString();
   testList();
+  testHashMap();
 
   Console::printf("%s\n", "done"); 
 
