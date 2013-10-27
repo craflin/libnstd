@@ -6,6 +6,7 @@
 #include <nstd/Atomic.h>
 #include <nstd/String.h>
 #include <nstd/HashSet.h>
+#include <nstd/List.h>
 
 void_t testMutexRecursion()
 {
@@ -204,6 +205,23 @@ void_t testHashSetString()
   ASSERT(mySet.find("wdashat") == mySet.end());
 }
 
+void_t testList()
+{
+  List<String> myList;
+  myList.append("string1");
+  myList.append("string2");
+  myList.append("string3");
+  ASSERT(myList.find("string2") != myList.end());
+  ASSERT(myList.find("string4") == myList.end());
+  myList.remove("string2");
+  ASSERT(myList.find("string2") == myList.end());
+  List<String>::Iterator it = myList.begin();
+  ASSERT(*it == "string1");
+  ASSERT(*(++it) == "string3");
+  *it = "abbba";
+  ASSERT(*it == "abbba");
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing..."); 
@@ -218,6 +236,7 @@ int_t main(int_t argc, char_t* argv[])
   testHashSet();
   testHashSetDestructor();
   testHashSetString();
+  testList();
 
   Console::printf("%s\n", "done"); 
 
