@@ -43,12 +43,13 @@ public:
       Memory::free(i);
     }
   }
-  
+
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
-  
+
   size_t size() const {return _size;}
-  
+  bool_t empty() const {return endItem.prev == 0;}
+
   Iterator find(const T& value)
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
@@ -56,7 +57,7 @@ public:
         return i;
     return _end;
   }
-  
+
   void_t prepend(const T& value)
   {
     Item* item;

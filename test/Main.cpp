@@ -123,6 +123,7 @@ void_t testString()
 void_t testHashSet()
 {
   HashSet<int_t> mySet;
+  ASSERT(mySet.empty());
   ASSERT(mySet.begin() == mySet.end());
   mySet.insert(1);
   mySet.insert(2);
@@ -199,6 +200,7 @@ void_t testHashSetDestructor()
 void_t testHashSetString()
 {
   HashSet<String> mySet;
+  ASSERT(mySet.empty());
   mySet.insert("what");
   mySet.insert("bv");
   mySet.insert("c");
@@ -209,6 +211,7 @@ void_t testHashSetString()
 void_t testList()
 {
   List<String> myList;
+  ASSERT(myList.empty());
   myList.append("string1");
   myList.append("string2");
   myList.append("string3");
@@ -230,6 +233,7 @@ void_t testList()
 void_t testHashMap()
 {
   HashMap<String, int_t> myMap;
+  ASSERT(myMap.empty());
   myMap.insert("123", 123);
   myMap.insert("123", 125);
   ASSERT(*myMap.find("123") == 125);

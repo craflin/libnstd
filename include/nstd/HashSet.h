@@ -53,9 +53,10 @@ public:
   
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
-  
+
   size_t size() const {return _size;}
-  
+  bool_t empty() const {return endItem.prev == 0;}
+
   Iterator find(const T& key)
   {
     if(!data) return _end;
@@ -68,7 +69,7 @@ public:
     }
     return _end;
   }
-  
+
   void_t insert(const T& key)
   {
     if(find(key) != _end) return;
