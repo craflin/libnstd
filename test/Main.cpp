@@ -228,6 +228,9 @@ void_t testList()
   ASSERT(*it == "abbba");
   myList.prepend("string7");
   ASSERT(*myList.begin() == "string7");
+  myList.clear();
+  ASSERT(myList.size() == 0);
+  ASSERT(myList.empty());
 }
 
 void_t testHashMap()
