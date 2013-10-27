@@ -1,0 +1,39 @@
+
+name = "libnstd"
+platforms = { "Win32", "x64" }
+configurations = { "Debug", "Release" }
+
+cppFlags += { "/MT" }
+defines += { "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+if(configuration != "Debug") {
+  defines += "NDEBUG"
+}
+if(platform == "x64") {
+  defines += "_WIN64"
+}
+
+targets = {
+  test = cppApplication + {
+    dependencies = { "libnstd" }
+    includePaths = { "include" }
+    buildDir = "build/test/$(configuration)"
+    root = "test"
+    libPaths = { "lib" }
+    libs = { "nstd$(if $(Debug),D,)" }
+    linkFlags += { "/SUBSYSTEM:CONSOLE" }
+    files = {
+      "test/*.cpp" = cppSource,
+      "test/*.h"
+    }
+  }
+  libnstd = cppStaticLibrary + {
+    includePaths = { "include" }
+    buildDir = "build/$(configuration)"
+    output = "lib/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,)"
+    root = { "src", "include/nstd" }
+    files = {
+      "src/*.cpp" = cppSource,
+      "include/nstd/*.h"
+    }
+  }
+}
