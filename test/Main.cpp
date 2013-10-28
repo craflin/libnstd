@@ -236,6 +236,39 @@ void_t testList()
   ASSERT(myList.empty());
 }
 
+void_t testListSort()
+{
+  List<int_t> myList;
+  for(int_t i = 0; i < 100; ++i)
+    myList.append(rand() % 90);
+  myList.sort();
+  int_t current = 0;
+  for(List<int_t>::Iterator i = myList.begin(), end = myList.end(); i != end; ++i)
+  {
+    ASSERT(*i >= current);
+    current = *i;
+  }
+}
+
+void_t testListStringSort()
+{
+  List<String> myList;
+  String str;
+  for(int_t i = 0; i < 100; ++i)
+  {
+    str.printf("abc%d", (int_t)(rand() % 90));
+    myList.append(str);
+  }
+  myList.sort();
+  String current("abc0");
+  for(List<String>::Iterator i = myList.begin(), end = myList.end(); i != end; ++i)
+  {
+    ASSERT(*i >= current);
+    current = *i;
+  }
+}
+
+
 void_t testHashMap()
 {
   HashMap<String, int_t> myMap;
@@ -263,6 +296,8 @@ int_t main(int_t argc, char_t* argv[])
   testHashSetDestructor();
   testHashSetString();
   testList();
+  testListSort();
+  testListStringSort();
   testHashMap();
 
   Console::printf("%s\n", "done"); 

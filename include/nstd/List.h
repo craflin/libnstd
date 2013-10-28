@@ -163,7 +163,49 @@ public:
     if(it != _end)
       remove(it);
   }
-  
+
+  /**
+  * Sort the list elements.
+  */
+  void_t sort()
+  {
+    if(endItem.prev == 0)
+      return;
+    struct QuickSort
+    {
+      inline static void_t swap(Item* a, Item* b)
+      {
+        T tmp = a->value;
+        a->value = b->value;
+        b->value = tmp;
+      }
+      inline static void_t sort(Item* left, Item* right)
+      {
+        Item* ptr0, * ptr1, * ptr2;
+        ptr0 = ptr1 = ptr2 = left;
+        const T& pivot = left->value;
+        do
+        {
+          ptr2 = ptr2->next;
+          if(ptr2->value < pivot)
+          {
+            ptr0 = ptr1;
+            ptr1 = ptr1->next;
+            swap(ptr1, ptr2);
+          }
+        } while(ptr2 != right);
+        swap(left, ptr1);
+        if(ptr1 != right)
+          ptr1 = ptr1->next;
+        if(left != ptr0)
+          sort(left, ptr0);
+        if(ptr1 != right)
+          sort(ptr1, right);
+      }
+    };
+    QuickSort::sort(_begin.item, endItem.prev);
+  }
+
 private:
   struct Item
   {
