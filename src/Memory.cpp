@@ -188,3 +188,23 @@ int_t Memory::compare(const void_t* ptr1, const void_t* ptr2, size_t count)
 {
   return memcmp(ptr1, ptr2, count);
 }
+
+void_t* operator new(size_t size)
+{
+  return Memory::alloc(size);
+}
+
+void_t* operator new [](size_t size)
+{
+  return Memory::alloc(size);
+}
+
+void_t operator delete(void_t* buffer)
+{
+  Memory::free(buffer);
+}
+
+void_t operator delete[](void_t* buffer)
+{
+  Memory::free(buffer);
+}

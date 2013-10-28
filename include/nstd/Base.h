@@ -30,24 +30,7 @@ typedef int ssize_t;
 
 typedef int64_t time_t;
 
-/*
-static inline size_t hashCode(int8_t val) {return val;}
-static inline size_t hashCode(int16_t val) {return val;}
-static inline size_t hashCode(int32_t val) {return val;}
-#if defined(_M_AMD64) || defined(__amd64__)
-static inline size_t hashCode(int64_t val) {return val;}
-#else
-static inline size_t hashCode(int64_t val) {return (size_t)(val >> 32) ^ (size_t)val;}
-#endif
-
-static inline size_t hashCode(uint8_t val) {return val;}
-static inline size_t hashCode(uint16_t val) {return val;}
-static inline size_t hashCode(uint32_t val) {return val;}
-#if defined(_M_AMD64) || defined(__amd64__)
-static inline size_t hashCode(uint64_t val) {return val;}
-#else
-static inline size_t hashCode(uint64_t val) {return (size_t)(val >> 32) ^ (size_t)val;}
-#endif
-
-static inline size_t hashCode(bool_t val) {return val;}
-*/
+void_t* operator new(size_t size);
+void_t* operator new [](size_t size);
+void_t operator delete(void_t* buffer);
+void_t operator delete[](void_t* buffer);

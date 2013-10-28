@@ -292,6 +292,35 @@ void_t testHashMapString()
   ASSERT(myMap.empty());
 }
 
+void_t testNewDelete()
+{
+  static uint_t constructorCalls = 0;
+  static uint_t destructorCalls = 0;
+  class MyClass
+  {
+  public:
+    MyClass()
+    {
+      if(constructorCalls == 0)
+      {
+        ASSERT(Memory::size(this) > sizeof(MyClass));
+      }
+      ++constructorCalls;
+    };
+    ~MyClass() {++destructorCalls;};
+    String aaaa;
+  };
+
+  MyClass* aa = new MyClass;
+  delete aa;
+
+  MyClass* bb = new MyClass[23];
+  delete [] bb;
+
+  ASSERT(constructorCalls == 24);
+  ASSERT(destructorCalls == 24);
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing..."); 
@@ -311,6 +340,7 @@ int_t main(int_t argc, char_t* argv[])
   testListStringSort();
   testHashMap();
   testHashMapString();
+  testNewDelete();
 
   Console::printf("%s\n", "done"); 
 
