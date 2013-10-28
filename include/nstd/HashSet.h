@@ -57,6 +57,21 @@ public:
   size_t size() const {return _size;}
   bool_t empty() const {return endItem.prev == 0;}
 
+  void_t clear()
+  {
+    for(Item* i = _begin.item, * end = &endItem, * next; i != end; i = next)
+    {
+      next = i->next;
+      i->~Item();
+      *i->cell = 0;
+      i->next = freeItem;
+      freeItem = i;
+    }
+    _begin.item = &endItem;
+    endItem.prev = 0;
+    _size = 0;
+  }
+
   Iterator find(const T& key)
   {
     if(!data) return _end;

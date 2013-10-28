@@ -167,6 +167,9 @@ void_t testHashSet()
   mySet.insert(400);
   mySet.remove(400);
   ASSERT(mySet.find(400) == mySet.end());
+  mySet.clear();
+  ASSERT(mySet.size() == 0);
+  ASSERT(mySet.empty());
 }
 
 void_t testHashSetDestructor()
@@ -240,7 +243,9 @@ void_t testHashMap()
   myMap.insert("123", 123);
   myMap.insert("123", 125);
   ASSERT(*myMap.find("123") == 125);
-
+  myMap.clear();
+  ASSERT(myMap.size() == 0);
+  ASSERT(myMap.empty());
 }
 
 int_t main(int_t argc, char_t* argv[])
