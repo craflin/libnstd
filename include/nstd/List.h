@@ -72,7 +72,7 @@ public:
     return _end;
   }
 
-  void_t prepend(const T& value)
+  T& prepend(const T& value)
   {
     Item* item;
     if(freeItem)
@@ -102,9 +102,10 @@ public:
     _begin.item = item;
 
     ++_size;
+    return item->value;
   }
 
-  void_t append(const T& value)
+  T& append(const T& value)
   {
     Item* item;
     if(freeItem)
@@ -137,6 +138,7 @@ public:
     item->next = &endItem;
     endItem.prev = item;
     ++_size;
+    return item->value;
   }
 
   void_t remove(const Iterator& it)
