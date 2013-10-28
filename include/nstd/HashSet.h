@@ -119,8 +119,7 @@ public:
     }
 
     size_t hashCode = key;
-    item->Item::Item();
-    item->key = key;
+    item->Item::Item(key);
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
@@ -164,11 +163,15 @@ public:
 private:
   struct Item
   {
-    T key;
+    const T key;
     Item** cell;
     Item* nextCell;
     Item* prev;
     Item* next;
+
+    Item() : key() {}
+
+    Item(const T& key) : key(key) {}
   };
   struct ItemBlock
   {

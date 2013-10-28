@@ -127,10 +127,7 @@ public:
     }
 
     size_t hashCode = key;
-    item->Item::Item();
-    item->key = key;
-    V& v = item->value;
-    v = value;
+    item->Item::Item(key, value);
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
@@ -144,7 +141,7 @@ public:
     item->next = &endItem;
     endItem.prev = item;
     ++_size;
-    return v;
+    return item->value;
   }
 
   void_t remove(const Iterator& it)
@@ -175,12 +172,16 @@ public:
 private:
   struct Item
   {
-    T key;
+    const T key;
     V value;
     Item** cell;
     Item* nextCell;
     Item* prev;
     Item* next;
+
+    Item() : key() {}
+
+    Item(const T& key, const V& value) : key(key), value(value) {}
   };
   struct ItemBlock
   {

@@ -95,8 +95,7 @@ public:
       }
     }
 
-    item->Item::Item();
-    item->value = value;
+    item->Item::Item(value);
 
     item->prev = 0;
     (item->next = _begin.item)->prev = item;
@@ -128,8 +127,7 @@ public:
       }
     }
 
-    item->Item::Item();
-    item->value = value;
+    item->Item::Item(value);
     
     if((item->prev = endItem.prev))
       endItem.prev->next = item;
@@ -212,6 +210,10 @@ private:
     T value;
     Item* prev;
     Item* next;
+
+    Item() {}
+
+    Item(const T& value) : value(value) {}
   };
   struct ItemBlock
   {

@@ -268,8 +268,19 @@ void_t testListStringSort()
   }
 }
 
-
 void_t testHashMap()
+{
+  HashMap<int_t, int_t> myMap;
+  ASSERT(myMap.empty());
+  myMap.insert(123, 123);
+  myMap.insert(123, 125);
+  ASSERT(*myMap.find(123) == 125);
+  myMap.clear();
+  ASSERT(myMap.size() == 0);
+  ASSERT(myMap.empty());
+}
+
+void_t testHashMapString()
 {
   HashMap<String, int_t> myMap;
   ASSERT(myMap.empty());
@@ -299,6 +310,7 @@ int_t main(int_t argc, char_t* argv[])
   testListSort();
   testListStringSort();
   testHashMap();
+  testHashMapString();
 
   Console::printf("%s\n", "done"); 
 
