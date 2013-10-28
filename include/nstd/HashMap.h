@@ -87,13 +87,14 @@ public:
     return _end;
   }
   
-  void_t insert(const T& key, const V& value)
+  V& insert(const T& key, const V& value)
   {
     Iterator it = find(key);
     if(it != _end)
     {
-      *it = value;
-      return;
+      V& v = *it;
+      v = value;
+      return v;
     }
 
     if(!data)
@@ -128,7 +129,8 @@ public:
     size_t hashCode = key;
     item->Item::Item();
     item->key = key;
-    item->value = value;
+    V& v = item->value;
+    v = value;
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
@@ -142,6 +144,7 @@ public:
     item->next = &endItem;
     endItem.prev = item;
     ++_size;
+    return v;
   }
 
   void_t remove(const Iterator& it)
