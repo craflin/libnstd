@@ -222,16 +222,14 @@ public:
   static char_t toUpperCase(char_t c) {return upperCaseMap[(uchar_t&)c];}
   static bool_t isSpace(char_t c) {return (c >= 9 && c <= 13) || c == 32;}
 
-  /*
-    isalnum
-    isalpha
-    isdigit
-    islower
-    isprint
-    ispunct
-    isupper
-    isxdigit
-    */
+  static bool_t isAlnum(char_t c);
+  static bool_t isAlpha(char_t c);
+  static bool_t isDigit(char_t c);
+  static bool_t isLower(char_t c);
+  static bool_t isPrint(char_t c);
+  static bool_t isPunct(char_t c);
+  static bool_t isUpper(char_t c);
+  static bool_t isXDigit(char_t c);
 
   /**
   * Compute a hash code for this string.
