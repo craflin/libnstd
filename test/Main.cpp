@@ -63,7 +63,7 @@ void_t testConsolePrintf()
   Console::printf("%s\n", "Hello world");
   size_t bufferSize;
   char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
-  Memory::fill(buffer, bufferSize - 1, 'a');
+  Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
   Console::printf("%s%s\n", buffer, buffer);
@@ -74,7 +74,7 @@ void_t testDebugPrintf()
   Debug::printf("%s\n", "Hello world");
   size_t bufferSize;
   char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
-  Memory::fill(buffer, bufferSize - 1, 'a');
+  Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
   Debug::printf("%s%s\n", buffer, buffer);

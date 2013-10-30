@@ -2,6 +2,7 @@
 name = "libnstd"
 platforms = { "Win32", "x64" }
 configurations = { "Debug", "Release" }
+Win32 = "true"
 
 cppFlags += { "/MT" }
 defines += { "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
