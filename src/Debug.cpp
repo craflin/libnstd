@@ -8,7 +8,7 @@
 
 int_t Debug::print(const char* str)
 {
-  OutputDebugStringA(str);
+  OutputDebugString(str);
   return (int_t)strlen(str);
 }
 
@@ -21,7 +21,7 @@ int_t Debug::printf(const char_t* format, ...)
     int_t result = vsnprintf(buffer, sizeof(buffer), format, ap);
     if(result >= 0 && result < sizeof(buffer))
     {
-      OutputDebugStringA(buffer);
+      OutputDebugString(buffer);
       va_end(ap);
       return result;
     }
@@ -43,7 +43,7 @@ int_t Debug::printf(const char_t* format, ...)
     }
     result = vsnprintf(buffer, bufferSize, format, ap);
     va_end(ap);
-    OutputDebugStringA(buffer);
+    OutputDebugString(buffer);
     if(allocatedBuffer)
       Memory::free(allocatedBuffer);
     return result;
