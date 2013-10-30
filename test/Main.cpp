@@ -8,6 +8,11 @@
 #include <nstd/HashSet.h>
 #include <nstd/List.h>
 #include <nstd/HashMap.h>
+#include <nstd/File.h>
+
+#include <cstring>
+#include <cctype>
+#include <cstdlib>
 
 void_t testMutexRecursion()
 {
@@ -24,9 +29,20 @@ void_t testMemoryAllocSmall()
   void_t* buffer = Memory::alloc(123, size);
   ASSERT(buffer);
   ASSERT(size >= 123);
+  ASSERT(Memory::size(buffer) == size);
   Memory::free(buffer);
   buffer = Memory::alloc(123, size);
   ASSERT(size >= 123);
+  
+  char_t testBuffer[100];
+  memset(testBuffer, 'a', sizeof(testBuffer));
+  Memory::fill(buffer, 'b', size);
+  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) != 0);
+  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) == memcmp(buffer, testBuffer, sizeof(testBuffer)));
+  ASSERT(Memory::compare(testBuffer, buffer, sizeof(testBuffer)) == memcmp(testBuffer, buffer, sizeof(testBuffer)));
+  Memory::fill(buffer, 'a', size);
+  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) == 0);
+
   Memory::free(buffer);
 }
 
@@ -35,10 +51,10 @@ void_t testMemoryAllocLarge()
   size_t size;
   void_t* buffer = Memory::alloc(50000 * 5, size);
   ASSERT(buffer);
-  ASSERT(size >= 123);
+  ASSERT(size >= 50000 * 5);
   Memory::free(buffer);
   buffer = Memory::alloc(50000 * 5, size);
-  ASSERT(size >= 123);
+  ASSERT(size >= 50000 * 5);
   Memory::free(buffer);
 }
 
@@ -89,7 +105,6 @@ void_t testAtomic()
   ASSERT(Atomic::decrement(uint64) == ((0xffffffffLL << 32) | 0xfffffff0LL));
 }
 
-#include <cctype>
 void_t testString()
 {
   String empty;
@@ -119,7 +134,6 @@ void_t testString()
   }
 }
 
-#include <cstdlib>
 void_t testHashSet()
 {
   HashSet<int_t> mySet;
@@ -321,6 +335,32 @@ void_t testNewDelete()
   ASSERT(destructorCalls == 24);
 }
 
+void_t testFile()
+{
+  ASSERT(!File::exists("dkasdlakshkalal.nonexisting.file"));
+  File file;
+  ASSERT(file.open("testfile.file.test", File::writeFlag));
+  ASSERT(File::exists("testfile.file.test"));
+  char_t buffer[266];
+  Memory::fill(buffer, 'a', sizeof(buffer));
+  ASSERT(file.write(buffer, sizeof(buffer)) == sizeof(buffer));
+  char_t buffer2[300];
+  Memory::fill(buffer2, 'b', sizeof(buffer2));
+  ASSERT(file.write(buffer2, sizeof(buffer2)) == sizeof(buffer2));
+  file.close();
+  ASSERT(file.open("testfile.file.test", File::readFlag));
+  char_t readBuffer[500];
+  ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
+  ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);
+  ASSERT(Memory::compare(readBuffer + sizeof(buffer), buffer2, sizeof(readBuffer) - sizeof(buffer)) == 0);
+  char_t readBuffer2[166];
+  ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
+  ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
+  file.close();
+  ASSERT(File::unlink("testfile.file.test"));
+  ASSERT(!File::exists("testfile.file.test"));
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing..."); 
@@ -341,6 +381,7 @@ int_t main(int_t argc, char_t* argv[])
   testHashMap();
   testHashMapString();
   testNewDelete();
+  testFile();
 
   Console::printf("%s\n", "done"); 
 
