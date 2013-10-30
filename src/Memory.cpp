@@ -174,7 +174,7 @@ void_t Memory::move(void_t* dest, const void_t* src, size_t length)
   MoveMemory(dest, src, length);
 }
 
-void_t Memory::fill(void_t* buffer, size_t size, byte_t value)
+void_t Memory::fill(void_t* buffer, byte_t value, size_t size)
 {
   FillMemory(buffer, size, value);
 }
