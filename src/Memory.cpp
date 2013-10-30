@@ -27,7 +27,7 @@ public:
     static FreePage* firstFreePage;
     static FreePage** lastNextFreePage;
     static size_t freePageCount;
-    static CRITICAL_SECTION criticalSection;
+    static CRITICAL_SECTION criticalSection; // TODO: is it possible to use atomic operations instead?
     
     static const uint64_t headerCheckValue = 0x1235543212355432LL;
     static const uint64_t headerCheckValueUsed = 0x1235543212355433LL;
@@ -150,7 +150,7 @@ void_t Memory::free(void_t* buffer)
 
   if(header->size > _Memory::pageSize || _Memory::freePageCount >= _Memory::maxFreePageCount)
   {
-    VirtualFree(header, header->size, MEM_RELEASE);
+    VERIFY(VirtualFree(header, 0, MEM_RELEASE));
     return;
   }
 
