@@ -178,7 +178,7 @@ public:
     const char_t* s1 = data->str, * s2 = other.data->str;
     while(*s1 && *s1 == *s2)
         ++s1,++s2;
-    return *(const unsigned char*)s1 - *(const unsigned char*)s2;
+    return (int_t)*(const uchar_t*)s1 - *(const uchar_t*)s2;
   }
 
   String substr(int_t start, int_t length = -1) const
@@ -236,6 +236,13 @@ public:
   static bool_t isPunct(char_t c);
   static bool_t isUpper(char_t c);
   static bool_t isXDigit(char_t c);
+
+  static int_t compare(const char_t* s1, const char_t* s2)
+  {
+    while(*s1 && *s1 == *s2)
+        ++s1,++s2;
+    return (int_t)*(const uchar_t*)s1 - *(const uchar_t*)s2;
+  }
 
   /**
   * Compute a hash code for this string.
