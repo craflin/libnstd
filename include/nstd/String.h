@@ -59,6 +59,12 @@ public:
   }
 
   operator const char_t*() const {return data->str;}
+
+  operator char_t*()
+  {
+    detach(data->len, data->len);
+    return (char_t*)data->str;
+  }
   
   uint_t length() const {return data->len;}
 
