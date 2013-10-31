@@ -123,50 +123,66 @@ bool_t File::write(const String& data)
 {
   return write(data, data.length()) == (int)data.length();
 }
-/*
+
 String File::dirname(const String& file)
 {
-  const char* start = file.getData();
-  const char* pos = &start[file.getLength() - 1];
+  const char_t* start = file;
+  const char_t* pos = &start[file.length() - 1];
   for(; pos >= start; --pos)
     if(*pos == '\\' || *pos == '/')
-      return file.substr(0, pos - start);
+      return file.substr(0, (int_t)(pos - start));
   return String(".");
 }
 
-String File::getBasename(const String& file)
+String File::basename(const String& file, const String& extension)
 {
-  const char* start = file.getData();
-  const char* pos = &start[file.getLength() - 1];
+  const char_t* start = file;
+  uint_t fileLen = file.length();
+  const char_t* pos = &start[fileLen - 1];
+  const char_t* result;
   for(; pos >= start; --pos)
     if(*pos == '\\' || *pos == '/')
-      return file.substr(pos - start + 1);
-  return file;
+    {
+      result = pos + 1;
+      goto removeExtension;
+    }
+  result = start;
+removeExtension:
+  uint_t resultLen = fileLen - (uint_t)(result - start);
+  uint_t extensionLen = extension.length();
+  if(extensionLen)
+  {
+    const char_t* extensionPtr = extension;
+    if(*extensionPtr == '.')
+    {
+      if(resultLen >= extensionLen)
+        if(String::compare((const char_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+          return String(result, resultLen - extensionLen);
+    }
+    else
+    {
+      uint_t extensionLenPlus1 = extensionLen + 1;
+      if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == '.')
+        if(String::compare((const char_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+          return String(result, resultLen - extensionLenPlus1);
+    }
+  }
+  return String(result, resultLen);
 }
 
-String File::getExtension(const String& file)
+String File::extension(const String& file)
 {
-  const char* start = file.getData();
-  const char* pos = &start[file.getLength() - 1];
+  const char_t* start = file;
+  uint_t fileLen = file.length();
+  const char_t* pos = &start[fileLen - 1];
   for(; pos >= start; --pos)
     if(*pos == '.')
-      return file.substr(pos - start + 1);
+      return String(pos + 1, fileLen - ((uint_t)(pos - start) + 1));
     else if(*pos == '\\' || *pos == '/')
       return String();
   return String();
 }
-
-String File::getWithoutExtension(const String& file)
-{
-  const char* start = file.getData();
-  const char* pos = &start[file.getLength() - 1];
-  for(; pos >= start; --pos)
-    if(*pos == '.')
-      return file.substr(0, pos - start);
-    else if(*pos == '\\' || *pos == '/')
-      return file;
-  return file;
-}
+/*
 
 String File::simplifyPath(const String& path)
 {

@@ -361,6 +361,16 @@ void_t testFile()
   ASSERT(!File::exists("testfile.file.test"));
 }
 
+void_t testFileName()
+{
+  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah") == "test.blah");
+  ASSERT(File::basename("c:\\sadasd\\asdas\\test") == "test");
+  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah", "blah") == "test");
+  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah", ".blah") == "test");
+  ASSERT(File::extension("c:\\sadasd\\asdas\\test.blah") == "blah");
+  ASSERT(File::dirname("c:\\sadasd\\asdas\\test.blah") == "c:\\sadasd\\asdas");
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing..."); 
@@ -382,6 +392,7 @@ int_t main(int_t argc, char_t* argv[])
   testHashMapString();
   testNewDelete();
   testFile();
+  testFileName();
 
   Console::printf("%s\n", "done"); 
 

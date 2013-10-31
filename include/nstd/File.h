@@ -23,8 +23,8 @@ public:
   bool_t write(const String& data);
 
   static String dirname(const String& file);
-  static String basename(const String& file, const String& extension);
-  static String withoutExtension(const String& file);
+  static String basename(const String& file, const String& extension = String());
+  static String extension(const String& file);
   static String simplifyPath(const String& path);
   static bool_t isAbsolutePath(const String& path);
 
