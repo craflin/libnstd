@@ -159,15 +159,15 @@ public:
 
   template<size_t N> bool operator!=(const char_t (&str)[N]) const {return data->len != N - 1 || Memory::compare(data->str, str, N - 1) != 0;}
 
-  bool_t operator>(const String& other) const {return cmp(other) > 0;}
+  bool_t operator>(const String& other) const {return compare(other) > 0;}
 
-  bool_t operator>=(const String& other) const {return cmp(other) >= 0;}
+  bool_t operator>=(const String& other) const {return compare(other) >= 0;}
 
-  bool_t operator<(const String& other) const {return cmp(other) < 0;}
+  bool_t operator<(const String& other) const {return compare(other) < 0;}
 
-  bool_t operator<=(const String& other) const {return cmp(other) <= 0;}
+  bool_t operator<=(const String& other) const {return compare(other) <= 0;}
 
-  int_t cmp(const String& other) const
+  int_t compare(const String& other) const
   {
     const char_t* s1 = data->str, * s2 = other.data->str;
     while(*s1 && *s1 == *s2)
