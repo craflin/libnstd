@@ -13,6 +13,13 @@ public:
     //appendFlag = 0x0004, // TODO
   };
 
+  struct Times
+  {
+    time_t writeTime;
+    time_t accessTime;
+    time_t creationTime;
+  };
+
   File();
   ~File();
 
@@ -28,7 +35,7 @@ public:
   static String simplifyPath(const String& path);
   static bool_t isAbsolutePath(const String& path);
 
-  static bool_t writeTime(const String& file, time_t& writeTime);
+  static bool_t times(const String& file, Times& time);
 
   static bool_t exists(const String& file);
   static bool_t unlink(const String& file);

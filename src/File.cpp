@@ -243,16 +243,18 @@ bool_t File::isAbsolutePath(const String& path)
   const char_t* data = path;
   return *data == '/' || *data == '\\' || (path.length() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
 }
-/*
-bool File::writeTime(const String& file, long long& writeTime)
+
+bool_t times(const String& file, File::Times& times)
 {
 #ifdef _WIN32
   WIN32_FIND_DATAA wfd;
-  HANDLE hFind = FindFirstFile(file.getData(), &wfd);
+  HANDLE hFind = FindFirstFile(file, &wfd); // TODO: use another function for this ?
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
   ASSERT(sizeof(DWORD) == 4);
-  writeTime = ((long long)wfd.ftLastWriteTime.dwHighDateTime) << 32LL | ((long long)wfd.ftLastWriteTime.dwLowDateTime);
+  times.writeTime = (time_t)wfd.ftLastWriteTime.dwHighDateTime << 32LL | (time_t)wfd.ftLastWriteTime.dwLowDateTime;
+  times.accessTime = (time_t)wfd.ftLastAccessTime.dwHighDateTime << 32LL | (time_t)wfd.ftLastAccessTime.dwLowDateTime;
+  times.creationTime = (time_t)wfd.ftCreationTime.dwHighDateTime << 32LL | (time_t)wfd.ftCreationTime.dwLowDateTime;
   FindClose(hFind);
   return true;
 #else
@@ -260,10 +262,11 @@ bool File::writeTime(const String& file, long long& writeTime)
   if(stat(file.getData(), &buf) != 0)
     return false;
   writeTime = ((long long)buf.st_mtim.tv_sec) * 1000000000LL + ((long long)buf.st_mtim.tv_nsec);
+  todo
   return true;
 #endif
 }
-*/
+
 bool_t File::exists(const String& file)
 {
 #ifdef _WIN32
