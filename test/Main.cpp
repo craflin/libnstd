@@ -287,25 +287,25 @@ void_t testListStringSort()
 void_t testHashMap()
 {
   HashMap<int_t, int_t> myMap;
-  ASSERT(myMap.empty());
+  ASSERT(myMap.isEmpty());
   myMap.insert(123, 123);
   myMap.insert(123, 125);
   ASSERT(*myMap.find(123) == 125);
   myMap.clear();
   ASSERT(myMap.size() == 0);
-  ASSERT(myMap.empty());
+  ASSERT(myMap.isEmpty());
 }
 
 void_t testHashMapString()
 {
   HashMap<String, int_t> myMap;
-  ASSERT(myMap.empty());
+  ASSERT(myMap.isEmpty());
   myMap.insert("123", 123);
   myMap.insert("123", 125);
   ASSERT(*myMap.find("123") == 125);
   myMap.clear();
   ASSERT(myMap.size() == 0);
-  ASSERT(myMap.empty());
+  ASSERT(myMap.isEmpty());
 }
 
 void_t testNewDelete()
