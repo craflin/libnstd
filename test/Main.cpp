@@ -230,7 +230,7 @@ void_t testHashSetString()
 void_t testList()
 {
   List<String> myList;
-  ASSERT(myList.empty());
+  ASSERT(myList.isEmpty());
   myList.append("string1");
   myList.append("string2");
   myList.append("string3");
@@ -249,7 +249,7 @@ void_t testList()
   ASSERT(*myList.begin() == "string7");
   myList.clear();
   ASSERT(myList.size() == 0);
-  ASSERT(myList.empty());
+  ASSERT(myList.isEmpty());
 }
 
 void_t testListSort()

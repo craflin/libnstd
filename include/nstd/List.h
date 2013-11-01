@@ -48,7 +48,7 @@ public:
   const Iterator& end() const {return _end;}
 
   size_t size() const {return _size;}
-  bool_t empty() const {return endItem.prev == 0;}
+  bool_t isEmpty() const {return endItem.prev == 0;}
 
   void_t clear()
   {
