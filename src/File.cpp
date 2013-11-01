@@ -182,16 +182,16 @@ String File::extension(const String& file)
       return String();
   return String();
 }
-/*
 
 String File::simplifyPath(const String& path)
 {
-  String result(path.getLength());
-  const char* data = path.getData();
-  const char* start = data;
-  const char* end;
-  String chunck;
-  bool startsWithSlash = *data == '/' || *data == '\\';
+  String result(path.length());
+  const char_t* data = path;
+  const char_t* start = data;
+  const char_t* end;
+  const char_t* chunck;
+  uint_t chunckLen;
+  bool_t startsWithSlash = *data == '/' || *data == '\\';
   for(;;)
   {
     while(*start && (*start == '/' || *start == '\\'))
@@ -203,31 +203,32 @@ String File::simplifyPath(const String& path)
     if(end == start)
       break;
 
-    chunck = path.substr(start - data, end - start);
-    if(chunck == ".." && !result.isEmpty())
+    chunck = start;
+    chunckLen = (uint_t)(end - start);
+    if(chunckLen == 2 && *chunck == '.' && chunck[1] == '.' && !result.isEmpty())
     {
-      const char* data = result.getData();
-      const char* pos = data + result.getLength() - 1;
+      const char_t* data = result;
+      const char_t* pos = data + result.length() - 1;
       for(;; --pos)
         if(pos < data || *pos == '/' || *pos == '\\')
         {
-          if(strcmp(pos + 1, "..") != 0)
+          if(String::compare(pos + 1, "..") != 0)
           {
             if(pos < data)
-              result.setLength(0);
+              result.resize(0);
             else
-              result.setLength(pos - data);
+              result.resize(pos - data);
             goto cont;
           }
           break;
         }
     }
-    else if(chunck == ".")
+    else if(chunckLen == 1 && *chunck == '.')
       goto cont;
 
     if(!result.isEmpty() || startsWithSlash)
       result.append('/');
-    result.append(chunck);
+    result.append(chunck, chunckLen);
 
   cont:
     if(!*end)
@@ -236,7 +237,7 @@ String File::simplifyPath(const String& path)
   }
   return result;
 }
-
+/*
 bool File::isPathAbsolute(const String& path)
 {
   const char* data = path.getData();

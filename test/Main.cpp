@@ -371,6 +371,16 @@ void_t testFileName()
   ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah", ".blah") == "test");
   ASSERT(File::extension("c:\\sadasd\\asdas\\test.blah") == "blah");
   ASSERT(File::dirname("c:\\sadasd\\asdas\\test.blah") == "c:\\sadasd\\asdas");
+  ASSERT(File::dirname("asdas/test.blah") == "asdas");
+
+  ASSERT(File::simplifyPath("../../dsadsad/2dsads") == "../../dsadsad/2dsads");
+  ASSERT(File::simplifyPath("..\\..\\dsadsad\\2dsads") == "../../dsadsad/2dsads");
+  ASSERT(File::simplifyPath(".././../dsadsad/2dsads") == "../../dsadsad/2dsads");
+  ASSERT(File::simplifyPath("dsadsad/../2dsads") == "2dsads");
+  ASSERT(File::simplifyPath("dsadsad/./../2dsads") == "2dsads");
+  ASSERT(File::simplifyPath("dsadsad/.././2dsads") == "2dsads");
+  ASSERT(File::simplifyPath("/dsadsad/../2dsads") == "/2dsads");
+  ASSERT(File::simplifyPath("/../../aaa/2dsads") == "/../../aaa/2dsads");
 }
 
 int_t main(int_t argc, char_t* argv[])
