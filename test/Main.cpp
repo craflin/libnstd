@@ -139,7 +139,7 @@ void_t testString()
 void_t testHashSet()
 {
   HashSet<int_t> mySet;
-  ASSERT(mySet.empty());
+  ASSERT(mySet.isEmpty());
   ASSERT(mySet.begin() == mySet.end());
   mySet.insert(1);
   mySet.insert(2);
@@ -185,7 +185,7 @@ void_t testHashSet()
   ASSERT(mySet.find(400) == mySet.end());
   mySet.clear();
   ASSERT(mySet.size() == 0);
-  ASSERT(mySet.empty());
+  ASSERT(mySet.isEmpty());
 }
 
 void_t testHashSetDestructor()
@@ -219,7 +219,7 @@ void_t testHashSetDestructor()
 void_t testHashSetString()
 {
   HashSet<String> mySet;
-  ASSERT(mySet.empty());
+  ASSERT(mySet.isEmpty());
   mySet.insert("what");
   mySet.insert("bv");
   mySet.insert("c");
