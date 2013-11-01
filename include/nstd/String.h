@@ -122,6 +122,15 @@ public:
     return *this;
   }
 
+  String& String::append(const char_t* str, uint_t len)
+  {
+    uint_t newLen = data->len + len;
+    detach(data->len, newLen);
+    Memory::copy((char_t*)data->str + data->len, str, len);
+    data->len = newLen;
+    return *this;
+  }
+
   String& String::append(const char_t c)
   {
     uint_t newLen = data->len + 1;
