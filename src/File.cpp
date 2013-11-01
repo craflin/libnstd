@@ -237,13 +237,13 @@ String File::simplifyPath(const String& path)
   }
   return result;
 }
-/*
-bool File::isPathAbsolute(const String& path)
-{
-  const char* data = path.getData();
-  return *data == '/' || *data == '\\' || (path.getLength() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
-}
 
+bool_t File::isAbsolutePath(const String& path)
+{
+  const char_t* data = path;
+  return *data == '/' || *data == '\\' || (path.length() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
+}
+/*
 bool File::writeTime(const String& file, long long& writeTime)
 {
 #ifdef _WIN32

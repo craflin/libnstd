@@ -381,6 +381,13 @@ void_t testFileName()
   ASSERT(File::simplifyPath("dsadsad/.././2dsads") == "2dsads");
   ASSERT(File::simplifyPath("/dsadsad/../2dsads") == "/2dsads");
   ASSERT(File::simplifyPath("/../../aaa/2dsads") == "/../../aaa/2dsads");
+
+  ASSERT(File::isAbsolutePath("/aaa/2dsads"));
+  ASSERT(File::isAbsolutePath("\\aaa\\2dsads"));
+  ASSERT(File::isAbsolutePath("c:/aaa/2dsads"));
+  ASSERT(File::isAbsolutePath("c:\\aaa\\2dsads"));
+  ASSERT(!File::isAbsolutePath("..\\aaa\\2dsads"));
+  ASSERT(!File::isAbsolutePath("aaa/2dsads"));
 }
 
 int_t main(int_t argc, char_t* argv[])
