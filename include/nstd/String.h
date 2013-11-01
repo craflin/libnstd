@@ -91,7 +91,7 @@ public:
     }
   }
 
-  bool_t empty() const {return data->len == 0;}
+  bool_t isEmpty() const {return data->len == 0;}
 
   void_t String::resize(uint_t length)
   {

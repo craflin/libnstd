@@ -108,6 +108,7 @@ void_t testAtomic()
 void_t testString()
 {
   String empty;
+  ASSERT(empty.isEmpty());
   String hello("hello");
   String copyOfHello(hello);
   String copyOfCopyOfHello(copyOfHello);
@@ -121,6 +122,7 @@ void_t testString()
   ASSERT(!(copyOfHello == empty));
   ASSERT(!(copyOfCopyOfHello == empty));
   copyOfHello.clear();
+  ASSERT(copyOfHello.isEmpty());
   empty.printf("%s %s", (const char_t*)hello, "world");
   ASSERT(empty == "hello world");
   ASSERT(empty != "hello worl2");
