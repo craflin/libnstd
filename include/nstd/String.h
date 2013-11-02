@@ -93,17 +93,17 @@ public:
 
   bool_t isEmpty() const {return data->len == 0;}
 
-  void_t String::resize(uint_t length)
+  void_t resize(uint_t length)
   {
     detach(length, length);
   }
 
-  void_t String::reserve(uint_t size)
+  void_t reserve(uint_t size)
   {
     detach(data->len, size < data->len ? data->len : size);
   }
 
-  String& String::prepend(const String& str)
+  String& prepend(const String& str)
   {
     String copy(*this);
     uint_t newLen = str.data->len + copy.data->len;
@@ -113,7 +113,7 @@ public:
     return *this;
   }
 
-  String& String::append(const String& str)
+  String& append(const String& str)
   {
     uint_t newLen = data->len + str.data->len;
     detach(data->len, newLen);
@@ -122,7 +122,7 @@ public:
     return *this;
   }
 
-  String& String::append(const char_t* str, uint_t len)
+  String& append(const char_t* str, uint_t len)
   {
     uint_t newLen = data->len + len;
     detach(data->len, newLen);
@@ -131,7 +131,7 @@ public:
     return *this;
   }
 
-  String& String::append(const char_t c)
+  String& append(const char_t c)
   {
     uint_t newLen = data->len + 1;
     detach(data->len, newLen);
@@ -282,7 +282,7 @@ private:
   Data* data;
   Data _data;
 
-  void_t String::detach(uint_t copyLength, uint_t minCapacity);
+  void_t detach(uint_t copyLength, uint_t minCapacity);
 
   static struct EmptyData : public Data
   {

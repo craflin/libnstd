@@ -63,7 +63,11 @@ int_t String::printf(const char_t* format, ...)
 
   // buffer was too small: compute size, reserve buffer, print again
   {
+#ifdef _MSC_VER
     result = _vscprintf(format, ap);
+#else
+    result = vsnprintf(0, 0, format, ap);
+#endif
     reserve(result);
     result = vsnprintf((char_t*)data->str, result + 1, format, ap);
     data->len = result;
@@ -73,11 +77,11 @@ int_t String::printf(const char_t* format, ...)
 }
 
 #include <cctype>
-static bool_t isAlnum(char_t c) {return isalnum((uchar_t&)c) != 0;};
-static bool_t isAlpha(char_t c) {return isalpha((uchar_t&)c) != 0;};
-static bool_t isDigit(char_t c) {return isdigit((uchar_t&)c) != 0;};
-static bool_t isLower(char_t c) {return islower((uchar_t&)c) != 0;};
-static bool_t isPrint(char_t c) {return isprint((uchar_t&)c) != 0;};
-static bool_t isPunct(char_t c) {return ispunct((uchar_t&)c) != 0;};
-static bool_t isUpper(char_t c) {return isupper((uchar_t&)c) != 0;};
-static bool_t isXDigit(char_t c) {return isxdigit((uchar_t&)c) != 0;};
+bool_t String::isAlnum(char_t c) {return isalnum((uchar_t&)c) != 0;};
+bool_t String::isAlpha(char_t c) {return isalpha((uchar_t&)c) != 0;};
+bool_t String::isDigit(char_t c) {return isdigit((uchar_t&)c) != 0;};
+bool_t String::isLower(char_t c) {return islower((uchar_t&)c) != 0;};
+bool_t String::isPrint(char_t c) {return isprint((uchar_t&)c) != 0;};
+bool_t String::isPunct(char_t c) {return ispunct((uchar_t&)c) != 0;};
+bool_t String::isUpper(char_t c) {return isupper((uchar_t&)c) != 0;};
+bool_t String::isXDigit(char_t c) {return isxdigit((uchar_t&)c) != 0;};
