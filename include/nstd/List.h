@@ -27,7 +27,7 @@ public:
     friend class List;
   };
 
-  List() : _size(0), freeItem(0), blocks(0), _end(&endItem), _begin(&endItem)
+  List() : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
@@ -95,7 +95,8 @@ public:
       }
     }
 
-    item->Item::Item(value);
+    VERIFY(new(item) Item(value) == item);
+    //item->Item::Item(value);
 
     item->prev = 0;
     (item->next = _begin.item)->prev = item;
@@ -128,8 +129,9 @@ public:
       }
     }
 
-    item->Item::Item(value);
-    
+    VERIFY(new(item) Item(value) == item);
+    //item->Item::Item(value);
+
     if((item->prev = endItem.prev))
       endItem.prev->next = item;
     else
@@ -222,10 +224,10 @@ private:
     ItemBlock* next;
   };
 
-  Item endItem;
   Iterator _end;
   Iterator _begin;
   size_t _size;
+  Item endItem;
   Item* freeItem;
   ItemBlock* blocks;
 };
