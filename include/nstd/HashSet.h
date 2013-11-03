@@ -26,13 +26,13 @@ public:
     friend class HashSet;
   };
 
-  HashSet() : data(0), _size(0), capacity(0), freeItem(0), blocks(0), _end(&endItem), _begin(&endItem)
+  HashSet() : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  explicit HashSet(size_t capacity) : data(0), _size(0), capacity(capacity), freeItem(0), blocks(0), _end(&endItem), _begin(&endItem)
+  explicit HashSet(size_t capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
@@ -119,7 +119,8 @@ public:
     }
 
     size_t hashCode = key;
-    item->Item::Item(key);
+    VERIFY(new(item) Item(key) == item);
+    //item->Item::Item(key);
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
@@ -178,12 +179,12 @@ private:
     ItemBlock* next;
   };
 
-  Item endItem;
   Iterator _end;
   Iterator _begin;
-  Item** data;
   size_t _size;
   size_t capacity;
+  Item** data;
+  Item endItem;
   Item* freeItem;
   ItemBlock* blocks;
 };
