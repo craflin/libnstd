@@ -4,7 +4,7 @@
 #include <cstdarg>
 #include <cstdio>
 
-int_t Console::print(const char* str)
+int_t Console::print(const char_t* str)
 {
   return fputs(str, stdout);
 }
