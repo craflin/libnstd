@@ -217,7 +217,7 @@ String File::simplifyPath(const String& path)
             if(pos < data)
               result.resize(0);
             else
-              result.resize(pos - data);
+              result.resize((uint_t)(pos - data));
             goto cont;
           }
           break;
