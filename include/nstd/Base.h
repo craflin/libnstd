@@ -34,3 +34,6 @@ void_t* operator new(size_t size);
 void_t* operator new [](size_t size);
 void_t operator delete(void_t* buffer);
 void_t operator delete[](void_t* buffer);
+
+inline void_t* operator new(size_t, void_t* buffer) {return buffer;}
+inline void_t operator delete(void_t* p, void_t*) {}
