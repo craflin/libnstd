@@ -252,17 +252,19 @@ bool_t times(const String& file, File::Times& times)
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
   ASSERT(sizeof(DWORD) == 4);
-  times.writeTime = (time_t)wfd.ftLastWriteTime.dwHighDateTime << 32LL | (time_t)wfd.ftLastWriteTime.dwLowDateTime;
-  times.accessTime = (time_t)wfd.ftLastAccessTime.dwHighDateTime << 32LL | (time_t)wfd.ftLastAccessTime.dwLowDateTime;
-  times.creationTime = (time_t)wfd.ftCreationTime.dwHighDateTime << 32LL | (time_t)wfd.ftCreationTime.dwLowDateTime;
+  // TODO: add
+  times.writeTime = ((timestamp_t)wfd.ftLastWriteTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftLastWriteTime.dwLowDateTime) / 10000LL - 11644473600LL;
+  times.accessTime = ((timestamp_t)wfd.ftLastAccessTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftLastAccessTime.dwLowDateTime) / 10000LL - 11644473600LL;
+  times.creationTime = ((timestamp_t)wfd.ftCreationTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftCreationTime.dwLowDateTime) / 10000LL - 11644473600LL;
   FindClose(hFind);
   return true;
 #else
   struct stat buf;
-  if(stat(file.getData(), &buf) != 0)
+  if(stat(file, &buf) != 0)
     return false;
-  writeTime = ((long long)buf.st_mtim.tv_sec) * 1000000000LL + ((long long)buf.st_mtim.tv_nsec);
-  todo
+  times.writeTime = ((long long)buf.st_mtim.tv_sec) * 1000LL + ((long long)buf.st_mtim.tv_nsec) / 1000000LL;
+  times.accessTime = ((long long)buf.st_atim.tv_sec) * 1000LL + ((long long)buf.st_atim.tv_nsec) / 1000000LL;
+  times.creationTime = ((long long)buf.st_ctim.tv_sec) * 1000LL + ((long long)buf.st_ctim.tv_nsec) / 1000000LL;
   return true;
 #endif
 }

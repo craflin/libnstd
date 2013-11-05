@@ -3,7 +3,7 @@
 
 #include <ctime>
 
-time_t Time::time()
+timestamp_t Time::time()
 {
-  return ::time(0);
+  return ::time(0) * 1000;
 }

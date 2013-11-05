@@ -7,5 +7,5 @@
 class Time
 {
 public:
-  static time_t time();
+  static timestamp_t time();
 };

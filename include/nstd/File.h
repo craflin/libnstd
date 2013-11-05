@@ -15,9 +15,9 @@ public:
 
   struct Times
   {
-    time_t writeTime;
-    time_t accessTime;
-    time_t creationTime;
+    timestamp_t writeTime;
+    timestamp_t accessTime;
+    timestamp_t creationTime;
   };
 
   File();
