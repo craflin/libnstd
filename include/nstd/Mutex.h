@@ -14,7 +14,7 @@ public:
   void_t unlock();
 
 private:
-#ifdef _MSC_VER
+#ifdef _WIN32
   #ifdef _M_AMD64
   byte_t data[40];
   #else
