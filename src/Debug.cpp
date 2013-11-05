@@ -2,24 +2,32 @@
 #include <nstd/Debug.h>
 #include <nstd/Memory.h>
 
+#ifdef _MSC_VER
 #include <Windows.h>
+#endif
 #include <cstdio>
-#include <malloc.h>
+#include <cstdarg>
+//#include <malloc.h>
 
-int_t Debug::print(const char* str)
+int_t Debug::print(const char_t* str)
 {
+#ifdef _MSC_VER
   OutputDebugString(str);
   return (int_t)strlen(str);
+#else
+  return fputs(str, stderr);
+#endif
 }
 
 int_t Debug::printf(const char_t* format, ...)
 {
+#ifdef _MSC_VER
   va_list ap;
   va_start(ap, format);
   {
     char_t buffer[4096];
     int_t result = vsnprintf(buffer, sizeof(buffer), format, ap);
-    if(result >= 0 && result < sizeof(buffer))
+    if(result >= 0 && result < (int_t)sizeof(buffer))
     {
       OutputDebugString(buffer);
       va_end(ap);
@@ -29,7 +37,12 @@ int_t Debug::printf(const char_t* format, ...)
 
   // buffer was too small
   {
-    int_t result = _vscprintf(format, ap);
+    int_t result;
+//#ifdef _MSC_VER
+    result = _vscprintf(format, ap);
+//#else
+//    result = vsnprintf(0, 0, format, ap);
+//#endif
     size_t bufferSize = result + 1;
     char_t* buffer, *allocatedBuffer = 0;
     try // try using stack buffer
@@ -48,4 +61,11 @@ int_t Debug::printf(const char_t* format, ...)
       Memory::free(allocatedBuffer);
     return result;
   }
+#else
+  va_list ap;
+  va_start(ap, format);
+  int_t result = vfprintf(stderr, format, ap);
+  va_end(ap);
+  return result;
+#endif
 }
