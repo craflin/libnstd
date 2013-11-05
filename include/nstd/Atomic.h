@@ -34,6 +34,18 @@ public:
     */
 #else
     return __sync_add_and_fetch(&var, 1); // untested
+    /*
+    int_t result;
+    int_t* pValInt = (int_t*)&var;
+
+    asm volatile( 
+        "lock; xaddl %%eax, %2;"
+        :"=a" (result) 
+        : "a" (1), "m" (*pValInt) 
+        :"memory" );
+
+    return result + 1;
+    */
 #endif
   }
 
