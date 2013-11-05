@@ -7,7 +7,7 @@
 #endif
 #include <cstdio>
 #include <cstdarg>
-//#include <malloc.h>
+#include <malloc.h>
 
 int_t Debug::print(const char_t* str)
 {
