@@ -1,16 +1,23 @@
 
 name = "libnstd"
-platforms = { "Win32", "x64" }
 configurations = { "Debug", "Release" }
-Win32 = "true"
 
-cppFlags += { "/MT" }
-defines += { "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+if(tool == "vcxproj") {
+  configurations += { "cygwin_Debug", "cygwin_Release" }
+  platforms = { "Win32", "x64" }
+  Win32 = "true"
+  cppFlags += { "/MT" }
+  defines += { "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
+  if(platform == "x64") {
+    defines += "_WIN64"
+  }
+}
+if(host == "Win32") {
+  defines += "_WIN32"
+}
+
 if(configuration != "Debug") {
   defines += "NDEBUG"
-}
-if(platform == "x64") {
-  defines += "_WIN64"
 }
 
 targets = {
@@ -21,10 +28,20 @@ targets = {
     root = "test"
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
-    linkFlags += { "/SUBSYSTEM:CONSOLE" }
+    if(tool == "vcxproj") {
+      linkFlags += { "/SUBSYSTEM:CONSOLE" }
+    }
     files = {
       "test/*.cpp" = cppSource,
       "test/*.h"
+    }
+    if ("$(patsubst cygwin_%,cygwin,$(configuration))" == "cygwin") {
+      defines -= { "_WIN32", "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
+      configuration = "$(patsubst cygwin_%,%,$(configuration))"
+      buildDir = "build/test/$(configuration)"
+      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
     }
   }
   libnstd = cppStaticLibrary + {
@@ -35,6 +52,14 @@ targets = {
     files = {
       "src/*.cpp" = cppSource,
       "include/nstd/*.h"
+    }
+    if ("$(patsubst cygwin_%,cygwin,$(configuration))" == "cygwin") {
+      defines -= { "_WIN32", "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
+      configuration = "$(patsubst cygwin_%,%,$(configuration))"
+      buildDir = "build/$(configuration)"
+      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
     }
   }
 }

@@ -100,9 +100,9 @@ void_t testAtomic()
   ASSERT(Atomic::increment(int64) == 1);
   ASSERT(Atomic::decrement(int64) == 0);
   ASSERT(Atomic::decrement(int64) == -1);
-  volatile uint64_t uint64 =  (0xffffffffLL << 32) | 0xfffffff0LL;
-  ASSERT(Atomic::increment(uint64) == ((0xffffffffLL << 32) | 0xfffffff1LL));
-  ASSERT(Atomic::decrement(uint64) == ((0xffffffffLL << 32) | 0xfffffff0LL));
+  volatile uint64_t uint64 =  (0xffffffffULL << 32) | 0xfffffff0ULL;
+  ASSERT(Atomic::increment(uint64) == ((0xffffffffULL << 32) | 0xfffffff1ULL));
+  ASSERT(Atomic::decrement(uint64) == ((0xffffffffULL << 32) | 0xfffffff0ULL));
 }
 
 void_t testString()
@@ -188,32 +188,35 @@ void_t testHashSet()
   ASSERT(mySet.isEmpty());
 }
 
+struct TestHashSetDestructor
+{
+  int_t num;
+  //int_t* destructions;
+
+  TestHashSetDestructor() : num(0) {}
+  TestHashSetDestructor(int_t num) : num(num) {}
+  ~TestHashSetDestructor()
+  {
+    ++destructions;
+  }
+
+  operator size_t() const {return num;}
+
+  static int_t destructions;
+};
+
+int_t TestHashSetDestructor::destructions = 0;
+
 void_t testHashSetDestructor()
 {
-  static int_t destructions = 0;
-  struct Test
   {
-    int_t num;
-    //int_t* destructions;
-
-    Test() : num(0) {}
-    Test(int_t num) : num(num) {}
-    ~Test()
-    {
-      ++destructions;
-    }
-
-    operator size_t() const {return num;}
-  };
-
-  {
-    HashSet<Test> mySet;
+    HashSet<TestHashSetDestructor> mySet;
     mySet.insert(1);
     mySet.insert(2);
     mySet.insert(3);
     mySet.remove(1);
   }
-  ASSERT(destructions == 8);
+  ASSERT(TestHashSetDestructor::destructions == 8);
 }
 
 void_t testHashSetString()
@@ -392,7 +395,7 @@ void_t testFileName()
 
 int_t main(int_t argc, char_t* argv[])
 {
-  Console::printf("%s\n", "Testing..."); 
+  Console::printf("%s\n", "Testing...");
 
   testMutexRecursion();
   testMemoryAllocSmall();
@@ -413,7 +416,7 @@ int_t main(int_t argc, char_t* argv[])
   testFile();
   testFileName();
 
-  Console::printf("%s\n", "done"); 
+  Console::printf("%s\n", "done");
 
   return 0;
 }
