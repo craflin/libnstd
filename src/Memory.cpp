@@ -57,7 +57,6 @@ private:
       GetSystemInfo(&si);
       pageSize = si.dwPageSize;
 #else
-      VERIFY(pthread_mutex_init(&mutex, NULL) == 0);
       pageSize = sysconf(_SC_PAGESIZE);
 #endif
     }
@@ -65,8 +64,6 @@ private:
     {
 #ifdef _WIN32
       DeleteCriticalSection(&criticalSection);
-#else
-      pthread_mutex_destroy(&mutex);
 #endif
     }
 };
@@ -79,7 +76,7 @@ size_t _Memory::freePageCount = 0;
 #ifdef _WIN32
 CRITICAL_SECTION _Memory::criticalSection;
 #else
-pthread_mutex_t _Memory::mutex;
+pthread_mutex_t _Memory::mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 void_t* Memory::alloc(size_t size)
