@@ -2,7 +2,14 @@
 #include <nstd/Memory.h>
 #include <nstd/Debug.h>
 
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <pthread.h>
+#include <unistd.h>
+#include <malloc.h>
+#include <cstring>
+#endif
 
 class _Memory
 {
@@ -27,7 +34,11 @@ public:
     static FreePage* firstFreePage;
     static FreePage** lastNextFreePage;
     static size_t freePageCount;
+#ifdef _WIN32
     static CRITICAL_SECTION criticalSection; // TODO: is it possible to use atomic operations instead?
+#else
+    static pthread_mutex_t mutex;
+#endif
     
     static const uint64_t headerCheckValue = 0x1235543212355432LL;
     static const uint64_t headerCheckValueUsed = 0x1235543212355433LL;
@@ -40,14 +51,23 @@ private:
 
     _Memory()
     {
+#ifdef _WIN32
       InitializeCriticalSection(&criticalSection);
       SYSTEM_INFO si;
       GetSystemInfo(&si);
       pageSize = si.dwPageSize;
+#else
+      VERIFY(pthread_mutex_init(&mutex, NULL) == 0);
+      pageSize = sysconf(_SC_PAGESIZE);
+#endif
     }
     ~_Memory()
     {
+#ifdef _WIN32
       DeleteCriticalSection(&criticalSection);
+#else
+      pthread_mutex_destroy(&mutex);
+#endif
     }
 };
 
@@ -56,7 +76,11 @@ size_t _Memory::pageSize;
 _Memory::FreePage* _Memory::firstFreePage = 0;
 _Memory::FreePage** _Memory::lastNextFreePage = &_Memory::firstFreePage;
 size_t _Memory::freePageCount = 0;
+#ifdef _WIN32
 CRITICAL_SECTION _Memory::criticalSection;
+#else
+pthread_mutex_t _Memory::mutex;
+#endif
 
 void_t* Memory::alloc(size_t size)
 {
@@ -70,31 +94,55 @@ void_t* Memory::alloc(size_t size, size_t& rsize)
   size_t minAllocSize = size + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
   if(minAllocSize <= _Memory::pageSize)
   {
+#ifdef _WIN32
     EnterCriticalSection(&_Memory::criticalSection);
+#else
+    pthread_mutex_lock(&_Memory::mutex);
+#endif
     if(_Memory::firstFreePage)
     {
       _Memory::PageHeader* header = _Memory::firstFreePage;
       _Memory::firstFreePage = _Memory::firstFreePage->next;
       --_Memory::freePageCount;
+#ifdef _WIN32
       LeaveCriticalSection(&_Memory::criticalSection);
+#else
+      pthread_mutex_unlock(&_Memory::mutex);
+#endif
       rsize = _Memory::pageSize - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
       header->checkValue = _Memory::headerCheckValue;
       return (uint8_t*)header + sizeof(_Memory::PageHeader);
     }
     else
+    {
+#ifdef _WIN32
       LeaveCriticalSection(&_Memory::criticalSection);
+#else
+      pthread_mutex_unlock(&_Memory::mutex);
+#endif
+    }
   }
   size_t pageCount = (minAllocSize + _Memory::pageSize - 1) / _Memory::pageSize;
   size_t allocSize = pageCount * _Memory::pageSize;
 
-  _Memory::PageHeader* header = (_Memory::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  _Memory::PageHeader* header;
+#ifdef _WIN32
+  header = (_Memory::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#else
+  header = (_Memory::PageHeader*)memalign(_Memory::pageSize, allocSize);
+#endif
   if(!header) // out of memory?
   {
     Debug::printf("Memory::alloc: error: Could not allocate %llu pages.\n", (uint64_t)pageCount); HALT();
     do // wait and try again...
     {
-      Sleep(1000);
+#ifdef _WIN32
+      Sleep(5000);
       header = (_Memory::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+#else
+      sleep(5);
+      header = (_Memory::PageHeader*)memalign(_Memory::pageSize, allocSize);
+#endif
     } while(!header);
   }
   _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + allocSize - sizeof(_Memory::PageFooter));
@@ -150,38 +198,66 @@ void_t Memory::free(void_t* buffer)
 
   if(header->size > _Memory::pageSize || _Memory::freePageCount >= _Memory::maxFreePageCount)
   {
+#ifdef _WIN32
     VERIFY(VirtualFree(header, 0, MEM_RELEASE));
+#else
+    ::free(header);
+#endif
     return;
   }
 
   header->checkValue = _Memory::headerCheckValueUsed;
   ((_Memory::FreePage*)header)->next = 0;
 
+#ifdef _WIN32
   EnterCriticalSection(&_Memory::criticalSection);
+#else
+  pthread_mutex_lock(&_Memory::mutex);
+#endif
   *_Memory::lastNextFreePage = (_Memory::FreePage*)header;
   _Memory::lastNextFreePage = &((_Memory::FreePage*)header)->next;
   ++_Memory::freePageCount;
+#ifdef _WIN32
   LeaveCriticalSection(&_Memory::criticalSection);
+#else
+  pthread_mutex_unlock(&_Memory::mutex);
+#endif
 }
 
 void_t Memory::copy(void_t* dest, const void_t* src, size_t length)
 {
+#ifdef _WIN32
   CopyMemory(dest, src, length);
+#else
+  memcpy(dest, src, length);
+#endif
 }
 
 void_t Memory::move(void_t* dest, const void_t* src, size_t length)
 {
+#ifdef _WIN32
   MoveMemory(dest, src, length);
+#else
+  memmove(dest, src, length);
+#endif
 }
 
 void_t Memory::fill(void_t* buffer, byte_t value, size_t size)
 {
+#ifdef _WIN32
   FillMemory(buffer, size, value);
+#else
+  memset(buffer, value, size);
+#endif
 }
 
 void_t Memory::zero(void_t* buffer, size_t size)
 {
+#ifdef _WIN32
   ZeroMemory(buffer, size);
+#else
+  memset(buffer, 0, size);
+#endif
 }
 
 int_t Memory::compare(const void_t* ptr1, const void_t* ptr2, size_t count)
