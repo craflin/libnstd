@@ -29,6 +29,9 @@ targets = {
     root = "test"
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
+    if(tool != "vcxproj") {
+      libs += "pthread"
+    }
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
     }
