@@ -130,9 +130,9 @@ void_t testString()
 
   for (int i = 0; i < 0x100; ++i)
   {
-    ASSERT(String::toUpperCase((char_t)i) == toupper((char_t&)i));
-    ASSERT(String::toLowerCase((char_t)i) == tolower((char_t&)i));
-    ASSERT(String::isSpace((char_t)i) == !!isspace((char_t&)i));
+    ASSERT(String::toUpperCase((char_t)i) == (char_t)toupper((uchar_t&)i));
+    ASSERT(String::toLowerCase((char_t)i) == (char_t)tolower((uchar_t&)i));
+    ASSERT(String::isSpace((char_t)i) == !!isspace((uchar_t&)i));
   }
 }
 
@@ -396,7 +396,7 @@ void_t testFileName()
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing...");
-
+  
   testMutexRecursion();
   testMemoryAllocSmall();
   testMemoryAllocLarge();
