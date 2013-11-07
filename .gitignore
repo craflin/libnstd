@@ -1,5 +1,7 @@
-build
-ipch
+bin/
+lib/
+build/
+ipch/
 *.sdf
 *.opensdf
 *.suo
