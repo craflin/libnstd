@@ -204,7 +204,7 @@ bool Directory::exists(const String& dir)
   return isDir;
 #else
   struct stat buf;
-  if(stat(dir.getData(), &buf) != 0)
+  if(stat(dir, &buf) != 0)
     return false;
   return S_ISDIR(buf.st_mode);
 #endif
