@@ -143,7 +143,7 @@ bool Directory::read(String& name, bool_t& isDir)
         continue;
     }
 
-    name = String(str, strlen(str));
+    name = String(str, (uint_t)strlen(str));
     return true;
   }
 #else
@@ -219,7 +219,7 @@ bool Directory::create(const String& dir)
   for(; pos >= start; --pos)
     if(*pos == '\\' || *pos == '/')
     {
-      if(!create(dir.substr(0, pos - start)))
+      if(!create(dir.substr(0, (int_t)(pos - start))))
       {
         return false;
       }
