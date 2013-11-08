@@ -26,7 +26,7 @@ public:
   * @param dirsOnly Search only for directories and ignore files
   * @return Whether the directory was opened successfully
   */
-  bool open(const String& dirpath, const String& pattern, bool dirsOnly);
+  bool open(const String& dirpath, const String& pattern, bool_t dirsOnly);
 
   /**
   * Searches the next matching entry in the opened directory
@@ -34,26 +34,26 @@ public:
   * @param isDir Whether the next entry is a directory
   * @return Whether a matching entry was found
   */
-  bool read(String& path, bool& isDir);
+  bool_t read(String& path, bool_t& isDir);
 
-  static bool exists(const String& dir);
+  static bool_t exists(const String& dir);
 
-  static bool create(const String& dir);
+  static bool_t create(const String& dir);
 
-  static bool remove(const String& dir);
+  static bool_t remove(const String& dir);
 
-  static bool change(const String& dir);
+  static bool_t change(const String& dir);
 
 private:
-  bool dirsOnly;
+  bool_t dirsOnly;
 #ifdef _WIN32
-  void* findFile; /**< Win32 FindFirstFile HANDLE */
-  char ffd[320]; /**< Buffer for WIN32_FIND_DATA */
-  bool bufferedEntry; /**< Whether there is a buffered search result in ffd. */
+  void_t* findFile; /**< Win32 FindFirstFile HANDLE */
+  char_t ffd[320]; /**< Buffer for WIN32_FIND_DATA */
+  bool_t bufferedEntry; /**< Whether there is a buffered search result in ffd. */
   String dirpath; /**< The name of the directory. */
   String patternExtension; /**< A search pattern file name extension (e.g. "inf" of "*.inf") */
 #else
-  void* dp; /**< Directory descriptor. */
+  void_t* dp; /**< Directory descriptor. */
   String dirpath; /**< The path to the directory to search in */
   String pattern; /**< A search pattern like "*.inf" */
 #endif

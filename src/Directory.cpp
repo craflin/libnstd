@@ -27,8 +27,8 @@
 Directory::Directory()
 {
 #ifdef _WIN32
-  findFile = INVALID_HANDLE_VALUE;
   ASSERT(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
+  findFile = INVALID_HANDLE_VALUE;
 #else
   dp = 0;
 #endif
@@ -62,7 +62,7 @@ bool Directory::remove(const String& dir)
   return true;
 }
 
-bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly)
+bool Directory::open(const String& dirpath, const String& pattern, bool_t dirsOnly)
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
@@ -73,7 +73,7 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
 
   this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
-  const char* patExt = strrchr(pattern, '.');
+  const char_t* patExt = strrchr(pattern, '.');
   this->patternExtension = (patExt && !strpbrk(patExt + 1, "*?")) ? String(patExt + 1, -1) : String();
 
   String searchPath = dirpath;
@@ -109,7 +109,7 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
 #endif
 }
 
-bool Directory::read(String& name, bool& isDir)
+bool Directory::read(String& name, bool_t& isDir)
 {
 #ifdef _WIN32
   if(!findFile)
@@ -132,13 +132,13 @@ bool Directory::read(String& name, bool& isDir)
     isDir = (((LPWIN32_FIND_DATA)ffd)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
     if(dirsOnly && !isDir)
       continue;
-    const char* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
+    const char_t* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
     if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
       continue;
 
     if(!patternExtension.isEmpty())
     {
-      const char* patExt = strrchr(str, '.');
+      const char_t* patExt = strrchr(str, '.');
       if(!patExt || stricmp(patternExtension, patExt + 1) != 0)
         continue;
     }
@@ -164,7 +164,7 @@ bool Directory::read(String& name, bool& isDir)
       errno = lastErrno;
       return false;
     }
-    const char* const str = dent->d_name;
+    const char_t* const str = dent->d_name;
     if(fnmatch(pattern, str, 0) == 0)
     {
       name = String(str, strlen(str));
@@ -199,7 +199,7 @@ bool Directory::exists(const String& dir)
   HANDLE hFind = FindFirstFileA(dir, &wfd);
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
-  bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+  bool_t isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
   FindClose(hFind);
   return isDir;
 #else
@@ -214,8 +214,8 @@ bool Directory::create(const String& dir)
 {
   // TODO: set errno correctly
 
-  const char* start = dir;
-  const char* pos = &start[dir.length() - 1];
+  const char_t* start = dir;
+  const char_t* pos = &start[dir.length() - 1];
   for(; pos >= start; --pos)
     if(*pos == '\\' || *pos == '/')
     {
@@ -226,7 +226,7 @@ bool Directory::create(const String& dir)
       break;
     }
   ++pos;
-  bool result = false;
+  bool_t result = false;
   if(*pos)
 #ifdef _WIN32
     result = CreateDirectory(dir, NULL) == TRUE;
