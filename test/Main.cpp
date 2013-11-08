@@ -434,6 +434,7 @@ void_t testArray()
   ASSERT(count == 500);
   myArray.remove(23);
   ASSERT(myArray.size() == 499);
+  ASSERT(myArray.remove(myArray.begin()) == myArray.begin());
 }
 
 int_t main(int_t argc, char_t* argv[])

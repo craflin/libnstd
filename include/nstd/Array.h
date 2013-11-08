@@ -91,6 +91,18 @@ public:
     }
   }
 
+  Iterator remove(const Iterator& it)
+  {
+    T* pos = it.item;
+    for(T* end = --_end.item, * dest; pos < end;)
+    {
+      dest = pos;
+      *dest = *(++pos);
+    }
+    pos->~T();
+    return it.item;
+  }
+
   Iterator find(const T& value)
   {
     for(T* pos = _begin.item, * end = _end.item; pos < end; ++pos)
