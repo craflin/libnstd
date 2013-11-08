@@ -39,6 +39,10 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
+  operator const T*() const {return _begin.item;}
+
+  operator T*() {return _begin.item;}
+
   size_t size() const {return _end.item - _begin.item;}
   bool_t isEmpty() const {return _begin.item == _end.item;}
 
