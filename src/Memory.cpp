@@ -32,7 +32,6 @@ public:
 
     static size_t pageSize;
     static FreePage* firstFreePage;
-    static FreePage** lastNextFreePage;
     static size_t freePageCount;
 #ifdef _WIN32
     static CRITICAL_SECTION criticalSection; // TODO: is it possible to use atomic operations instead?
@@ -71,7 +70,6 @@ private:
 _Memory _Memory::memory;
 size_t _Memory::pageSize;
 _Memory::FreePage* _Memory::firstFreePage = 0;
-_Memory::FreePage** _Memory::lastNextFreePage = &_Memory::firstFreePage;
 size_t _Memory::freePageCount = 0;
 #ifdef _WIN32
 CRITICAL_SECTION _Memory::criticalSection;
@@ -211,8 +209,8 @@ void_t Memory::free(void_t* buffer)
 #else
   pthread_mutex_lock(&_Memory::mutex);
 #endif
-  *_Memory::lastNextFreePage = (_Memory::FreePage*)header;
-  _Memory::lastNextFreePage = &((_Memory::FreePage*)header)->next;
+  ((_Memory::FreePage*)header)->next = _Memory::firstFreePage;
+  _Memory::firstFreePage = (_Memory::FreePage*)header;
   ++_Memory::freePageCount;
 #ifdef _WIN32
   LeaveCriticalSection(&_Memory::criticalSection);
