@@ -9,6 +9,7 @@
 #include <nstd/List.h>
 #include <nstd/HashMap.h>
 #include <nstd/File.h>
+#include <nstd/Array.h>
 
 #include <cstring>
 #include <cctype>
@@ -393,6 +394,48 @@ void_t testFileName()
   ASSERT(!File::isAbsolutePath("aaa/2dsads"));
 }
 
+void_t testArray()
+{
+  {
+    Array<int> myArray;
+    ASSERT(myArray.isEmpty());
+    ASSERT(myArray.size() == 0);
+    ASSERT(myArray.append(123) == 123);
+    ASSERT(!myArray.isEmpty());
+    ASSERT(myArray.size() == 1);
+    myArray.clear();
+    ASSERT(myArray.isEmpty());
+    ASSERT(myArray.size() == 0);
+  }
+
+  Array<String> myArray;
+  ASSERT(myArray.isEmpty());
+  ASSERT(myArray.size() == 0);
+  ASSERT(myArray.append("test") == "test");
+  ASSERT(!myArray.isEmpty());
+  ASSERT(myArray.size() == 1);
+  myArray.clear();
+  ASSERT(myArray.isEmpty());
+  ASSERT(myArray.size() == 0);
+  String str;
+  for(int_t i = 0; i < 500; ++i)
+  {
+    str.printf("test%d", i);
+    myArray.append(str);
+  }
+  ASSERT(myArray.size() == 500);
+  int_t count = 0;
+  for(Array<String>::Iterator i = myArray.begin(), end = myArray.end(); i != end; ++i)
+  {
+    str.printf("test%d", count);
+    ASSERT(*i == str);
+    ++count;
+  }
+  ASSERT(count == 500);
+  myArray.remove(23);
+  ASSERT(myArray.size() == 499);
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf("%s\n", "Testing...");
@@ -415,6 +458,7 @@ int_t main(int_t argc, char_t* argv[])
   testNewDelete();
   testFile();
   testFileName();
+  testArray();
 
   Console::printf("%s\n", "done");
 
