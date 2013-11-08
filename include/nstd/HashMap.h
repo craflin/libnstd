@@ -66,7 +66,7 @@ public:
       next = i->next;
       i->~Item();
       *i->cell = 0;
-      i->next = freeItem;
+      i->prev = freeItem;
       freeItem = i;
     }
     _begin.item = &endItem;
@@ -109,7 +109,7 @@ public:
     if(freeItem)
     {
       item = freeItem;
-      freeItem = freeItem->next;
+      freeItem = freeItem->prev;
     }
     else
     {
@@ -121,7 +121,7 @@ public:
 
       for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
-        i->next = freeItem;
+        i->prev = freeItem;
         freeItem = i;
       }
     }
@@ -145,7 +145,7 @@ public:
     return item->value;
   }
 
-  void_t remove(const Iterator& it)
+  Iterator remove(const Iterator& it)
   {
     Item* item = it.item;
 
@@ -159,8 +159,9 @@ public:
     --_size;
 
     item->~Item();
-    item->next = freeItem;
+    item->prev = freeItem;
     freeItem = item;
+    return item->next;
   }
 
   void_t remove(const T& key)
