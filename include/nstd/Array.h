@@ -26,6 +26,8 @@ public:
 
   Array() : capacity(0) {}
 
+  explicit Array(size_t capacity) : capacity(capacity) {}
+
   ~Array()
   {
     if(_begin.item)
@@ -59,10 +61,12 @@ public:
   T& append(const T& value)
   {
     size_t size = _end.item - _begin.item;
-    if(size >= capacity)
+    if(!_begin.item || size >= capacity)
     {
       size_t bsize;
-      T* newData = (T*)Memory::alloc(sizeof(T) * (size + 1), bsize);
+      if(size >= capacity)
+        capacity = size + 1;
+      T* newData = (T*)Memory::alloc(sizeof(T) * capacity, bsize);
       capacity = bsize / sizeof(T);
       T* dest = newData;
       for(T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
