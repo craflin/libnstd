@@ -91,7 +91,7 @@ bool_t File::open(const String& file, uint_t flags)
   return true;
 }
 
-int_t File::read(char_t* buffer, int_t len)
+int_t File::read(void_t* buffer, int_t len)
 {
 #ifdef _WIN32
   DWORD i;
@@ -106,7 +106,7 @@ int_t File::read(char_t* buffer, int_t len)
 #endif
 }
 
-int_t File::write(const char_t* buffer, int_t len)
+int_t File::write(const void_t* buffer, int_t len)
 {
 #ifdef _WIN32
   DWORD i;
@@ -121,27 +121,28 @@ int_t File::write(const char_t* buffer, int_t len)
 
 bool_t File::write(const String& data)
 {
-  return write(data, data.length()) == (int)data.length();
+  int_t size = data.length() * sizeof(tchar_t);
+  return write(data, size) == size;
 }
 
 String File::dirname(const String& file)
 {
-  const char_t* start = file;
-  const char_t* pos = &start[file.length() - 1];
+  const tchar_t* start = file;
+  const tchar_t* pos = &start[file.length() - 1];
   for(; pos >= start; --pos)
-    if(*pos == '\\' || *pos == '/')
+    if(*pos == _T('\\') || *pos == _T('/'))
       return file.substr(0, (int_t)(pos - start));
-  return String(".");
+  return String(_T("."));
 }
 
 String File::basename(const String& file, const String& extension)
 {
-  const char_t* start = file;
+  const tchar_t* start = file;
   uint_t fileLen = file.length();
-  const char_t* pos = &start[fileLen - 1];
-  const char_t* result;
+  const tchar_t* pos = &start[fileLen - 1];
+  const tchar_t* result;
   for(; pos >= start; --pos)
-    if(*pos == '\\' || *pos == '/')
+    if(*pos == _T('\\') || *pos == _T('/'))
     {
       result = pos + 1;
       goto removeExtension;
@@ -152,18 +153,18 @@ removeExtension:
   uint_t extensionLen = extension.length();
   if(extensionLen)
   {
-    const char_t* extensionPtr = extension;
-    if(*extensionPtr == '.')
+    const tchar_t* extensionPtr = extension;
+    if(*extensionPtr == _T('.'))
     {
       if(resultLen >= extensionLen)
-        if(String::compare((const char_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+        if(String::compare((const tchar_t*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLen);
     }
     else
     {
       uint_t extensionLenPlus1 = extensionLen + 1;
-      if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == '.')
-        if(String::compare((const char_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+      if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == _T('.'))
+        if(String::compare((const tchar_t*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLenPlus1);
     }
   }
@@ -172,13 +173,13 @@ removeExtension:
 
 String File::extension(const String& file)
 {
-  const char_t* start = file;
+  const tchar_t* start = file;
   uint_t fileLen = file.length();
-  const char_t* pos = &start[fileLen - 1];
+  const tchar_t* pos = &start[fileLen - 1];
   for(; pos >= start; --pos)
-    if(*pos == '.')
+    if(*pos == _T('.'))
       return String(pos + 1, fileLen - ((uint_t)(pos - start) + 1));
-    else if(*pos == '\\' || *pos == '/')
+    else if(*pos == _T('\\') || *pos == _T('/'))
       return String();
   return String();
 }
@@ -186,18 +187,18 @@ String File::extension(const String& file)
 String File::simplifyPath(const String& path)
 {
   String result(path.length());
-  const char_t* data = path;
-  const char_t* start = data;
-  const char_t* end;
-  const char_t* chunck;
+  const tchar_t* data = path;
+  const tchar_t* start = data;
+  const tchar_t* end;
+  const tchar_t* chunck;
   uint_t chunckLen;
-  bool_t startsWithSlash = *data == '/' || *data == '\\';
+  bool_t startsWithSlash = *data == _T('/') || *data == _T('\\');
   for(;;)
   {
-    while(*start && (*start == '/' || *start == '\\'))
+    while(*start && (*start == _T('/') || *start == _T('\\')))
       ++start;
     end = start;
-    while(*end && *end != '/' && *end != '\\')
+    while(*end && *end != _T('/') && *end != _T('\\'))
       ++end;
 
     if(end == start)
@@ -205,14 +206,14 @@ String File::simplifyPath(const String& path)
 
     chunck = start;
     chunckLen = (uint_t)(end - start);
-    if(chunckLen == 2 && *chunck == '.' && chunck[1] == '.' && !result.isEmpty())
+    if(chunckLen == 2 && *chunck == _T('.') && chunck[1] == _T('.') && !result.isEmpty())
     {
-      const char_t* data = result;
-      const char_t* pos = data + result.length() - 1;
+      const tchar_t* data = result;
+      const tchar_t* pos = data + result.length() - 1;
       for(;; --pos)
-        if(pos < data || *pos == '/' || *pos == '\\')
+        if(pos < data || *pos == _T('/') || *pos == _T('\\'))
         {
-          if(String::compare(pos + 1, "..") != 0)
+          if(String::compare(pos + 1, _T("..")) != 0)
           {
             if(pos < data)
               result.resize(0);
@@ -223,11 +224,11 @@ String File::simplifyPath(const String& path)
           break;
         }
     }
-    else if(chunckLen == 1 && *chunck == '.')
+    else if(chunckLen == 1 && *chunck == _T('.'))
       goto cont;
 
     if(!result.isEmpty() || startsWithSlash)
-      result.append('/');
+      result.append(_T('/'));
     result.append(chunck, chunckLen);
 
   cont:
@@ -240,14 +241,14 @@ String File::simplifyPath(const String& path)
 
 bool_t File::isAbsolutePath(const String& path)
 {
-  const char_t* data = path;
-  return *data == '/' || *data == '\\' || (path.length() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
+  const tchar_t* data = path;
+  return *data == _T('/') || *data == _T('\\') || (path.length() > 2 && data[1] == _T(':') && (data[2] == _T('/') || data[2] == _T('\\')));
 }
 
 bool_t times(const String& file, File::Times& times)
 {
 #ifdef _WIN32
-  WIN32_FIND_DATAA wfd;
+  WIN32_FIND_DATA wfd;
   HANDLE hFind = FindFirstFile(file, &wfd); // TODO: use another function for this ?
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
@@ -272,7 +273,7 @@ bool_t times(const String& file, File::Times& times)
 bool_t File::exists(const String& file)
 {
 #ifdef _WIN32
-  WIN32_FIND_DATAA wfd;
+  WIN32_FIND_DATA wfd;
   HANDLE hFind = FindFirstFile(file, &wfd); // TODO: use GetFileAttribute ?
   if(hFind == INVALID_HANDLE_VALUE)         // I guess GetFileAttribute does not work on network drives. But it will produce
     return false;                           // an error code that can be used to fall back to another implementation.

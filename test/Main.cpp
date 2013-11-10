@@ -61,24 +61,24 @@ void_t testMemoryAllocLarge()
 
 void_t testConsolePrintf()
 {
-  Console::printf("%s\n", "Hello world");
+  Console::printf(_T("%s\n"), _T("Hello world"));
   size_t bufferSize;
   char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
-  Console::printf("%s%s\n", buffer, buffer);
+  Console::printf(_T("%hs%hs\n"), buffer, buffer);
 }
 
 void_t testDebugPrintf()
 {
-  Debug::printf("%s\n", "Hello world");
+  Debug::printf(_T("%s\n"), _T("Hello world"));
   size_t bufferSize;
   char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
-  Debug::printf("%s%s\n", buffer, buffer);
+  Debug::printf(_T("%hs%hs\n"), buffer, buffer);
 }
 
 void_t testAtomic()
@@ -110,7 +110,7 @@ void_t testString()
 {
   String empty;
   ASSERT(empty.isEmpty());
-  String hello("hello");
+  String hello(_T("hello"));
   String copyOfHello(hello);
   String copyOfCopyOfHello(copyOfHello);
   ASSERT(hello == copyOfCopyOfHello);
@@ -124,16 +124,22 @@ void_t testString()
   ASSERT(!(copyOfCopyOfHello == empty));
   copyOfHello.clear();
   ASSERT(copyOfHello.isEmpty());
-  empty.printf("%s %s", (const char_t*)hello, "world");
-  ASSERT(empty == "hello world");
-  ASSERT(empty != "hello worl2");
-  ASSERT(empty != "hello worl2a");
+  empty.printf(_T("%s %s"), (const tchar_t*)hello, _T("world"));
+  ASSERT(empty == _T("hello world"));
+  ASSERT(empty != _T("hello worl2"));
+  ASSERT(empty != _T("hello worl2a"));
 
   for (int i = 0; i < 0x100; ++i)
   {
+#ifdef _UNICODE
+    ASSERT(String::toUpperCase((wchar_t)i) == (wchar_t)towupper(i));
+    ASSERT(String::toLowerCase((wchar_t)i) == (wchar_t)towlower(i));
+    ASSERT(String::isSpace((wchar_t)i) == !!iswspace(i));
+#else
     ASSERT(String::toUpperCase((char_t)i) == (char_t)toupper((uchar_t&)i));
     ASSERT(String::toLowerCase((char_t)i) == (char_t)tolower((uchar_t&)i));
     ASSERT(String::isSpace((char_t)i) == !!isspace((uchar_t&)i));
+#endif
   }
 }
 
@@ -224,33 +230,33 @@ void_t testHashSetString()
 {
   HashSet<String> mySet;
   ASSERT(mySet.isEmpty());
-  mySet.insert("what");
-  mySet.insert("bv");
-  mySet.insert("c");
-  ASSERT(mySet.find("what") != mySet.end());
-  ASSERT(mySet.find("wdashat") == mySet.end());
+  mySet.insert(_T("what"));
+  mySet.insert(_T("bv"));
+  mySet.insert(_T("c"));
+  ASSERT(mySet.find(_T("what")) != mySet.end());
+  ASSERT(mySet.find(_T("wdashat")) == mySet.end());
 }
 
 void_t testList()
 {
   List<String> myList;
   ASSERT(myList.isEmpty());
-  myList.append("string1");
-  myList.append("string2");
-  myList.append("string3");
+  myList.append(_T("string1"));
+  myList.append(_T("string2"));
+  myList.append(_T("string3"));
   ASSERT(myList.size() == 3);
-  ASSERT(myList.find("string2") != myList.end());
-  ASSERT(myList.find("string4") == myList.end());
-  myList.remove("string2");
+  ASSERT(myList.find(_T("string2")) != myList.end());
+  ASSERT(myList.find(_T("string4")) == myList.end());
+  myList.remove(_T("string2"));
   ASSERT(myList.size() == 2);
-  ASSERT(myList.find("string2") == myList.end());
+  ASSERT(myList.find(_T("string2")) == myList.end());
   List<String>::Iterator it = myList.begin();
-  ASSERT(*it == "string1");
-  ASSERT(*(++it) == "string3");
-  *it = "abbba";
-  ASSERT(*it == "abbba");
-  myList.prepend("string7");
-  ASSERT(*myList.begin() == "string7");
+  ASSERT(*it == _T("string1"));
+  ASSERT(*(++it) == _T("string3"));
+  *it = _T("abbba");
+  ASSERT(*it == _T("abbba"));
+  myList.prepend(_T("string7"));
+  ASSERT(*myList.begin() == _T("string7"));
   myList.clear();
   ASSERT(myList.size() == 0);
   ASSERT(myList.isEmpty());
@@ -276,11 +282,11 @@ void_t testListStringSort()
   String str;
   for(int_t i = 0; i < 100; ++i)
   {
-    str.printf("abc%d", (int_t)(rand() % 90));
+    str.printf(_T("abc%d"), (int_t)(rand() % 90));
     myList.append(str);
   }
   myList.sort();
-  String current("abc0");
+  String current(_T("abc0"));
   for(List<String>::Iterator i = myList.begin(), end = myList.end(); i != end; ++i)
   {
     ASSERT(*i >= current);
@@ -304,9 +310,9 @@ void_t testHashMapString()
 {
   HashMap<String, int_t> myMap;
   ASSERT(myMap.isEmpty());
-  myMap.insert("123", 123);
-  myMap.insert("123", 125);
-  ASSERT(*myMap.find("123") == 125);
+  myMap.insert(_T("123"), 123);
+  myMap.insert(_T("123"), 125);
+  ASSERT(*myMap.find(_T("123")) == 125);
   myMap.clear();
   ASSERT(myMap.size() == 0);
   ASSERT(myMap.isEmpty());
@@ -343,10 +349,10 @@ void_t testNewDelete()
 
 void_t testFile()
 {
-  ASSERT(!File::exists("dkasdlakshkalal.nonexisting.file"));
+  ASSERT(!File::exists(_T("dkasdlakshkalal.nonexisting.file")));
   File file;
-  ASSERT(file.open("testfile.file.test", File::writeFlag));
-  ASSERT(File::exists("testfile.file.test"));
+  ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+  ASSERT(File::exists(_T("testfile.file.test")));
   char_t buffer[266];
   Memory::fill(buffer, 'a', sizeof(buffer));
   ASSERT(file.write(buffer, sizeof(buffer)) == sizeof(buffer));
@@ -354,7 +360,7 @@ void_t testFile()
   Memory::fill(buffer2, 'b', sizeof(buffer2));
   ASSERT(file.write(buffer2, sizeof(buffer2)) == sizeof(buffer2));
   file.close();
-  ASSERT(file.open("testfile.file.test", File::readFlag));
+  ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
   char_t readBuffer[500];
   ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
   ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);
@@ -363,35 +369,35 @@ void_t testFile()
   ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
   ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
   file.close();
-  ASSERT(File::unlink("testfile.file.test"));
-  ASSERT(!File::exists("testfile.file.test"));
+  ASSERT(File::unlink(_T("testfile.file.test")));
+  ASSERT(!File::exists(_T("testfile.file.test")));
 }
 
 void_t testFileName()
 {
-  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah") == "test.blah");
-  ASSERT(File::basename("c:\\sadasd\\asdas\\test") == "test");
-  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah", "blah") == "test");
-  ASSERT(File::basename("c:\\sadasd\\asdas\\test.blah", ".blah") == "test");
-  ASSERT(File::extension("c:\\sadasd\\asdas\\test.blah") == "blah");
-  ASSERT(File::dirname("c:\\sadasd\\asdas\\test.blah") == "c:\\sadasd\\asdas");
-  ASSERT(File::dirname("asdas/test.blah") == "asdas");
+  ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah")) == _T("test.blah"));
+  ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test")) == _T("test"));
+  ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah"), _T("blah")) == _T("test"));
+  ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah"), _T(".blah")) == _T("test"));
+  ASSERT(File::extension(_T("c:\\sadasd\\asdas\\test.blah")) == _T("blah"));
+  ASSERT(File::dirname(_T("c:\\sadasd\\asdas\\test.blah")) == _T("c:\\sadasd\\asdas"));
+  ASSERT(File::dirname(_T("asdas/test.blah")) == _T("asdas"));
 
-  ASSERT(File::simplifyPath("../../dsadsad/2dsads") == "../../dsadsad/2dsads");
-  ASSERT(File::simplifyPath("..\\..\\dsadsad\\2dsads") == "../../dsadsad/2dsads");
-  ASSERT(File::simplifyPath(".././../dsadsad/2dsads") == "../../dsadsad/2dsads");
-  ASSERT(File::simplifyPath("dsadsad/../2dsads") == "2dsads");
-  ASSERT(File::simplifyPath("dsadsad/./../2dsads") == "2dsads");
-  ASSERT(File::simplifyPath("dsadsad/.././2dsads") == "2dsads");
-  ASSERT(File::simplifyPath("/dsadsad/../2dsads") == "/2dsads");
-  ASSERT(File::simplifyPath("/../../aaa/2dsads") == "/../../aaa/2dsads");
+  ASSERT(File::simplifyPath(_T("../../dsadsad/2dsads")) == _T("../../dsadsad/2dsads"));
+  ASSERT(File::simplifyPath(_T("..\\..\\dsadsad\\2dsads")) == _T("../../dsadsad/2dsads"));
+  ASSERT(File::simplifyPath(_T(".././../dsadsad/2dsads")) == _T("../../dsadsad/2dsads"));
+  ASSERT(File::simplifyPath(_T("dsadsad/../2dsads")) == _T("2dsads"));
+  ASSERT(File::simplifyPath(_T("dsadsad/./../2dsads")) == _T("2dsads"));
+  ASSERT(File::simplifyPath(_T("dsadsad/.././2dsads")) == _T("2dsads"));
+  ASSERT(File::simplifyPath(_T("/dsadsad/../2dsads")) == _T("/2dsads"));
+  ASSERT(File::simplifyPath(_T("/../../aaa/2dsads")) == _T("/../../aaa/2dsads"));
 
-  ASSERT(File::isAbsolutePath("/aaa/2dsads"));
-  ASSERT(File::isAbsolutePath("\\aaa\\2dsads"));
-  ASSERT(File::isAbsolutePath("c:/aaa/2dsads"));
-  ASSERT(File::isAbsolutePath("c:\\aaa\\2dsads"));
-  ASSERT(!File::isAbsolutePath("..\\aaa\\2dsads"));
-  ASSERT(!File::isAbsolutePath("aaa/2dsads"));
+  ASSERT(File::isAbsolutePath(_T("/aaa/2dsads")));
+  ASSERT(File::isAbsolutePath(_T("\\aaa\\2dsads")));
+  ASSERT(File::isAbsolutePath(_T("c:/aaa/2dsads")));
+  ASSERT(File::isAbsolutePath(_T("c:\\aaa\\2dsads")));
+  ASSERT(!File::isAbsolutePath(_T("..\\aaa\\2dsads")));
+  ASSERT(!File::isAbsolutePath(_T("aaa/2dsads")));
 }
 
 void_t testArray()
@@ -411,7 +417,7 @@ void_t testArray()
   Array<String> myArray;
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
-  ASSERT(myArray.append("test") == "test");
+  ASSERT(myArray.append(_T("test")) == _T("test"));
   ASSERT(!myArray.isEmpty());
   ASSERT(myArray.size() == 1);
   myArray.clear();
@@ -420,14 +426,14 @@ void_t testArray()
   String str;
   for(int_t i = 0; i < 500; ++i)
   {
-    str.printf("test%d", i);
+    str.printf(_T("test%d"), i);
     myArray.append(str);
   }
   ASSERT(myArray.size() == 500);
   int_t count = 0;
   for(Array<String>::Iterator i = myArray.begin(), end = myArray.end(); i != end; ++i)
   {
-    str.printf("test%d", count);
+    str.printf(_T("test%d"), count);
     ASSERT(*i == str);
     ++count;
   }
@@ -439,7 +445,7 @@ void_t testArray()
 
 int_t main(int_t argc, char_t* argv[])
 {
-  Console::printf("%s\n", "Testing...");
+  Console::printf(_T("%s\n"), _T("Testing..."));
   
   testMutexRecursion();
   testMemoryAllocSmall();
@@ -461,7 +467,7 @@ int_t main(int_t argc, char_t* argv[])
   testFileName();
   testArray();
 
-  Console::printf("%s\n", "done");
+  Console::printf(_T("%s\n"), _T("done"));
 
   return 0;
 }

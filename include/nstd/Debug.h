@@ -6,8 +6,8 @@
 class Debug
 {
 public:
-  static int_t print(const char_t* str);
-  static int_t printf(const char_t* format, ...);
+  static int_t print(const tchar_t* str);
+  static int_t printf(const tchar_t* format, ...);
 };
 
 #ifdef _MSC_VER
@@ -23,6 +23,6 @@ void __cdecl __debugbreak(void);
 #define ASSERT(exp) ((void_t)1)
 #define VERIFY(exp) ((void_t)(exp))
 #else
-#define ASSERT(exp) ((void_t)(!(exp) && Debug::printf("%s:%u: assertion failed: %s\n", __FILE__, __LINE__, #exp) && (HALT(), 1)))
-#define VERIFY(exp) ((void_t)(!(exp) && Debug::printf("%s:%u: verification failed: %s\n", __FILE__, __LINE__, #exp) && (HALT(), 1)))
+#define ASSERT(exp) ((void_t)(!(exp) && Debug::printf(_T("%s:%u: assertion failed: %s\n"), __TFILE__, __LINE__, #exp) && (HALT(), 1)))
+#define VERIFY(exp) ((void_t)(!(exp) && Debug::printf(_T("%s:%u: verification failed: %s\n"), __TFILE__, __LINE__, #exp) && (HALT(), 1)))
 #endif

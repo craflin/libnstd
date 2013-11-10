@@ -25,8 +25,8 @@ public:
 
   bool_t open(const String& file, uint_t flags = readFlag);
   void_t close();
-  int_t read(char_t* buffer, int_t len);
-  int_t write(const char_t* buffer, int_t len);
+  int_t read(void_t* buffer, int_t len);
+  int_t write(const void_t* buffer, int_t len);
   bool_t write(const String& data);
 
   static String dirname(const String& file);

@@ -9,24 +9,32 @@
 #include <cstdarg>
 #include <malloc.h>
 
-int_t Debug::print(const char_t* str)
+int_t Debug::print(const tchar_t* str)
 {
 #ifdef _MSC_VER
   OutputDebugString(str);
+#ifdef _UNICODE
+  return (int_t)wcslen(str);
+#else
   return (int_t)strlen(str);
+#endif
 #else
   return fputs(str, stderr);
 #endif
 }
 
-int_t Debug::printf(const char_t* format, ...)
+int_t Debug::printf(const tchar_t* format, ...)
 {
 #ifdef _MSC_VER
   va_list ap;
   va_start(ap, format);
   {
-    char_t buffer[4096];
+    tchar_t buffer[4096];
+#if _UNICODE
+    int_t result = _vsnwprintf(buffer, sizeof(buffer), format, ap);
+#else
     int_t result = vsnprintf(buffer, sizeof(buffer), format, ap);
+#endif
     if(result >= 0 && result < (int_t)sizeof(buffer))
     {
       OutputDebugString(buffer);
@@ -38,23 +46,27 @@ int_t Debug::printf(const char_t* format, ...)
   // buffer was too small
   {
     int_t result;
-//#ifdef _MSC_VER
+#ifdef _UNICODE
+    result = _vscwprintf(format, ap);
+#else
     result = _vscprintf(format, ap);
-//#else
-//    result = vsnprintf(0, 0, format, ap);
-//#endif
-    size_t bufferSize = result + 1;
-    char_t* buffer, *allocatedBuffer = 0;
+#endif
+    size_t maxCount = result + 1;
+    tchar_t* buffer, *allocatedBuffer = 0;
     try // try using stack buffer
     {
-      buffer = (char_t*)alloca(bufferSize);
+      buffer = (tchar_t*)alloca(maxCount * sizeof(tchar_t));
     }
     catch(...) // fall back on heap buffer
     {
-      buffer = (char_t*)Memory::alloc(bufferSize);
+      buffer = (tchar_t*)Memory::alloc(maxCount * sizeof(tchar_t));
       allocatedBuffer = buffer;
     }
-    result = vsnprintf(buffer, bufferSize, format, ap);
+#ifdef _UNICODE
+    result = _vsnwprintf(buffer, maxCount, format, ap);
+#else
+    result = vsnprintf(buffer, maxCount, format, ap);
+#endif
     va_end(ap);
     OutputDebugString(buffer);
     if(allocatedBuffer)

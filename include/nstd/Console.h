@@ -6,6 +6,6 @@
 class Console
 {
 public:
-  static int_t print(const char_t* str);
-  static int_t printf(const char_t* format, ...);
+  static int_t print(const tchar_t* str);
+  static int_t printf(const tchar_t* format, ...);
 };

@@ -1,33 +1,34 @@
 
 name = "libnstd"
+
 configurations = { "Debug", "Release" }
 
+Debug = "$(if $(patsubst Debug%,,$(configuration)),,true)"
+Unicode = "$(if $(patsubst %_Unicode,,$(configuration)),,true)"
+
 if(tool == "vcxproj") {
-  configurations += { "Debug_cygwin", "Release_cygwin" }
+  configurations += { "Debug_Unicode", "Release_Unicode", "Debug_cygwin", "Release_cygwin" }
   platforms = { "Win32", "x64" }
   Win32 = "true"
-  cppFlags += { "/MT" }
+  cppFlags += { "/MT", "$(if $(Debug),/Od" }
   defines += { "_WIN32", "_CRT_SECURE_NO_WARNINGS" }
   if(platform == "x64") {
     defines += "_WIN64"
   }
 }
-if(platform == "Win32") {
-  defines += "_WIN32"
-}
 
-if(configuration != "Debug") {
-  defines += "NDEBUG"
-}
-
-cygwin = "$(if $(patsubst %_cygwin,,$(configuration)),,true)"
+defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 
 targets = {
   test = cppApplication + {
     dependencies = { "libnstd" }
     includePaths = { "include" }
-    buildDir = "build/test/$(configuration)"
-    output = "$(buildDir)/test/test$(if $(Debug),D,)$(if $(Win32),.exe,)"
+    if(platform == "Win32" && tool != "vcxproj") {
+      buildDir = "build/$(configuration)_cygwin/test"
+    } else {
+      buildDir = "build/$(configuration)/test"
+    }
+    output = "$(buildDir)/../test$(if $(Win32),.exe,)"
     root = "test"
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
@@ -41,9 +42,10 @@ targets = {
       "test/*.cpp" = cppSource,
       "test/*.h"
     }
-    if (cygwin) {
+    if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
+      buildDir = "build/$(configuration)_cygwin/test"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
@@ -51,16 +53,21 @@ targets = {
   }
   libnstd = cppStaticLibrary + {
     includePaths = { "include" }
-    buildDir = "build/$(configuration)"
+    if(platform == "Win32" && tool != "vcxproj") {
+      buildDir = "build/$(configuration)_cygwin"
+    } else {
+      buildDir = "build/$(configuration)"
+    }
     output = "lib/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,.a)"
     root = { "src", "include/nstd" }
     files = {
       "src/*.cpp" = cppSource,
       "include/nstd/*.h"
     }
-    if (cygwin) {
+    if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
+      buildDir = "build/$(configuration)_cygwin"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""

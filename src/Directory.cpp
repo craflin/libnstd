@@ -4,13 +4,12 @@
 * @author Colin Graf
 */
 
-#include <nstd/Directory.h>
-#include <nstd/File.h>
-#include <nstd/Debug.h>
-
 #include <cstring>
 #ifdef _WIN32
 #include <windows.h>
+#ifdef _MSC_VER
+#include <tchar.h>
+#endif
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,9 +19,16 @@
 #include <cerrno>
 #endif
 
-#if _MSC_VER
-#define stricmp _stricmp
+#if defined(_WIN32) && !defined(_MSC_VER)
+#define _tcsrchr strrchr
+#define _tcspbrk strpbrk
+#define _tcsicmp strcasecmp
+#define _tcslen strlen
 #endif
+
+#include <nstd/Directory.h>
+#include <nstd/File.h>
+#include <nstd/Debug.h>
 
 Directory::Directory()
 {
@@ -48,7 +54,7 @@ Directory::~Directory()
 bool Directory::remove(const String& dir)
 {
   String path = dir;
-  while(path != ".")
+  while(path != _T("."))
   {
 #ifdef _WIN32
     if(!RemoveDirectory(path))
@@ -73,13 +79,13 @@ bool Directory::open(const String& dirpath, const String& pattern, bool_t dirsOn
 
   this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
-  const char_t* patExt = strrchr(pattern, '.');
-  this->patternExtension = (patExt && !strpbrk(patExt + 1, "*?")) ? String(patExt + 1, -1) : String();
+  const tchar_t* patExt = _tcsrchr(pattern, _T('.'));
+  this->patternExtension = (patExt && !_tcspbrk(patExt + 1, _T("*?"))) ? String(patExt + 1, -1) : String();
 
   String searchPath = dirpath;
   searchPath.reserve(dirpath.length() + 1 + pattern.length());
   if(!dirpath.isEmpty())
-    searchPath.append('/');
+    searchPath.append(_T('/'));
   searchPath.append(pattern);
 
   findFile = FindFirstFileEx(searchPath,
@@ -132,18 +138,18 @@ bool Directory::read(String& name, bool_t& isDir)
     isDir = (((LPWIN32_FIND_DATA)ffd)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
     if(dirsOnly && !isDir)
       continue;
-    const char_t* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
-    if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
+    const tchar_t* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
+    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
       continue;
 
     if(!patternExtension.isEmpty())
     {
-      const char_t* patExt = strrchr(str, '.');
-      if(!patExt || stricmp(patternExtension, patExt + 1) != 0)
+      const tchar_t* patExt = _tcsrchr(str, _T('.'));
+      if(!patExt || _tcsicmp(patternExtension, patExt + 1) != 0)
         continue;
     }
 
-    name = String(str, (uint_t)strlen(str));
+    name = String(str, (uint_t)_tcslen(str));
     return true;
   }
 #else
@@ -174,7 +180,7 @@ bool Directory::read(String& name, bool_t& isDir)
       else if(dent->d_type == DT_LNK || dent->d_type == DT_UNKNOWN)
       {
         String path = dirpath;
-        path.append('/');
+        path.append(_T('/'));
         path.append(name);
         struct stat buff;
         if(stat(path, &buff) == 0)
@@ -183,7 +189,7 @@ bool Directory::read(String& name, bool_t& isDir)
       }
       if(dirsOnly && !isDir)
         continue;
-      if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
+      if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
         continue;
       return true;
     }
@@ -195,8 +201,8 @@ bool Directory::read(String& name, bool_t& isDir)
 bool Directory::exists(const String& dir)
 {
 #ifdef _WIN32
-  WIN32_FIND_DATAA wfd;
-  HANDLE hFind = FindFirstFileA(dir, &wfd);
+  WIN32_FIND_DATA wfd;
+  HANDLE hFind = FindFirstFile(dir, &wfd);
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
   bool_t isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
@@ -214,10 +220,10 @@ bool Directory::create(const String& dir)
 {
   // TODO: set errno correctly
 
-  const char_t* start = dir;
-  const char_t* pos = &start[dir.length() - 1];
+  const tchar_t* start = dir;
+  const tchar_t* pos = &start[dir.length() - 1];
   for(; pos >= start; --pos)
-    if(*pos == '\\' || *pos == '/')
+    if(*pos == _T('\\') || *pos == _T('/'))
     {
       if(!create(dir.substr(0, (int_t)(pos - start))))
       {
