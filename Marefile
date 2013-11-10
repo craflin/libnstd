@@ -24,9 +24,9 @@ targets = {
     dependencies = { "libnstd" }
     includePaths = { "include" }
     if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin/test"
+      buildDir = "build/$(configuration)_cygwin/src"
     } else {
-      buildDir = "build/$(configuration)/test"
+      buildDir = "build/$(configuration)/src"
     }
     output = "$(buildDir)/../test$(if $(Win32),.exe,)"
     root = "test"
