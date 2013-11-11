@@ -24,9 +24,9 @@ public:
     friend class Array;
   };
 
-  Array() : capacity(0) {}
+  Array() : _capacity(0) {}
 
-  explicit Array(size_t capacity) : capacity(capacity) {}
+  explicit Array(size_t capacity) : _capacity(capacity) {}
 
   ~Array()
   {
@@ -48,6 +48,29 @@ public:
   size_t size() const {return _end.item - _begin.item;}
   bool_t isEmpty() const {return _begin.item == _end.item;}
 
+  void_t reserve(size_t size)
+  {
+    if(!_begin.item || size > _capacity)
+    {
+      size_t bsize;
+      if (size > _capacity)
+        _capacity = size;
+      T* newData = (T*)Memory::alloc(sizeof(T) * _capacity, bsize);
+      _capacity = bsize / sizeof(T);
+      T* dest = newData;
+      for (T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
+      {
+        VERIFY(new(dest)T(*src) == dest);
+        src->~T();
+      }
+      Memory::free(_begin.item);
+      _begin.item = newData;
+      _end.item = dest;
+    }
+  }
+
+  size_t capacity() const {return _capacity;}
+
   void_t clear()
   {
     if(_begin.item)
@@ -61,23 +84,7 @@ public:
   T& append(const T& value)
   {
     size_t size = _end.item - _begin.item;
-    if(!_begin.item || size >= capacity)
-    {
-      size_t bsize;
-      if(size >= capacity)
-        capacity = size + 1;
-      T* newData = (T*)Memory::alloc(sizeof(T) * capacity, bsize);
-      capacity = bsize / sizeof(T);
-      T* dest = newData;
-      for(T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
-      {
-        VERIFY(new(dest) T(*src) == dest);
-        src->~T();
-      }
-      Memory::free(_begin.item);
-      _begin.item = newData;
-      _end.item = dest;
-    }
+    reserve(size + 1);
     T* item = _end.item;
     VERIFY(new(item) T(value) == item);
     ++_end.item;
@@ -122,6 +129,6 @@ public:
 private:
   Iterator _begin;
   Iterator _end;
-  size_t capacity;
+  size_t _capacity;
 };
 
