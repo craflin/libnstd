@@ -77,7 +77,7 @@ public:
   Iterator find(const T& key)
   {
     if(!data) return _end;
-    size_t hashCode = key;
+    size_t hashCode = (size_t)key;
     Item* item = data[hashCode % capacity];
     while(item)
     {
@@ -126,7 +126,7 @@ public:
       }
     }
 
-    size_t hashCode = key;
+    size_t hashCode = (size_t)key;
     VERIFY(new(item) Item(key, value) == item);
     //item->Item::Item(key, value);
     Item** cell;
