@@ -441,12 +441,22 @@ void_t testArray()
   myArray.remove(23);
   ASSERT(myArray.size() == 499);
   ASSERT(myArray.remove(myArray.begin()) == myArray.begin());
+
   myArray.clear();
   myArray.append("test1");
   myArray.reserve(1000);
   ASSERT(myArray.capacity() >= 1000);
   ASSERT(myArray.size() == 1);
   ASSERT(myArray[0] == "test1");
+
+  myArray.clear();
+  for (int_t i = 0; i < 100; ++i)
+    myArray.append("test");
+  ASSERT(myArray.size() == 100);
+  myArray.resize(110, "dasda");
+  ASSERT(myArray.size() == 110);
+  myArray.resize(90);
+  ASSERT(myArray.size() == 90);
 }
 
 int_t main(int_t argc, char_t* argv[])

@@ -69,6 +69,28 @@ public:
     }
   }
 
+  void resize(size_t size, const T& value = T())
+  {
+    size_t _size = _end.item - _begin.item;
+    if (size < _size)
+    {
+      T* newEnd = _begin.item + size;
+      for (T* i = newEnd, *end = _end.item; i != end; ++i)
+        i->~T();
+      _end.item = newEnd;
+    }
+    else
+    {
+      reserve(size);
+      T* end = _begin.item + size;
+      for (T* i = _begin.item + _size; i != end; ++i)
+      {
+        VERIFY(new(i)T(value) == i);
+      }
+      _end.item = end;
+    }
+  }
+
   size_t capacity() const {return _capacity;}
 
   void_t clear()
