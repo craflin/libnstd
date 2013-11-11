@@ -271,7 +271,7 @@ public:
   * Compute a hash code for this string.
   * @return The hash code
   */
-  operator size_t() const
+  explicit operator size_t() const
   {
     uint_t len;
     size_t hashCode = (len = data->len);
