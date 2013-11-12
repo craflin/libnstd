@@ -164,6 +164,8 @@ public:
 
   String& operator+=(const String& other) {return append(other);}
 
+  String& operator+=(tchar_t c) { return append(c); }
+
   String operator+(const String& other) const {return String(*this).append(other);}
 
   bool operator==(const String& other) const {return data->len == other.data->len && Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) == 0;}
