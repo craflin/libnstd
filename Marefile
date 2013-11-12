@@ -16,6 +16,9 @@ if(tool == "vcxproj") {
     defines += "_WIN64"
   }
 }
+else {
+  cppFlags += { "-std=c++11" }
+}
 
 defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 

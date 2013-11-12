@@ -9,6 +9,8 @@
 #include <windows.h>
 #ifdef _MSC_VER
 #include <tchar.h>
+#else
+#include <strings.h> // strcasecmp
 #endif
 #else
 #include <sys/types.h>
