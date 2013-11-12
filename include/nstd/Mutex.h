@@ -23,4 +23,7 @@ private:
 #else
   byte_t data[24]; // sizeof(pthread_mutex_t)
 #endif
+
+  Mutex(const Mutex&);
+  Mutex& operator=(const Mutex&);
 };
