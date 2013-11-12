@@ -42,4 +42,7 @@ public:
 
 private:
   void_t* fp;
+
+  File(const File&);
+  File& operator=(const File&);
 };
