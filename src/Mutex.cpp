@@ -1,12 +1,12 @@
 
-#include <nstd/Mutex.h>
-#include <nstd/Debug.h>
-
 #ifdef _WIN32
 #include <Windows.h>
 #else
 #include <pthread.h>
 #endif
+
+#include <nstd/Mutex.h>
+#include <nstd/Debug.h>
 
 Mutex::Mutex()
 {

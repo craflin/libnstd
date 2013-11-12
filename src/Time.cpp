@@ -1,7 +1,7 @@
 
-#include <nstd/Time.h>
-
 #include <ctime>
+
+#include <nstd/Time.h>
 
 timestamp_t Time::time()
 {

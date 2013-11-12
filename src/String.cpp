@@ -1,9 +1,10 @@
 
-#include <nstd/String.h>
-#include <nstd/Debug.h>
-
 #include <cstdarg>
 #include <cstdio>
+#include <cctype>
+
+#include <nstd/String.h>
+#include <nstd/Debug.h>
 
 String::EmptyData String::emptyData;
 #ifndef _UNICODE
@@ -89,8 +90,6 @@ int_t String::printf(const tchar_t* format, ...)
     return result;
   }
 }
-
-#include <cctype>
 
 #ifdef _UNICODE
 String& String::toLowerCase()

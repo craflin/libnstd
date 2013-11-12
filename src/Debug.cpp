@@ -1,13 +1,13 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Memory.h>
-
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
 #include <cstdio>
 #include <cstdarg>
 #include <malloc.h>
+
+#include <nstd/Debug.h>
+#include <nstd/Memory.h>
 
 int_t Debug::print(const tchar_t* str)
 {

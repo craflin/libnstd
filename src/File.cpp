@@ -1,7 +1,4 @@
 
-#include <nstd/File.h>
-#include <nstd/Debug.h>
-
 #ifdef _WIN32
 #include <windows.h>
 #else
@@ -11,6 +8,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #endif
+
+#include <nstd/File.h>
+#include <nstd/Debug.h>
 
 File::File()
 {

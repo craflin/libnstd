@@ -1,7 +1,4 @@
 
-#include <nstd/Memory.h>
-#include <nstd/Debug.h>
-
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -10,6 +7,9 @@
 #include <malloc.h>
 #include <cstring>
 #endif
+
+#include <nstd/Memory.h>
+#include <nstd/Debug.h>
 
 class _Memory
 {

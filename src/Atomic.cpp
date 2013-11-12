@@ -25,5 +25,4 @@ uint64_t Atomic::decrement(volatile uint64_t& var)
   return InterlockedDecrement64((__int64 volatile *)&var);
 }
 
-
 #endif
