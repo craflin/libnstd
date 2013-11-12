@@ -57,4 +57,7 @@ private:
   String dirpath; /**< The path to the directory to search in */
   String pattern; /**< A search pattern like "*.inf" */
 #endif
+
+  Directory(const Directory&);
+  Directory& operator=(const Directory&);
 };
