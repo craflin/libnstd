@@ -141,6 +141,9 @@ void_t testString()
     ASSERT(String::isSpace((char_t)i) == !!isspace((uchar_t&)i));
 #endif
   }
+
+  ASSERT(String::length(_T("")) == 0);
+  ASSERT(String::length(_T("123")) == 3);
 }
 
 void_t testHashSet()
@@ -443,17 +446,17 @@ void_t testArray()
   ASSERT(myArray.remove(myArray.begin()) == myArray.begin());
 
   myArray.clear();
-  myArray.append("test1");
+  myArray.append(_T("test1"));
   myArray.reserve(1000);
   ASSERT(myArray.capacity() >= 1000);
   ASSERT(myArray.size() == 1);
-  ASSERT(myArray[0] == "test1");
+  ASSERT(myArray[0] == _T("test1"));
 
   myArray.clear();
   for (int_t i = 0; i < 100; ++i)
-    myArray.append("test");
+    myArray.append(_T("test"));
   ASSERT(myArray.size() == 100);
-  myArray.resize(110, "dasda");
+  myArray.resize(110, _T("dasda"));
   ASSERT(myArray.size() == 110);
   myArray.resize(90);
   ASSERT(myArray.size() == 90);

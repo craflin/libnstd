@@ -269,6 +269,14 @@ public:
     return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
   }
 
+  static uint_t length(const tchar_t* s)
+  {
+    const tchar_t* start = s;
+    while (*s)
+      ++s;
+    return (uint_t)(s - start);
+  }
+
   /**
   * Compute a hash code for this string.
   * @return The hash code
