@@ -47,8 +47,17 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
+  const T& front() const { return _begin.item->value; }
+  const T& back() const { return _end.item->prev->value; }
+
+  T& front() { return _begin.item->value; }
+  T& back() { return _end.item->prev->value; }
+
   size_t size() const {return _size;}
   bool_t isEmpty() const {return endItem.prev == 0;}
+
+  T& prepend(const T& value) {return insert(_begin, value).item->value;}
+  T& append(const T& value) {return insert(_end, value).item->value;}
 
   void_t clear()
   {
@@ -72,7 +81,7 @@ public:
     return _end;
   }
 
-  T& prepend(const T& value)
+  Iterator insert(const Iterator& position, const T& value)
   {
     Item* item;
     if(freeItem)
@@ -98,49 +107,16 @@ public:
     VERIFY(new(item) Item(value) == item);
     //item->Item::Item(value);
 
-    item->prev = 0;
-    (item->next = _begin.item)->prev = item;
-    _begin.item = item;
-
-    ++_size;
-    return item->value;
-  }
-
-  T& append(const T& value)
-  {
-    Item* item;
-    if(freeItem)
-    {
-      item = freeItem;
-      freeItem = freeItem->prev;
-    }
-    else
-    {
-      size_t allocatedSize;
-      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
-      itemBlock->next = blocks;
-      blocks = itemBlock;
-      item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
-
-      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
-      {
-        i->prev = freeItem;
-        freeItem = i;
-      }
-    }
-
-    VERIFY(new(item) Item(value) == item);
-    //item->Item::Item(value);
-
-    if((item->prev = endItem.prev))
-      endItem.prev->next = item;
+    Item* insertPos = position.item;
+    if((item->prev = insertPos->prev))
+      insertPos->prev->next = item;
     else
       _begin.item = item;
 
-    item->next = &endItem;
-    endItem.prev = item;
+    item->next = insertPos;
+    insertPos->prev = item;
     ++_size;
-    return item->value;
+    return item;
   }
 
   Iterator remove(const Iterator& it)

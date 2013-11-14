@@ -251,27 +251,49 @@ void_t testHashSetString()
 
 void_t testList()
 {
+  // test list append
   List<String> myList;
   ASSERT(myList.isEmpty());
   myList.append(_T("string1"));
   myList.append(_T("string2"));
   myList.append(_T("string3"));
   ASSERT(myList.size() == 3);
+
+  // test list find
   ASSERT(myList.find(_T("string2")) != myList.end());
   ASSERT(myList.find(_T("string4")) == myList.end());
   myList.remove(_T("string2"));
   ASSERT(myList.size() == 2);
   ASSERT(myList.find(_T("string2")) == myList.end());
+
+  // test list iterator
   List<String>::Iterator it = myList.begin();
   ASSERT(*it == _T("string1"));
   ASSERT(*(++it) == _T("string3"));
   *it = _T("abbba");
   ASSERT(*it == _T("abbba"));
+
+  // test prepend
   myList.prepend(_T("string7"));
   ASSERT(*myList.begin() == _T("string7"));
+
+  // test list clear
   myList.clear();
   ASSERT(myList.size() == 0);
   ASSERT(myList.isEmpty());
+
+  // test front and back
+  myList.clear();
+  myList.append(_T("1"));
+  myList.append(_T("2"));
+  ASSERT(myList.front() == _T("1"));
+  ASSERT(myList.back() == _T("2"));
+  myList.append(_T("3"));
+  ASSERT(myList.front() == _T("1"));
+  ASSERT(myList.back() == _T("3"));
+  myList.prepend(_T("0"));
+  ASSERT(myList.front() == _T("0"));
+  ASSERT(myList.back() == _T("3"));
 }
 
 void_t testListSort()
