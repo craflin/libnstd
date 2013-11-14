@@ -56,8 +56,17 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
+  const T& front() const { return _begin.item->value; }
+  const T& back() const { return _end.item->prev->value; }
+
+  V& front() { return _begin.item->value; }
+  V& back() { return _end.item->prev->value; }
+
   size_t size() const {return _size;}
   bool_t isEmpty() const {return endItem.prev == 0;}
+
+  V& prepend(const T& key, const V& value) {return insert(_begin, key, value).item->value;}
+  V& append(const T& key, const V& value) {return insert(_end, key, value).item->value;}
 
   void_t clear()
   {
@@ -87,14 +96,13 @@ public:
     return _end;
   }
   
-  V& insert(const T& key, const V& value)
+  Iterator insert(const Iterator& position, const T& key, const V& value)
   {
     Iterator it = find(key);
     if(it != _end)
     {
-      V& v = *it;
-      v = value;
-      return v;
+      *it = value;
+      return it;
     }
 
     if(!data)
@@ -134,15 +142,16 @@ public:
     item->nextCell = *cell;
     *cell = item;
     
-    if((item->prev = endItem.prev))
-      endItem.prev->next = item;
+    Item* insertPos = position.item;
+    if((item->prev = insertPos->prev))
+      insertPos->prev->next = item;
     else
       _begin.item = item;
 
-    item->next = &endItem;
-    endItem.prev = item;
+    item->next = insertPos;
+    insertPos->prev = item;
     ++_size;
-    return item->value;
+    return item;
   }
 
   Iterator remove(const Iterator& it)

@@ -330,11 +330,15 @@ void_t testListStringSort()
 
 void_t testHashMap()
 {
+  // test append
   HashMap<int_t, int_t> myMap;
   ASSERT(myMap.isEmpty());
-  myMap.insert(123, 123);
-  myMap.insert(123, 125);
+  myMap.append(123, 123);
+  myMap.append(123, 125);
+  ASSERT(myMap.size() == 1);
   ASSERT(*myMap.find(123) == 125);
+
+  // test clear
   myMap.clear();
   ASSERT(myMap.size() == 0);
   ASSERT(myMap.isEmpty());
@@ -342,14 +346,32 @@ void_t testHashMap()
 
 void_t testHashMapString()
 {
+  // test append
   HashMap<String, int_t> myMap;
   ASSERT(myMap.isEmpty());
-  myMap.insert(_T("123"), 123);
-  myMap.insert(_T("123"), 125);
+  myMap.append(_T("123"), 123);
+  myMap.append(_T("123"), 125);
+  ASSERT(myMap.size() == 1);
   ASSERT(*myMap.find(_T("123")) == 125);
+
+  // test clear
   myMap.clear();
   ASSERT(myMap.size() == 0);
   ASSERT(myMap.isEmpty());
+
+  // test front and back
+  myMap.clear();
+  myMap.append(_T("1"), 1);
+  myMap.append(_T("2"), 2);
+  ASSERT(myMap.front() == 1);
+  ASSERT(myMap.back() == 2);
+  myMap.append(_T("3"), 3);
+  ASSERT(myMap.front() == 1);
+  ASSERT(myMap.back() == 3);
+  myMap.prepend(_T("0"), 0);
+  ASSERT(myMap.front() == 0);
+  ASSERT(myMap.back() == 3);
+
 }
 
 void_t testNewDelete()
