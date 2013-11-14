@@ -151,9 +151,9 @@ void_t testHashSet()
   HashSet<int_t> mySet;
   ASSERT(mySet.isEmpty());
   ASSERT(mySet.begin() == mySet.end());
-  mySet.insert(1);
-  mySet.insert(2);
-  mySet.insert(3);
+  mySet.append(1);
+  mySet.append(2);
+  mySet.append(3);
   ASSERT(mySet.begin() != mySet.end());
   HashSet<int_t>::Iterator it = mySet.begin();
   ASSERT(*it == 1);
@@ -165,8 +165,8 @@ void_t testHashSet()
   ASSERT(mySet.find(5) == mySet.end());
   mySet.remove(3);
   mySet.remove(1);
-  mySet.insert(5);
-  mySet.insert(6);
+  mySet.append(5);
+  mySet.append(6);
   ASSERT(mySet.find(3) == mySet.end());
   ASSERT(mySet.find(1) == mySet.end());
   ASSERT(mySet.find(5) != mySet.end());
@@ -176,7 +176,7 @@ void_t testHashSet()
   ASSERT(*(++it) == 5);
   ASSERT(*(++it) == 6);
   for(int i = 0; i < 300; ++i)
-    mySet.insert((rand() % 30) + 10);
+    mySet.append((rand() % 30) + 10);
   for(int i = 0; i < 300; ++i)
     mySet.remove((rand() % 30) + 10);
   for(HashSet<int_t>::Iterator it = mySet.begin(), end = mySet.end(), next; it != end; it = next)
@@ -189,13 +189,20 @@ void_t testHashSet()
   ASSERT(*it == 2);
   ASSERT(*(++it) == 5);
   ASSERT(*(++it) == 6);
-  mySet.insert(400);
-  mySet.insert(400);
+  mySet.append(400);
+  mySet.append(400);
   mySet.remove(400);
   ASSERT(mySet.find(400) == mySet.end());
   mySet.clear();
   ASSERT(mySet.size() == 0);
   ASSERT(mySet.isEmpty());
+
+  // test front and back
+  mySet.clear();
+  mySet.append(1);
+  mySet.append(2);
+  ASSERT(mySet.front() == 1);
+  ASSERT(mySet.back() == 2);
 }
 
 struct TestHashSetDestructor
@@ -221,10 +228,11 @@ void_t testHashSetDestructor()
 {
   {
     HashSet<TestHashSetDestructor> mySet;
-    mySet.insert(1);
-    mySet.insert(2);
-    mySet.insert(3);
+    mySet.append(1);
+    mySet.append(2);
+    mySet.append(3);
     mySet.remove(1);
+    ASSERT(mySet.size() == 2);
   }
   ASSERT(TestHashSetDestructor::destructions == 8);
 }
@@ -233,9 +241,10 @@ void_t testHashSetString()
 {
   HashSet<String> mySet;
   ASSERT(mySet.isEmpty());
-  mySet.insert(_T("what"));
-  mySet.insert(_T("bv"));
-  mySet.insert(_T("c"));
+  mySet.append(_T("what"));
+  mySet.append(_T("bv"));
+  mySet.append(_T("c"));
+  ASSERT(mySet.size() == 3);
   ASSERT(mySet.find(_T("what")) != mySet.end());
   ASSERT(mySet.find(_T("wdashat")) == mySet.end());
 }

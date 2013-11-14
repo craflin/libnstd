@@ -54,8 +54,14 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
+  const T& front() const { return _begin.item->key; }
+  const T& back() const { return _end.item->prev->key; }
+
   size_t size() const {return _size;}
   bool_t isEmpty() const {return endItem.prev == 0;}
+
+  void_t prepend(const T& key) {insert(_begin, key);}
+  void_t append(const T& key) {insert(_end, key);}
 
   void_t clear()
   {
@@ -85,20 +91,21 @@ public:
     return _end;
   }
 
-  void_t insert(const T& key)
+  Iterator insert(const Iterator& position, const T& key)
   {
-    if(find(key) != _end) return;
+    Iterator it = find(key);
+    if (it != _end) return it;
 
-    if(!data)
+    if (!data)
     {
       size_t size;
-      data = (Item**)Memory::alloc(sizeof(Item*) * capacity, size);
+      data = (Item**)Memory::alloc(sizeof(Item*)* capacity, size);
       capacity = size / sizeof(Item*);
-      Memory::zero(data, sizeof(Item*) * capacity);
+      Memory::zero(data, sizeof(Item*)* capacity);
     }
-    
+
     Item* item;
-    if(freeItem)
+    if (freeItem)
     {
       item = freeItem;
       freeItem = freeItem->prev;
@@ -106,12 +113,12 @@ public:
     else
     {
       size_t allocatedSize;
-      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
+      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock)+sizeof(Item), allocatedSize);
       itemBlock->next = blocks;
       blocks = itemBlock;
       item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
 
-      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+      for (Item* i = item + 1, *end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
         i->prev = freeItem;
         freeItem = i;
@@ -119,21 +126,23 @@ public:
     }
 
     size_t hashCode = (size_t)key;
-    VERIFY(new(item) Item(key) == item);
+    VERIFY(new(item)Item(key) == item);
     //item->Item::Item(key);
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
     *cell = item;
-    
-    if((item->prev = endItem.prev))
-      endItem.prev->next = item;
+
+    Item* insertPos = position.item;
+    if ((item->prev = insertPos->prev))
+      insertPos->prev->next = item;
     else
       _begin.item = item;
 
-    item->next = &endItem;
-    endItem.prev = item;
+    item->next = insertPos;
+    insertPos->prev = item;
     ++_size;
+    return item;
   }
 
   Iterator remove(const Iterator& it)
