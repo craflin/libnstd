@@ -67,7 +67,13 @@ private:
     }
 };
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4073) 
+#pragma init_seg(lib)
 _Memory _Memory::memory;
+#else
+_Memory _Memory::memory __attribute__ ((init_priority (101)));
+#endif
 size_t _Memory::pageSize;
 _Memory::FreePage* _Memory::firstFreePage = 0;
 size_t _Memory::freePageCount = 0;
