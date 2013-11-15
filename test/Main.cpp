@@ -371,7 +371,6 @@ void_t testHashMapString()
   myMap.prepend(_T("0"), 0);
   ASSERT(myMap.front() == 0);
   ASSERT(myMap.back() == 3);
-
 }
 
 void_t testNewDelete()
@@ -458,27 +457,37 @@ void_t testFileName()
 
 void_t testArray()
 {
-  {
-    Array<int> myArray;
-    ASSERT(myArray.isEmpty());
-    ASSERT(myArray.size() == 0);
-    ASSERT(myArray.append(123) == 123);
-    ASSERT(!myArray.isEmpty());
-    ASSERT(myArray.size() == 1);
-    myArray.clear();
-    ASSERT(myArray.isEmpty());
-    ASSERT(myArray.size() == 0);
-  }
+  // test append
+  Array<int> myArray;
+  ASSERT(myArray.isEmpty());
+  ASSERT(myArray.size() == 0);
+  ASSERT(myArray.append(123) == 123);
+  ASSERT(!myArray.isEmpty());
+  ASSERT(myArray.size() == 1);
 
+  // tets clear
+  myArray.clear();
+  ASSERT(myArray.isEmpty());
+  ASSERT(myArray.size() == 0);
+}
+
+
+void_t testArrayString()
+{
+  // test insert
   Array<String> myArray;
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
   ASSERT(myArray.append(_T("test")) == _T("test"));
   ASSERT(!myArray.isEmpty());
   ASSERT(myArray.size() == 1);
+
+  // test clear
   myArray.clear();
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
+
+  // test iterator
   String str;
   for(int_t i = 0; i < 500; ++i)
   {
@@ -494,10 +503,13 @@ void_t testArray()
     ++count;
   }
   ASSERT(count == 500);
+
+  // test remove
   myArray.remove(23);
   ASSERT(myArray.size() == 499);
   ASSERT(myArray.remove(myArray.begin()) == myArray.begin());
 
+  // test reserve
   myArray.clear();
   myArray.append(_T("test1"));
   myArray.reserve(1000);
@@ -505,6 +517,7 @@ void_t testArray()
   ASSERT(myArray.size() == 1);
   ASSERT(myArray[0] == _T("test1"));
 
+  // test resize
   myArray.clear();
   for (int_t i = 0; i < 100; ++i)
     myArray.append(_T("test"));
@@ -513,6 +526,16 @@ void_t testArray()
   ASSERT(myArray.size() == 110);
   myArray.resize(90);
   ASSERT(myArray.size() == 90);
+
+  // test front and back
+  myArray.clear();
+  myArray.append(_T("1"));
+  myArray.append(_T("2"));
+  ASSERT(myArray.front() == _T("1"));
+  ASSERT(myArray.back() == _T("2"));
+  myArray.append(_T("3"));
+  ASSERT(myArray.front() == _T("1"));
+  ASSERT(myArray.back() == _T("3"));
 }
 
 int_t main(int_t argc, char_t* argv[])
@@ -538,6 +561,7 @@ int_t main(int_t argc, char_t* argv[])
   testFile();
   testFileName();
   testArray();
+  testArrayString();
 
   Console::printf(_T("%s\n"), _T("done"));
 

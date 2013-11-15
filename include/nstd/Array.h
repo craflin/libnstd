@@ -41,6 +41,12 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
+  const T& front() const {return *_begin.item;}
+  const T& back() const {return _end.item[-1];}
+
+  T& front() {return *_begin.item;}
+  T& back() {return _end.item[-1];}
+
   operator const T*() const {return _begin.item;}
 
   operator T*() {return _begin.item;}
