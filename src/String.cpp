@@ -2,9 +2,18 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cctype>
+#include <cstring>
+#ifdef _MSC_VER
+#include <tchar.h>
+#endif
 
 #include <nstd/String.h>
 #include <nstd/Debug.h>
+
+#ifndef _MSC_VER
+#define _tcsstr strstr
+#define _tcspbrk strpbrk
+#endif
 
 String::EmptyData String::emptyData;
 #ifndef _UNICODE
@@ -88,6 +97,33 @@ int_t String::printf(const tchar_t* format, ...)
     data->len = result;
     va_end(ap);
     return result;
+  }
+}
+
+const tchar_t* String::find(const tchar_t* str) const {return _tcsstr(data->str, str);}
+const tchar_t* String::findOneOf(const tchar_t* chars) const {return _tcspbrk(data->str, chars);}
+const tchar_t* String::findLast(const tchar_t* str) const
+{
+  const tchar_t* result = 0;
+  const tchar_t* match = _tcsstr(data->str, str);
+  for(;;)
+  {
+    if(!match)
+      return result;
+    result = match;
+    match = _tcsstr(match + 1, str);
+  }
+}
+const tchar_t* String::findLastOf(const tchar_t* chars) const
+{
+  const tchar_t* result = 0;
+  const tchar_t* match = _tcspbrk(data->str, chars);
+  for(;;)
+  {
+    if(!match)
+      return result;
+    result = match;
+    match = _tcspbrk(match + 1, chars);
   }
 }
 

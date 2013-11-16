@@ -108,11 +108,14 @@ void_t testAtomic()
 
 void_t testString()
 {
+  // test constructors
   String empty;
   ASSERT(empty.isEmpty());
   String hello(_T("hello"));
   String copyOfHello(hello);
   String copyOfCopyOfHello(copyOfHello);
+
+  // test compare operators
   ASSERT(hello == copyOfCopyOfHello);
   ASSERT(copyOfHello == copyOfCopyOfHello);
   ASSERT(hello == copyOfCopyOfHello);
@@ -122,13 +125,18 @@ void_t testString()
   ASSERT(!(hello == empty));
   ASSERT(!(copyOfHello == empty));
   ASSERT(!(copyOfCopyOfHello == empty));
+
+  // test clear
   copyOfHello.clear();
   ASSERT(copyOfHello.isEmpty());
+
+  // test printf
   empty.printf(_T("%s %s"), (const tchar_t*)hello, _T("world"));
   ASSERT(empty == _T("hello world"));
   ASSERT(empty != _T("hello worl2"));
   ASSERT(empty != _T("hello worl2a"));
 
+  // test toUpperCase, toLowerCase, isSpace
   for (int i = 0; i < 0x100; ++i)
   {
 #ifdef _UNICODE
@@ -142,8 +150,20 @@ void_t testString()
 #endif
   }
 
+  // test static length
   ASSERT(String::length(_T("")) == 0);
   ASSERT(String::length(_T("123")) == 3);
+
+  // test find methods
+  String test(_T("this is the find test test string"));
+  ASSERT(String::compare(test.find(_T('i')), _T("is is the find test test string")) == 0);
+  ASSERT(String::compare(test.findLast(_T('i')), _T("ing")) == 0);
+  ASSERT(String::compare(test.find(_T("is")), _T("is is the find test test string")) == 0);
+  ASSERT(String::compare(test.findLast(_T("is")), _T("is the find test test string")) == 0);
+  ASSERT(String::compare(test.findOneOf(_T("ex")), _T("e find test test string")) == 0);
+  ASSERT(String::compare(test.findOneOf(_T("xe")), _T("e find test test string")) == 0);
+  ASSERT(String::compare(test.findLastOf(_T("ex")), _T("est string")) == 0);
+  ASSERT(String::compare(test.findLastOf(_T("xe")), _T("est string")) == 0);
 }
 
 void_t testHashSet()

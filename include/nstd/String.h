@@ -192,6 +192,27 @@ public:
     return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
   }
 
+  const tchar_t* find(tchar_t c) const
+  {
+    for(const tchar_t* s = data->str; *s; ++s)
+      if(*s == c)
+        return s;
+    return 0;
+  }
+
+  const tchar_t* findLast(tchar_t c) const
+  {
+    for(const tchar_t * start = data->str, * p = data->str + data->len - 1; p >= start; --p)
+      if(*p == c)
+        return p;
+    return 0;
+  }
+
+  const tchar_t* find(const tchar_t* str) const;
+  const tchar_t* findOneOf(const tchar_t* chars) const;
+  const tchar_t* findLast(const tchar_t* str) const;
+  const tchar_t* findLastOf(const tchar_t* chars) const;
+
   String substr(ssize_t start, ssize_t length = -1) const
   {
     if(start < 0)
