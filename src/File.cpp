@@ -91,7 +91,7 @@ bool_t File::open(const String& file, uint_t flags)
   return true;
 }
 
-int_t File::read(void_t* buffer, int_t len)
+uint_t File::read(void_t* buffer, uint_t len)
 {
 #ifdef _WIN32
   DWORD i;
@@ -106,7 +106,7 @@ int_t File::read(void_t* buffer, int_t len)
 #endif
 }
 
-int_t File::write(const void_t* buffer, int_t len)
+uint_t File::write(const void_t* buffer, uint_t len)
 {
 #ifdef _WIN32
   DWORD i;
@@ -121,8 +121,8 @@ int_t File::write(const void_t* buffer, int_t len)
 
 bool_t File::write(const String& data)
 {
-  int_t size = data.length() * sizeof(tchar_t);
-  return write(data, size) == size;
+  size_t size = data.length() * sizeof(tchar_t);
+  return write(data, (uint_t)size) == (uint_t)size;
 }
 
 String File::dirname(const String& file)
@@ -138,7 +138,7 @@ String File::dirname(const String& file)
 String File::basename(const String& file, const String& extension)
 {
   const tchar_t* start = file;
-  uint_t fileLen = file.length();
+  size_t fileLen = file.length();
   const tchar_t* pos = &start[fileLen - 1];
   const tchar_t* result;
   for(; pos >= start; --pos)
@@ -149,8 +149,8 @@ String File::basename(const String& file, const String& extension)
     }
   result = start;
 removeExtension:
-  uint_t resultLen = fileLen - (uint_t)(result - start);
-  uint_t extensionLen = extension.length();
+  size_t resultLen = fileLen - (size_t)(result - start);
+  size_t extensionLen = extension.length();
   if(extensionLen)
   {
     const tchar_t* extensionPtr = extension;
@@ -162,7 +162,7 @@ removeExtension:
     }
     else
     {
-      uint_t extensionLenPlus1 = extensionLen + 1;
+      size_t extensionLenPlus1 = extensionLen + 1;
       if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == _T('.'))
         if(String::compare((const tchar_t*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLenPlus1);
@@ -174,11 +174,11 @@ removeExtension:
 String File::extension(const String& file)
 {
   const tchar_t* start = file;
-  uint_t fileLen = file.length();
+  size_t fileLen = file.length();
   const tchar_t* pos = &start[fileLen - 1];
   for(; pos >= start; --pos)
     if(*pos == _T('.'))
-      return String(pos + 1, fileLen - ((uint_t)(pos - start) + 1));
+      return String(pos + 1, fileLen - ((size_t)(pos - start) + 1));
     else if(*pos == _T('\\') || *pos == _T('/'))
       return String();
   return String();
@@ -191,7 +191,7 @@ String File::simplifyPath(const String& path)
   const tchar_t* start = data;
   const tchar_t* end;
   const tchar_t* chunck;
-  uint_t chunckLen;
+  size_t chunckLen;
   bool_t startsWithSlash = *data == _T('/') || *data == _T('\\');
   for(;;)
   {
@@ -205,7 +205,7 @@ String File::simplifyPath(const String& path)
       break;
 
     chunck = start;
-    chunckLen = (uint_t)(end - start);
+    chunckLen = (size_t)(end - start);
     if(chunckLen == 2 && *chunck == _T('.') && chunck[1] == _T('.') && !result.isEmpty())
     {
       const tchar_t* data = result;
@@ -218,7 +218,7 @@ String File::simplifyPath(const String& path)
             if(pos < data)
               result.resize(0);
             else
-              result.resize((uint_t)(pos - data));
+              result.resize((size_t)(pos - data));
             goto cont;
           }
           break;

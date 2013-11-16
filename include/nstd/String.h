@@ -33,7 +33,7 @@ public:
     }
   }
 
-  String(const tchar_t* str, uint_t length)
+  String(const tchar_t* str, size_t length)
   {
     data = (Data*)Memory::alloc((length + 1) * sizeof(tchar_t) + sizeof(Data));
     data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
@@ -43,7 +43,7 @@ public:
     data->ref = 1;
   }
 
-  explicit String(uint_t capacity)
+  explicit String(size_t capacity)
   {
     data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar_t) + sizeof(Data));
     data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
@@ -66,12 +66,12 @@ public:
     return (tchar_t*)data->str;
   }
   
-  uint_t length() const {return data->len;}
+  size_t length() const {return data->len;}
 
-  uint_t capacity() const
+  size_t capacity() const
   {
     if(data->ref == 1)
-      return (uint_t)((Memory::size(data) - sizeof(Data)) / sizeof(tchar_t) - 1);
+      return (Memory::size(data) - sizeof(Data)) / sizeof(tchar_t) - 1;
     return 0;
   }
 
@@ -93,12 +93,12 @@ public:
 
   bool_t isEmpty() const {return data->len == 0;}
 
-  void_t resize(uint_t length)
+  void_t resize(size_t length)
   {
     detach(length, length);
   }
 
-  void_t reserve(uint_t size)
+  void_t reserve(size_t size)
   {
     detach(data->len, size < data->len ? data->len : size);
   }
@@ -106,7 +106,7 @@ public:
   String& prepend(const String& str)
   {
     String copy(*this);
-    uint_t newLen = str.data->len + copy.data->len;
+    size_t newLen = str.data->len + copy.data->len;
     detach(0, newLen);
     Memory::copy((tchar_t*)data->str, str.data->str, str.data->len * sizeof(tchar_t));
     Memory::copy((tchar_t*)data->str + str.data->len, copy.data->str, copy.data->len * sizeof(tchar_t));
@@ -115,16 +115,16 @@ public:
 
   String& append(const String& str)
   {
-    uint_t newLen = data->len + str.data->len;
+    size_t newLen = data->len + str.data->len;
     detach(data->len, newLen);
     Memory::copy((tchar_t*)data->str + data->len, str.data->str, str.data->len * sizeof(tchar_t));
     data->len = newLen;
     return *this;
   }
 
-  String& append(const tchar_t* str, uint_t len)
+  String& append(const tchar_t* str, size_t len)
   {
-    uint_t newLen = data->len + len;
+    size_t newLen = data->len + len;
     detach(data->len, newLen);
     Memory::copy((tchar_t*)data->str + data->len, str, len * sizeof(tchar_t));
     data->len = newLen;
@@ -133,7 +133,7 @@ public:
 
   String& append(const tchar_t c)
   {
-    uint_t newLen = data->len + 1;
+    size_t newLen = data->len + 1;
     detach(data->len, newLen);
     ((tchar_t*)data->str)[data->len] = c;
     ((tchar_t*)data->str)[newLen] = _T('\0');
@@ -192,22 +192,22 @@ public:
     return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
   }
 
-  String substr(int_t start, int_t length = -1) const
+  String substr(ssize_t start, ssize_t length = -1) const
   {
     if(start < 0)
     {
-      start = (int_t)data->len + start;
+      start = (ssize_t)data->len + start;
       if(start < 0)
         start = 0;
     }
-    else if((uint_t)start > data->len)
+    else if((size_t)start > data->len)
       start = data->len;
 
-    int_t end;
+    size_t end;
     if(length >= 0)
     {
-      end = start + length;
-      if((uint_t)end > data->len)
+      end = (size_t)start + (size_t)length;
+      if(end > data->len)
         end = data->len;
     }
     else
@@ -269,12 +269,12 @@ public:
     return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
   }
 
-  static uint_t length(const tchar_t* s)
+  static size_t length(const tchar_t* s)
   {
     const tchar_t* start = s;
     while (*s)
       ++s;
-    return (uint_t)(s - start);
+    return (size_t)(s - start);
   }
 
   /**
@@ -283,7 +283,7 @@ public:
   */
   explicit operator size_t() const
   {
-    uint_t len;
+    size_t len;
     size_t hashCode = (len = data->len);
     const tchar_t* str = data->str;
     hashCode *= 16807;
@@ -299,14 +299,14 @@ private:
   struct Data
   {
     const tchar_t* str;
-    uint_t len;
+    size_t len;
     volatile size_t ref;
   };
 
   Data* data;
   Data _data;
 
-  void_t detach(uint_t copyLength, uint_t minCapacity);
+  void_t detach(size_t copyLength, size_t minCapacity);
 
   static struct EmptyData : public Data
   {
