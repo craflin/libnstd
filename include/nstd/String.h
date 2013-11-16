@@ -300,7 +300,7 @@ private:
   {
     const tchar_t* str;
     uint_t len;
-    size_t ref;
+    volatile size_t ref;
   };
 
   Data* data;
