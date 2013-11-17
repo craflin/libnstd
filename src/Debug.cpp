@@ -4,7 +4,6 @@
 #endif
 #include <cstdio>
 #include <cstdarg>
-#include <malloc.h>
 
 #include <nstd/Debug.h>
 #include <nstd/Memory.h>
@@ -52,16 +51,7 @@ int_t Debug::printf(const tchar_t* format, ...)
     result = _vscprintf(format, ap);
 #endif
     size_t maxCount = result + 1;
-    tchar_t* buffer, *allocatedBuffer = 0;
-    try // try using stack buffer
-    {
-      buffer = (tchar_t*)alloca(maxCount * sizeof(tchar_t));
-    }
-    catch(...) // fall back on heap buffer
-    {
-      buffer = (tchar_t*)Memory::alloc(maxCount * sizeof(tchar_t));
-      allocatedBuffer = buffer;
-    }
+    tchar_t* buffer = (tchar_t*)Memory::alloc(maxCount * sizeof(tchar_t));
 #ifdef _UNICODE
     result = _vsnwprintf(buffer, maxCount, format, ap);
 #else
@@ -69,8 +59,7 @@ int_t Debug::printf(const tchar_t* format, ...)
 #endif
     va_end(ap);
     OutputDebugString(buffer);
-    if(allocatedBuffer)
-      Memory::free(allocatedBuffer);
+    Memory::free(buffer);
     return result;
   }
 #else
