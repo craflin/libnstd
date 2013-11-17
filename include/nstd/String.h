@@ -70,6 +70,7 @@ public:
   }
 
   operator const tchar_t*() const {return data->str;}
+  operator const tchar_t*() {return data->str;}
 
   operator tchar_t*()
   {
