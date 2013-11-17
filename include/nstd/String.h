@@ -92,6 +92,16 @@ public:
     }
   }
 
+  void_t attach(const tchar_t* str, size_t length)
+  {
+    if(data->ref && Atomic::decrement(data->ref) == 0)
+        Memory::free(data);
+    data = &_data;
+    _data.ref = 0;
+    _data.str = str;
+    _data.len = length;
+  }
+
   bool_t isEmpty() const {return data->len == 0;}
 
   void_t resize(size_t length)

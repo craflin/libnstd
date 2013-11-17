@@ -172,6 +172,25 @@ void_t testString()
   ASSERT(a + b + c == _T("aa b cc"));
   ASSERT(String().append(a).append(b).append(c) == _T("aa b cc"));
   ASSERT(String().append(b).prepend(a).append(c) == _T("aa b cc"));
+
+  // test if lazy copying
+  struct LazyCopyTest
+  {
+    static String test1()
+    {
+      return String(_T("test"));
+    }
+  };
+  String aa = LazyCopyTest::test1(); // so, this is equal to "String aa(_T("test"))"?
+  const tchar_t* caa = aa;
+  ASSERT(caa != (tchar_t*)aa);
+
+  // test external buffer attaching
+  tchar_t buf[100];
+  Memory::fill(buf, 'a', 8);
+  String bufWrapper;
+  bufWrapper.attach(buf, 4);
+  ASSERT(bufWrapper == String(buf, 4));
 }
 
 void_t testHashSet()
