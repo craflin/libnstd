@@ -164,6 +164,14 @@ void_t testString()
   ASSERT(String::compare(test.findOneOf(_T("xe")), _T("e find test test string")) == 0);
   ASSERT(String::compare(test.findLastOf(_T("ex")), _T("est string")) == 0);
   ASSERT(String::compare(test.findLastOf(_T("xe")), _T("est string")) == 0);
+
+  // test prepend, append
+  String b(_T(" b "));
+  String a(_T("aa"));
+  String c(_T("cc"));
+  ASSERT(a + b + c == _T("aa b cc"));
+  ASSERT(String().append(a).append(b).append(c) == _T("aa b cc"));
+  ASSERT(String().append(b).prepend(a).append(c) == _T("aa b cc"));
 }
 
 void_t testHashSet()

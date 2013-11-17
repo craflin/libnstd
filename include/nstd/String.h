@@ -120,7 +120,8 @@ public:
     size_t newLen = str.data->len + copy.data->len;
     detach(0, newLen);
     Memory::copy((tchar_t*)data->str, str.data->str, str.data->len * sizeof(tchar_t));
-    Memory::copy((tchar_t*)data->str + str.data->len, copy.data->str, copy.data->len * sizeof(tchar_t));
+    Memory::copy((tchar_t*)data->str + str.data->len, copy.data->str, (copy.data->len + 1) * sizeof(tchar_t));
+    data->len = newLen;
     return *this;
   }
 
@@ -128,7 +129,7 @@ public:
   {
     size_t newLen = data->len + str.data->len;
     detach(data->len, newLen);
-    Memory::copy((tchar_t*)data->str + data->len, str.data->str, str.data->len * sizeof(tchar_t));
+    Memory::copy((tchar_t*)data->str + data->len, str.data->str, (str.data->len + 1) * sizeof(tchar_t));
     data->len = newLen;
     return *this;
   }
@@ -138,6 +139,7 @@ public:
     size_t newLen = data->len + len;
     detach(data->len, newLen);
     Memory::copy((tchar_t*)data->str + data->len, str, len * sizeof(tchar_t));
+    ((tchar_t*)data->str)[newLen] = _T('\0');
     data->len = newLen;
     return *this;
   }
