@@ -43,17 +43,6 @@ public:
     data->ref = 1;
   }
 
-  explicit String(const tchar_t* str)
-  {
-    size_t length = String::length(str);
-    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar_t) + sizeof(Data));
-    data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-    Memory::copy((tchar_t*)data->str, str, length * sizeof(tchar_t));
-    data->len = length;
-    ((tchar_t*)data->str)[length] = _T('\0');
-    data->ref = 1;
-  }
-
   explicit String(size_t capacity)
   {
     data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar_t) + sizeof(Data));
