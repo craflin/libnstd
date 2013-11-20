@@ -11,6 +11,8 @@
 #include <nstd/File.h>
 #include <nstd/Array.h>
 #include <nstd/Thread.h>
+#include <nstd/Semaphore.h>
+#include <nstd/Time.h>
 
 #include <cstring>
 #include <cctype>
@@ -49,6 +51,21 @@ void_t testThread()
   ASSERT(thread2.join() == 42);
   ASSERT(thread3.join() == 42);
   ASSERT(threadData.counter == 4 * 10000);
+}
+
+void_t testSempahore()
+{
+  Semaphore sem(3);
+  sem.post();
+  ASSERT(sem.wait());
+  ASSERT(sem.wait());
+  ASSERT(sem.wait());
+  ASSERT(sem.wait());
+  ASSERT(!sem.tryWait());
+  timestamp_t start = Time::time();
+  ASSERT(!sem.wait(1000));
+  timestamp_t waitTime = Time::time() - start;
+  ASSERT(waitTime > 850);
 }
 
 void_t testMutexRecursion()
@@ -626,6 +643,7 @@ int_t main(int_t argc, char_t* argv[])
   Console::printf(_T("%s\n"), _T("Testing..."));
 
   testThread();
+  testSempahore();
   testMutexRecursion();
   testMemoryAllocSmall();
   testMemoryAllocLarge();
