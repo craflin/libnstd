@@ -52,4 +52,7 @@ public:
 
 private:
   void* handle;
+
+  Semaphore(const Semaphore&);
+  Semaphore& operator=(const Semaphore&);
 };
