@@ -228,6 +228,9 @@ public:
   const tchar_t* findLast(const tchar_t* str) const;
   const tchar_t* findLastOf(const tchar_t* chars) const;
 
+  bool startsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str, str.data->str, str.data->len) == 0;}
+  bool endsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str + data->len - str.data->len, str.data->str, str.data->len) == 0;}
+
   String substr(ssize_t start, ssize_t length = -1) const
   {
     if(start < 0)
