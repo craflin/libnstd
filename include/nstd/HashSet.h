@@ -32,6 +32,14 @@ public:
     endItem.next = 0;
   }
 
+  HashSet(const HashSet& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  {
+    endItem.prev = 0;
+    endItem.next = 0;
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      append(i->key);
+  }
+
   explicit HashSet(size_t capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
@@ -50,7 +58,15 @@ public:
       Memory::free(i);
     }
   }
-  
+
+  HashSet& operator=(const HashSet& other)
+  {
+    clear();
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      append(i->key);
+    return *this;
+  }
+
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
