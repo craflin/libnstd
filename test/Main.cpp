@@ -486,10 +486,35 @@ void_t testHashMapString()
   // test append
   HashMap<String, int_t> myMap;
   ASSERT(myMap.isEmpty());
-  myMap.append(_T("123"), 123);
-  myMap.append(_T("123"), 125);
+  myMap.append(_T("string1"), 120);
+  myMap.append(_T("string1"), 121);
   ASSERT(myMap.size() == 1);
-  ASSERT(*myMap.find(_T("123")) == 125);
+  myMap.append(_T("string2"), 122);
+  myMap.append(_T("string3"), 123);
+  ASSERT(myMap.size() == 3);
+
+  // test find
+  ASSERT(*myMap.find(_T("string1")) == 121);
+  ASSERT(*myMap.find(_T("string2")) == 122);
+  ASSERT(*myMap.find(_T("string3")) == 123);
+  ASSERT(myMap.find(_T("dsadasa")) == myMap.end());
+
+  // test list copy constructor
+  HashMap<String, int_t> myMap2(myMap);
+  ASSERT(myMap2.size() == 3);
+  ASSERT(*myMap2.begin() == 121);
+  ASSERT(myMap2.begin().key() == _T("string1"));
+  ASSERT(*(++HashMap<String, int_t>::Iterator(myMap2.begin())) == 122);
+  ASSERT(myMap2.back() == 123);
+
+  // test list copy operator
+  HashMap<String, int_t> myMap3;
+  myMap3 = myMap;
+  ASSERT(myMap3.size() == 3);
+  ASSERT(*myMap3.begin() == 121);
+  ASSERT(myMap3.begin().key() == _T("string1"));
+  ASSERT(*(++HashMap<String, int_t>::Iterator(myMap3.begin())) == 122);
+  ASSERT(myMap3.back() == 123);
 
   // test clear
   myMap.clear();

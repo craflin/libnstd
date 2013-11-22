@@ -12,7 +12,7 @@ public:
   {
   public:
     Iterator() : item(0) {}
-    const T& key() {return item->key;}
+    const T& key() const {return item->key;}
     V& operator*() {return item->value;}
     const V& operator*() const {return item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
@@ -34,6 +34,14 @@ public:
     endItem.next = 0;
   }
 
+  HashMap(const HashMap& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  {
+    endItem.prev = 0;
+    endItem.next = 0;
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      append(i->key, i->value);
+  }
+
   explicit HashMap(size_t capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
@@ -51,6 +59,14 @@ public:
       next = i->next;
       Memory::free(i);
     }
+  }
+
+  HashMap& operator=(const HashMap& other)
+  {
+    clear();
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      append(i->key, i->value);
+    return *this;
   }
 
   const Iterator& begin() const {return _begin;}
