@@ -28,6 +28,17 @@ public:
 
   explicit Array(size_t capacity) : _capacity(capacity) {}
 
+  Array(const Array& other) : _capacity(0)
+  {
+    reserve(other.capacity());
+    T* dest = _begin.item;
+    for(T* src = other._begin.item, * end = other._end.item; src != end; ++src, ++dest)
+    {
+      VERIFY(new(dest)T(*src) == dest);
+    }
+    _end.item = dest;
+  }
+
   ~Array()
   {
     if(_begin.item)
@@ -36,6 +47,19 @@ public:
         i->~T();
       Memory::free(_begin.item);
     }
+  }
+
+  Array& operator=(const Array& other)
+  {
+    clear();
+    reserve(other.capacity());
+    T* dest = _begin.item;
+    for(T* src = other._begin.item, * end = other._end.item; src != end; ++src, ++dest)
+    {
+      VERIFY(new(dest)T(*src) == dest);
+    }
+    _end.item = dest;
+    return *this;
   }
 
   const Iterator& begin() const {return _begin;}
@@ -56,7 +80,7 @@ public:
 
   void_t reserve(size_t size)
   {
-    if(!_begin.item || size > _capacity)
+    if(size > _capacity || (!_begin.item && size > 0))
     {
       size_t bsize;
       if (size > _capacity)

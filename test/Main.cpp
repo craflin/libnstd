@@ -369,6 +369,7 @@ void_t testList()
   // test list copy operator
   List<String> myList3;
   myList3 = myList;
+  ASSERT(myList3.size() == 3);
   ASSERT(*myList3.begin() == _T("string1"));
   ASSERT(*(++List<String>::Iterator(myList3.begin())) == _T("string2"));
   ASSERT(myList3.back() == _T("string3"));
@@ -576,8 +577,10 @@ void_t testArray()
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
   ASSERT(myArray.append(123) == 123);
+  ASSERT(myArray.append(124) == 124);
+  ASSERT(myArray.append(125) == 125);
   ASSERT(!myArray.isEmpty());
-  ASSERT(myArray.size() == 1);
+  ASSERT(myArray.size() == 3);
 
   // tets clear
   myArray.clear();
@@ -592,9 +595,26 @@ void_t testArrayString()
   Array<String> myArray;
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
-  ASSERT(myArray.append(_T("test")) == _T("test"));
+  ASSERT(myArray.append(_T("string1")) == _T("string1"));
+  ASSERT(myArray.append(_T("string2")) == _T("string2"));
+  ASSERT(myArray.append(_T("string3")) == _T("string3"));
   ASSERT(!myArray.isEmpty());
-  ASSERT(myArray.size() == 1);
+  ASSERT(myArray.size() == 3);
+
+  // test list copy constructor
+  Array<String> myArray2(myArray);
+  ASSERT(myArray2.size() == 3);
+  ASSERT(*myArray2.begin() == _T("string1"));
+  ASSERT(*(++Array<String>::Iterator(myArray2.begin())) == _T("string2"));
+  ASSERT(myArray2.back() == _T("string3"));
+
+  // test list copy operator
+  Array<String> myArray3;
+  myArray3 = myArray;
+  ASSERT(myArray3.size() == 3);
+  ASSERT(*myArray3.begin() == _T("string1"));
+  ASSERT(*(++Array<String>::Iterator(myArray3.begin())) == _T("string2"));
+  ASSERT(myArray3.back() == _T("string3"));
 
   // test clear
   myArray.clear();
