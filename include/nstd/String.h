@@ -181,6 +181,8 @@ public:
 
   String operator+(const String& other) const {return String(*this).append(other);}
 
+  template<size_t N> String operator+(const tchar_t(&str)[N]) const {return String(*this).append(String(str));}
+
   bool operator==(const String& other) const {return data->len == other.data->len && Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) == 0;}
 
   template<size_t N> bool operator==(const tchar_t (&str)[N]) const {return data->len == N - 1 && Memory::compare(data->str, str, (N - 1) * sizeof(tchar_t)) == 0;}
@@ -315,7 +317,11 @@ public:
   * Compute a hash code for this string.
   * @return The hash code
   */
+#if __cplusplus >= 201103L
   explicit operator size_t() const
+#else
+  operator size_t() const
+#endif
   {
     size_t len;
     size_t hashCode = (len = data->len);
