@@ -359,6 +359,20 @@ void_t testList()
   myList.append(_T("string3"));
   ASSERT(myList.size() == 3);
 
+  // test list copy constructor
+  List<String> myList2(myList);
+  ASSERT(myList2.size() == 3);
+  ASSERT(*myList2.begin() == _T("string1"));
+  ASSERT(*(++List<String>::Iterator(myList2.begin())) == _T("string2"));
+  ASSERT(myList2.back() == _T("string3"));
+
+  // test list copy operator
+  List<String> myList3;
+  myList3 = myList;
+  ASSERT(*myList3.begin() == _T("string1"));
+  ASSERT(*(++List<String>::Iterator(myList3.begin())) == _T("string2"));
+  ASSERT(myList3.back() == _T("string3"));
+
   // test list find
   ASSERT(myList.find(_T("string2")) != myList.end());
   ASSERT(myList.find(_T("string4")) == myList.end());
