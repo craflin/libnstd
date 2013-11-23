@@ -1,5 +1,5 @@
 /**
-* A Semaphore for thread synchronization.
+* A classic Semaphore for synchronization in multi thread environments.
 * @author Colin Graf
 */
 
@@ -8,16 +8,16 @@
 #include <nstd/Base.h>
 
 /**
-* Encapsulates an semaphore object.
+* Encapsulation of a semaphore object.
 */
 class Semaphore
 {
 public:
   /**
   * Construct a new semaphore object.
-  * @param value The initial value of the semaphore.
+  * @param value The initial value of the semaphore counter.
   */
-  Semaphore(unsigned int value = 0);
+  Semaphore(uint_t value = 0);
 
   /** Destructor. */
   ~Semaphore();
@@ -25,33 +25,34 @@ public:
   /**
   * Increment the semaphore counter.
   */
-  void post();
+  void_t signal();
 
   /**
-  * Decrement the semaphore counter. The method returns immediatly if the
-  * counter is greater than zero. Otherwise it blocks until the semaphore
-  * counter can be decremented.
-  * @return Whether the decrementation was successful.
+  * Decrement the semaphore counter. The method returns immediately if the
+  * counter is greater than zero. Otherwise it blocks the execution of the
+  * calling thread until another thread increases the semaphore counter.
+  * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool wait();
+  bool_t wait();
 
   /**
-  * Decrement the semaphore counter. The method returns immediatly if the
-  * counter is greater than zero. Otherwise it blocks until the semaphore
-  * counter can be decremented.
-  * @param timeout A timeout for the blocking call. (in ms).
-  * @return Whether the decrementation was successful.
+  * Decrement the semaphore counter. The method returns immediately if the
+  * counter is greater than zero. Otherwise it blocks the execution of the
+  * calling thread until another thread increases the semaphore counter or
+  * a timeout occurs.
+  * @param timeout The maximum time to wait. (in ms).
+  * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool wait(timestamp_t timeout);
+  bool_t wait(timestamp_t timeout);
 
   /**
-  * Try to decrement the semaphore counter. This method returns immediatly.
-  * @return Whether the decrementation was successful.
+  * Try to decrement the semaphore counter. This method returns immediately.
+  * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool tryWait();
+  bool_t tryWait();
 
 private:
-  void* handle;
+  void_t* handle;
 
   Semaphore(const Semaphore&);
   Semaphore& operator=(const Semaphore&);

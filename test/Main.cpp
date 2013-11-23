@@ -56,7 +56,7 @@ void_t testThread()
 void_t testSempahore()
 {
   Semaphore sem(3);
-  sem.post();
+  sem.signal();
   ASSERT(sem.wait());
   ASSERT(sem.wait());
   ASSERT(sem.wait());
