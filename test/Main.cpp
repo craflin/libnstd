@@ -62,10 +62,10 @@ void_t testSempahore()
   ASSERT(sem.wait());
   ASSERT(sem.wait());
   ASSERT(!sem.tryWait());
-  timestamp_t start = Time::time();
-  ASSERT(!sem.wait(1000));
-  timestamp_t waitTime = Time::time() - start;
-  ASSERT(waitTime > 850);
+  timestamp_t start = Time::ticks();
+  ASSERT(!sem.wait(300));
+  timestamp_t waitTime = Time::ticks() - start;
+  ASSERT(waitTime > 200);
 }
 
 void_t testMutexRecursion()
