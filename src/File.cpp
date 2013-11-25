@@ -2,10 +2,9 @@
 #ifdef _WIN32
 #include <windows.h>
 #else
-#include <cstdio>
-#include <cerrno>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <unistd.h>
 #endif
 
@@ -38,7 +37,7 @@ void_t File::close()
 #else
   if(fp)
   {
-    fclose((FILE*)fp);
+    ::close((int_t)fp);
     fp = 0;
   }
 #endif
@@ -82,10 +81,20 @@ bool_t File::open(const String& file, uint_t flags)
 #else
   if(fp)
     return false;
-  const char_t* mode = (flags & (writeFlag | readFlag)) == (writeFlag | readFlag) ? "w+" : (flags & writeFlag ? "w" : "r");
-  fp = fopen(file, mode); // TODO: do not use fopen api
-  if(!fp)
+  int_t oflags;
+  if((flags & (readFlag | writeFlag)) == (readFlag | writeFlag))
+    oflags = O_CREAT | O_RDWR; // create if not exists, rw mode
+  else if(flags & writeFlag)
+    oflags = O_CREAT | O_TRUNC | O_WRONLY; // create if not exists, truncate if exist, write mode
+  else
+    oflags = O_RDONLY; // do not create if not exists, read mode
+
+  fp = (void_t*)::open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if((int_t)fp == -1)
+  {
+    fp = 0;
     return false;
+  }
 #endif
 
   return true;
@@ -99,8 +108,8 @@ uint_t File::read(void_t* buffer, uint_t len)
     return 0;
   return i;
 #else
-  size_t i = fread(buffer, 1, len, (FILE*)fp);
-  if(i == 0)
+  ssize_t i = ::read((int_t)fp, buffer, len);
+  if(i == -1)
     return 0;
   return (int_t)i;
 #endif
@@ -114,7 +123,9 @@ uint_t File::write(const void_t* buffer, uint_t len)
     return 0;
   return i;
 #else
-  size_t i = fwrite(buffer, 1, len, (FILE*)fp);
+  ssize_t i = ::write((int_t)fp, buffer, len);
+  if(i == -1)
+    return 0;
   return (int_t)i;
 #endif
 }
