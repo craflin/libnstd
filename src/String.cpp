@@ -102,30 +102,8 @@ int_t String::printf(const tchar_t* format, ...)
 
 const tchar_t* String::find(const tchar_t* str) const {return _tcsstr(data->str, str);}
 const tchar_t* String::findOneOf(const tchar_t* chars) const {return _tcspbrk(data->str, chars);}
-const tchar_t* String::findLast(const tchar_t* str) const
-{
-  const tchar_t* result = 0;
-  const tchar_t* match = _tcsstr(data->str, str);
-  for(;;)
-  {
-    if(!match)
-      return result;
-    result = match;
-    match = _tcsstr(match + 1, str);
-  }
-}
-const tchar_t* String::findLastOf(const tchar_t* chars) const
-{
-  const tchar_t* result = 0;
-  const tchar_t* match = _tcspbrk(data->str, chars);
-  for(;;)
-  {
-    if(!match)
-      return result;
-    result = match;
-    match = _tcspbrk(match + 1, chars);
-  }
-}
+const tchar_t* String::findLast(const tchar_t* str) const {return String::findLast(data->str, str);}
+const tchar_t* String::findLastOf(const tchar_t* chars) const {return String::findLastOf(data->str, chars);}
 
 #ifdef _UNICODE
 String& String::toLowerCase()
@@ -143,7 +121,9 @@ String& String::toUpperCase()
     *str = towupper(*str);
   return *this;
 }
+#endif
 
+#ifdef _UNICODE
 wchar_t String::toLowerCase(wchar_t c) {return towlower(c);}
 wchar_t String::toUpperCase(wchar_t c) {return towupper(c);}
 bool_t String::isSpace(wchar_t c) {return iswspace(c) != 0;}
@@ -168,3 +148,30 @@ bool_t String::isPunct(char_t c) { return ispunct((uchar_t&)c) != 0; };
 bool_t String::isUpper(char_t c) { return isupper((uchar_t&)c) != 0; };
 bool_t String::isXDigit(char_t c) { return isxdigit((uchar_t&)c) != 0; };
 #endif
+
+const tchar_t* String::find(const tchar_t* in, const tchar_t* str) {return _tcsstr(in, str);}
+const tchar_t* String::findOneOf(const tchar_t* in, const tchar_t* chars) {return _tcspbrk(in, chars);}
+const tchar_t* String::findLast(const tchar_t* in, const tchar_t* str)
+{
+  const tchar_t* result = 0;
+  const tchar_t* match = _tcsstr(in, str);
+  for(;;)
+  {
+    if(!match)
+      return result;
+    result = match;
+    match = _tcsstr(match + 1, str);
+  }
+}
+const tchar_t* String::findLastOf(const tchar_t* in, const tchar_t* chars)
+{
+  const tchar_t* result = 0;
+  const tchar_t* match = _tcspbrk(in, chars);
+  for(;;)
+  {
+    if(!match)
+      return result;
+    result = match;
+    match = _tcspbrk(match + 1, chars);
+  }
+}

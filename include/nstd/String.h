@@ -282,6 +282,28 @@ public:
 
   int_t printf(const tchar_t* format, ...);
 
+  /**
+  * Compute a hash code for this string.
+  * @return The hash code
+  */
+#if __cplusplus >= 201103L
+  explicit operator size_t() const
+#else
+  operator size_t() const
+#endif
+  {
+    size_t len;
+    size_t hashCode = (len = data->len);
+    const tchar_t* str = data->str;
+    hashCode *= 16807;
+    hashCode ^= str[0];
+    hashCode *= 16807;
+    hashCode ^= str[len / 2];
+    hashCode *= 16807;
+    hashCode ^= str[len - (len != 0)];
+    return hashCode;
+  }
+
 #ifdef _UNICODE
   static tchar_t toLowerCase(tchar_t c);
   static tchar_t toUpperCase(tchar_t c);
@@ -316,27 +338,27 @@ public:
     return (size_t)(s - start);
   }
 
-  /**
-  * Compute a hash code for this string.
-  * @return The hash code
-  */
-#if __cplusplus >= 201103L
-  explicit operator size_t() const
-#else
-  operator size_t() const
-#endif
+  static const tchar_t* find(const tchar_t* in, tchar_t c)
   {
-    size_t len;
-    size_t hashCode = (len = data->len);
-    const tchar_t* str = data->str;
-    hashCode *= 16807;
-    hashCode ^= str[0];
-    hashCode *= 16807;
-    hashCode ^= str[len / 2];
-    hashCode *= 16807;
-    hashCode ^= str[len - (len != 0)];
-    return hashCode;
+    for(; *in; ++in)
+      if(*in == c)
+        return in;
+    return 0;
   }
+
+  static const tchar_t* findLast(const tchar_t* in, tchar_t c)
+  {
+    const tchar_t* last = 0;
+    for(; *in; ++in)
+      if(*in == c)
+        last = in;
+    return last;
+  }
+
+  static const tchar_t* find(const tchar_t* in, const tchar_t* str);
+  static const tchar_t* findOneOf(const tchar_t* in, const tchar_t* chars);
+  static const tchar_t* findLast(const tchar_t* in, const tchar_t* str);
+  static const tchar_t* findLastOf(const tchar_t* in, const tchar_t* chars);
 
 private:
   struct Data
