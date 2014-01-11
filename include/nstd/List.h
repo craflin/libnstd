@@ -120,8 +120,11 @@ public:
       }
     }
 
+#ifdef VERIFY
     VERIFY(new(item) Item(value) == item);
-    //item->Item::Item(value);
+#else
+    new(item) Item(value);
+#endif
 
     Item* insertPos = position.item;
     if((item->prev = insertPos->prev))
