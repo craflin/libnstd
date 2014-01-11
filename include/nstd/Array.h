@@ -90,7 +90,11 @@ public:
       T* dest = newData;
       for (T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
       {
+#ifdef VERIFY
         VERIFY(new(dest)T(*src) == dest);
+#else
+        new(dest)T(*src);
+#endif
         src->~T();
       }
       Memory::free(_begin.item);
@@ -115,7 +119,11 @@ public:
       T* end = _begin.item + size;
       for (T* i = _begin.item + _size; i != end; ++i)
       {
+#ifdef VERIFY
         VERIFY(new(i)T(value) == i);
+#else
+        new(i)T(value);
+#endif
       }
       _end.item = end;
     }
@@ -138,7 +146,11 @@ public:
     size_t size = _end.item - _begin.item;
     reserve(size + 1);
     T* item = _end.item;
+#ifdef VERIFY
     VERIFY(new(item) T(value) == item);
+#else
+    new(item) T(value);
+#endif
     ++_end.item;
     return *item;
   }
