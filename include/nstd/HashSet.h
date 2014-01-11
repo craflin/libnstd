@@ -142,8 +142,12 @@ public:
     }
 
     size_t hashCode = (size_t)key;
+#ifdef VERIFY
     VERIFY(new(item)Item(key) == item);
-    //item->Item::Item(key);
+#else
+    new(item)Item(key);
+#endif
+
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
     item->nextCell = *cell;
