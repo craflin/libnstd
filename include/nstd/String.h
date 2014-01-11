@@ -282,6 +282,12 @@ public:
 
   int_t printf(const tchar_t* format, ...);
 
+  int_t toInt() const;
+  uint_t toUInt() const;
+  int64_t toInt64() const;
+  uint64_t toUInt64() const;
+  double toDouble() const;
+
   /**
   * Compute a hash code for this string.
   * @return The hash code

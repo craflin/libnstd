@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cctype>
 #include <cstring>
+#include <cstdlib>
 #ifdef _MSC_VER
 #include <tchar.h>
 #endif
@@ -99,6 +100,12 @@ int_t String::printf(const tchar_t* format, ...)
     return result;
   }
 }
+
+int_t String::toInt() const {return atoi(data->str);}
+uint_t String::toUInt() const {return strtoul(data->str, 0, 10);}
+int64_t String::toInt64() const {return atoll(data->str);}
+uint64_t String::toUInt64() const {return strtoull(data->str, 0, 10);}
+double String::toDouble() const {return atof(data->str);}
 
 const tchar_t* String::find(const tchar_t* str) const {return _tcsstr(data->str, str);}
 const tchar_t* String::findOneOf(const tchar_t* chars) const {return _tcspbrk(data->str, chars);}
