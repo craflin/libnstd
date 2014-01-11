@@ -303,6 +303,19 @@ void_t testHashSet()
   mySet.append(2);
   ASSERT(mySet.front() == 1);
   ASSERT(mySet.back() == 2);
+
+  // test remove front and back
+  mySet.clear();
+  mySet.append(1);
+  mySet.append(2);
+  mySet.append(3);
+  mySet.removeFront();
+  ASSERT(mySet.size() == 2);
+  ASSERT(mySet.front() == 2);
+  mySet.removeBack();
+  ASSERT(mySet.size() == 1);
+  ASSERT(mySet.front() == 2);
+  ASSERT(mySet.back() == 2);
 }
 
 struct TestHashSetDestructor
@@ -431,6 +444,19 @@ void_t testList()
   myList.prepend(_T("0"));
   ASSERT(myList.front() == _T("0"));
   ASSERT(myList.back() == _T("3"));
+
+  // test remove front and back
+  myList.clear();
+  myList.append(_T("1"));
+  myList.append(_T("2"));
+  myList.append(_T("3"));
+  myList.removeFront();
+  ASSERT(myList.size() == 2);
+  ASSERT(myList.front() == _T("2"));
+  myList.removeBack();
+  ASSERT(myList.size() == 1);
+  ASSERT(myList.front() == _T("2"));
+  ASSERT(myList.back() == _T("2"));
 }
 
 void_t testListSort()
@@ -533,6 +559,19 @@ void_t testHashMapString()
   myMap.prepend(_T("0"), 0);
   ASSERT(myMap.front() == 0);
   ASSERT(myMap.back() == 3);
+
+  // test remove front and back
+  myMap.clear();
+  myMap.append(_T("1"), 1);
+  myMap.append(_T("2"), 2);
+  myMap.append(_T("3"), 3);
+  myMap.removeFront();
+  ASSERT(myMap.size() == 2);
+  ASSERT(myMap.front() == 2);
+  myMap.removeBack();
+  ASSERT(myMap.size() == 1);
+  ASSERT(myMap.front() == 2);
+  ASSERT(myMap.back() == 2);
 }
 
 void_t testNewDelete()
@@ -717,6 +756,19 @@ void_t testArrayString()
   myArray.append(_T("3"));
   ASSERT(myArray.front() == _T("1"));
   ASSERT(myArray.back() == _T("3"));
+
+  // test remove front and back
+  myArray.clear();
+  myArray.append(_T("1"));
+  myArray.append(_T("2"));
+  myArray.append(_T("3"));
+  myArray.removeFront();
+  ASSERT(myArray.size() == 2);
+  ASSERT(myArray.front() == _T("2"));
+  myArray.removeBack();
+  ASSERT(myArray.size() == 1);
+  ASSERT(myArray.front() == _T("2"));
+  ASSERT(myArray.back() == _T("2"));
 }
 
 int_t main(int_t argc, char_t* argv[])

@@ -71,6 +71,9 @@ public:
   T& front() {return *_begin.item;}
   T& back() {return _end.item[-1];}
 
+  Iterator removeFront() {return remove(_begin);}
+  Iterator removeBack() {return remove(_end.item - 1);}
+
   operator const T*() const {return _begin.item;}
 
   operator T*() {return _begin.item;}

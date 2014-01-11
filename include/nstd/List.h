@@ -69,6 +69,9 @@ public:
   T& front() { return _begin.item->value; }
   T& back() { return _end.item->prev->value; }
 
+  Iterator removeFront() {return remove(_begin);}
+  Iterator removeBack() {return remove(_end.item->prev);}
+
   size_t size() const {return _size;}
   bool_t isEmpty() const {return endItem.prev == 0;}
 

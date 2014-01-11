@@ -70,8 +70,11 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
-  const T& front() const { return _begin.item->key; }
-  const T& back() const { return _end.item->prev->key; }
+  const T& front() const {return _begin.item->key;}
+  const T& back() const {return _end.item->prev->key;}
+
+  Iterator removeFront() {return remove(_begin);}
+  Iterator removeBack() {return remove(_end.item->prev);}
 
   size_t size() const {return _size;}
   bool_t isEmpty() const {return endItem.prev == 0;}
