@@ -101,6 +101,20 @@ int_t String::printf(const tchar_t* format, ...)
   }
 }
 
+int_t String::scanf(const tchar_t* format, ...) const
+{
+  int_t result;
+  va_list ap;
+  va_start(ap, format);
+#ifdef _UNICODE
+  result = vswscanf(data->str, format, ap);
+#else
+  result = vsscanf(data->str, format, ap);
+#endif
+  va_end(ap);
+  return result;
+}
+
 int_t String::toInt() const {return atoi(data->str);}
 uint_t String::toUInt() const {return strtoul(data->str, 0, 10);}
 int64_t String::toInt64() const {return atoll(data->str);}
