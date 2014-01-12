@@ -14,6 +14,7 @@ public:
   uint_t join();
 
   static void_t yield();
+  static void_t sleep(timestamp_t milliseconds);
 
 private:
   void_t* thread;

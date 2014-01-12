@@ -3,6 +3,7 @@
 #include <Windows.h>
 #else
 #include <pthread.h>
+#include <unistd.h> // usleep
 #endif
 
 #include <nstd/Debug.h>
@@ -103,6 +104,15 @@ void_t Thread::yield()
   SwitchToThread();
 #else
   pthread_yield();
+#endif
+}
+
+void_t Thread::sleep(timestamp_t milliseconds)
+{
+#ifdef _WIN32
+  Sleep((DWORD)milliseconds);
+#else
+  usleep(milliseconds * 1000);
 #endif
 }
 
