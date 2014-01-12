@@ -15,6 +15,7 @@ public:
     const T& key() const {return item->key;}
     V& operator*() {return item->value;}
     const V& operator*() const {return item->value;}
+    const V* operator->() const {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
     bool operator==(const Iterator& other) const {return item == other.item;}
@@ -102,7 +103,7 @@ public:
     _size = 0;
   }
 
-  Iterator find(const T& key)
+  Iterator find(const T& key) const
   {
     if(!data) return _end;
     size_t hashCode = (size_t)key;

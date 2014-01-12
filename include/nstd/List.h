@@ -14,6 +14,7 @@ public:
     Iterator() : item(0) {}
     T& operator*() {return item->value;}
     const T& operator*() const {return item->value;}
+    const T* operator->() const {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
     bool operator==(const Iterator& other) const {return item == other.item;}
@@ -92,7 +93,7 @@ public:
     _size = 0;
   }
 
-  Iterator find(const T& value)
+  Iterator find(const T& value) const
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       if(i->value == value)
