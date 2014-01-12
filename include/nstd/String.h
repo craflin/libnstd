@@ -337,6 +337,14 @@ public:
     return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
   }
 
+  static int_t compare(const tchar_t* s1, const tchar_t* s2, size_t len)
+  {
+    while(len--)
+      if(*s1++ != *s2++)
+        return *(const tchar_t*)(s1 - 1) - *(const tchar_t*)(s2 - 1);
+    return 0;
+  }
+
   static size_t length(const tchar_t* s)
   {
     const tchar_t* start = s;
