@@ -162,10 +162,10 @@ size_t Memory::size(void_t* buffer)
   {
     if(header->checkValue == _Memory::headerCheckValueUsed)
     {
-      Debug::print(_T("Memory::free: error: The passed buffer was freed.\n")); HALT();
+      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); HALT();
       return 0;
     }
-    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); HALT();
     return 0;
   }
   return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
