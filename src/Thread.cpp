@@ -73,7 +73,7 @@ bool_t Thread::start(uint_t (*proc)(void_t*), void_t* param)
   pthread_t thread;
   if(pthread_create(&thread, 0, (void* (*) (void *)) proc, param) != 0)
     return false;
-  this->thread = thread;
+  this->thread = (void_t*)thread;
   return true;
 #endif
 }
