@@ -115,11 +115,19 @@ int_t String::scanf(const tchar_t* format, ...) const
   return result;
 }
 
+#ifdef _UNICODE
+int_t String::toInt() const {return _wtoi(data->str);}
+uint_t String::toUInt() const {return wcstoul(data->str, 0, 10);}
+int64_t String::toInt64() const {return _wtoll(data->str);}
+uint64_t String::toUInt64() const {return wcstoull(data->str, 0, 10);}
+double String::toDouble() const {return _wtof(data->str);}
+#else
 int_t String::toInt() const {return atoi(data->str);}
 uint_t String::toUInt() const {return strtoul(data->str, 0, 10);}
 int64_t String::toInt64() const {return atoll(data->str);}
 uint64_t String::toUInt64() const {return strtoull(data->str, 0, 10);}
 double String::toDouble() const {return atof(data->str);}
+#endif
 
 const tchar_t* String::find(const tchar_t* str) const {return _tcsstr(data->str, str);}
 const tchar_t* String::findOneOf(const tchar_t* chars) const {return _tcspbrk(data->str, chars);}
