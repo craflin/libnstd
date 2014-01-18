@@ -51,10 +51,12 @@ private:
     _Memory()
     {
 #ifdef _WIN32
+#ifndef __CYGWIN__
       InitializeCriticalSection(&criticalSection);
       SYSTEM_INFO si;
       GetSystemInfo(&si);
       pageSize = si.dwPageSize;
+#endif
 #else
       pageSize = sysconf(_SC_PAGESIZE);
 #endif
@@ -91,7 +93,17 @@ void_t* Memory::alloc(size_t size)
 
 void_t* Memory::alloc(size_t size, size_t& rsize)
 {
+#ifdef __CYGWIN__
+  if(_Memory::pageSize == 0)
+  {
+      InitializeCriticalSection(&_Memory::criticalSection);
+      SYSTEM_INFO si;
+      GetSystemInfo(&si);
+      _Memory::pageSize = si.dwPageSize;
+  }
+#else
   ASSERT(_Memory::pageSize > 0);
+#endif
   size_t minAllocSize = size + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
   if(minAllocSize <= _Memory::pageSize)
   {
