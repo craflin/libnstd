@@ -27,8 +27,23 @@ public:
   void_t close();
   bool_t isOpen() const;
 
-  uint_t read(void_t* buffer, uint_t len);
-  uint_t write(const void_t* buffer, uint_t len);
+  /**
+  * Read a data block from the file at the current read position.
+  *
+  * The file has to be opened with Flags::readFlag. If successful, the read position changes to after 
+  * the block that was read.
+  *
+  * @param  [in] buffer A buffer where the data should be stored. It has to be large 
+  *                     enough to hold \c length bytes.
+  * @param  [in] length The count of the bytes to read.
+  *
+  * @return The amount of bytes that was read. This could be equal 0 or less than \c length when the end of the
+  *         file was reached. In case of an error -1 is returned.
+  */
+  ssize_t read(void_t* buffer, size_t length);
+
+  ssize_t write(const void_t* buffer, size_t length);
+
   bool_t write(const String& data);
 
   static String dirname(const String& file);

@@ -112,40 +112,70 @@ bool_t File::unlink(const String& file)
   return true;
 }
 
-uint_t File::read(void_t* buffer, uint_t len)
+ssize_t File::read(void_t* buffer, size_t len)
 {
 #ifdef _WIN32
+#ifdef _AMD64
+  byte_t* bufferStart = (byte_t*)buffer;
+  DWORD i;
+  while(len > (size_t)INT_MAX)
+  {
+    if(!ReadFile((HANDLE)fp, buffer, INT_MAX, &i, NULL))
+      return -1;
+    buffer = (byte_t*)buffer + i;
+    if(i != INT_MAX)
+      return (byte_t*)buffer - bufferStart;
+    len -= INT_MAX;
+  }
+  if(!ReadFile((HANDLE)fp, buffer, (DWORD)len, &i, NULL))
+    return -1;
+  buffer = (byte_t*)buffer + i;
+  return (byte_t*)buffer - bufferStart;
+#else
   DWORD i;
   if(!ReadFile((HANDLE)fp, buffer, len, &i, NULL))
-    return 0;
+    return -1;
   return i;
+#endif
 #else
-  ssize_t i = ::read((int_t)fp, buffer, len);
-  if(i == -1)
-    return 0;
-  return (int_t)i;
+  return ::read((int_t)fp, buffer, len);
 #endif
 }
 
-uint_t File::write(const void_t* buffer, uint_t len)
+ssize_t File::write(const void_t* buffer, size_t len)
 {
 #ifdef _WIN32
+#ifdef _AMD64
+  const byte_t* bufferStart = (const byte_t*)buffer;
+  DWORD i;
+  while(len > (size_t)INT_MAX)
+  {
+    if(!WriteFile((HANDLE)fp, buffer, INT_MAX, &i, NULL))
+      return -1;
+    buffer = (const byte_t*)buffer + i;
+    if(i != INT_MAX)
+      return (const byte_t*)buffer - bufferStart;
+    len -= INT_MAX;
+  }
+  if(!WriteFile((HANDLE)fp, buffer, (DWORD)len, &i, NULL))
+    return -1;
+  buffer = (const byte_t*)buffer + i;
+  return (const byte_t*)buffer - bufferStart;
+#else
   DWORD i;
   if(!WriteFile((HANDLE)fp, buffer, len, &i, NULL))
-    return 0;
+    return -1;
   return i;
+#endif
 #else
-  ssize_t i = ::write((int_t)fp, buffer, len);
-  if(i == -1)
-    return 0;
-  return (int_t)i;
+  return ::write((int_t)fp, buffer, len);
 #endif
 }
 
 bool_t File::write(const String& data)
 {
   size_t size = data.length() * sizeof(tchar_t);
-  return write(data, (uint_t)size) == (uint_t)size;
+  return write((const byte_t*)(const tchar_t*)data, size) == size;
 }
 
 String File::dirname(const String& file)

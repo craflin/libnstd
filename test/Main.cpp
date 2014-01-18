@@ -606,26 +606,49 @@ void_t testNewDelete()
 
 void_t testFile()
 {
-  ASSERT(!File::exists(_T("dkasdlakshkalal.nonexisting.file")));
-  File file;
-  ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+  // test open and close
+  {
+    File file;
+    ASSERT(!file.isOpen());
+    ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+    ASSERT(file.isOpen());
+    file.close();
+    ASSERT(!file.isOpen());
+    ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+    ASSERT(file.isOpen());
+  }
+
+  // test file exists
   ASSERT(File::exists(_T("testfile.file.test")));
+  ASSERT(!File::exists(_T("dkasdlakshkalal.nonexisting.file")));
+
+  // test file write
   char_t buffer[266];
-  Memory::fill(buffer, 'a', sizeof(buffer));
-  ASSERT(file.write(buffer, sizeof(buffer)) == sizeof(buffer));
   char_t buffer2[300];
-  Memory::fill(buffer2, 'b', sizeof(buffer2));
-  ASSERT(file.write(buffer2, sizeof(buffer2)) == sizeof(buffer2));
-  file.close();
-  ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
-  char_t readBuffer[500];
-  ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
-  ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);
-  ASSERT(Memory::compare(readBuffer + sizeof(buffer), buffer2, sizeof(readBuffer) - sizeof(buffer)) == 0);
-  char_t readBuffer2[166];
-  ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
-  ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
-  file.close();
+  {
+    File file;
+    ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+    Memory::fill(buffer, 'a', sizeof(buffer));
+    ASSERT(file.write(buffer, sizeof(buffer)) == sizeof(buffer));
+    Memory::fill(buffer2, 'b', sizeof(buffer2));
+    ASSERT(file.write(buffer2, sizeof(buffer2)) == sizeof(buffer2));
+  }
+
+  // test file read
+  {
+    File file;
+    ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
+    char_t readBuffer[500];
+    ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
+    ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);
+    ASSERT(Memory::compare(readBuffer + sizeof(buffer), buffer2, sizeof(readBuffer) - sizeof(buffer)) == 0);
+    char_t readBuffer2[166];
+    ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
+    ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
+    file.close();
+  }
+
+  // test unlink
   ASSERT(File::unlink(_T("testfile.file.test")));
   ASSERT(!File::exists(_T("testfile.file.test")));
 }
