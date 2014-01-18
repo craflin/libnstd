@@ -25,6 +25,8 @@ public:
 
   bool_t open(const String& file, uint_t flags = readFlag);
   void_t close();
+  bool_t isOpen() const;
+
   uint_t read(void_t* buffer, uint_t len);
   uint_t write(const void_t* buffer, uint_t len);
   bool_t write(const String& data);

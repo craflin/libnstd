@@ -26,35 +26,6 @@ File::~File()
   close();
 }
 
-void_t File::close()
-{
-#ifdef _WIN32
-  if(fp != INVALID_HANDLE_VALUE)
-  {
-    CloseHandle((HANDLE)fp);
-    fp = INVALID_HANDLE_VALUE;
-  }
-#else
-  if(fp)
-  {
-    ::close((int_t)fp);
-    fp = 0;
-  }
-#endif
-}
-
-bool_t File::unlink(const String& file)
-{
-#ifdef _WIN32
-  if(!DeleteFile(file))
-    return false;
-#else
-  if(::unlink(file) != 0)
-    return false;
-#endif
-  return true;
-}
-
 bool_t File::open(const String& file, uint_t flags)
 {
 #ifdef _WIN32
@@ -80,7 +51,10 @@ bool_t File::open(const String& file, uint_t flags)
     return false;
 #else
   if(fp)
+  {
+    errno = EINVAL;
     return false;
+  }
   int_t oflags;
   if((flags & (readFlag | writeFlag)) == (readFlag | writeFlag))
     oflags = O_CREAT | O_RDWR; // create if not exists, rw mode
@@ -97,6 +71,44 @@ bool_t File::open(const String& file, uint_t flags)
   }
 #endif
 
+  return true;
+}
+
+void_t File::close()
+{
+#ifdef _WIN32
+  if(fp != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle((HANDLE)fp);
+    fp = INVALID_HANDLE_VALUE;
+  }
+#else
+  if(fp)
+  {
+    ::close((int_t)fp);
+    fp = 0;
+  }
+#endif
+}
+
+bool_t File::isOpen() const
+{
+#ifdef _WIN32
+  return fp != INVALID_HANDLE_VALUE;
+#else
+  return fp != 0;
+#endif
+}
+
+bool_t File::unlink(const String& file)
+{
+#ifdef _WIN32
+  if(!DeleteFile(file))
+    return false;
+#else
+  if(::unlink(file) != 0)
+    return false;
+#endif
   return true;
 }
 
