@@ -13,6 +13,7 @@
 #include <nstd/Thread.h>
 #include <nstd/Semaphore.h>
 #include <nstd/Time.h>
+#include <nstd/Error.h>
 
 #include <cstring>
 #include <cctype>
@@ -771,6 +772,13 @@ void_t testArrayString()
   ASSERT(myArray.back() == _T("2"));
 }
 
+void_t testError()
+{
+  File file;
+  ASSERT(!file.open(_T("thisshouldbeanonexisting file")));
+  ASSERT(!Error::getErrorString().isEmpty());
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
@@ -797,6 +805,7 @@ int_t main(int_t argc, char_t* argv[])
   testFileName();
   testArray();
   testArrayString();
+  testError();
 
   Console::printf(_T("%s\n"), _T("done"));
 
