@@ -82,7 +82,7 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
   this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
   const tchar_t* patExt = _tcsrchr(pattern, _T('.'));
-  this->patternExtension = (patExt && !_tcspbrk(patExt + 1, _T("*?"))) ? String(patExt + 1, -1) : String();
+  this->patternExtension = (patExt && !_tcspbrk(++patExt, _T("*?"))) ? String(patExt, String::length(patExt)) : String();
 
   String searchPath = dirpath;
   searchPath.reserve(dirpath.length() + 1 + pattern.length());
@@ -92,11 +92,11 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
 
   findFile = FindFirstFileEx(searchPath,
 #if _WIN32_WINNT > 0x0600
-	  FindExInfoBasic,
+    FindExInfoBasic,
 #else
-	  FindExInfoStandard,
+    FindExInfoStandard,
 #endif
-	  (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
+    (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
     return false;
   bufferedEntry = true;
