@@ -95,9 +95,9 @@ public:
 
   Iterator find(const T& value) const
   {
-    for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
+    for(const Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       if(i->value == value)
-        return i;
+        return (Item*)i;
     return _end;
   }
 
