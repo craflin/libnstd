@@ -26,7 +26,7 @@ public:
   * @param dirsOnly Search only for directories and ignore files
   * @return Whether the directory was opened successfully
   */
-  bool open(const String& dirpath, const String& pattern, bool_t dirsOnly);
+  bool_t open(const String& dirpath, const String& pattern, bool_t dirsOnly);
 
   /**
   * Searches the next matching entry in the opened directory

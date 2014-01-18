@@ -53,7 +53,7 @@ Directory::~Directory()
 #endif
 }
 
-bool Directory::remove(const String& dir)
+bool_t Directory::remove(const String& dir)
 {
   String path = dir;
   while(path != _T("."))
@@ -70,7 +70,7 @@ bool Directory::remove(const String& dir)
   return true;
 }
 
-bool Directory::open(const String& dirpath, const String& pattern, bool_t dirsOnly)
+bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirsOnly)
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
@@ -117,7 +117,7 @@ bool Directory::open(const String& dirpath, const String& pattern, bool_t dirsOn
 #endif
 }
 
-bool Directory::read(String& name, bool_t& isDir)
+bool_t Directory::read(String& name, bool_t& isDir)
 {
 #ifdef _WIN32
   if(!findFile)
@@ -200,7 +200,7 @@ bool Directory::read(String& name, bool_t& isDir)
 #endif
 }
 
-bool Directory::exists(const String& dir)
+bool_t Directory::exists(const String& dir)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
@@ -218,7 +218,7 @@ bool Directory::exists(const String& dir)
 #endif
 }
 
-bool Directory::create(const String& dir)
+bool_t Directory::create(const String& dir)
 {
   // TODO: set errno correctly
 
@@ -244,7 +244,7 @@ bool Directory::create(const String& dir)
   return result;
 }
 
-bool Directory::change(const String& dir)
+bool_t Directory::change(const String& dir)
 {
 #ifdef _WIN32
   return SetCurrentDirectory(dir) != FALSE;
