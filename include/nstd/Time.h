@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <nstd/Base.h>
+#include <nstd/String.h>
 
 class Time
 {
@@ -16,4 +16,6 @@ public:
   * @return The ticks (in millisconds) that have currently passed since the system was started.
   */
   static timestamp_t ticks();
+
+  static String toString(timestamp_t time, const tchar_t* format);
 };
