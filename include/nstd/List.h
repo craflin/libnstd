@@ -171,7 +171,7 @@ public:
   */
   void_t sort()
   {
-    if(endItem.prev == 0)
+    if(endItem.prev == 0 || _begin.item == endItem.prev)
       return;
     struct QuickSort
     {
