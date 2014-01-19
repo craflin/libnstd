@@ -35,6 +35,7 @@
 Directory::Directory()
 {
 #ifdef _WIN32
+  //Debug::printf(_T("sizeof(WIN32_FIND_DATA)=%d\n"), sizeof(WIN32_FIND_DATA));
   ASSERT(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
   findFile = INVALID_HANDLE_VALUE;
 #else
@@ -81,16 +82,37 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
 
   this->dirsOnly = dirsOnly;
   this->dirpath = dirpath;
-  const tchar_t* patExt = _tcsrchr(pattern, _T('.'));
-  this->patternExtension = (patExt && !_tcspbrk(++patExt, _T("*?"))) ? String(patExt, String::length(patExt)) : String();
 
-  String searchPath = dirpath;
-  searchPath.reserve(dirpath.length() + 1 + pattern.length());
+  // there are three FindFirstFile/FindFirstFileEx issues:
+  // 1) '?' does not match exacty 1 character but also 0 characters.
+  // 2) pattern machting on file extensions is kinda funky. (*.aaa matches x.aaabb, *a.* matches aa, a?t does not match a.t)
+  // 3) it is hard to differentiate between nonexistent directories and directories in which no matching files can be found.
+
+  // solutions:
+  // 1) when pattern contains an '?', test if results really match
+  // 2) replace '?' with '*', when pattern ends with '.*' or does not end with '*', test if results really match
+  // 3) when FindFirstFileEx result invalid handle fails, then try again using '*' as pattern and test if results really match (probably they don't)
+
+  String searchPat = pattern;
+  this->pattern.clear();
+  if(searchPat.find('?'))
+  {
+    this->pattern = pattern;
+    searchPat.replace('?', '*');
+  }
+  else if(!pattern.isEmpty() && (pattern[pattern.length() - 1] != '*' || (pattern.length() > 1 && pattern[pattern.length() - 2] == '.')))
+    this->pattern = pattern;
+  if(searchPat.isEmpty())
+    searchPat = _T("*");
+
+  String searchStr = dirpath;
+  searchStr.reserve(dirpath.length() + 1 + pattern.length());
   if(!dirpath.isEmpty())
-    searchPath.append(_T('/'));
-  searchPath.append(pattern);
+    searchStr.append(_T('/'));
+  size_t searchStrLen = searchStr.length();
+  searchStr.append(searchPat);
 
-  findFile = FindFirstFileEx(searchPath,
+  findFile = FindFirstFileEx(searchStr,
 #if _WIN32_WINNT > 0x0600
     FindExInfoBasic,
 #else
@@ -98,7 +120,22 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
 #endif
     (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
-    return false;
+  {
+    if(searchPat == _T("*"))
+      return false;
+    this->pattern = pattern;
+    searchStr.resize(searchStrLen);
+    searchStr.append(_T("*"));
+    findFile = FindFirstFileEx(searchStr,
+  #if _WIN32_WINNT > 0x0600
+      FindExInfoBasic,
+  #else
+      FindExInfoStandard,
+  #endif
+      (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
+    if(findFile == INVALID_HANDLE_VALUE)
+      return false;
+  }
   bufferedEntry = true;
   return true;
 #else
@@ -144,10 +181,41 @@ bool_t Directory::read(String& name, bool_t& isDir)
     if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
       continue;
 
-    if(!patternExtension.isEmpty())
+    if(!pattern.isEmpty())
     {
-      const tchar_t* patExt = _tcsrchr(str, _T('.'));
-      if(!patExt || _tcsicmp(patternExtension, patExt + 1) != 0)
+      struct PatternMatcher
+      {
+        static bool szWildMatch7(const tchar_t* pat, const tchar_t* str) {
+            const tchar_t* s, * p;
+            bool star = false;
+
+        loopStart:
+            for (s = str, p = pat; *s; ++s, ++p) {
+              switch (*p) {
+                  case _T('?'):
+                    break;
+                  case _T('*'):
+                    star = true;
+                    str = s, pat = p;
+                    do { ++pat; } while (*pat == _T('*'));
+                    if (!*pat) return true;
+                    goto loopStart;
+                  default:
+                    if (String::toLowerCase(*s) != String::toLowerCase(*p)) goto starCheck;
+                    break;
+              }
+            }
+            while (*p == _T('*')) ++p;
+            return !*p;
+   
+        starCheck:
+            if (!star) return false;
+            str++;
+            goto loopStart;
+        }
+      };
+
+      if(!PatternMatcher::szWildMatch7(pattern, str))
         continue;
     }
 
@@ -220,28 +288,26 @@ bool_t Directory::exists(const String& dir)
 
 bool_t Directory::create(const String& dir)
 {
-  // TODO: set errno correctly
-
-  const tchar_t* start = dir;
-  const tchar_t* pos = &start[dir.length() - 1];
-  for(; pos >= start; --pos)
-    if(*pos == _T('\\') || *pos == _T('/'))
-    {
-      if(!create(dir.substr(0, (int_t)(pos - start))))
-      {
-        return false;
-      }
-      break;
-    }
-  ++pos;
-  bool_t result = false;
-  if(*pos)
+  String parent = File::dirname(dir);
+  if(parent != _T(".") && !Directory::exists(parent))
+  {
+    if(!Directory::create(parent))
+      return false;
+  }
 #ifdef _WIN32
-    result = CreateDirectory(dir, NULL) == TRUE;
+  return CreateDirectory(dir, NULL) == TRUE;
 #else
-    result = mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
+  return mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
 #endif
-  return result;
+}
+
+bool_t Directory::unlink(const String& dir)
+{
+#ifdef _WIN32
+  return RemoveDirectory(dir) == TRUE;
+#else
+  return unlink(dir) == 0;
+#endif
 }
 
 bool_t Directory::change(const String& dir)
@@ -252,3 +318,4 @@ bool_t Directory::change(const String& dir)
   return chdir(dir) == 0;
 #endif
 }
+

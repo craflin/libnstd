@@ -42,16 +42,29 @@ public:
 
   static bool_t remove(const String& dir);
 
+  /**
+  * Remove directory from file system. The directory has to be empty.
+  *
+  * @param  [in] dir  The path to the directory.
+  *
+  * @return Whether the directory was successfully deleted. If not, use Error::getLastError() to determine why.
+  */
+  static bool_t unlink(const String& dir);
+
   static bool_t change(const String& dir);
 
 private:
   bool_t dirsOnly;
 #ifdef _WIN32
   void_t* findFile; /**< Win32 FindFirstFile HANDLE */
+#ifdef _UNICODE
+  char_t ffd[592]; /**< Buffer for WIN32_FIND_DATA */
+#else
   char_t ffd[320]; /**< Buffer for WIN32_FIND_DATA */
+#endif
   bool_t bufferedEntry; /**< Whether there is a buffered search result in ffd. */
   String dirpath; /**< The name of the directory. */
-  String patternExtension; /**< A search pattern file name extension (e.g. "inf" of "*.inf") */
+  String pattern; /**< A search pattern like "*.inf" */
 #else
   void_t* dp; /**< Directory descriptor. */
   String dirpath; /**< The path to the directory to search in */
