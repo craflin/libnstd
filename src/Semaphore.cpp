@@ -8,7 +8,7 @@
 #include <windows.h>
 #else
 #include <semaphore.h>
-#include <ctime>
+#include <time.h>
 #endif
 
 #include <nstd/Semaphore.h>

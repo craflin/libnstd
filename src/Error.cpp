@@ -3,6 +3,7 @@
 #include <windows.h>
 #else
 #include <errno.h>
+#include <cstring>
 #endif
 
 #include <nstd/Error.h>
