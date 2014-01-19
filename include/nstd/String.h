@@ -228,6 +228,15 @@ public:
   const tchar_t* findLast(const tchar_t* str) const;
   const tchar_t* findLastOf(const tchar_t* chars) const;
 
+  String& replace(tchar_t needle, tchar_t replacement)
+  {
+    detach(data->len, data->len);
+    for (tchar_t* str = (tchar_t*)data->str; *str; ++str)
+      if(*str == needle)
+        *str = replacement;
+    return *this;
+  }
+
   bool startsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str, str.data->str, str.data->len) == 0;}
   bool endsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str + data->len - str.data->len, str.data->str, str.data->len) == 0;}
 
