@@ -166,6 +166,18 @@ public:
       remove(it);
   }
 
+  bool operator==(const List& other) const
+  {
+    if(_size != other._size)
+      return false;
+    for(const Item* a = _begin.item, * b = other._begin.item; a != &endItem; a = a->next, b = b->next)
+      if(a->value != b->value)
+        return false;
+    return true;
+  }
+
+  bool operator!=(const List& other) const {return !(*this == other);}
+
   /**
   * Sort the list elements.
   */
