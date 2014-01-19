@@ -175,7 +175,7 @@ ssize_t File::write(const void_t* buffer, size_t len)
 bool_t File::write(const String& data)
 {
   size_t size = data.length() * sizeof(tchar_t);
-  return write((const byte_t*)(const tchar_t*)data, size) == size;
+  return write((const byte_t*)(const tchar_t*)data, size) == (ssize_t)size;
 }
 
 String File::dirname(const String& file)
