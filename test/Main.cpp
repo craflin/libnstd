@@ -15,6 +15,8 @@
 #include <nstd/Semaphore.h>
 #include <nstd/Time.h>
 #include <nstd/Error.h>
+#include <nstd/Buffer.h>
+#include <nstd/Variant.h>
 
 #include <cstring>
 #include <cctype>
