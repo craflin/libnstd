@@ -27,6 +27,8 @@ String Time::toString(timestamp_t time, const tchar_t* format)
   time_t timet = (time_t)(time / 1000);
   const tm* tms = localtime(&timet);
   String result;
+  if(!tms)
+    return result;
   tchar_t* buffer = result;
   size_t len;
 #ifdef _UNICODE
