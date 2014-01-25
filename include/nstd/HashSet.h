@@ -154,7 +154,8 @@ public:
 
     Item** cell;
     item->cell = (cell = &data[hashCode % capacity]);
-    item->nextCell = *cell;
+    if((item->nextCell = *cell))
+      item->nextCell->cell = &item->nextCell;
     *cell = item;
 
     Item* insertPos = position.item;
