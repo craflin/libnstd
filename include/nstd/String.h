@@ -290,7 +290,6 @@ public:
 #endif
 
   int_t printf(const tchar_t* format, ...);
-  int_t vprintf(const tchar_t*& format);
   int_t scanf(const tchar_t* format, ...) const;
 
   int_t toInt() const;

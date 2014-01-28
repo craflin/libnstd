@@ -101,52 +101,6 @@ int_t String::printf(const tchar_t* format, ...)
   }
 }
 
-int_t String::vprintf(const tchar_t*& format)
-{
-  detach(0, 200);
-
-  int_t result;
-  va_list ap;
-  va_start(ap, format);
-
-  {
-    size_t capacity = Memory::size(data) - sizeof(Data);
-#ifdef _UNICODE
-    result = _vsnwprintf((wchar_t*)data->str, capacity, format, ap);
-#else
-    result = vsnprintf((char_t*)data->str, capacity, format, ap);
-#endif
-    if(result >= 0 && result < (int_t)capacity)
-    {
-      data->len = result;
-      va_end(ap);
-      return result;
-    }
-  }
-
-  // buffer was too small: compute size, reserve buffer, print again
-  {
-#ifdef _MSC_VER
-#ifdef _UNICODE
-    result = _vscwprintf(format, ap);
-#else
-    result = _vscprintf(format, ap);
-#endif
-#else
-    result = vsnprintf(0, 0, format, ap);
-#endif
-    reserve(result);
-#ifdef _UNICODE
-    result = _vsnwprintf((wchar_t*)data->str, result + 1, format, ap);
-#else
-    result = vsnprintf((char_t*)data->str, result + 1, format, ap);
-#endif
-    data->len = result;
-    va_end(ap);
-    return result;
-  }
-}
-
 int_t String::scanf(const tchar_t* format, ...) const
 {
   int_t result;
