@@ -589,7 +589,7 @@ void_t testNewDelete()
     {
       if(constructorCalls == 0)
       {
-        ASSERT(Memory::size(this) > sizeof(MyClass));
+        ASSERT(Memory::size(this) >= sizeof(MyClass));
       }
       ++constructorCalls;
     };

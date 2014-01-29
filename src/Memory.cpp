@@ -1,4 +1,11 @@
 
+
+#if !defined(_MSC_VER) || defined(_M_AMD64)
+#define USE_PAGE_ALIGNED_ALLOCATION
+#endif
+
+#ifdef USE_PAGE_ALIGNED_ALLOCATION
+
 #ifdef _WIN32
 #include <Windows.h>
 #else
@@ -7,9 +14,12 @@
 #include <malloc.h>
 #include <cstring>
 #endif
+#endif
 
 #include <nstd/Memory.h>
 #include <nstd/Debug.h>
+
+#ifdef USE_PAGE_ALIGNED_ALLOCATION
 
 class _Memory
 {
@@ -237,6 +247,165 @@ void_t Memory::free(void_t* buffer)
 #endif
 }
 
+void_t* operator new(size_t size)
+{
+  size_t allocatedSize;
+  return Memory::alloc(size, allocatedSize);
+}
+
+void_t* operator new [](size_t size)
+{
+  size_t allocatedSize;
+  return Memory::alloc(size, allocatedSize);
+}
+
+void_t operator delete(void_t* buffer)
+{
+  Memory::free(buffer);
+}
+
+void_t operator delete[](void_t* buffer)
+{
+  Memory::free(buffer);
+}
+
+#else // !USE_PAGE_ALIGNED_ALLOCATION
+
+#include <Windows.h>
+
+class _Memory
+{
+public:
+    struct PageHeader
+    {
+      uint64_t checkValue;
+      size_t size;
+    };
+
+    struct PageFooter 
+    {
+      uint64_t checkValue;
+    };
+    
+    struct FreePage : public PageHeader
+    {
+      FreePage* next;
+    };
+
+    static const uint64_t headerCheckValue = 0x1235543212355432LL;
+    static const uint64_t headerCheckValueUsed = 0x1235543212355433LL;
+    static const uint64_t footerCheckValue = 0x1235543212355432LL;
+
+    static HANDLE processHeap;
+
+private:
+    static _Memory memory;
+
+    _Memory()
+    {
+      processHeap = GetProcessHeap();
+    }
+};
+
+#pragma warning(disable: 4073) 
+#pragma init_seg(lib)
+_Memory _Memory::memory;
+HANDLE _Memory::processHeap = 0;
+
+void_t* Memory::alloc(size_t minSize, size_t& rsize)
+{
+  ASSERT(_Memory::processHeap);
+  size_t minAllocSize = minSize + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
+  _Memory::PageHeader* header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, NULL, minAllocSize);
+  if(!header) // out of memory?
+  {
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); HALT();
+    do // wait and try again...
+    {
+      Sleep(5000);
+      header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, NULL, minAllocSize);
+    } while(!header);
+  }
+  size_t allocSize = HeapSize(_Memory::processHeap, NULL, header);
+  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + allocSize - sizeof(_Memory::PageFooter));
+  header->size = allocSize;
+  header->checkValue = _Memory::headerCheckValue;
+  footer->checkValue = _Memory::footerCheckValue;
+  rsize = allocSize - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
+  return (void_t*)((uint8_t*)header + sizeof(_Memory::PageHeader));
+}
+
+void_t* Memory::alloc(size_t size)
+{
+  size_t allocatedSize;
+  return alloc(size, allocatedSize);
+}
+
+size_t Memory::size(void_t* buffer)
+{
+  if(!buffer) return 0;
+  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
+  if(header->checkValue != _Memory::headerCheckValue)
+  {
+    if(header->checkValue == _Memory::headerCheckValueUsed)
+    {
+      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); HALT();
+      return 0;
+    }
+    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    return 0;
+  }
+  return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
+}
+
+void_t Memory::free(void_t* buffer)
+{
+  if(!buffer) return;
+  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
+  if(header->checkValue != _Memory::headerCheckValue)
+  {
+    if(header->checkValue == _Memory::headerCheckValueUsed)
+    {
+      Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); HALT();
+      return;
+    }
+    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    return;
+  }
+  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + header->size - sizeof(_Memory::PageFooter));
+  if(footer->checkValue != _Memory::footerCheckValue)
+  {
+    Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); HALT(); // buffer overrun?
+    footer->checkValue = _Memory::footerCheckValue;
+  }
+
+  VERIFY(HeapFree(_Memory::processHeap, NULL, header));
+}
+
+void_t* operator new(size_t size)
+{
+  size_t allocatedSize;
+  return Memory::alloc(size, allocatedSize);
+}
+
+void_t* operator new [](size_t size)
+{
+  size_t allocatedSize;
+  return Memory::alloc(size, allocatedSize);
+}
+
+void_t operator delete(void_t* buffer)
+{
+  Memory::free(buffer);
+}
+
+void_t operator delete[](void_t* buffer)
+{
+  Memory::free(buffer);
+}
+
+#endif // !USE_PAGE_ALIGNED_ALLOCATION
+
 void_t Memory::copy(void_t* dest, const void_t* src, size_t length)
 {
 #ifdef _WIN32
@@ -276,24 +445,4 @@ void_t Memory::zero(void_t* buffer, size_t size)
 int_t Memory::compare(const void_t* ptr1, const void_t* ptr2, size_t count)
 {
   return memcmp(ptr1, ptr2, count);
-}
-
-void_t* operator new(size_t size)
-{
-  return Memory::alloc(size);
-}
-
-void_t* operator new [](size_t size)
-{
-  return Memory::alloc(size);
-}
-
-void_t operator delete(void_t* buffer)
-{
-  Memory::free(buffer);
-}
-
-void_t operator delete[](void_t* buffer)
-{
-  Memory::free(buffer);
 }

@@ -27,13 +27,13 @@ public:
     friend class HashSet;
   };
 
-  HashSet() : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  HashSet() : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  HashSet(const HashSet& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  HashSet(const HashSet& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
@@ -45,6 +45,7 @@ public:
   {
     endItem.prev = 0;
     endItem.next = 0;
+    _size |= (size_t)!_size;
   }
 
   ~HashSet()

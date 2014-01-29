@@ -29,13 +29,13 @@ public:
     friend class HashMap;
   };
 
-  HashMap() : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  HashMap() : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  HashMap(const HashMap& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(0), data(0), freeItem(0), blocks(0)
+  HashMap(const HashMap& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
@@ -47,6 +47,7 @@ public:
   {
     endItem.prev = 0;
     endItem.next = 0;
+    _size |= (size_t)!_size;
   }
 
   ~HashMap()
