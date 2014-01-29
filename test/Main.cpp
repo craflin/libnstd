@@ -991,6 +991,12 @@ void_t testDirectory()
   ASSERT(Directory::unlink(String(_T("testDir"))));
 }
 
+void_t testTime()
+{
+  String test = Time::toString(123 * 1000, "%Y-%m-%d %H:%M:%S");
+  ASSERT(test == "1970-01-01 01:02:03");
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
@@ -1019,6 +1025,7 @@ int_t main(int_t argc, char_t* argv[])
   testArrayString();
   testError();
   testDirectory();
+  testTime();
 
   Console::printf(_T("%s\n"), _T("done"));
 
