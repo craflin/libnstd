@@ -8,7 +8,7 @@
 
 timestamp_t Time::time()
 {
-  return ::time(0) * 1000;
+  return ::time(0) * 1000LL;
 }
 
 timestamp_t Time::ticks()
