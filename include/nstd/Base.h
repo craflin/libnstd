@@ -4,6 +4,9 @@
 #if (defined(_M_AMD64) || defined(__amd64__)) && !defined(_AMD64)
 #define _AMD64
 #endif
+#if defined(__arm__)  && !defined(_ARM)
+#define _ARM
+#endif
 #if defined(UNICODE) && !defined(_UNICODE)
 #define _UNICODE
 #endif

@@ -156,7 +156,7 @@ void_t* Memory::alloc(size_t size, size_t& rsize)
 #endif
   if(!header) // out of memory?
   {
-    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu pages.\n"), (uint64_t)pageCount); HALT();
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu pages.\n"), (uint64_t)pageCount); TRAP();
     do // wait and try again...
     {
 #ifdef _WIN32
@@ -184,10 +184,10 @@ size_t Memory::size(void_t* buffer)
   {
     if(header->checkValue == _Memory::headerCheckValueUsed)
     {
-      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); HALT();
+      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); TRAP();
       return 0;
     }
-    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return 0;
   }
   return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
@@ -206,16 +206,16 @@ void_t Memory::free(void_t* buffer)
   {
     if(header->checkValue == _Memory::headerCheckValueUsed)
     {
-      Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); HALT();
+      Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); TRAP();
       return;
     }
-    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return;
   }
   _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + header->size - sizeof(_Memory::PageFooter));
   if(footer->checkValue != _Memory::footerCheckValue)
   {
-    Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); HALT(); // buffer overrun?
+    Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
     footer->checkValue = _Memory::footerCheckValue;
   }
 
@@ -319,7 +319,7 @@ void_t* Memory::alloc(size_t minSize, size_t& rsize)
   _Memory::PageHeader* header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, NULL, minAllocSize);
   if(!header) // out of memory?
   {
-    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); HALT();
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
     do // wait and try again...
     {
       Sleep(5000);
@@ -349,10 +349,10 @@ size_t Memory::size(void_t* buffer)
   {
     if(header->checkValue == _Memory::headerCheckValueUsed)
     {
-      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); HALT();
+      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); TRAP();
       return 0;
     }
-    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return 0;
   }
   return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
@@ -366,16 +366,16 @@ void_t Memory::free(void_t* buffer)
   {
     if(header->checkValue == _Memory::headerCheckValueUsed)
     {
-      Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); HALT();
+      Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); TRAP();
       return;
     }
-    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); HALT();
+    Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return;
   }
   _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + header->size - sizeof(_Memory::PageFooter));
   if(footer->checkValue != _Memory::footerCheckValue)
   {
-    Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); HALT(); // buffer overrun?
+    Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
     footer->checkValue = _Memory::footerCheckValue;
   }
 
