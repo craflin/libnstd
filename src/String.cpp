@@ -89,12 +89,16 @@ int_t String::printf(const tchar_t* format, ...)
 #else
     result = vsnprintf(0, 0, format, ap);
 #endif
+    ASSERT(result >= 0);
+    if(result < 0)
+      return -1;
     reserve(result);
 #ifdef _UNICODE
     result = _vsnwprintf((wchar_t*)data->str, result + 1, format, ap);
 #else
     result = vsnprintf((char_t*)data->str, result + 1, format, ap);
 #endif
+    ASSERT(result >= 0);
     data->len = result;
     va_end(ap);
     return result;
