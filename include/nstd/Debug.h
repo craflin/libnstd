@@ -22,7 +22,7 @@ __attribute__((gnu_inline, always_inline)) static void __inline__ TRAP(void) {__
 #endif
 
 #ifdef NDEBUG
-#undef HALT
+#undef TRAP
 #define TRAP() ((void_t)0)
 #define ASSERT(exp) ((void_t)1)
 #define VERIFY(exp) ((void_t)(exp))
