@@ -271,7 +271,14 @@ void_t operator delete[](void_t* buffer)
 
 #else // !USE_PAGE_ALIGNED_ALLOCATION
 
+#ifdef _WIN32
 #include <Windows.h>
+#else
+#include <cstdlib>
+#include <malloc.h>
+#include <unistd.h>
+#include <cstring>
+#endif
 
 class _Memory
 {
@@ -338,10 +345,11 @@ void_t* Memory::alloc(size_t minSize, size_t& rsize)
     Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
     do // wait and try again...
     {
-      Sleep(5000);
 #ifdef _WIN32
+      Sleep(5000);
       header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, 0, minAllocSize);
 #else
+      sleep(5);
       header = (_Memory::PageHeader*)malloc(minAllocSize);
 #endif
     } while(!header);
