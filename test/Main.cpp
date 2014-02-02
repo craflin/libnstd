@@ -995,6 +995,11 @@ void_t testTime()
 {
   String test = Time::toString(123 * 1000, "%Y-%m-%d %H:%M:%S");
   ASSERT(test == "1970-01-01 01:02:03");
+
+  timestamp_t now = Time::time();
+  Time time(now);
+  ASSERT(time.toTimestamp() == now);
+
 }
 
 int_t main(int_t argc, char_t* argv[])
