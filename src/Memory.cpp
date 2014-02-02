@@ -414,7 +414,7 @@ void_t Memory::free(void_t* buffer)
 #ifdef _WIN32
   VERIFY(HeapFree(_Memory::processHeap, 0, header));
 #else
-  free(header);
+  ::free(header);
 #endif
 }
 
