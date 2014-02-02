@@ -996,10 +996,28 @@ void_t testTime()
   String test = Time::toString(123 * 1000, "%Y-%m-%d %H:%M:%S");
   ASSERT(test == "1970-01-01 01:02:03");
 
+  {
+    Time time(123LL * 1000);
+    ASSERT(time.toString("%Y-%m-%d %H:%M:%S") == test);
+  }
+
   timestamp_t now = Time::time();
   Time time(now);
   ASSERT(time.toTimestamp() == now);
+  Time time2(time);
+  time2.toLocal();
+  ASSERT(time == time2);
+  ASSERT(time2.toTimestamp() == now);
 
+  Time timeUtc(time);
+  timeUtc.toUtc();
+  ASSERT(timeUtc != time);
+  ASSERT(timeUtc.toTimestamp() == now);
+  Time timeUtc2(timeUtc);
+  timeUtc2.toUtc();
+  ASSERT(timeUtc != time);
+  ASSERT(timeUtc2 == timeUtc);
+  ASSERT(timeUtc2.toTimestamp() == now);
 }
 
 int_t main(int_t argc, char_t* argv[])
