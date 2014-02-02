@@ -1,8 +1,8 @@
 
 
-#if !defined(_MSC_VER) || defined(_M_AMD64)
-#define USE_PAGE_ALIGNED_ALLOCATION
-#endif
+//#if !defined(_MSC_VER) || defined(_M_AMD64)
+//#define USE_PAGE_ALIGNED_ALLOCATION
+//#endif
 
 #ifdef USE_PAGE_ALIGNED_ALLOCATION
 
@@ -296,37 +296,62 @@ public:
     static const uint64_t headerCheckValueUsed = 0x1235543212355433LL;
     static const uint64_t footerCheckValue = 0x1235543212355432LL;
 
+#ifdef _WIN32
     static HANDLE processHeap;
-
+#endif
 private:
     static _Memory memory;
 
     _Memory()
     {
+#ifdef _WIN32
       processHeap = GetProcessHeap();
+#endif
     }
 };
 
+#ifdef _MSC_VER
 #pragma warning(disable: 4073) 
 #pragma init_seg(lib)
 _Memory _Memory::memory;
+#else
+_Memory _Memory::memory __attribute__ ((init_priority (101)));
+#endif
+#ifdef _WIN32
 HANDLE _Memory::processHeap = 0;
+#endif
 
 void_t* Memory::alloc(size_t minSize, size_t& rsize)
 {
+#ifdef _WIN32
   ASSERT(_Memory::processHeap);
+#endif
   size_t minAllocSize = minSize + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-  _Memory::PageHeader* header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, NULL, minAllocSize);
+  _Memory::PageHeader* header;
+#ifdef _WIN32
+  header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, 0, minAllocSize);
+#else
+  header = (_Memory::PageHeader*)malloc(minAllocSize);
+#endif
   if(!header) // out of memory?
   {
     Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
     do // wait and try again...
     {
       Sleep(5000);
-      header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, NULL, minAllocSize);
+#ifdef _WIN32
+      header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, 0, minAllocSize);
+#else
+      header = (_Memory::PageHeader*)malloc(minAllocSize);
+#endif
     } while(!header);
   }
-  size_t allocSize = HeapSize(_Memory::processHeap, NULL, header);
+  size_t allocSize;
+#ifdef _WIN32
+  allocSize = HeapSize(_Memory::processHeap, 0, header);
+#else
+  allocSize = malloc_usable_size(header);
+#endif
   _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + allocSize - sizeof(_Memory::PageFooter));
   header->size = allocSize;
   header->checkValue = _Memory::headerCheckValue;
@@ -378,8 +403,11 @@ void_t Memory::free(void_t* buffer)
     Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
     footer->checkValue = _Memory::footerCheckValue;
   }
-
-  VERIFY(HeapFree(_Memory::processHeap, NULL, header));
+#ifdef _WIN32
+  VERIFY(HeapFree(_Memory::processHeap, 0, header));
+#else
+  free(header);
+#endif
 }
 
 void_t* operator new(size_t size)
