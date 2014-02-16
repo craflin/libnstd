@@ -184,7 +184,8 @@ public:
   {
     Item* item = it.item;
 
-    *item->cell = item->nextCell;
+    if((*item->cell = item->nextCell))
+      item->nextCell->cell = item->cell;
 
     if(!item->prev)
       (_begin.item = item->next)->prev = 0;
