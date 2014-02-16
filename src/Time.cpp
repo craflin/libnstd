@@ -63,7 +63,7 @@ timestamp_t Time::toTimestamp()
   tm.tm_yday = yday;
   tm.tm_isdst = dst;
   if(utc)
-#ifdef _WIN32
+#ifdef _MSC_VER
     return _mkgmtime(&tm) * 1000LL;
 #else
     return timegm(&tm) * 1000LL;
