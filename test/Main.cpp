@@ -993,12 +993,12 @@ void_t testDirectory()
 
 void_t testTime()
 {
-  String test = Time::toString(123 * 1000, "%Y-%m-%d %H:%M:%S");
-  ASSERT(test == "1970-01-01 01:02:03");
+  String test = Time::toString(123 * 1000, _T("%Y-%m-%d %H:%M:%S"));
+  ASSERT(test == _T("1970-01-01 01:02:03"));
 
   {
     Time time(123LL * 1000);
-    ASSERT(time.toString("%Y-%m-%d %H:%M:%S") == test);
+    ASSERT(time.toString(_T("%Y-%m-%d %H:%M:%S")) == test);
   }
 
   timestamp_t now = Time::time();

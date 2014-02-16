@@ -105,6 +105,34 @@ int_t String::printf(const tchar_t* format, ...)
   }
 }
 
+#if defined(_MSC_VER) && _MSC_VER <= 1600
+#ifdef _UNICODE
+static int vswscanf(const wchar_t* s, const wchar_t* fmt, va_list ap)
+#else
+static int vsscanf(const char* s, const char* fmt, va_list ap)
+#endif
+{
+  struct Args
+  {
+    void *a[32];
+  } args;
+  for (int i = 0; i < sizeof(args.a) / sizeof(void*); ++i)
+    args.a[i] = va_arg(ap, void*);
+#ifdef _UNICODE
+  return swscanf(s, fmt, args);
+#else
+  return sscanf(s, fmt, args);
+#endif
+}
+#ifdef _UNICODE
+#define _wtoll _wtoi64
+#define wcstoull _wcstoui64
+#else
+#define atoll _atoi64
+#define strtoull _strtoui64
+#endif
+#endif
+
 int_t String::scanf(const tchar_t* format, ...) const
 {
   int_t result;
