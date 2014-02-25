@@ -179,6 +179,15 @@ bool_t File::write(const String& data)
   return write((const byte_t*)(const tchar_t*)data, size) == (ssize_t)size;
 }
 
+bool_t File::flush()
+{
+#ifdef _WIN32
+  return FlushFileBuffers((HANDLE)fp) != FALSE;
+#else
+  return fsync((int_t)fp) == 0;
+#endif
+}
+
 String File::dirname(const String& file)
 {
   const tchar_t* start = file;

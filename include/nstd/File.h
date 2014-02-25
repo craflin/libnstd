@@ -46,6 +46,8 @@ public:
 
   bool_t write(const String& data);
 
+  bool_t flush();
+
   static String dirname(const String& file);
   static String basename(const String& file, const String& extension = String());
   static String extension(const String& file);
