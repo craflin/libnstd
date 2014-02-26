@@ -10,7 +10,7 @@ public:
   {
     readFlag = 0x0001,
     writeFlag = 0x0002,
-    //appendFlag = 0x0004, // TODO
+    appendFlag = 0x0004,
   };
 
   struct Times

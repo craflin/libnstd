@@ -39,17 +39,31 @@ bool_t File::open(const String& file, uint_t flags)
   if(flags & writeFlag)
   {
     desiredAccess |= GENERIC_WRITE;
-    creationDisposition |= CREATE_ALWAYS;
+    if(flags & appendFlag)
+      creationDisposition = OPEN_ALWAYS;
+    else
+      creationDisposition = CREATE_ALWAYS;
   }
   if(flags & readFlag)
   {
     desiredAccess |= GENERIC_READ;
     if(!(flags & writeFlag))
-      creationDisposition |= OPEN_EXISTING;
+      creationDisposition = OPEN_EXISTING;
   }
   fp = CreateFile(file, desiredAccess, FILE_SHARE_READ, NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
   if(fp == INVALID_HANDLE_VALUE)
     return false;
+  if(creationDisposition == OPEN_ALWAYS)
+  {
+    if(SetFilePointer(fp, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
+    {
+      DWORD lastError = GetLastError();
+      CloseHandle((HANDLE)fp);
+      fp = INVALID_HANDLE_VALUE;
+      SetLastError(lastError);
+      return false;
+    }
+  }
 #else
   if(fp)
   {
@@ -60,7 +74,12 @@ bool_t File::open(const String& file, uint_t flags)
   if((flags & (readFlag | writeFlag)) == (readFlag | writeFlag))
     oflags = O_CREAT | O_RDWR; // create if not exists, rw mode
   else if(flags & writeFlag)
-    oflags = O_CREAT | O_TRUNC | O_WRONLY; // create if not exists, truncate if exist, write mode
+  {
+    if(flags & appendFlag)
+      oflags = O_CREAT | O_WRONLY; // create if not exists, write mode
+    else
+      oflags = O_CREAT | O_TRUNC | O_WRONLY; // create if not exists, truncate if exist, write mode
+  }
   else
     oflags = O_RDONLY; // do not create if not exists, read mode
 
@@ -69,6 +88,17 @@ bool_t File::open(const String& file, uint_t flags)
   {
     fp = 0;
     return false;
+  }
+  if(flags & appendFlag)
+  {
+    if(lseek((int_t)fp, 0, SEEK_END) == -1)
+    {
+      int lastError = errno;
+      ::close((int_t)fp);
+      fp = 0;
+      errno = lastError;
+      return false;
+    }
   }
 #endif
 

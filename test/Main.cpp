@@ -654,6 +654,32 @@ void_t testFile()
   // test unlink
   ASSERT(File::unlink(_T("testfile.file.test")));
   ASSERT(!File::exists(_T("testfile.file.test")));
+
+  // test append mode
+  {
+    char_t buf1[10];
+    char_t buf2[20];
+    Memory::fill(buf1, 1, sizeof(buf1));
+    Memory::fill(buf2, 1, sizeof(buf2));
+    {
+      File file;
+      ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+      ASSERT(file.write(buf1, sizeof(buf1)) == sizeof(buf1));
+    }
+    {
+      File file;
+      ASSERT(file.open(_T("testfile.file.test"), File::writeFlag | File::appendFlag));
+      ASSERT(file.write(buf2, sizeof(buf2)) == sizeof(buf2));
+    }
+    {
+      File file;
+      ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
+      char_t result[50];
+      ASSERT(file.read(result, sizeof(result)) == sizeof(buf1) + sizeof(buf2));
+      ASSERT(Memory::compare(result, buf1, sizeof(buf1)) == 0);
+      ASSERT(Memory::compare(result + sizeof(buf1), buf2, sizeof(buf2)) == 0);
+    }
+  }
 }
 
 void_t testFileName()
