@@ -9,6 +9,8 @@
 #else
 #include <semaphore.h>
 #include <time.h>
+#include <errno.h>
+#include <unistd.h> // usleep
 #endif
 
 #include <nstd/Semaphore.h>
@@ -51,6 +53,8 @@ bool_t Semaphore::wait()
 #endif
 }
 
+#include <string.h>
+#include <stdio.h>
 bool_t Semaphore::wait(timestamp_t timeout)
 {
 #ifdef _WIN32
@@ -61,7 +65,27 @@ bool_t Semaphore::wait(timestamp_t timeout)
   ts.tv_nsec += (timeout % 1000) * 1000000;
   ts.tv_sec += timeout / 1000 + ts.tv_nsec / 1000000000;
   ts.tv_nsec %= 1000000000;
-  return sem_timedwait((sem_t*)&handle, &ts) != -1;
+  for(;;)
+  {
+    if(sem_timedwait((sem_t*)&handle, &ts) == -1)
+    {
+      if(errno == EINTR)
+        continue;
+      if(errno == ENOSYS)
+        goto no_sem_timedwait;
+      return false;
+    }
+    return true;
+  }
+no_sem_timedwait:
+  // TODO: this sucks, find a better way to do this
+  for(int i = 0; i < timeout; i += 10)
+  {
+    if(sem_trywait((sem_t*)&handle) != -1)
+      return true;
+    usleep(10 * 1000);
+  }
+  return false;
 #endif
 }
 
