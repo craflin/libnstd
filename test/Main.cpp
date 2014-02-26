@@ -867,6 +867,7 @@ void_t testDirectory()
   files.append(_T("ab.tx"));
   files.append(_T("ab.txt"));
   files.append(_T("ab.txtt"));
+  files.sort();
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)
     ASSERT(File().open(String(_T("testDir/")) + *i, File::writeFlag));
 
@@ -874,6 +875,7 @@ void_t testDirectory()
   List<String> dirs;
   dirs.append(_T("dirA"));
   dirs.append(_T("dirB"));
+  dirs.sort();
   for(List<String>::Iterator i = dirs.begin(), end = dirs.end(); i != end; ++i)
     ASSERT(Directory::create(String(_T("testDir/")) + *i));
 
@@ -887,6 +889,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles == files);
     ASSERT(foundDirs == dirs);
   }
@@ -901,6 +905,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles == files);
     ASSERT(foundDirs == dirs);
   }
@@ -915,6 +921,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.isEmpty());
     ASSERT(foundDirs == dirs);
   }
@@ -929,6 +937,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.isEmpty());
     ASSERT(foundDirs == dirs);
   }
@@ -943,6 +953,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.size() == 1 && foundFiles.front() == _T("ab.t"));
     ASSERT(foundDirs.isEmpty());
   }
@@ -957,6 +969,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     for(List<String>::Iterator i = foundFiles.begin(), end = foundFiles.end(); i != end; ++i)
       ASSERT(*i != _T("ab"));
     ASSERT(foundFiles.size() == 4);
@@ -973,6 +987,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.size() == 1);
     ASSERT(foundDirs.isEmpty());
   }
@@ -987,6 +1003,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.size() == 4);
     ASSERT(foundDirs.isEmpty());
   }
@@ -1001,6 +1019,8 @@ void_t testDirectory()
     List<String> foundDirs;
     while(dir.read(path, isDir))
       (isDir ? foundDirs : foundFiles).append(path);
+    foundFiles.sort();
+    foundDirs.sort();
     ASSERT(foundFiles.isEmpty());
     ASSERT(foundDirs.isEmpty());
   }

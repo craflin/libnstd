@@ -229,6 +229,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
     return false;
   }
 
+  const char_t* pattern = this->pattern;
   for(;;)
   {
     struct dirent* dent = readdir((DIR*)dp);
@@ -241,7 +242,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
       return false;
     }
     const char_t* const str = dent->d_name;
-    if(fnmatch(pattern, str, 0) == 0)
+    if(!*pattern || fnmatch(pattern, str, 0) == 0)
     {
       name = String(str, strlen(str));
       isDir = false;
@@ -306,7 +307,7 @@ bool_t Directory::unlink(const String& dir)
 #ifdef _WIN32
   return RemoveDirectory(dir) == TRUE;
 #else
-  return unlink(dir) == 0;
+  return ::rmdir(dir) == 0;
 #endif
 }
 
@@ -315,7 +316,7 @@ bool_t Directory::change(const String& dir)
 #ifdef _WIN32
   return SetCurrentDirectory(dir) != FALSE;
 #else
-  return chdir(dir) == 0;
+  return ::chdir(dir) == 0;
 #endif
 }
 
