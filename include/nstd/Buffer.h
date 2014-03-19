@@ -59,6 +59,14 @@ public:
     *bufferEnd = 0;
   }
 
+  void_t append(const Buffer& buffer)
+  {
+    size_t size = buffer.bufferEnd - buffer.bufferStart;
+    resize(bufferEnd - bufferStart + size);
+    Memory::copy(bufferEnd - size, buffer.bufferStart, size);
+    *bufferEnd = 0;
+  }
+
   void_t resize(size_t size)
   {
     size_t requiredCapacity = bufferEnd - buffer + size;
