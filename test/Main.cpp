@@ -17,6 +17,7 @@
 #include <nstd/Error.h>
 #include <nstd/Buffer.h>
 #include <nstd/Variant.h>
+#include <nstd/Process.h>
 
 #include <cstring>
 #include <cctype>
@@ -1066,6 +1067,18 @@ void_t testTime()
   ASSERT(timeUtc2.toTimestamp() == now);
 }
 
+void_t testProcess()
+{
+  Process process;
+  uint32_t id = process.start(_T("sleep 1"));
+  ASSERT(id != 0);
+  ASSERT(process.isRunning());
+  uint32_t exitCode = 0xfffa2;
+  ASSERT(process.join(exitCode));
+  ASSERT(!process.isRunning());
+  ASSERT(exitCode == 0);
+}
+
 int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
@@ -1095,6 +1108,7 @@ int_t main(int_t argc, char_t* argv[])
   testError();
   testDirectory();
   testTime();
+  testProcess();
 
   Console::printf(_T("%s\n"), _T("done"));
 
