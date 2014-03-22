@@ -34,13 +34,8 @@ Process::Process()
 
 Process::~Process()
 {
-#ifdef _WIN32
-  ASSERT(hProcess ==  INVALID_HANDLE_VALUE);
-  if(hProcess != INVALID_HANDLE_VALUE)
-    CloseHandle((HANDLE)hProcess);
-#else
-  ASSERT(pid ==  0);
-#endif
+  uint32_t exitCode;
+  join(exitCode);
 }
 
 bool Process::isRunning() const
