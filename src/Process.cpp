@@ -10,6 +10,7 @@
 #include <sys/wait.h>
 #include <cstdio>
 #include <cstring>
+#include <signal.h>
 //#include <sys/utsname.h> // uname
 #endif
 
@@ -128,36 +129,11 @@ private:
 uint32_t Process::start(const String& commandLine)
 {
 #ifdef _WIN32
-//  String program(MAX_PATH);
-//  for(const tchar_t* p = commandLine; *p;)
-//    switch(*p)
-//    {
-//    case _T('"'):
-//      for(++p; *p;)
-//        switch(*p)
-//        {
-//        case _T('"'):
-//          ++p;
-//          break;
-//        case _T('\\'):
-//          if(p[1] == _T('"'))
-//          {
-//            program.append(_T('"'));
-//            p += 2;
-//          }
-//          break;
-//        default:
-//          program.append(*(p++));
-//      }
-//      break;
-//    case _T(' '):
-//      goto done;
-//    default:
-//      program.append(*(p++));
-//    }
-//done: ;
-
-
+  if(hProcess != INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return 0;
+  }
 
   STARTUPINFO si;
   PROCESS_INFORMATION pi;
@@ -179,6 +155,11 @@ uint32_t Process::start(const String& commandLine)
   return pi.dwProcessId;
 
 #else
+  if(pid)
+  {
+    errno = EINVAL;
+    return false;
+  }
 
   // split commandLine into args
   List<String> command;
@@ -718,6 +699,35 @@ success:
 }
 #endif
 
+bool_t Process::kill()
+{
+#ifdef _WIN32
+  if(hProcess == INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return false;
+  }
+  if(!TerminateProcess(hProcess, EXIT_FAILURE))
+    return false;
+  CloseHandle((HANDLE)hProcess);
+  hProcess = INVALID_HANDLE_VALUE;
+  return true;
+#else
+  if(!pid)
+  {
+    errno = EINVAL;
+    return false;
+  }
+  if(::kill((pid_t)pid, SIGKILL) != 0)
+    return false;
+  int status;
+  if(waitpid(pid, &status, 0) != (pid_t)pid)
+    return false;
+  pid = 0;
+  return true;
+#endif
+}
+
 bool_t Process::join(uint32_t& exitCode)
 {
 #ifdef _WIN32
@@ -748,7 +758,7 @@ bool_t Process::join(uint32_t& exitCode)
   }
   int status;
   if(waitpid(pid, &status, 0) != (pid_t)pid)
-    return 0;
+    return false;
   exitCode = WEXITSTATUS(status);
   pid = 0;
   return true;
@@ -797,3 +807,12 @@ bool_t Process::join(uint32_t& exitCode)
 //  vars = environmentVariables;
 //  evnMutex.unlock();
 //}
+
+uint32_t Process::getCurrentProcessId()
+{
+#ifdef _WIN32
+  return (uint32_t)GetCurrentProcessId();
+#else
+  return (uint32_t)getpid();
+#endif
+}

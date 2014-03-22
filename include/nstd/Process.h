@@ -32,12 +32,16 @@ public:
   */
   bool_t join(uint32_t& exitCode);
 
+  bool_t kill();
+
   /*
   * Wait for one of the given processes to exit.
   */
   //static Process* joinOne(Process* processes, size_t count, uint32_t& exitCode);
 
   //static void_t getEnvironmentVariables(HashMap<String, String>& vars);
+
+  static uint32_t getCurrentProcessId();
 
 private:
 #ifdef _WIN32
