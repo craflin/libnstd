@@ -1,22 +1,24 @@
 
-//#include <malloc.h>
 #ifdef _WIN32
 #include <windows.h>
 #else
-//#include <unistd.h>
-//#include <cerrno>
-//#include <cstdlib>
-//#include <sys/types.h>
-//#include <sys/wait.h>
-//#include <cstdio>
-//#include <cstring>
+#include <alloca.h>
+#include <unistd.h>
+#include <cerrno>
+#include <cstdlib>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <cstdio>
+#include <cstring>
 //#include <sys/utsname.h> // uname
 #endif
 
 #include <nstd/Debug.h>
 #include <nstd/List.h>
 //#include <nstd/Mutex.h>
-//#include <nstd/File.h>
+#ifndef _WIN32
+#include <nstd/File.h>
+#endif
 //#include <nstd/Buffer.h>
 #include <nstd/Process.h>
 
@@ -27,7 +29,6 @@ Process::Process()
   hProcess = INVALID_HANDLE_VALUE;
 #else
   pid = 0;
-  exitCode = 1;
 #endif
 }
 
@@ -183,7 +184,114 @@ uint32_t Process::start(const String& commandLine)
   return pi.dwProcessId;
 
 #else
-#error todo
+
+  // split commandLine into args
+  List<String> command;
+  {
+    String arg;
+    for(const tchar_t* p = commandLine; *p;)
+      switch(*p)
+      {
+      case _T('"'):
+        for(++p; *p;)
+          switch(*p)
+          {
+          case _T('"'):
+            ++p;
+            break;
+          case _T('\\'):
+            if(p[1] == _T('"'))
+            {
+              arg.append(_T('"'));
+              p += 2;
+            }
+            break;
+          default:
+            arg.append(*(p++));
+        }
+        break;
+      case _T(' '):
+        command.append(arg);
+        arg.clear();
+        ++p;
+        break;
+      default:
+        arg.append(*(p++));
+      }
+    if(!arg.isEmpty())
+      command.append(arg);
+  }
+
+  // load path env
+  List<String> searchPaths;
+  {
+    char* pathVar = getenv("PATH");
+    for(const char* str = pathVar; *str;)
+    {
+      const char* end = strchr(str, ':');
+      if(end)
+      {
+        if(end > str)
+          searchPaths.append(String(str, end - str));
+        ++end;
+        str = end;
+      }
+      else
+      {
+        searchPaths.append(String(str, String::length(str)));
+        break;
+      }
+    }
+  }
+
+
+  // find executable
+  String program;
+  if(!command.isEmpty())
+    program = command.front();
+  String programPath = program;
+  if(((const char*)programPath)[0] != '/')
+    for(List<String>::Iterator i = searchPaths.begin(), end = searchPaths.end(); i != end; ++i)
+    {
+      String testPath = *i;
+      testPath.append('/');
+      testPath.append(program);
+      if(File::exists(testPath))
+      {
+        programPath = testPath;
+        break;
+      }
+    }
+
+
+  // start process
+  int r = vfork();
+  if(r == -1)
+    return 0;
+  else if(r != 0) // parent
+  {
+    pid = r;
+    return r;
+  }
+  else // child
+  {
+    const char** argv = (const char**)alloca(sizeof(const char*) * (command.size() + 1));
+    int i = 0;
+    for(List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
+      argv[i++] = *j;
+    argv[i] = 0;
+
+    const char** envp = (const char**)environ;
+    const char* executable = programPath;
+    if(execve(executable, (char* const*)argv, (char* const*)envp) == -1)
+    {
+      fprintf(stderr, "%s: %s\n", executable, strerror(errno));
+      _exit(EXIT_FAILURE);
+    }
+    ASSERT(false); // unreachable
+    return 0;
+  }
+
 #endif
 }
 
@@ -641,10 +749,14 @@ bool_t Process::join(uint32_t& exitCode)
   if(!pid)
   {
     errno = EINVAL;
-    return 0;
+    return false;
   }
+  int status;
+  if(waitpid(pid, &status, 0) != (pid_t)pid)
+    return 0;
+  exitCode = WEXITSTATUS(status);
   pid = 0;
-  return exitCode;
+  return true;
 #endif
 }
 

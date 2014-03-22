@@ -44,6 +44,5 @@ private:
   void* hProcess;
 #else
   uint32_t pid;
-  uint32_t exitCode;
 #endif
 };
