@@ -320,3 +320,43 @@ bool_t Directory::change(const String& dir)
 #endif
 }
 
+String Directory::getCurrent()
+{
+#ifdef _WIN32
+  String result;
+  result.resize(MAX_PATH);
+  DWORD len = GetCurrentDirectory(MAX_PATH + 1, (tchar_t*)result);
+  if(len <= MAX_PATH)
+  {
+    result.resize(len);
+    return result;
+  }
+  result.resize(len);
+  DWORD len2 = GetCurrentDirectory(len + 1, (tchar_t*)result);
+  if(len2 <= MAX_PATH)
+  {
+    result.resize(len2);
+    return result;
+  }
+  return String();
+#else
+  String result;
+  result.resize(PATH_MAX);
+  for(;;)
+  {
+    char* success = getcwd((char*)result, result.length());
+    if(success)
+    {
+      result.resize(String::length((char*)result));
+      return result;
+    }
+    if(errno == ERANGE)
+    {
+      result.resize(result.length() * 2);
+      continue;
+    }
+    return String();
+  }
+
+#endif
+}

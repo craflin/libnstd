@@ -53,6 +53,8 @@ public:
 
   static bool_t change(const String& dir);
 
+  static String getCurrent();
+
 private:
   bool_t dirsOnly;
 #ifdef _WIN32
