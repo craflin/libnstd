@@ -338,6 +338,33 @@ bool_t File::isAbsolutePath(const String& path)
   return *data == _T('/') || *data == _T('\\') || (path.length() > 2 && data[1] == _T(':') && (data[2] == _T('/') || data[2] == _T('\\')));
 }
 
+String File::getRelativePath(const String& from, const String& to)
+{
+  String simFrom = simplifyPath(from);
+  String simTo = simplifyPath(to);
+  if(simFrom == simTo)
+    return String(".");
+  simFrom.append('/');
+  if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
+    return String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length());
+  String result("../");
+  while(simFrom.length() > 0)
+  {
+    simFrom.resize(simFrom.length() - 1);
+    const tchar_t* newEnd = simFrom.findLast('/');
+    if(!newEnd)
+      break;
+    simFrom.resize((newEnd - (const tchar_t*)simFrom) + 1);
+    if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
+    {
+      result.append(String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
+      return result;
+    }
+    result.append("../");
+  }
+  return String();
+}
+
 bool_t times(const String& file, File::Times& times)
 {
 #ifdef _WIN32

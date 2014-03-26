@@ -48,13 +48,14 @@ public:
 
   bool_t flush();
 
-  static String dirname(const String& file);
-  static String basename(const String& file, const String& extension = String());
-  static String extension(const String& file);
+  static String dirname(const String& file); // TODO: rename getDirname()?
+  static String basename(const String& file, const String& extension = String()); // TODO: rename getBasename()?
+  static String extension(const String& file); // TODO: rename getExtension()?
   static String simplifyPath(const String& path);
   static bool_t isAbsolutePath(const String& path);
+  static String getRelativePath(const String& from, const String& to);
 
-  static bool_t times(const String& file, Times& time);
+  static bool_t times(const String& file, Times& time); // TODO: rename getTimes()?
 
   static bool_t exists(const String& file);
   static bool_t unlink(const String& file);
