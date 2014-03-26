@@ -17,12 +17,10 @@ typedef void void_t;
 typedef signed char int8_t;
 typedef short int16_t;
 typedef int int32_t;
-typedef long long int int64_t;
 
 typedef unsigned char uint8_t;
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;
-typedef unsigned long long int uint64_t;
 
 typedef unsigned char byte_t;
 typedef char char_t;
@@ -31,9 +29,20 @@ typedef int int_t;
 typedef unsigned int uint_t;
 
 #ifdef _AMD64
+#ifdef _WIN32
+typedef long long int int64_t;
+typedef unsigned long long int uint64_t;
 typedef unsigned long long int size_t;
 typedef long long int ssize_t;
 #else
+typedef long int int64_t;
+typedef unsigned long int uint64_t;
+typedef unsigned long int size_t;
+typedef long int ssize_t;
+#endif
+#else
+typedef long long int int64_t;
+typedef unsigned long long int uint64_t;
 typedef unsigned int size_t;
 typedef int ssize_t;
 #endif
@@ -50,7 +59,7 @@ typedef char_t tchar_t;
 #endif
 #endif
 
-typedef int64_t timestamp_t;
+typedef long long int timestamp_t;
 
 void_t* operator new(size_t size);
 void_t* operator new [](size_t size);

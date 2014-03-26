@@ -1025,6 +1025,16 @@ void_t testDirectory()
     ASSERT(foundFiles.isEmpty());
     ASSERT(foundDirs.isEmpty());
   }
+  
+  // test getCurrentDir and change
+  {
+    String currentDir = Directory::getCurrent();
+    ASSERT(!currentDir.isEmpty());
+    ASSERT(Directory::change(_T("testDir")));
+    ASSERT(Directory::getCurrent() == currentDir + _T("/testDir"));
+    ASSERT(Directory::change(_T("..")));
+    ASSERT(Directory::getCurrent() == currentDir);
+  }
 
   // delete test files
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)

@@ -94,7 +94,7 @@ uint_t Thread::join()
   void* retval;
   VERIFY(pthread_join((pthread_t)thread, &retval) == 0);
   thread = 0;
-  return (uint_t)retval;
+  return (uint_t)(intptr_t)retval;
 #endif
 }
 

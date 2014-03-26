@@ -83,18 +83,18 @@ bool_t File::open(const String& file, uint_t flags)
   else
     oflags = O_RDONLY; // do not create if not exists, read mode
 
-  fp = (void_t*)::open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if((int_t)fp == -1)
+  fp = (void_t*)(intptr_t)::open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  if((int_t)(intptr_t)fp == -1)
   {
     fp = 0;
     return false;
   }
   if(flags & appendFlag)
   {
-    if(lseek((int_t)fp, 0, SEEK_END) == -1)
+    if(lseek((int_t)(intptr_t)fp, 0, SEEK_END) == -1)
     {
       int lastError = errno;
-      ::close((int_t)fp);
+      ::close((int_t)(intptr_t)fp);
       fp = 0;
       errno = lastError;
       return false;
@@ -116,7 +116,7 @@ void_t File::close()
 #else
   if(fp)
   {
-    ::close((int_t)fp);
+    ::close((int_t)(intptr_t)fp);
     fp = 0;
   }
 #endif
@@ -169,7 +169,7 @@ ssize_t File::read(void_t* buffer, size_t len)
   return i;
 #endif
 #else
-  return ::read((int_t)fp, buffer, len);
+  return ::read((int_t)(intptr_t)fp, buffer, len);
 #endif
 }
 
@@ -199,7 +199,7 @@ ssize_t File::write(const void_t* buffer, size_t len)
   return i;
 #endif
 #else
-  return ::write((int_t)fp, buffer, len);
+  return ::write((int_t)(intptr_t)fp, buffer, len);
 #endif
 }
 
@@ -214,7 +214,7 @@ bool_t File::flush()
 #ifdef _WIN32
   return FlushFileBuffers((HANDLE)fp) != FALSE;
 #else
-  return fsync((int_t)fp) == 0;
+  return fsync((int_t)(intptr_t)fp) == 0;
 #endif
 }
 
