@@ -173,6 +173,12 @@ void_t testString()
   String copyOfHello(hello);
   String copyOfCopyOfHello(copyOfHello);
 
+  // test self assign
+  String blupp;
+  blupp.printf("%d", 123);
+  blupp = blupp;
+  ASSERT(blupp == "123");
+
   // test compare operators
   ASSERT(hello == copyOfCopyOfHello);
   ASSERT(copyOfHello == copyOfCopyOfHello);

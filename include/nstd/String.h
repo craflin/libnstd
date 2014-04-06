@@ -157,7 +157,14 @@ public:
   String& operator=(const String& other)
   {
     if(data->ref && Atomic::decrement(data->ref) == 0)
+    {
+      if(this == &other)
+      {
+        Atomic::increment(data->ref);
+        return *this;
+      }
       Memory::free(data);
+    }
 
     if(other.data->ref)
     {
