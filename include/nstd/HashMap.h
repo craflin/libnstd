@@ -217,7 +217,7 @@ private:
     Item* prev;
     Item* next;
 
-    Item() : key() {}
+    Item() : key(), value() {}
 
     Item(const T& key, const V& value) : key(key), value(value) {}
   };

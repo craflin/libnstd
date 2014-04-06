@@ -227,7 +227,7 @@ private:
     Item* prev;
     Item* next;
 
-    Item() {}
+    Item() : value() {}
 
     Item(const T& value) : value(value) {}
   };
