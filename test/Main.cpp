@@ -1031,7 +1031,11 @@ void_t testDirectory()
     String currentDir = Directory::getCurrent();
     ASSERT(!currentDir.isEmpty());
     ASSERT(Directory::change(_T("testDir")));
+#ifdef _WIN32
+    ASSERT(Directory::getCurrent() == currentDir + _T("\\testDir"));
+#else
     ASSERT(Directory::getCurrent() == currentDir + _T("/testDir"));
+#endif
     ASSERT(Directory::change(_T("..")));
     ASSERT(Directory::getCurrent() == currentDir);
   }
