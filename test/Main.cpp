@@ -642,12 +642,14 @@ void_t testFile()
     ASSERT(file.write(buffer, sizeof(buffer)) == sizeof(buffer));
     Memory::fill(buffer2, 'b', sizeof(buffer2));
     ASSERT(file.write(buffer2, sizeof(buffer2)) == sizeof(buffer2));
+    ASSERT(file.size() == sizeof(buffer) + sizeof(buffer2));
   }
 
   // test file read
   {
     File file;
     ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
+    ASSERT(file.size() == sizeof(buffer) + sizeof(buffer2));
     char_t readBuffer[500];
     ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
     ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);

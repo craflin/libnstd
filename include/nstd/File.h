@@ -28,6 +28,13 @@ public:
   bool_t isOpen() const;
 
   /**
+  * Get size of the file.
+  *
+  * @return The size of the file in bytes. In case of an error -1 is returned.
+  */
+  int64_t size();
+
+  /**
   * Read a data block from the file at the current read position.
   *
   * The file has to be opened with Flags::readFlag. If successful, the read position changes to after 

@@ -131,6 +131,31 @@ bool_t File::isOpen() const
 #endif
 }
 
+int64_t File::size()
+{
+#ifdef _WIN32
+  LARGE_INTEGER fs;
+  if(!GetFileSizeEx((HANDLE)fp, &fs))
+    return -1;
+  return fs.QuadPart;
+#else
+  // todo: use lstat?
+  off64_t currentPosition = lseek((int_t)(intptr_t)fp, 0, SEEK_CUR);
+  if(currentPosition < 0)
+    return -1; 
+  off64_t size = lseek((int_t)(intptr_t)fp, 0, SEEK_END);
+  if(size < 0)
+    return -1;
+  if(currentPosition != size)
+  {
+    currentPosition = lseek((int_t)(intptr_t)fp, currentPosition, SEEK_SET);
+    if(currentPosition < 0)
+      return -1;
+  }
+  return size;
+#endif
+}
+
 bool_t File::unlink(const String& file)
 {
 #ifdef _WIN32
