@@ -175,9 +175,9 @@ void_t testString()
 
   // test self assign
   String blupp;
-  blupp.printf("%d", 123);
+  blupp.printf(_T("%d"), 123);
   blupp = blupp;
-  ASSERT(blupp == "123");
+  ASSERT(blupp == _T("123"));
 
   // test compare operators
   ASSERT(hello == copyOfCopyOfHello);
@@ -658,6 +658,18 @@ void_t testFile()
     ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
     ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
     file.close();
+  }
+
+  // test file read all
+  {
+    File file;
+    ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
+    ASSERT(file.size() == sizeof(buffer) + sizeof(buffer2));
+    String data;
+    ASSERT(file.readAll(data));
+    ASSERT(data.length() * sizeof(tchar_t) == sizeof(buffer) + sizeof(buffer2));
+    ASSERT(Memory::compare((const tchar_t*)data, buffer, sizeof(buffer)) == 0);
+    ASSERT(Memory::compare((const byte_t*)(const tchar_t*)data + sizeof(buffer), buffer2, sizeof(buffer2)) == 0);
   }
 
   // test unlink

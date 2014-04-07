@@ -198,6 +198,22 @@ ssize_t File::read(void_t* buffer, size_t len)
 #endif
 }
 
+bool_t File::readAll(String& data)
+{
+  int64_t fileSize = size();
+  if(fileSize < 0)
+    return false;
+  data.resize((size_t)fileSize / sizeof(tchar_t));
+  size_t dataCount = read((tchar_t*)data, data.length() * sizeof(tchar_t));
+  if(dataCount < 0)
+  {
+    data.clear();
+    return false;
+  }
+  data.resize(dataCount / sizeof(tchar_t));
+  return true;
+}
+
 ssize_t File::write(const void_t* buffer, size_t len)
 {
 #ifdef _WIN32
@@ -368,11 +384,11 @@ String File::getRelativePath(const String& from, const String& to)
   String simFrom = simplifyPath(from);
   String simTo = simplifyPath(to);
   if(simFrom == simTo)
-    return String(".");
+    return String(_T("."));
   simFrom.append('/');
   if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
     return String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length());
-  String result("../");
+  String result(_T("../"));
   while(simFrom.length() > 0)
   {
     simFrom.resize(simFrom.length() - 1);
@@ -385,7 +401,7 @@ String File::getRelativePath(const String& from, const String& to)
       result.append(String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
       return result;
     }
-    result.append("../");
+    result.append(_T("../"));
   }
   return String();
 }

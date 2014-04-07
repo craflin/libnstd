@@ -49,6 +49,15 @@ public:
   */
   ssize_t read(void_t* buffer, size_t length);
 
+  /**
+  * Read all data from current read position till the end of the file.
+  *
+  * @param  [out] data  The data.
+  *
+  * @return Whether the data was successfully read.
+  */
+  bool_t readAll(String& data);
+
   ssize_t write(const void_t* buffer, size_t length);
 
   bool_t write(const String& data);
