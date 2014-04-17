@@ -707,7 +707,8 @@ bool_t Process::kill()
     SetLastError(ERROR_INVALID_HANDLE);
     return false;
   }
-  if(!TerminateProcess(hProcess, EXIT_FAILURE))
+  TerminateProcess(hProcess, EXIT_FAILURE);
+  if(WaitForSingleObject(hProcess, INFINITE) != WAIT_OBJECT_0)
     return false;
   CloseHandle((HANDLE)hProcess);
   hProcess = INVALID_HANDLE_VALUE;
@@ -718,8 +719,7 @@ bool_t Process::kill()
     errno = EINVAL;
     return false;
   }
-  if(::kill((pid_t)pid, SIGKILL) != 0)
-    return false;
+  ::kill((pid_t)pid, SIGKILL);
   int status;
   if(waitpid(pid, &status, 0) != (pid_t)pid)
     return false;
