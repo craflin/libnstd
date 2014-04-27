@@ -15,9 +15,9 @@ Time::Time(bool_t utc) : utc(utc)
   sec = tm->tm_sec;
   min = tm->tm_min;
   hour = tm->tm_hour;
-  mday = tm->tm_mday;
-  mon = tm->tm_mon;
-  year = tm->tm_year;
+  day = tm->tm_mday;
+  month = tm->tm_mon + 1;
+  year = tm->tm_year + 1900;
   wday = tm->tm_wday;
   yday = tm->tm_yday;
   dst = !!tm->tm_isdst;
@@ -30,9 +30,9 @@ Time::Time(timestamp_t time, bool_t utc) : utc(utc)
   sec = tm->tm_sec;
   min = tm->tm_min;
   hour = tm->tm_hour;
-  mday = tm->tm_mday;
-  mon = tm->tm_mon;
-  year = tm->tm_year;
+  day = tm->tm_mday;
+  month = tm->tm_mon + 1;
+  year = tm->tm_year + 1900;
   wday = tm->tm_wday;
   yday = tm->tm_yday;
   dst = !!tm->tm_isdst;
@@ -42,8 +42,8 @@ Time::Time(const Time& other) :
   sec(other.sec),
   min(other.min),
   hour(other.hour),
-  mday(other.mday),
-  mon(other.mon),
+  day(other.day),
+  month(other.month),
   year(other.year),
   wday(other.wday),
   yday(other.yday),
@@ -56,9 +56,9 @@ timestamp_t Time::toTimestamp()
   tm.tm_sec = sec;
   tm.tm_min = min;
   tm.tm_hour = hour;
-  tm.tm_mday = mday;
-  tm.tm_mon = mon;
-  tm.tm_year = year;
+  tm.tm_mday = day;
+  tm.tm_mon = month - 1;
+  tm.tm_year = year - 1900;
   tm.tm_wday = wday;
   tm.tm_yday = yday;
   tm.tm_isdst = dst;
@@ -97,8 +97,8 @@ bool_t Time::operator==(const Time& other) const
   return sec == other.sec &&
     min == other.min &&
     hour == other.hour &&
-    mday == other.mday &&
-    mon == other.mon &&
+    day == other.day &&
+    month == other.month &&
     year == other.year &&
     wday == other.wday &&
     yday == other.yday &&
@@ -111,8 +111,8 @@ bool_t Time::operator!=(const Time& other) const
   return sec != other.sec ||
     min != other.min ||
     hour != other.hour ||
-    mday != other.mday ||
-    mon != other.mon ||
+    day != other.day ||
+    month != other.month ||
     year != other.year ||
     wday != other.wday ||
     yday != other.yday ||
@@ -144,9 +144,9 @@ String Time::toString(const tchar_t* format)
   tm.tm_sec = sec;
   tm.tm_min = min;
   tm.tm_hour = hour;
-  tm.tm_mday = mday;
-  tm.tm_mon = mon;
-  tm.tm_year = year;
+  tm.tm_mday = day;
+  tm.tm_mon = month - 1;
+  tm.tm_year = year - 1900;
   tm.tm_wday = wday;
   tm.tm_yday = yday;
   tm.tm_isdst = dst;
@@ -170,12 +170,12 @@ String Time::toString(const tchar_t* format)
   return result;
 }
 
-String Time::toString(timestamp_t time, const tchar_t* format)
+String Time::toString(timestamp_t time, const tchar_t* format, bool_t utc)
 {
   if(!*format)
     return String();
   time_t timet = (time_t)(time / 1000);
-  const tm* tms = localtime(&timet);
+  const tm* tms = utc ? ::gmtime(&timet) : ::localtime(&timet);
   String result(256);
   if(!tms)
     return result;
