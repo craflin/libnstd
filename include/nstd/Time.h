@@ -18,7 +18,7 @@ public:
   bool_t dst;
   bool_t utc;
 
-  Time(bool_t utc = false);
+  explicit Time(bool_t utc = false);
   Time(timestamp_t time, bool_t utc = false);
   Time(const Time& other);
 
