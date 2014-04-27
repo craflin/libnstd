@@ -53,8 +53,6 @@ bool_t Semaphore::wait()
 #endif
 }
 
-#include <string.h>
-#include <stdio.h>
 bool_t Semaphore::wait(timestamp_t timeout)
 {
 #ifdef _WIN32
@@ -78,7 +76,7 @@ bool_t Semaphore::wait(timestamp_t timeout)
     return true;
   }
 no_sem_timedwait:
-  // TODO: this sucks, find a better way to do this
+  // TODO: this sucks, find a better way to do something like this:
   for(int i = 0; i < timeout; i += 10)
   {
     if(sem_trywait((sem_t*)&handle) != -1)
