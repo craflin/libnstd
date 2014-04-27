@@ -263,6 +263,7 @@ void_t testHashSet()
   ASSERT(mySet.isEmpty());
   ASSERT(mySet.begin() == mySet.end());
   mySet.append(1);
+  ASSERT(mySet.contains(1));
   mySet.append(2);
   mySet.append(3);
   ASSERT(mySet.begin() != mySet.end());
@@ -508,6 +509,7 @@ void_t testHashMap()
   HashMap<int_t, int_t> myMap;
   ASSERT(myMap.isEmpty());
   myMap.append(123, 123);
+  ASSERT(myMap.contains(123));
   myMap.append(123, 125);
   ASSERT(myMap.size() == 1);
   ASSERT(*myMap.find(123) == 125);

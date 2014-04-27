@@ -116,7 +116,9 @@ public:
     }
     return _end;
   }
-  
+
+  bool_t contains(const T& key) const {return find(key) != _end;}
+
   Iterator insert(const Iterator& position, const T& key, const V& value)
   {
     Iterator it = find(key);
