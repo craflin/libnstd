@@ -45,7 +45,7 @@ public:
   {
     endItem.prev = 0;
     endItem.next = 0;
-    _size |= (size_t)!_size;
+    capacity |= (size_t)!capacity;
   }
 
   ~HashSet()
