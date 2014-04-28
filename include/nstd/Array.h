@@ -145,6 +145,21 @@ public:
     }
   }
 
+  void_t swap(Array& other)
+  {
+    T* tmpFirst = _begin.item;
+    T* tmpEnd = _end.item;
+    size_t tmpCapacity = _capacity;
+
+    _begin.item = other._begin.item;
+    _end.item = other._end.item;
+    _capacity = other._capacity;
+
+    other._begin.item = tmpFirst;
+    other._end.item = tmpEnd;
+    other._capacity = tmpCapacity;
+  }
+
   T& append(const T& value)
   {
     size_t size = _end.item - _begin.item;

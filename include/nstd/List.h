@@ -93,6 +93,37 @@ public:
     _size = 0;
   }
 
+  void_t swap(List& other)
+  {
+    Item* tmpFirst = _begin.item;
+    Item* tmpLast = endItem.prev;
+    size_t tmpSize = _size;
+    Item* tmpFreeItem = freeItem;
+    ItemBlock* tmpBlocks = blocks;
+
+    if((endItem.prev = other.endItem.prev))
+    {
+      endItem.prev->next = &endItem;
+      _begin.item = other._begin.item;
+    }
+    else
+      _begin.item = &endItem;
+    _size = other._size;
+    freeItem = other.freeItem;
+    blocks = other.blocks;
+
+    if((other.endItem.prev = tmpLast))
+    {
+      tmpLast->next = &other.endItem;
+      other._begin.item = tmpFirst;
+    }
+    else
+      other._begin.item = &other.endItem;
+    other._size = tmpSize;
+    other.freeItem = tmpFreeItem;
+    other.blocks = tmpBlocks;
+  }
+
   Iterator find(const T& value) const
   {
     for(const Item* i = _begin.item, * end = &endItem; i != end; i = i->next)

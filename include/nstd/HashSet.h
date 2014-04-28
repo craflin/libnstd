@@ -99,6 +99,43 @@ public:
     _size = 0;
   }
 
+  void_t swap(HashSet& other)
+  {
+    Item* tmpFirst = _begin.item;
+    Item* tmpLast = endItem.prev;
+    size_t tmpSize = _size;
+    size_t tmpCapacity = capacity;
+    Item** tmpData = data;
+    Item* tmpFreeItem = freeItem;
+    ItemBlock* tmpBlocks = blocks;
+
+    if((endItem.prev = other.endItem.prev))
+    {
+      endItem.prev->next = &endItem;
+      _begin.item = other._begin.item;
+    }
+    else
+      _begin.item = &endItem;
+    _size = other._size;
+    capacity = other.capacity;
+    data = other.data;
+    freeItem = other.freeItem;
+    blocks = other.blocks;
+
+    if((other.endItem.prev = tmpLast))
+    {
+      tmpLast->next = &other.endItem;
+      other._begin.item = tmpFirst;
+    }
+    else
+      other._begin.item = &other.endItem;
+    other._size = tmpSize;
+    other.capacity = tmpCapacity;
+    other.data = tmpData;
+    other.freeItem = tmpFreeItem;
+    other.blocks = tmpBlocks;
+  }
+
   Iterator find(const T& key) const
   {
     if(!data) return _end;

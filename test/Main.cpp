@@ -260,6 +260,7 @@ void_t testString()
 void_t testHashSet()
 {
   HashSet<int_t> mySet;
+  mySet.swap(HashSet<int_t>());
   ASSERT(mySet.isEmpty());
   ASSERT(mySet.begin() == mySet.end());
   mySet.append(1);
@@ -400,6 +401,7 @@ void_t testList()
 {
   // test list append
   List<String> myList;
+  myList.swap(List<String>());
   ASSERT(myList.isEmpty());
   myList.append(_T("string1"));
   myList.append(_T("string2"));
@@ -507,6 +509,7 @@ void_t testHashMap()
 {
   // test append
   HashMap<int_t, int_t> myMap;
+  myMap.swap(HashMap<int_t, int_t>());
   ASSERT(myMap.isEmpty());
   myMap.append(123, 123);
   ASSERT(myMap.contains(123));
@@ -736,6 +739,7 @@ void_t testArray()
 {
   // test append
   Array<int> myArray;
+  myArray.swap(Array<int>());
   ASSERT(myArray.isEmpty());
   ASSERT(myArray.size() == 0);
   ASSERT(myArray.append(123) == 123);
