@@ -13,7 +13,7 @@ extern "C" long _InterlockedExchange(long volatile*, long);
 extern "C" __int64 _InterlockedIncrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedDecrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __int64);
-extern "C" __int64 _InterlockedExchange(__int64 volatile*, __int64);
+extern "C" __int64 _InterlockedExchange64(__int64 volatile*, __int64);
 #endif
 #endif
 
