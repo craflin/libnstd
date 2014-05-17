@@ -4,11 +4,16 @@
 #include <nstd/Base.h>
 
 #ifdef _MSC_VER
-extern "C" long _InterlockedIncrement(long volatile *Addend);
-extern "C" long _InterlockedDecrement(long volatile *Addend);
+extern "C" long _InterlockedIncrement(long volatile*);
+extern "C" long _InterlockedDecrement(long volatile*);
+extern "C" long _InterlockedCompareExchange(long volatile*, long, long);
+extern "C" void* _InterlockedCompareExchangePointer(void* volatile*, void*, void*);
+extern "C" long _InterlockedExchange(long volatile*, long);
 #ifdef _M_AMD64
-extern "C" __int64 _InterlockedIncrement64(__int64 volatile *Addend);
-extern "C" __int64 _InterlockedDecrement64(__int64 volatile *Addend);
+extern "C" __int64 _InterlockedIncrement64(__int64 volatile*);
+extern "C" __int64 _InterlockedDecrement64(__int64 volatile*);
+extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __int64);
+extern "C" __int64 _InterlockedExchange(__int64 volatile*, __int64);
 #endif
 #endif
 
@@ -141,6 +146,100 @@ public:
   }
 #endif
 
+  static inline int32_t compareAndSwap(int32_t volatile& var, int32_t oldVal, int32_t newVal)
+  {
+#ifdef _MSC_VER
+    return (int32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
+#else
+    return __sync_val_compare_and_swap(var, oldVal, newVal);
+#endif
+  }
+
+  static inline uint32_t compareAndSwap(uint32_t volatile& var, uint32_t oldVal, uint32_t newVal)
+  {
+#ifdef _MSC_VER
+    return (uint32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
+#else
+    return __sync_val_compare_and_swap(var, oldVal, newVal);
+#endif
+  }
+
+#if defined(_MSC_VER) && !defined(_M_AMD64)
+  static int64_t compareAndSwap(int64_t volatile& var, int64_t oldVal, int64_t newVal);
+#else
+  static inline int64_t compareAndSwap(int64_t volatile& var, int64_t oldVal, int64_t newVal)
+  {
+#ifdef _MSC_VER
+    return _InterlockedCompareExchange64((volatile __int64*)&var, newVal, oldVal);
+#else
+    return __sync_val_compare_and_swap(var, oldVal, newVal);
+#endif
+  }
+#endif
+
+#if defined(_MSC_VER) && !defined(_M_AMD64)
+  static uint64_t compareAndSwap(uint64_t volatile& var, uint64_t oldVal, uint64_t newVal);
+#else
+  static inline uint64_t compareAndSwap(uint64_t volatile& var, uint64_t oldVal, uint64_t newVal)
+  {
+#ifdef _MSC_VER
+    return (uint64_t)_InterlockedCompareExchange64((volatile __int64*)&var, (__int64)newVal, (__int64)oldVal);
+#else
+    return __sync_val_compare_and_swap(var, oldVal, newVal);
+#endif
+  }
+#endif
+
+  static inline void* compareAndSwap(void* volatile& ptr, void* oldVal, void* newVal)
+  {
+#ifdef _MSC_VER
+    return _InterlockedCompareExchangePointer(&ptr, newVal, oldVal);
+#else
+    return __sync_val_compare_and_swap(&ptr, oldVal, newVal);
+    //void *prev;
+    //__asm__ __volatile__ ("lock ; cmpxchg %3,%4"
+    //                      : "=a" (prev), "=m" (*ptr)
+    //                      : "0" (oldVal), "q" (newVal), "m" (*ptr) : "memory");
+    //return prev;
+#endif
+  }
+
+  template <class T> static inline T* compareAndSwap(T* volatile& ptr, T* oldVal, T* newVal)
+  {
+#ifdef _MSC_VER
+    return (T*)_InterlockedCompareExchangePointer((void* volatile*)&ptr, (void*)newVal, (void*)oldVal);
+#else
+    return __sync_val_compare_and_swap(&ptr, oldVal, newVal);
+    //void *prev;
+    //__asm__ __volatile__ ("lock ; cmpxchg %3,%4"
+    //                      : "=a" (prev), "=m" (*ptr)
+    //                      : "0" (oldVal), "q" (newVal), "m" (*ptr) : "memory");
+    //return prev;
+#endif
+  }
+
+  static inline int32_t swap(int32_t volatile& var,  int32_t val)
+  {
+#ifdef _MSC_VER
+    return (int32_t)_InterlockedExchange((long volatile*)&var, (long)val);
+#else
+    return __sync_lock_test_and_set(ptr, val);
+#endif
+  }
+
+  static inline uint32_t swap(uint32_t volatile& var,  uint32_t val)
+  {
+#ifdef _MSC_VER
+    return (uint32_t)_InterlockedExchange((long volatile*)&var, (long)val);
+#else
+    return __sync_lock_test_and_set(ptr, val);
+#endif
+  }
+
+  // todo: swap(int64_t ...
+  // todo: swap(uint64_t ...
+  // todo: swap(void* ...
+
   /*
   static inline void* swapPtr(void* volatile* ptr, void *val)
   {
@@ -155,14 +254,7 @@ public:
 #endif
   }
 
-  static inline int swapInt(int volatile* ptr,  int val)
-  {
-#ifdef _MSC_VER
-    return InterlockedExchange((long volatile*)ptr, (long)val);
-#else
-    return __sync_lock_test_and_set(ptr, val);
-#endif
-  }
+
 
   static inline int testAndSetInt(int volatile* ptr)
   {
@@ -187,29 +279,6 @@ public:
 #endif
   }
 
-  static inline void* compareAndSwapPtr(void* volatile* ptr, void* oldVal, void* newVal)
-  {
-#ifdef _MSC_VER
-    return InterlockedCompareExchangePointer(ptr, newVal, oldVal);
-#else
-    return __sync_val_compare_and_swap(ptr, oldVal, newVal);
-    //void *prev;
-    //__asm__ __volatile__ ("lock ; cmpxchg %3,%4"
-    //                      : "=a" (prev), "=m" (*ptr)
-    //                      : "0" (oldVal), "q" (newVal), "m" (*ptr) : "memory");
-    //return prev;
-#endif
-  }
-
-  static inline int compareAndSwapInt(int volatile* ptr, int oldVal, int newVal)
-  {
-#ifdef _MSC_VER
-    return InterlockedCompareExchange((long volatile*)ptr, (long)newVal, (long)oldVal);
-#else
-    return __sync_val_compare_and_swap(ptr, oldVal, newVal);
-#endif
-  }
-
   static void inline memoryBarrier() 
   {
 #ifdef _MSC_VER
@@ -220,5 +289,6 @@ public:
     // or do something with XCHG // without SSE2
 #endif
   }
+
   */
 };
