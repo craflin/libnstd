@@ -9,11 +9,14 @@ extern "C" long _InterlockedDecrement(long volatile*);
 extern "C" long _InterlockedCompareExchange(long volatile*, long, long);
 extern "C" void* _InterlockedCompareExchangePointer(void* volatile*, void*, void*);
 extern "C" long _InterlockedExchange(long volatile*, long);
+extern "C" long _InterlockedAdd(long volatile*, long);
+extern "C" long _InterlockedOr(long volatile*, long);
 #ifdef _M_AMD64
 extern "C" __int64 _InterlockedIncrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedDecrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __int64);
 extern "C" __int64 _InterlockedExchange64(__int64 volatile*, __int64);
+extern "C" __int64 _InterlockedAdd64(__int64 volatile*, __int64);
 #endif
 #endif
 
@@ -223,7 +226,7 @@ public:
 #ifdef _MSC_VER
     return (int32_t)_InterlockedExchange((long volatile*)&var, (long)val);
 #else
-    return __sync_lock_test_and_set(ptr, val);
+    return __sync_lock_test_and_set(&var, val);
 #endif
   }
 
@@ -232,7 +235,7 @@ public:
 #ifdef _MSC_VER
     return (uint32_t)_InterlockedExchange((long volatile*)&var, (long)val);
 #else
-    return __sync_lock_test_and_set(ptr, val);
+    return __sync_lock_test_and_set(&var, val);
 #endif
   }
 
@@ -251,6 +254,33 @@ public:
 
   // todo: testAndSet uint32_t int64_t ...
 
+  static inline int32_t fetchAndAdd(int32_t volatile& var, int32_t val)
+  {
+#ifdef _MSC_VER
+    return (int32_t)_InterlockedAdd((long volatile*)&var, (long)val);
+#else
+    return __sync_fetch_and_add(ptr, val);
+    //unsigned int result;
+    //__asm__ __volatile__ ("lock; xaddl %0, %1" :
+    //                      "=r" (result), "=m" (*ptr) : "0" (val), "m" (*ptr)
+    //                      : "memory");
+    //return result;
+#endif
+  }
+
+  static inline uint32_t fetchAndAdd(uint32_t volatile& var, uint32_t val)
+  {
+#ifdef _MSC_VER
+    return (uint32_t)_InterlockedAdd((long volatile*)&var, (long)val);
+#else
+    return __sync_fetch_and_add(ptr, val);
+    //unsigned int result;
+    //__asm__ __volatile__ ("lock; xaddl %0, %1" :
+    //                      "=r" (result), "=m" (*ptr) : "0" (val), "m" (*ptr)
+    //                      : "memory");
+    //return result;
+#endif
+  }
 
   /*
   static inline void* swapPtr(void* volatile* ptr, void *val)
@@ -265,34 +295,16 @@ public:
     //return val;
 #endif
   }
-
-
-
-
-  static inline int fetchAndAddInt(int volatile* ptr, int val)
-  {
-#ifdef _MSC_VER
-    return InterlockedAdd((long volatile*)ptr, (long)val);
-#else
-    return __sync_fetch_and_add(ptr, val);
-    //unsigned int result;
-    //__asm__ __volatile__ ("lock; xaddl %0, %1" :
-    //                      "=r" (result), "=m" (*ptr) : "0" (val), "m" (*ptr)
-    //                      : "memory");
-    //return result;
-#endif
-  }
-
+  */
   static void inline memoryBarrier() 
   {
 #ifdef _MSC_VER
-    MemoryBarrier();
+    long barrier;
+    _InterlockedOr(&barrier, 0);
 #else
     __sync_synchronize();
     //__asm__ __volatile__("mfence" : : : "memory"); // SSE2
     // or do something with XCHG // without SSE2
 #endif
   }
-
-  */
 };
