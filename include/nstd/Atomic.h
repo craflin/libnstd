@@ -240,6 +240,18 @@ public:
   // todo: swap(uint64_t ...
   // todo: swap(void* ...
 
+  static inline int32_t testAndSet(int32_t volatile& var)
+  {
+#ifdef _MSC_VER
+    return (int32_t)_InterlockedExchange((long volatile*)&var, 1);
+#else
+    return __sync_lock_test_and_set(&var, 1);
+#endif
+  }
+
+  // todo: testAndSet uint32_t int64_t ...
+
+
   /*
   static inline void* swapPtr(void* volatile* ptr, void *val)
   {
@@ -256,14 +268,6 @@ public:
 
 
 
-  static inline int testAndSetInt(int volatile* ptr)
-  {
-#ifdef _MSC_VER
-    return InterlockedExchange((long volatile*)ptr, 1);
-#else
-    return __sync_lock_test_and_set(ptr, 1);
-#endif
-  }
 
   static inline int fetchAndAddInt(int volatile* ptr, int val)
   {
