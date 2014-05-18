@@ -6,6 +6,31 @@
 #endif
 
 #include <nstd/Time.h>
+#ifdef _WIN32
+#include <nstd/Debug.h>
+#endif
+
+#ifdef _WIN32
+#pragma warning(disable: 4073)
+#pragma init_seg(lib)
+class _Time
+{
+public:
+  static timestamp_t perfFreq;
+
+private:
+  static _Time data;
+
+  _Time()
+  {
+    LARGE_INTEGER li;
+    VERIFY(QueryPerformanceFrequency(&li));
+    perfFreq = li.QuadPart / 1000000LL;
+  }
+};
+_Time _Time::data;
+timestamp_t _Time::perfFreq;
+#endif
 
 Time::Time(bool_t utc) : utc(utc)
 {
@@ -133,6 +158,17 @@ timestamp_t Time::ticks()
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
   return (timestamp_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+#endif
+}
+
+timestamp_t Time::microTicks()
+{
+#ifdef _WIN32
+  LARGE_INTEGER li;
+  VERIFY(QueryPerformanceCounter(&li));
+  return li.QuadPart / _Time::perfFreq;
+#else
+  // todo
 #endif
 }
 

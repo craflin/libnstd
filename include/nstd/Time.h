@@ -42,5 +42,7 @@ public:
   */
   static timestamp_t ticks();
 
+  static timestamp_t microTicks();
+
   static String toString(timestamp_t time, const tchar_t* format, bool_t utc = false);
 };
