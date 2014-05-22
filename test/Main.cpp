@@ -1225,10 +1225,17 @@ void_t testMap()
         map.remove(testRmPos);
     }
     lastKey = map.begin().key();
+    size_t count = 1;
     for(Map<int32_t, int32_t>::Iterator k = ++Map<int32_t, int32_t>::Iterator(map.begin()), end = map.end(); k != end; ++k)
     {
       ASSERT(k.key() > lastKey);
       lastKey = k.key();
+      ++count;
+    }
+    ASSERT(count == map.size());
+    for(Map<int32_t, int32_t>::Iterator i = map.begin(), end = map.end(); i != end; ++i)
+    {
+      ASSERT(map.find(i.key()) != map.end());
     }
   }
 }
