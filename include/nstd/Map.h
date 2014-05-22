@@ -126,16 +126,6 @@ public:
     Item* left = item->left;
     Item* right = item->right;
 
-    Item* prev = item->prev;
-    Item* next = item->next; // todo: use freeItem stuff
-
-    if(!item->prev)
-      (_begin.item = item->next)->prev = 0;
-    else
-      (item->prev->next = item->next)->prev = item->prev;
-    --_size;
-    delete item;
-
     if(!left && !right)
     {
       *cell = 0;
@@ -158,6 +148,7 @@ public:
 
     if(left->height < right->height)
     {
+      Item* next = item->next;
       ASSERT(!next->left);
       Item* nextParent = next->parent;
       if(nextParent == item)
@@ -198,6 +189,7 @@ public:
     }
     else
     {
+      Item* prev = item->prev;
       ASSERT(!prev->right);
       Item* prevParent = prev->parent;
       if(prevParent == item)
@@ -257,6 +249,16 @@ public:
       rebal(parent);
       parent = parentParent;
     }
+
+    Item* next = item->next; // todo: use freeItem stuff
+
+    if(!item->prev)
+      (_begin.item = item->next)->prev = 0;
+    else
+      (item->prev->next = item->next)->prev = item->prev;
+    --_size;
+    delete item;
+
     return next;
   }
 
