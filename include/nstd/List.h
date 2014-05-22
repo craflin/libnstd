@@ -81,9 +81,8 @@ public:
 
   void_t clear()
   {
-    for(Item* i = _begin.item, * end = &endItem, * next; i != end; i = next)
+    for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
-      next = i->next;
       i->~Item();
       i->prev = freeItem;
       freeItem = i;
