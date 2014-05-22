@@ -325,7 +325,6 @@ private:
         item->next = insertPos;
         insertPos->prev = item;
 
-        int_t loopCount = 0; // todo: remove this debug code
         do
         {
           size_t oldHeight = parent->height;
@@ -335,7 +334,6 @@ private:
           Item* parentParent = parent->parent;
           rebal(parent);
           parent = parentParent;
-          ++loopCount;
         } while(parent);
       }
       return item;
@@ -344,14 +342,12 @@ private:
     {
       if(key > position->key)
       {
-        //return insert(&position->right, position, key, value); // todo: remove bug find code:
         cell = &position->right;
         parent = position;
         goto begin;
       }
       else if(key < position->key)
       {
-        //return insert(&position->left, position, key, value); // todo: remove bug find code:
         cell = &position->left;
         parent = position;
         goto begin;
@@ -373,8 +369,6 @@ private:
       Item*& cell = parent ? (parent->left == item ? parent->left : parent->right) : root;
       ASSERT(cell == item);
       shiftr(cell);
-      item->updateHeightAndSlope(); // todo: remove bug find code
-      cell->updateHeightAndSlope(); // todo: remove bug find code
       ASSERT((cell->slope < 0 ? -cell->slope : cell->slope) <= 1);
     }
     else if(item->slope < -1)
@@ -384,16 +378,12 @@ private:
       Item*& cell = parent ? (parent->left == item ? parent->left : parent->right) : root;
       ASSERT(cell == item);
       shiftl(cell);
-      item->updateHeightAndSlope(); // todo: remove bug find code
-      cell->updateHeightAndSlope(); // todo: remove bug find code
       ASSERT((cell->slope < 0 ? -cell->slope : cell->slope) <= 1);
     }
   }
   
   static void_t rotr(Item*& cell)
   {
-    size_t oldHeight = cell->height; // todo: remove bug find code:
-
     Item* oldTop = cell;
     Item* result = oldTop->left;
     Item* tmp = result->right;
@@ -405,23 +395,10 @@ private:
     cell = result;
     oldTop->updateHeightAndSlope();
     result->updateHeightAndSlope();
-    ASSERT(result->height <= oldHeight);
-
-    // todo: remove bug find code:
-    if(result->left)
-      result->left->updateHeightAndSlope();
-    if(result->right)
-      result->right->updateHeightAndSlope();
-    if(oldTop->left)
-      oldTop->left->updateHeightAndSlope();
-    if(oldTop->right)
-      oldTop->right->updateHeightAndSlope();
   }
   
   static void_t rotl(Item*& cell)
   {
-    size_t oldHeight = cell->height; // todo: remove bug find code:
-
     Item* oldTop = cell;
     Item* result = oldTop->right;
     Item* tmp = result->left;
@@ -433,17 +410,6 @@ private:
     cell = result;
     oldTop->updateHeightAndSlope();
     result->updateHeightAndSlope();
-    ASSERT(result->height <= oldHeight);
-
-    // todo: remove bug find code:
-    if(result->left)
-      result->left->updateHeightAndSlope();
-    if(result->right)
-      result->right->updateHeightAndSlope();
-    if(oldTop->left)
-      oldTop->left->updateHeightAndSlope();
-    if(oldTop->right)
-      oldTop->right->updateHeightAndSlope();
   }
   
   static void_t shiftr(Item*& cell)
