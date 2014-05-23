@@ -1206,7 +1206,7 @@ void_t testMap()
     for(int_t i = 0; i < 10000; ++i)
     {
       Map<int32_t, int32_t>::Iterator testInsertPos = map.find(rand() % 100);
-      map.insert(testInsertPos, i, 123);
+      map.insert(testInsertPos, i % 100, 123);
     }
     int_t lastKey = map.begin().key();
     for(Map<int32_t, int32_t>::Iterator k = ++Map<int32_t, int32_t>::Iterator(map.begin()), end = map.end(); k != end; ++k)
@@ -1214,15 +1214,14 @@ void_t testMap()
       ASSERT(k.key() > lastKey);
       lastKey = k.key();
     }
-    for(int_t i = 0; i < 50; ++i)
+    int item;
+    for(int_t i = 0; i < 5000; ++i)
     {
       Map<int32_t, int32_t>::Iterator testRmPos = map.find(rand() % 100);
-      if(i == 28 || i == 46)
-      {
-        int k = 42;
-      }
       if (testRmPos != map.end())
         map.remove(testRmPos);
+      item = rand() % 100;
+      map.insert(item, 123);
     }
     lastKey = map.begin().key();
     size_t count = 1;

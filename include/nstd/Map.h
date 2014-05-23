@@ -109,6 +109,23 @@ public:
     return insert(&root, 0, key, value);
   }
 
+  void checkTree(Item* item, Item* parent)
+  {
+    ASSERT(item->parent == parent);
+    size_t height = item->height;
+    ssize_t slope = item->slope;
+    if(item->left)
+      checkTree(item->left, item);
+    if(item->right)
+      checkTree(item->right, item);
+    size_t leftHeight = item->left ? item->left->height : 0;
+    size_t rightHeight = item->right ? item->right->height : 0;
+    ASSERT(height == (leftHeight > rightHeight ? leftHeight : rightHeight) + 1);
+    ASSERT(slope == leftHeight - rightHeight);
+    ASSERT(slope <= 1);
+    ASSERT(slope >= -1);
+  }
+
   void_t remove(const T& key)
   {
     Iterator it = find(key);
@@ -125,6 +142,11 @@ public:
     ASSERT(*cell == item);
     Item* left = item->left;
     Item* right = item->right;
+
+    if (item->key == 54)
+    {
+      int k = 42;
+    }
 
     if(!left && !right)
     {
@@ -234,20 +256,20 @@ public:
     do
     {
       parent->updateHeightAndSlope();
-      Item* parentParent = parent->parent;
-      rebal(parent);
-      parent = parentParent;
+      parent = rebal(parent);
+      // wenn sich parent->height hier nicht verändert hat, dann kann ich doch direkt
+      // zu *cell springen, oder?
+      parent = parent->parent;
     } while(parent != origParent);
   rebalParentUpwards:
     while(parent)
     {
       size_t oldHeight = parent->height;
       parent->updateHeightAndSlope();
-      if(parent->height == oldHeight)
+      parent = rebal(parent);
+      if(oldHeight == parent->height)
         break;
-      Item* parentParent = parent->parent;
-      rebal(parent);
-      parent = parentParent;
+      parent = parent->parent;
     }
 
     Item* next = item->next; // todo: use freeItem stuff
@@ -257,8 +279,11 @@ public:
     else
       (item->prev->next = item->next)->prev = item->prev;
     --_size;
-    delete item;
 
+
+
+    checkTree(root, 0);
+    delete item;
     return next;
   }
 
@@ -327,17 +352,19 @@ private:
         item->next = insertPos;
         insertPos->prev = item;
 
+        // neu:
+        size_t oldHeight;
         do
         {
-          size_t oldHeight = parent->height;
+          oldHeight = parent->height;
           parent->updateHeightAndSlope();
-          if(parent->height == oldHeight)
+          parent = rebal(parent);
+          if(oldHeight == parent->height)
             break;
-          Item* parentParent = parent->parent;
-          rebal(parent);
-          parent = parentParent;
+          parent = parent->parent;
         } while(parent);
       }
+      checkTree(root, 0);
       return item;
     }
     else
@@ -357,12 +384,13 @@ private:
       else
       {
         position->value = value;
+        checkTree(root, 0);
         return position;
       }
     }
   }
   
-  void_t rebal(Item* item)
+  Item* rebal(Item* item)
   {
     if(item->slope > 1)
     {
@@ -372,6 +400,7 @@ private:
       ASSERT(cell == item);
       shiftr(cell);
       ASSERT((cell->slope < 0 ? -cell->slope : cell->slope) <= 1);
+      return cell;
     }
     else if(item->slope < -1)
     {
@@ -381,7 +410,9 @@ private:
       ASSERT(cell == item);
       shiftl(cell);
       ASSERT((cell->slope < 0 ? -cell->slope : cell->slope) <= 1);
+      return cell;
     }
+    return item;
   }
   
   static void_t rotr(Item*& cell)
