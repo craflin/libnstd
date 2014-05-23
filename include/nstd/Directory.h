@@ -1,6 +1,8 @@
 /**
 * @file Directory.h
-* Declaration of a class for accessing directories.
+*
+* Declaration of a class to access a directory.
+*
 * @author Colin Graf
 */
 
@@ -8,31 +10,35 @@
 
 #include <nstd/String.h>
 
-/** A Class for accessing directories */
+/** A Class to access a directory. */
 class Directory
 {
 public:
 
-  /** Default constructor */
+  /** Default constructor. */
   Directory();
 
-  /** Destructor */
+  /** Destructor. */
   ~Directory();
 
   /**
-  * Opens a directory for searching for files in the directory
-  * @param dirpath The path to the directory to search in
-  * @param pattern A search pattern like "*.inf"
-  * @param dirsOnly Search only for directories and ignore files
-  * @return Whether the directory was opened successfully
+  * Open a directory to search for files in the directory.
+  *
+  * @param  [in] dirpath  The path to the directory to be searched.
+  * @param  [in] pattern  A search pattern (e.g. "*.inf").
+  * @param  [in] dirsOnly Whether the search should ignore files and should only include directories.
+  *
+  * @return \c true when the directory was successfully opened.
   */
   bool_t open(const String& dirpath, const String& pattern, bool_t dirsOnly);
 
   /**
-  * Searches the next matching entry in the opened directory
-  * @param path The path of the next matching entry
-  * @param isDir Whether the next entry is a directory
-  * @return Whether a matching entry was found
+  * Search for the next matching entry in the opened directory.
+  *
+  * @param  [out] path  The path of the next matching entry.
+  * @param  [out] isDir Whether the entry is a directory or not.
+  *
+  * @return \c true when matching entry was found.
   */
   bool_t read(String& path, bool_t& isDir);
 
@@ -47,7 +53,7 @@ public:
   *
   * @param  [in] dir  The path to the directory.
   *
-  * @return Whether the directory was successfully deleted. If not, use Error::getLastError() to determine why.
+  * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
   */
   static bool_t unlink(const String& dir);
 
@@ -65,12 +71,12 @@ private:
   char_t ffd[320]; /**< Buffer for WIN32_FIND_DATA */
 #endif
   bool_t bufferedEntry; /**< Whether there is a buffered search result in ffd. */
-  String dirpath; /**< The name of the directory. */
-  String pattern; /**< A search pattern like "*.inf" */
+  String dirpath; /**< The path to the directory to be searched. */
+  String pattern; /**< A search pattern (e.g. "*.inf") */
 #else
   void_t* dp; /**< Directory descriptor. */
-  String dirpath; /**< The path to the directory to search in */
-  String pattern; /**< A search pattern like "*.inf" */
+  String dirpath; /**< The path to the directory to be searched. */
+  String pattern; /**< A search pattern (e.g. "*.inf"). */
 #endif
 
   Directory(const Directory&);
