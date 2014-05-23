@@ -37,6 +37,12 @@ public:
     endItem.next = 0;
   }
 
+  ~Map()
+  {
+    clear();
+    // todo: freeItem stuff
+  }
+
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
@@ -51,6 +57,26 @@ public:
 
   size_t size() const {return _size;}
   bool_t isEmpty() const {return !root;}
+
+  void_t clear()
+  {
+    //for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
+    //{
+    //  i->~Item();
+    //  i->prev = freeItem;
+    //  freeItem = i;
+    //}
+    // todo: freeItem stuff
+    for(Item* i = _begin.item, * end = &endItem, *next; i != end; i = next)
+    {
+      next = i->next;
+      i->~Item();
+      delete i;
+    }
+    _begin.item = &endItem;
+    endItem.prev = 0;
+    _size = 0;
+  }
 
   Iterator find(const T& key) const
   {
