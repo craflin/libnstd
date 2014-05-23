@@ -168,7 +168,9 @@ timestamp_t Time::microTicks()
   VERIFY(QueryPerformanceCounter(&li));
   return li.QuadPart / _Time::perfFreq;
 #else
-  // todo
+  struct timespec ts;
+  clock_gettime(CLOCK_MONOTONIC, &ts);
+  return (timestamp_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 #endif
 }
 
