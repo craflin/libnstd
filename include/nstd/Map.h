@@ -109,22 +109,22 @@ public:
     return insert(&root, 0, key, value);
   }
 
-  void checkTree(Item* item, Item* parent)
-  {
-    ASSERT(item->parent == parent);
-    size_t height = item->height;
-    ssize_t slope = item->slope;
-    if(item->left)
-      checkTree(item->left, item);
-    if(item->right)
-      checkTree(item->right, item);
-    size_t leftHeight = item->left ? item->left->height : 0;
-    size_t rightHeight = item->right ? item->right->height : 0;
-    ASSERT(height == (leftHeight > rightHeight ? leftHeight : rightHeight) + 1);
-    ASSERT(slope == leftHeight - rightHeight);
-    ASSERT(slope <= 1);
-    ASSERT(slope >= -1);
-  }
+  //void checkTree(Item* item, Item* parent)
+  //{
+  //  ASSERT(item->parent == parent);
+  //  size_t height = item->height;
+  //  ssize_t slope = item->slope;
+  //  if(item->left)
+  //    checkTree(item->left, item);
+  //  if(item->right)
+  //    checkTree(item->right, item);
+  //  size_t leftHeight = item->left ? item->left->height : 0;
+  //  size_t rightHeight = item->right ? item->right->height : 0;
+  //  ASSERT(height == (leftHeight > rightHeight ? leftHeight : rightHeight) + 1);
+  //  ASSERT(slope == leftHeight - rightHeight);
+  //  ASSERT(slope <= 1);
+  //  ASSERT(slope >= -1);
+  //}
 
   void_t remove(const T& key)
   {
@@ -142,11 +142,6 @@ public:
     ASSERT(*cell == item);
     Item* left = item->left;
     Item* right = item->right;
-
-    if (item->key == 54)
-    {
-      int k = 42;
-    }
 
     if(!left && !right)
     {
@@ -280,9 +275,6 @@ public:
       (item->prev->next = item->next)->prev = item->prev;
     --_size;
 
-
-
-    checkTree(root, 0);
     delete item;
     return next;
   }
@@ -364,7 +356,6 @@ private:
           parent = parent->parent;
         } while(parent);
       }
-      checkTree(root, 0);
       return item;
     }
     else
@@ -384,7 +375,6 @@ private:
       else
       {
         position->value = value;
-        checkTree(root, 0);
         return position;
       }
     }
