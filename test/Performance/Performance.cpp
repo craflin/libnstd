@@ -4,6 +4,9 @@
 
 void testMapStd(int iterations);
 void_t testMapNStd(int iterations);
+void testHashMapStd(int iterations);
+void_t testHashMapNStd(int iterations);
+
 
 const int mapTestIterations = 1000000;
 
@@ -23,6 +26,21 @@ int_t main(int_t argc, char_t* argv[])
       Console::printf(_T("testMapNStd... "));
       timestamp_t startTime = Time::microTicks();
       testMapNStd(mapTestIterations);
+      timestamp_t duration = Time::microTicks() - startTime;
+      Console::printf(_T("%lld microseconds\n"), duration);
+    }
+    {
+      Console::printf(_T("testHashMapStd...  "));
+      timestamp_t startTime = Time::microTicks();
+      testHashMapStd(mapTestIterations);
+      timestamp_t duration = Time::microTicks() - startTime;
+      Console::printf(_T("%lld microseconds\n"), duration);
+    }
+
+    {
+      Console::printf(_T("testHashMapNStd... "));
+      timestamp_t startTime = Time::microTicks();
+      testHashMapNStd(mapTestIterations);
       timestamp_t duration = Time::microTicks() - startTime;
       Console::printf(_T("%lld microseconds\n"), duration);
     }
