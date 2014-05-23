@@ -31,7 +31,7 @@ public:
   };
   
 public:
-  Map() : _end(&endItem), _begin(&endItem), _size(0), root(0), freeItem(0), blocks(0)
+  Map() : _end(&endItem), _begin(&endItem), root(0), _size(0), freeItem(0), blocks(0)
   {
     endItem.parent = 0;
     endItem.prev = 0;
