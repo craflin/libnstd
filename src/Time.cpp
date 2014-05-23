@@ -11,8 +11,6 @@
 #endif
 
 #ifdef _WIN32
-#pragma warning(disable: 4073)
-#pragma init_seg(lib)
 class _Time
 {
 public:
@@ -28,7 +26,13 @@ private:
     perfFreq = li.QuadPart / 1000000LL;
   }
 };
+#ifdef _MSC_VER
+#pragma warning(disable: 4073) 
+#pragma init_seg(lib)
 _Time _Time::data;
+#else
+_Time _Time::data __attribute__ ((init_priority (101)));
+#endif
 timestamp_t _Time::perfFreq;
 #endif
 

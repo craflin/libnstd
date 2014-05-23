@@ -58,7 +58,7 @@ targets = {
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
-      buildDir = "build/$(configuration)_cygwin/$(target)"
+      buildDir = "build/$(configuration)_cygwin/obj/$(target)"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
