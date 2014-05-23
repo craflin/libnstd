@@ -1,5 +1,6 @@
 
 #include <unordered_map>
+#include <cstdlib>
 
 void testHashMapStd(int iterations)
 {

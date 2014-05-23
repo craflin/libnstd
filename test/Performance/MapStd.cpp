@@ -1,5 +1,6 @@
 
 #include <map>
+#include <cstdlib>
 
 void testMapStd(int iterations)
 {
