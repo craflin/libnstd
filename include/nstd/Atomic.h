@@ -154,7 +154,7 @@ public:
 #ifdef _MSC_VER
     return (int32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
 #else
-    return __sync_val_compare_and_swap(var, oldVal, newVal);
+    return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 
@@ -163,7 +163,7 @@ public:
 #ifdef _MSC_VER
     return (uint32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
 #else
-    return __sync_val_compare_and_swap(var, oldVal, newVal);
+    return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 
@@ -175,7 +175,7 @@ public:
 #ifdef _MSC_VER
     return _InterlockedCompareExchange64((volatile __int64*)&var, newVal, oldVal);
 #else
-    return __sync_val_compare_and_swap(var, oldVal, newVal);
+    return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 #endif
@@ -188,7 +188,7 @@ public:
 #ifdef _MSC_VER
     return (uint64_t)_InterlockedCompareExchange64((volatile __int64*)&var, (__int64)newVal, (__int64)oldVal);
 #else
-    return __sync_val_compare_and_swap(var, oldVal, newVal);
+    return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 #endif
@@ -259,7 +259,7 @@ public:
 #ifdef _MSC_VER
     return (int32_t)_InterlockedAdd((long volatile*)&var, (long)val);
 #else
-    return __sync_fetch_and_add(ptr, val);
+    return __sync_fetch_and_add(&var, val);
     //unsigned int result;
     //__asm__ __volatile__ ("lock; xaddl %0, %1" :
     //                      "=r" (result), "=m" (*ptr) : "0" (val), "m" (*ptr)
@@ -273,7 +273,7 @@ public:
 #ifdef _MSC_VER
     return (uint32_t)_InterlockedAdd((long volatile*)&var, (long)val);
 #else
-    return __sync_fetch_and_add(ptr, val);
+    return __sync_fetch_and_add(&var, val);
     //unsigned int result;
     //__asm__ __volatile__ ("lock; xaddl %0, %1" :
     //                      "=r" (result), "=m" (*ptr) : "0" (val), "m" (*ptr)
