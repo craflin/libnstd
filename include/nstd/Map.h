@@ -2,6 +2,7 @@
 #pragma once
 
 #include <nstd/Debug.h>
+#include <nstd/Memory.h>
 
 template<typename T, typename V> class Map
 {
@@ -30,7 +31,7 @@ public:
   };
   
 public:
-  Map() : _end(&endItem), _begin(&endItem), _size(0), root(0)
+  Map() : _end(&endItem), _begin(&endItem), _size(0), root(0), freeItem(0), blocks(0)
   {
     endItem.parent = 0;
     endItem.prev = 0;
@@ -39,8 +40,13 @@ public:
 
   ~Map()
   {
-    clear();
-    // todo: freeItem stuff
+    for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
+      i->~Item();
+    for(ItemBlock* i = blocks, * next; i; i = next)
+    {
+      next = i->next;
+      Memory::free(i);
+    }
   }
 
   const Iterator& begin() const {return _begin;}
@@ -60,18 +66,11 @@ public:
 
   void_t clear()
   {
-    //for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
-    //{
-    //  i->~Item();
-    //  i->prev = freeItem;
-    //  freeItem = i;
-    //}
-    // todo: freeItem stuff
-    for(Item* i = _begin.item, * end = &endItem, *next; i != end; i = next)
+    for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
-      next = i->next;
       i->~Item();
-      delete i;
+      i->prev = freeItem;
+      freeItem = i;
     }
     _begin.item = &endItem;
     endItem.prev = 0;
@@ -300,16 +299,16 @@ public:
       parent = parent->parent;
     }
 
-    Item* next = item->next; // todo: use freeItem stuff
-
     if(!item->prev)
       (_begin.item = item->next)->prev = 0;
     else
       (item->prev->next = item->next)->prev = item->prev;
     --_size;
 
-    delete item;
-    return next;
+    item->~Item();
+    item->prev = freeItem;
+    freeItem = item;
+    return item->next;
   }
 
 private:
@@ -338,13 +337,19 @@ private:
       height = (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
     }
   };
-  
+  struct ItemBlock
+  {
+    ItemBlock* next;
+  };
+
 private:
   Iterator _end;
   Iterator _begin;
   Item* root;
   size_t _size;
   Item endItem;
+  Item* freeItem;
+  ItemBlock* blocks;
 
 private:
   Iterator insert(Item** cell, Item* parent, const T& key, const V& value)
@@ -354,7 +359,28 @@ private:
     Item* position = *cell;
     if(!position)
     {
-      Item* item = new Item(parent, key, value);
+      Item* item;
+      if(freeItem)
+      {
+        item = freeItem;
+        freeItem = freeItem->prev;
+      }
+      else
+      {
+        size_t allocatedSize;
+        ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
+        itemBlock->next = blocks;
+        blocks = itemBlock;
+        item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
+
+        for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+        {
+          i->prev = freeItem;
+          freeItem = i;
+        }
+      }
+      new(item) Item(parent, key, value);
+
       *cell = item;
       ++_size;
       if(!parent)
