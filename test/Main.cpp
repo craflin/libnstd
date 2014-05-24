@@ -19,6 +19,7 @@
 #include <nstd/Variant.h>
 #include <nstd/Process.h>
 #include <nstd/Map.h>
+#include <nstd/Math.h>
 
 #include <cstring>
 #include <cctype>
