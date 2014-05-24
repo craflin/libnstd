@@ -417,6 +417,7 @@ void_t testList()
   ASSERT(myList2.size() == 3);
   ASSERT(*myList2.begin() == _T("string1"));
   ASSERT(*(++List<String>::Iterator(myList2.begin())) == _T("string2"));
+  ASSERT(*(++myList2.begin()) == _T("string2"));
   ASSERT(myList2.back() == _T("string3"));
 
   // test list copy operator

@@ -14,6 +14,8 @@ public:
     const T* operator->() const {return item;}
     const Iterator& operator++() {++item; return *this;}
     const Iterator& operator--() {--item; return *this;}
+    Iterator operator++() const {return item + 1;}
+    Iterator operator--() const {return item - 1;}
     bool operator==(const Iterator& other) const {return item == other.item;}
     bool operator!=(const Iterator& other) const {return item != other.item;}
 

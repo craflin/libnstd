@@ -18,6 +18,8 @@ public:
     const V* operator->() const {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
+    Iterator operator++() const {return item->next;}
+    Iterator operator--() const {return item->prev;}
     bool operator==(const Iterator& other) const {return item == other.item;}
     bool operator!=(const Iterator& other) const {return item != other.item;}
 
