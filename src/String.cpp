@@ -236,3 +236,38 @@ const tchar_t* String::findLastOf(const tchar_t* in, const tchar_t* chars)
     match = _tcspbrk(match + 1, chars);
   }
 }
+
+String String::fromInt(int_t value)
+{
+  String result;
+  result.printf(_T("%d"), value);
+  return result;
+}
+
+String String::fromUInt(uint_t value)
+{
+  String result;
+  result.printf(_T("%u"), value);
+  return result;
+}
+
+String String::fromInt64(int64_t value)
+{
+  String result;
+  result.printf(_T("%lld"), value);
+  return result;
+}
+
+String String::fromUInt64(uint64_t value)
+{
+  String result;
+  result.printf(_T("%llu"), value);
+  return result;
+}
+
+String String::fromDouble(double value)
+{
+  String result;
+  result.printf(_T("%f"), value);
+  return result;
+}

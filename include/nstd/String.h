@@ -391,6 +391,12 @@ public:
   static const tchar_t* findLast(const tchar_t* in, const tchar_t* str);
   static const tchar_t* findLastOf(const tchar_t* in, const tchar_t* chars);
 
+  static String fromInt(int_t value);
+  static String fromUInt(uint_t value);
+  static String fromInt64(int64_t value);
+  static String fromUInt64(uint64_t value);
+  static String fromDouble(double value);
+
 private:
   struct Data
   {
