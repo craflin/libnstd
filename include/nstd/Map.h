@@ -14,9 +14,10 @@ public:
   public:
     Iterator() : item(0) {}
     const T& key() const {return item->key;}
-    V& operator*() {return item->value;}
     const V& operator*() const {return item->value;}
+    V& operator*() {return item->value;}
     const V* operator->() const {return &item->value;}
+    V* operator->() {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
     Iterator operator++() const {return item->next;}
