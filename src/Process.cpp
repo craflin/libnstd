@@ -120,48 +120,6 @@ uint32_t Process::start(const String& commandLine)
       command.append(arg);
   }
 
-  // load path env
-  List<String> searchPaths;
-  {
-    char* pathVar = getenv("PATH");
-    for(const char* str = pathVar; *str;)
-    {
-      const char* end = strchr(str, ':');
-      if(end)
-      {
-        if(end > str)
-          searchPaths.append(String(str, end - str));
-        ++end;
-        str = end;
-      }
-      else
-      {
-        searchPaths.append(String(str, String::length(str)));
-        break;
-      }
-    }
-  }
-
-
-  // find executable
-  String program;
-  if(!command.isEmpty())
-    program = command.front();
-  String programPath = program;
-  if(((const char*)programPath)[0] != '/')
-    for(List<String>::Iterator i = searchPaths.begin(), end = searchPaths.end(); i != end; ++i)
-    {
-      String testPath = *i;
-      testPath.append('/');
-      testPath.append(program);
-      if(File::exists(testPath))
-      {
-        programPath = testPath;
-        break;
-      }
-    }
-
-
   // start process
   int r = vfork();
   if(r == -1)
@@ -179,9 +137,8 @@ uint32_t Process::start(const String& commandLine)
       argv[i++] = *j;
     argv[i] = 0;
 
-    const char** envp = (const char**)environ;
-    const char* executable = programPath;
-    if(execve(executable, (char* const*)argv, (char* const*)envp) == -1)
+    const char* executable = i > 0 ? argv[0] : "";
+    if(execvp(executable, (char* const*)argv) == -1)
     {
       fprintf(stderr, "%s: %s\n", executable, strerror(errno));
       _exit(EXIT_FAILURE);
