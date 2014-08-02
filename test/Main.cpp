@@ -1122,14 +1122,28 @@ void_t testTime()
 
 void_t testProcess()
 {
-  Process process;
-  uint32_t id = process.start(_T("sleep 1"));
-  ASSERT(id != 0);
-  ASSERT(process.isRunning());
-  uint32_t exitCode = 0xfffa2;
-  ASSERT(process.join(exitCode));
-  ASSERT(!process.isRunning());
-  ASSERT(exitCode == 0);
+  {
+    Process process;
+    uint32_t id = process.start(_T("sleep 1"));
+    ASSERT(id != 0);
+    ASSERT(process.isRunning());
+    uint32_t exitCode = 0xfffa2;
+    ASSERT(process.join(exitCode));
+    ASSERT(!process.isRunning());
+    ASSERT(exitCode == 0);
+  }
+
+  {
+    Process process;
+    ASSERT(process.open(_T("ls"), Process::stdoutStream));
+    ASSERT(process.isRunning());
+    char_t buffer[123];
+    ASSERT(process.read(buffer, sizeof(buffer)) > 0);
+    uint32_t exitCode = 0xfffa2;
+    ASSERT(process.join(exitCode));
+    ASSERT(!process.isRunning());
+    ASSERT(exitCode == 0);
+  }
 }
 
 void_t testMap()

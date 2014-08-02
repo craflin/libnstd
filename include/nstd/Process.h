@@ -34,6 +34,21 @@ public:
 
   bool_t kill();
 
+  
+  enum Stream
+  {
+    stdoutStream = 0x01,
+    stderrStream = 0x02,
+    stdinStream = 0x04,
+  };
+
+  bool_t open(const String& command, uint_t streams = stdoutStream);
+
+  ssize_t read(void_t* buffer, size_t length);
+  ssize_t read(void_t* buffer, size_t length, uint_t& streams);
+  ssize_t write(const void_t* buffer, size_t length);
+
+
   /*
   * Wait for one of the given processes to exit.
   */
@@ -45,7 +60,10 @@ public:
 
 private:
 #ifdef _WIN32
-  void* hProcess;
+  void_t* hProcess;
+  void_t* hStdOutRead;
+  void_t* hStdErrRead;
+  void_t* hStdInWrite;
 #else
   uint32_t pid;
 #endif

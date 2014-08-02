@@ -28,6 +28,9 @@ Process::Process()
 #ifdef _WIN32
   ASSERT(sizeof(hProcess) >= sizeof(HANDLE));
   hProcess = INVALID_HANDLE_VALUE;
+  hStdOutRead = INVALID_HANDLE_VALUE;
+  hStdErrRead = INVALID_HANDLE_VALUE;
+  hStdInWrite = INVALID_HANDLE_VALUE;
 #else
   pid = 0;
 #endif
@@ -712,6 +715,21 @@ bool_t Process::kill()
     return false;
   CloseHandle((HANDLE)hProcess);
   hProcess = INVALID_HANDLE_VALUE;
+  if(hStdOutRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdOutRead);
+    hStdOutRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdErrRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdErrRead);
+    hStdErrRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdInWrite != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdInWrite);
+    hStdInWrite = INVALID_HANDLE_VALUE;
+  }
   return true;
 #else
   if(!pid)
@@ -749,6 +767,21 @@ bool_t Process::join(uint32_t& exitCode)
   CloseHandle((HANDLE)hProcess);
   hProcess = INVALID_HANDLE_VALUE;
   exitCode = (uint32_t)dwExitCode;
+  if(hStdOutRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdOutRead);
+    hStdOutRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdErrRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdErrRead);
+    hStdErrRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdInWrite != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdInWrite);
+    hStdInWrite = INVALID_HANDLE_VALUE;
+  }
   return true;
 #else
   if(!pid)
@@ -814,5 +847,147 @@ uint32_t Process::getCurrentProcessId()
   return (uint32_t)GetCurrentProcessId();
 #else
   return (uint32_t)getpid();
+#endif
+}
+
+bool_t Process::open(const String& commandLine, uint_t streams)
+{
+#ifdef _WIN32
+  if(hProcess != INVALID_HANDLE_VALUE)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return false;
+  }
+
+  STARTUPINFO si;
+  PROCESS_INFORMATION pi;
+
+  ZeroMemory(&si, sizeof(si));
+  si.cb = sizeof(si);
+  ZeroMemory(&pi, sizeof(pi));
+
+  si.dwFlags = STARTF_USESTDHANDLES;
+  si.hStdInput = INVALID_HANDLE_VALUE;
+  si.hStdOutput = INVALID_HANDLE_VALUE;
+  si.hStdError = INVALID_HANDLE_VALUE;
+
+  SECURITY_ATTRIBUTES sa; 
+  sa.nLength = sizeof(SECURITY_ATTRIBUTES); 
+  sa.bInheritHandle = TRUE; 
+  sa.lpSecurityDescriptor = NULL; 
+
+  if(streams & stdoutStream)
+  {
+   if(!CreatePipe(&hStdOutRead, &si.hStdOutput, &sa, 0) ||
+      !SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0))
+      goto error;
+  }
+  if(streams & stderrStream)
+  {
+   if(!CreatePipe(&hStdErrRead, &si.hStdError, &sa, 0) ||
+      !SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0))
+      goto error;
+  }
+  if(streams & stdinStream)
+  {
+   if(!CreatePipe(&si.hStdInput, &hStdInWrite, &sa, 0) ||
+      !SetHandleInformation(hStdInWrite, HANDLE_FLAG_INHERIT, 0))
+      goto error;
+  }
+
+  {
+    String args(commandLine);
+
+    if(!CreateProcess(NULL, (tchar_t*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+      goto error;
+  }
+
+  CloseHandle(pi.hThread);
+
+  if(si.hStdOutput != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdOutput);
+  if(si.hStdError != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdError);
+  if(si.hStdInput != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdInput);
+
+  ASSERT(pi.hProcess);
+  hProcess = pi.hProcess;
+  return true;
+error:
+  if(hStdOutRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdOutRead);
+    hStdOutRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdErrRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdErrRead);
+    hStdErrRead = INVALID_HANDLE_VALUE;
+  }
+  if(hStdInWrite != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdInWrite);
+    hStdInWrite = INVALID_HANDLE_VALUE;
+  }
+  if(si.hStdOutput != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdOutput);
+  if(si.hStdError != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdError);
+  if(si.hStdInput != INVALID_HANDLE_VALUE)
+    CloseHandle(si.hStdInput);
+  return false;
+#else
+  // todo
+  return 0;
+#endif
+}
+
+ssize_t Process::read(void_t* buffer, size_t length)
+{
+#ifdef _WIN32
+  DWORD i;
+  if(!ReadFile(hStdOutRead, buffer, length, &i, NULL))
+    return -1;
+  return i;
+#else
+  // todo
+  return -1;
+#endif
+}
+
+ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
+{
+#ifdef _WIN32
+  HANDLE handles[2];
+  DWORD handleCount = 0;
+  if(streams & stdoutStream)
+    handles[handleCount++] = hStdOutRead;
+  if(streams & stderrStream)
+    handles[handleCount++] = hStdErrRead;
+  DWORD dw = WaitForMultipleObjects(handleCount, handles, FALSE, INFINITE);
+  if(dw < WAIT_OBJECT_0 || dw >= WAIT_OBJECT_0 + handleCount)
+    return -1;
+  DWORD i;
+  if(!ReadFile(handles[dw - WAIT_OBJECT_0], buffer, length, &i, NULL))
+    return -1;
+  return i;
+#else
+  // todo
+  return -1;
+#endif
+}
+
+ssize_t Process::write(const void_t* buffer, size_t length)
+{
+#ifdef _WIN32
+  // todo
+  DWORD i;
+  if(!WriteFile(hStdInWrite, buffer, length, &i, NULL))
+    return -1;
+  return i;
+#else
+  // todo
+  return -1;
 #endif
 }
