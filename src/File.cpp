@@ -83,7 +83,7 @@ bool_t File::open(const String& file, uint_t flags)
   else
     oflags = O_RDONLY; // do not create if not exists, read mode
 
-  fp = (void_t*)(intptr_t)::open(file, oflags, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  fp = (void_t*)(intptr_t)::open(file, oflags | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if((int_t)(intptr_t)fp == -1)
   {
     fp = 0;
