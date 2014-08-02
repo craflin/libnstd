@@ -66,5 +66,8 @@ private:
   void_t* hStdInWrite;
 #else
   uint32_t pid;
+  int fdStdOutRead;
+  int fdStdErrRead;
+  int fdStdInWrite;
 #endif
 };

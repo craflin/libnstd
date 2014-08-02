@@ -30,6 +30,9 @@ Process::Process()
   hStdInWrite = INVALID_HANDLE_VALUE;
 #else
   pid = 0;
+  fdStdOutRead = 0;
+  fdStdErrRead = 0;
+  fdStdInWrite = 0;
 #endif
 }
 
@@ -146,7 +149,6 @@ uint32_t Process::start(const String& commandLine)
     ASSERT(false); // unreachable
     return 0;
   }
-
 #endif
 }
 
@@ -190,6 +192,21 @@ bool_t Process::kill()
   if(waitpid(pid, &status, 0) != (pid_t)pid)
     return false;
   pid = 0;
+  if(fdStdOutRead)
+  {
+    close(fdStdOutRead);
+    fdStdOutRead = 0;
+  }
+  if(fdStdErrRead)
+  {
+    close(fdStdErrRead);
+    fdStdErrRead = 0;
+  }
+  if(fdStdInWrite)
+  {
+    close(fdStdInWrite);
+    fdStdInWrite = 0;
+  }
   return true;
 #endif
 }
@@ -242,6 +259,21 @@ bool_t Process::join(uint32_t& exitCode)
     return false;
   exitCode = WEXITSTATUS(status);
   pid = 0;
+  if(fdStdOutRead)
+  {
+    close(fdStdOutRead);
+    fdStdOutRead = 0;
+  }
+  if(fdStdErrRead)
+  {
+    close(fdStdErrRead);
+    fdStdErrRead = 0;
+  }
+  if(fdStdInWrite)
+  {
+    close(fdStdInWrite);
+    fdStdInWrite = 0;
+  }
   return true;
 #endif
 }
@@ -320,6 +352,7 @@ bool_t Process::open(const String& commandLine, uint_t streams)
   hProcess = pi.hProcess;
   return true;
 error:
+  DWORD err = GetLastError();
   if(hStdOutRead != INVALID_HANDLE_VALUE)
   {
     CloseHandle(hStdOutRead);
@@ -341,10 +374,154 @@ error:
     CloseHandle(si.hStdError);
   if(si.hStdInput != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdInput);
+  SetLastError(err);
   return false;
 #else
-  // todo
-  return 0;
+  if(pid)
+  {
+    errno = EINVAL;
+    return false;
+  }
+
+  // split commandLine into args
+  List<String> command;
+  {
+    String arg;
+    for(const tchar_t* p = commandLine; *p;)
+      switch(*p)
+      {
+      case _T('"'):
+        for(++p; *p;)
+          switch(*p)
+          {
+          case _T('"'):
+            ++p;
+            break;
+          case _T('\\'):
+            if(p[1] == _T('"'))
+            {
+              arg.append(_T('"'));
+              p += 2;
+            }
+            break;
+          default:
+            arg.append(*(p++));
+        }
+        break;
+      case _T(' '):
+        command.append(arg);
+        arg.clear();
+        ++p;
+        break;
+      default:
+        arg.append(*(p++));
+      }
+    if(!arg.isEmpty())
+      command.append(arg);
+  }
+
+  // create pipes
+  int stdoutFds[2] = {};
+  int stderrFds[2] = {};
+  int stdinFds[2] = {};
+  if(streams & stdoutStream)
+  {
+    if(pipe(stdoutFds) != 0)
+      goto error;
+  }
+  if(streams & stderrStream)
+  {
+    if(pipe(stderrFds) != 0)
+      goto error;
+  }
+  if(streams & stdinStream)
+  {
+    if(pipe(stdinFds) != 0)
+      goto error;
+  }
+
+  // start process
+  {
+    int r = fork(); // here we cannot use vfork because of the pipe fd stuff (todo: am i sure about this)
+    if(r == -1)
+      return false;
+    else if(r != 0) // parent
+    {
+      pid = r;
+
+      if(stdoutFds[1])
+        close(stdoutFds[1]);
+      if(stderrFds[1])
+        close(stderrFds[1]);
+      if(stdinFds[0])
+        close(stdinFds[0]);
+
+      fdStdOutRead = stdoutFds[0];
+      fdStdErrRead = stderrFds[0];
+      fdStdInWrite = stderrFds[1];
+
+      return true;
+    }
+    else // child
+    {
+      if(stdoutFds[1])
+      {
+        dup2(stdoutFds[1], STDOUT_FILENO);
+        close(stdoutFds[1]);
+      }
+      if(stderrFds[1])
+      {
+        dup2(stderrFds[1], STDERR_FILENO);
+        close(stderrFds[1]);
+      }
+      if(stdinFds[0])
+      {
+        dup2(stdinFds[0], STDIN_FILENO);
+        close(stdinFds[0]);
+      }
+
+      if(stdoutFds[0])
+        close(stdoutFds[0]);
+      if(stderrFds[0])
+        close(stderrFds[0]);
+      if(stdinFds[1])
+        close(stdinFds[1]);
+
+      const char** argv = (const char**)alloca(sizeof(const char*) * (command.size() + 1));
+      int i = 0;
+      for(List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
+        argv[i++] = *j;
+      argv[i] = 0;
+
+      const char* executable = i > 0 ? argv[0] : "";
+      if(execvp(executable, (char* const*)argv) == -1)
+      {
+        fprintf(stderr, "%s: %s\n", executable, strerror(errno));
+        _exit(EXIT_FAILURE);
+      }
+      ASSERT(false); // unreachable
+      return false;
+    }
+  }
+error:
+  int err = errno;
+  if(stdoutFds[0])
+  {
+    close(stdoutFds[0]);
+    close(stdoutFds[1]);
+  }
+  if(stderrFds[0])
+  {
+    close(stderrFds[0]);
+    close(stderrFds[1]);
+  }
+  if(stdinFds[0])
+  {
+    close(stdinFds[0]);
+    close(stdinFds[1]);
+  }
+  errno = err;
+  return false;
 #endif
 }
 
@@ -356,8 +533,7 @@ ssize_t Process::read(void_t* buffer, size_t length)
     return -1;
   return i;
 #else
-  // todo
-  return -1;
+  return ::read(fdStdOutRead, buffer, length);
 #endif
 }
 
@@ -366,10 +542,15 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
 #ifdef _WIN32
   HANDLE handles[2];
   DWORD handleCount = 0;
-  if(streams & stdoutStream)
+  if(streams & stdoutStream && hStdOutRead != INVALID_HANDLE_VALUE)
     handles[handleCount++] = hStdOutRead;
-  if(streams & stderrStream)
+  if(streams & stderrStream && hStdErrRead != INVALID_HANDLE_VALUE)
     handles[handleCount++] = hStdErrRead;
+  if(handleCount == 0)
+  {
+    SetLastError(ERROR_INVALID_HANDLE);
+    return -1;
+  }
   DWORD dw = WaitForMultipleObjects(handleCount, handles, FALSE, INFINITE);
   if(dw < WAIT_OBJECT_0 || dw >= WAIT_OBJECT_0 + handleCount)
     return -1;
@@ -378,7 +559,38 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
     return -1;
   return i;
 #else
-  // todo
+  fd_set fdr;
+  FD_ZERO(&fdr);
+  int maxFd = 0;
+  if(streams & stdoutStream && fdStdOutRead)
+  {
+    FD_SET(fdStdOutRead, &fdr);
+    maxFd = fdStdOutRead;
+  }
+  if(streams & stderrStream && fdStdErrRead)
+  {
+    FD_SET(fdStdErrRead, &fdr);
+    if(fdStdErrRead > maxFd)
+      maxFd = fdStdErrRead;
+  }
+  if(maxFd == 0)
+  {
+    errno = EINVAL;
+    return -1;
+  }
+  timeval tv = {1000, 0};
+  for(;;)
+  {
+    int i;
+    if((i = select(maxFd + 1, &fdr, 0, 0, &tv)) != 0)
+      return -1;
+    if(i == 0 || (i < 0 && errno == EINTR))
+      continue;
+  }
+  if(streams & stdoutStream && fdStdOutRead && FD_ISSET(fdStdOutRead, &fdr))
+    return ::read(fdStdOutRead, buffer, length);
+  if(streams & stderrStream && fdStdErrRead && FD_ISSET(fdStdErrRead, &fdr))
+    return ::read(fdStdErrRead, buffer, length);
   return -1;
 #endif
 }
@@ -386,13 +598,11 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
 ssize_t Process::write(const void_t* buffer, size_t length)
 {
 #ifdef _WIN32
-  // todo
   DWORD i;
   if(!WriteFile(hStdInWrite, buffer, length, &i, NULL))
     return -1;
   return i;
 #else
-  // todo
-  return -1;
+  return ::write(fdStdInWrite, buffer, length);
 #endif
 }
