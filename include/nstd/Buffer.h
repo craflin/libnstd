@@ -69,29 +69,31 @@ public:
 
   void_t resize(size_t size)
   {
-    size_t requiredCapacity = bufferEnd - buffer + size;
+    size_t requiredCapacity = bufferStart - buffer + size;
     if(requiredCapacity > _capacity)
     {
-      requiredCapacity = bufferEnd - bufferStart + size;
-      if(requiredCapacity > _capacity)
+      if(size > _capacity)
       {
-        byte_t* newBuffer = (byte_t*)Memory::alloc(requiredCapacity + 1, _capacity); --_capacity;
-        size_t oldSize = bufferEnd - bufferStart;
-        Memory::copy(newBuffer, bufferStart, oldSize);
+        byte_t* newBuffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
+        Memory::copy(newBuffer, bufferStart, bufferEnd - bufferStart);
         Memory::free(buffer);
         bufferStart = buffer = newBuffer;
-        bufferEnd = newBuffer + oldSize;
+        bufferEnd = newBuffer + size;
+        *bufferEnd = 0;
       }
       else
       {
-        size_t oldSize = bufferEnd - bufferStart;
-        Memory::move(buffer, bufferStart, oldSize);
+        Memory::move(buffer, bufferStart, bufferEnd - bufferStart);
         bufferStart = buffer;
-        bufferEnd = buffer + oldSize;
+        bufferEnd = buffer + size;
+        *bufferEnd = 0;
       }
     }
-    bufferEnd = bufferStart + size;
-    *bufferEnd = 0;
+    else
+    {
+      bufferEnd = bufferStart + size;
+      *bufferEnd = 0;
+    }
   }
 
   void_t removeFront(size_t size)
