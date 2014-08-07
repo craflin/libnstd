@@ -30,18 +30,18 @@ public:
     
     Iterator(Item* item) : item(item) {}
 
-    friend class Map;
+    friend class MultiMap;
   };
   
 public:
-  Map() : _end(&endItem), _begin(&endItem), root(0), _size(0), freeItem(0), blocks(0)
+  MultiMap() : _end(&endItem), _begin(&endItem), root(0), _size(0), freeItem(0), blocks(0)
   {
     endItem.parent = 0;
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  ~Map()
+  ~MultiMap()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       i->~Item();
@@ -55,11 +55,11 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
-  const T& front() const {return _begin.item->value;}
-  const T& back() const {return _end.item->prev->value;}
+  const V& front() const {return _begin.item->value;}
+  const V& back() const {return _end.item->prev->value;}
 
-  T& front() {return _begin.item->value;}
-  T& back() {return _end.item->prev->value;}
+  V& front() {return _begin.item->value;}
+  V& back() {return _end.item->prev->value;}
 
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}

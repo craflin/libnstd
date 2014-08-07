@@ -55,11 +55,11 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
-  const T& front() const {return _begin.item->value;}
-  const T& back() const {return _end.item->prev->value;}
+  const V& front() const {return _begin.item->value;}
+  const V& back() const {return _end.item->prev->value;}
 
-  T& front() {return _begin.item->value;}
-  T& back() {return _end.item->prev->value;}
+  V& front() {return _begin.item->value;}
+  V& back() {return _end.item->prev->value;}
 
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
