@@ -72,7 +72,7 @@ public:
     size_t requiredCapacity = bufferStart - buffer + size;
     if(requiredCapacity > _capacity)
     {
-      if(size > _capacity)
+      if(size > _capacity || !buffer)
       {
         byte_t* newBuffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
         Memory::copy(newBuffer, bufferStart, bufferEnd - bufferStart);
@@ -89,7 +89,7 @@ public:
         *bufferEnd = 0;
       }
     }
-    else
+    else if(buffer)
     {
       bufferEnd = bufferStart + size;
       *bufferEnd = 0;
