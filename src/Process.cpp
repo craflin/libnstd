@@ -442,7 +442,7 @@ error:
 
   // start process
   {
-    int r = fork(); // here we cannot use vfork because of the pipe fd stuff (todo: am i sure about this)
+    int r = vfork();
     if(r == -1)
       return false;
     else if(r != 0) // parent
@@ -555,7 +555,9 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
   if(dw < WAIT_OBJECT_0 || dw >= WAIT_OBJECT_0 + handleCount)
     return -1;
   DWORD i;
-  if(!ReadFile(handles[dw - WAIT_OBJECT_0], buffer, length, &i, NULL))
+  HANDLE readHandle = handles[dw - WAIT_OBJECT_0];
+  streams = readHandle == hStdOutRead ? stdoutStream : stderrStream;
+  if(!ReadFile(readHandle, buffer, length, &i, NULL))
     return -1;
   return i;
 #else
@@ -588,9 +590,15 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
       continue;
   }
   if(streams & stdoutStream && fdStdOutRead && FD_ISSET(fdStdOutRead, &fdr))
+  {
+    streams = stdoutStream;
     return ::read(fdStdOutRead, buffer, length);
+  }
   if(streams & stderrStream && fdStdErrRead && FD_ISSET(fdStdErrRead, &fdr))
+  {
+    streams = stderrStream;
     return ::read(fdStdErrRead, buffer, length);
+  }
   return -1;
 #endif
 }
