@@ -70,4 +70,7 @@ private:
   int fdStdErrRead;
   int fdStdInWrite;
 #endif
+
+  Process(const Process&);
+  Process& operator=(const Process&);
 };
