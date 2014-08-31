@@ -86,6 +86,12 @@ public:
   void_t prepend(const T& key) {insert(_begin, key);}
   void_t append(const T& key) {insert(_end, key);}
 
+  void_t append(const HashSet& other)
+  {
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      insert(_end, i->key);
+  }
+
   void_t clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
@@ -237,7 +243,13 @@ public:
     if(it != _end)
       remove(it);
   }
-  
+
+  void_t remove(const HashSet& other)
+  {
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      remove(i->key);
+  }
+
 private:
   struct Item
   {
