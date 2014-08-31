@@ -58,6 +58,8 @@ public:
 
   static uint32_t getCurrentProcessId();
 
+  static void_t exit(uint32_t exitCode);
+
 private:
 #ifdef _WIN32
   void_t* hProcess;

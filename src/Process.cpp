@@ -287,6 +287,15 @@ uint32_t Process::getCurrentProcessId()
 #endif
 }
 
+void_t Process::exit(uint32_t exitCode)
+{
+#ifdef _WIN32
+  ExitProcess(exitCode);
+#else
+  _exit(0);
+#endif
+}
+
 bool_t Process::open(const String& commandLine, uint_t streams)
 {
 #ifdef _WIN32
