@@ -11,6 +11,7 @@
 #include <cstdio>
 #include <cstring>
 #include <signal.h>
+#include <cstdlib> // setenv
 #endif
 
 #include <nstd/Debug.h>
@@ -621,5 +622,43 @@ ssize_t Process::write(const void_t* buffer, size_t length)
   return i;
 #else
   return ::write(fdStdInWrite, buffer, length);
+#endif
+}
+
+String Process::getEnvironmentVariable(const String& name)
+{
+#ifdef _WIN32
+  String buffer;
+  size_t bufferSize = 256;
+  for(;;)
+  {
+    buffer.resize(bufferSize);
+    DWORD dw = GetEnvironmentVariable((const tchar_t*)name, (tchar_t*)buffer, bufferSize);
+    if(dw == bufferSize)
+    {
+      bufferSize <<= 1;
+      continue;
+    }
+    if(!dw)
+      return String();
+    buffer.resize(dw);
+    return buffer;
+  }
+#else
+  const tchar_t* var = getenv((const tchar_t*)name);
+  if(!var)
+    return String();
+  return String(var, String::length(var));
+#endif
+}
+
+bool_t Process::setEnvironmentVariable(const String& name, const String& value)
+{
+#ifdef _WIN32
+  return SetEnvironmentVariable((const tchar_t*)name, value.isEmpty() ? 0 : (const tchar_t*)value) == TRUE;
+#else
+  if(value.isEmpty())
+    return unsetenv((const tchar_t*)name);
+  return setenv((const tchar_t*)name, (const tchar_t*)value, 1) == 0;
 #endif
 }

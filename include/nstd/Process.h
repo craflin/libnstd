@@ -54,11 +54,14 @@ public:
   */
   //static Process* joinOne(Process* processes, size_t count, uint32_t& exitCode);
 
-  //static void_t getEnvironmentVariables(HashMap<String, String>& vars);
-
   static uint32_t getCurrentProcessId();
 
   static void_t exit(uint32_t exitCode);
+
+  //static void_t getEnvironmentVariables(HashMap<String, String>& vars);
+
+  static String getEnvironmentVariable(const String& name);
+  static bool_t setEnvironmentVariable(const String& name, const String& value);
 
 private:
 #ifdef _WIN32
