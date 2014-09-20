@@ -35,7 +35,7 @@ bool_t Library::load(const String& name)
 #else
   if(library)
     return false;
-  library = dlopen((const char_t*)name, RTLD_NOW);
+  library = dlopen((const char_t*)name, RTLD_NOW | RTLD_GLOBAL);
   return library != 0;
 #endif
 }
