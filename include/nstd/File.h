@@ -13,6 +13,13 @@ public:
     appendFlag = 0x0004,
   };
 
+  enum Position
+  {
+    setPosition,
+    currentPosition,
+    endPosition,
+  };
+
   struct Times
   {
     timestamp_t writeTime;
@@ -61,6 +68,8 @@ public:
   ssize_t write(const void_t* buffer, size_t length);
 
   bool_t write(const String& data);
+
+  int64_t seek(int64_t offset, Position start = setPosition);
 
   bool_t flush();
 

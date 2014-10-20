@@ -250,6 +250,26 @@ bool_t File::write(const String& data)
   return write((const byte_t*)(const tchar_t*)data, size) == (ssize_t)size;
 }
 
+int64_t File::seek(int64_t offset, Position start)
+{
+#ifdef _WIN32
+  DWORD moveMethod[3] = {FILE_BEGIN, FILE_CURRENT, FILE_END};
+#ifndef _AMD64
+  LARGE_INTEGER li;
+  li.QuadPart = offset;
+  li.LowPart = SetFilePointer((HANDLE)fp, li.LowPart, &li.HighPart, moveMethod[start]);
+  if (li.LowPart == INVALID_SET_FILE_POINTER && GetLastError() != NO_ERROR)
+    return -1;
+  return li.QuadPart;
+#else
+  return SetFilePointer((HANDLE)fp, (LONG)offset, NULL, moveMethod[start]);
+#endif
+#else
+  int whence[3] = {SEEK_SET, SEEK_CUR, SEEK_END};
+  return lseek64((int_t)(intptr_t)fp, offset, whence[start]);
+#endif
+}
+
 bool_t File::flush()
 {
 #ifdef _WIN32
