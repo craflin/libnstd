@@ -2,7 +2,6 @@
 #pragma once
 
 #include <nstd/String.h>
-#include <nstd/HashMap.h>
 
 class Process
 {
@@ -32,9 +31,12 @@ public:
   */
   bool_t join(uint32_t& exitCode);
 
+  /**
+  * Kill and join the process.
+  * @return Whether the proces was properly joined.
+  */
   bool_t kill();
 
-  
   enum Stream
   {
     stdoutStream = 0x01,
@@ -71,9 +73,9 @@ private:
   void_t* hStdInWrite;
 #else
   uint32_t pid;
-  int fdStdOutRead;
-  int fdStdErrRead;
-  int fdStdInWrite;
+  int_t fdStdOutRead;
+  int_t fdStdErrRead;
+  int_t fdStdInWrite;
 #endif
 
   Process(const Process&);
