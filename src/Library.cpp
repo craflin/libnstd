@@ -1,6 +1,9 @@
 
 #ifdef _WIN32
 #include <Windows.h>
+#ifdef _UNICODE
+#include <cstdlib>
+#endif
 #else
 #include <dlfcn.h>
 #endif
@@ -43,7 +46,15 @@ bool_t Library::load(const String& name)
 void_t* Library::findSymbol(const String& name)
 {
 #ifdef _WIN32
+#ifdef _UNICODE
+  char_t mbname[MAX_PATH];
+  size_t destChars;
+  if(wcstombs_s(&destChars, mbname, (const tchar_t*)name, name.length()) != 0)
+    return 0;
+  return (void_t*)GetProcAddress((HMODULE)library, mbname);
+#else
   return (void_t*)GetProcAddress((HMODULE)library, (const tchar_t*)name);
+#endif
 #else
   return dlsym(library, (const tchar_t*)name);
 #endif

@@ -1164,20 +1164,20 @@ void_t testMap()
   ASSERT(map.isEmpty());
   ASSERT(map.size() == 0);
   ASSERT(map.begin() == map.end());
-  map.insert("000", 0);
+  map.insert(_T("000"), 0);
   ASSERT(map.begin() != map.end());
   Map<String, int32_t>::Iterator begin = map.begin();
   ASSERT(++begin == map.end());
   for(int_t i = 1; i < 90; ++i)
   {
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(item, i);
   }
   for(int_t i = 90; i < 100; ++i)
   {
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(map.end(), item, i);
   }
   ASSERT(!map.isEmpty());
@@ -1186,41 +1186,41 @@ void_t testMap()
   for(Map<String, int32_t>::Iterator j = map.begin(), end = map.end(); j != end; ++j, ++i)
   {
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     ASSERT(j.key() == item);
     ASSERT(*j == i);
   }
   for(int_t i = 0; i < 100; i += 10)
   {
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(item, i);
   }
   for(int_t i = 4; i < 20; i += 10)
   {
     String item2;
-    item2.printf("%03d", 99 - i);
+    item2.printf(_T("%03d"), 99 - i);
     Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
   for(int_t i = 3; i < 100; i += 10)
   {
     String item2;
-    item2.printf("%03d", i);
+    item2.printf(_T("%03d"), i);
     Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
   for(int_t i = 6; i < 100; i += 10)
   {
     String item2;
-    item2.printf("%03d", i - 5);
+    item2.printf(_T("%03d"), i - 5);
     Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
     String item;
-    item.printf("%03d", i);
+    item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
   String lastKey = map.begin().key();
@@ -1232,7 +1232,7 @@ void_t testMap()
     lastKey = k.key();
     lastValue = *k; 
   }
-  map.remove("042");
+  map.remove(_T("042"));
   {
     Map<int32_t, int32_t> map;
     for(int_t i = 0; i < 10000; ++i)
