@@ -535,15 +535,32 @@ error:
 #endif
 }
 
-ssize_t Process::read(void_t* buffer, size_t length)
+ssize_t Process::read(void_t* buffer, size_t len)
 {
 #ifdef _WIN32
   DWORD i;
-  if(!ReadFile(hStdOutRead, buffer, length, &i, NULL))
+#ifdef _AMD64
+  byte_t* bufferStart = (byte_t*)buffer;
+  while(len > (size_t)INT_MAX)
+  {
+    if(!ReadFile(hStdOutRead, buffer, INT_MAX, &i, NULL))
+      return -1;
+    buffer = (byte_t*)buffer + i;
+    if(i != INT_MAX)
+      return (byte_t*)buffer - bufferStart;
+    len -= INT_MAX;
+  }
+  if(!ReadFile(hStdOutRead, buffer, (DWORD)len, &i, NULL))
+    return -1;
+  buffer = (byte_t*)buffer + i;
+  return (byte_t*)buffer - bufferStart;
+#else
+  if(!ReadFile(hStdOutRead, buffer, len, &i, NULL))
     return -1;
   return i;
+#endif
 #else
-  return ::read(fdStdOutRead, buffer, length);
+  return ::read(fdStdOutRead, buffer, len);
 #endif
 }
 
@@ -564,12 +581,29 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
   DWORD dw = WaitForMultipleObjects(handleCount, handles, FALSE, INFINITE);
   if(dw < WAIT_OBJECT_0 || dw >= WAIT_OBJECT_0 + handleCount)
     return -1;
-  DWORD i;
   HANDLE readHandle = handles[dw - WAIT_OBJECT_0];
   streams = readHandle == hStdOutRead ? stdoutStream : stderrStream;
+  DWORD i;
+#ifdef _AMD64
+  byte_t* bufferStart = (byte_t*)buffer;
+  while(length > (size_t)INT_MAX)
+  {
+    if(!ReadFile(readHandle, buffer, INT_MAX, &i, NULL))
+      return -1;
+    buffer = (byte_t*)buffer + i;
+    if(i != INT_MAX)
+      return (byte_t*)buffer - bufferStart;
+    length -= INT_MAX;
+  }
+  if(!ReadFile(readHandle, buffer, (DWORD)length, &i, NULL))
+    return -1;
+  buffer = (byte_t*)buffer + i;
+  return (byte_t*)buffer - bufferStart;
+#else
   if(!ReadFile(readHandle, buffer, length, &i, NULL))
     return -1;
   return i;
+#endif
 #else
   fd_set fdr;
   FD_ZERO(&fdr);
@@ -613,15 +647,32 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
 #endif
 }
 
-ssize_t Process::write(const void_t* buffer, size_t length)
+ssize_t Process::write(const void_t* buffer, size_t len)
 {
 #ifdef _WIN32
   DWORD i;
-  if(!WriteFile(hStdInWrite, buffer, length, &i, NULL))
+#ifdef _AMD64
+  const byte_t* bufferStart = (const byte_t*)buffer;
+  while(len > (size_t)INT_MAX)
+  {
+    if(!WriteFile(hStdInWrite, buffer, INT_MAX, &i, NULL))
+      return -1;
+    buffer = (const byte_t*)buffer + i;
+    if(i != INT_MAX)
+      return (const byte_t*)buffer - bufferStart;
+    len -= INT_MAX;
+  }
+  if(!WriteFile(hStdInWrite, buffer, (DWORD)len, &i, NULL))
+    return -1;
+  buffer = (const byte_t*)buffer + i;
+  return (const byte_t*)buffer - bufferStart;
+#else
+  if(!WriteFile(hStdInWrite, buffer, len, &i, NULL))
     return -1;
   return i;
+#endif
 #else
-  return ::write(fdStdInWrite, buffer, length);
+  return ::write(fdStdInWrite, buffer, len);
 #endif
 }
 
@@ -629,7 +680,7 @@ String Process::getEnvironmentVariable(const String& name)
 {
 #ifdef _WIN32
   String buffer;
-  size_t bufferSize = 256;
+  DWORD bufferSize = 256;
   for(;;)
   {
     buffer.resize(bufferSize);
