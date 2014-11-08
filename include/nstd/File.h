@@ -20,7 +20,7 @@ public:
     endPosition,
   };
 
-  struct Times
+  struct Time
   {
     timestamp_t writeTime;
     timestamp_t accessTime;
@@ -80,7 +80,7 @@ public:
   static bool_t isAbsolutePath(const String& path);
   static String getRelativePath(const String& from, const String& to);
 
-  static bool_t times(const String& file, Times& time); // TODO: rename getTimes()?
+  static bool_t time(const String& file, Time& time);
 
   static bool_t exists(const String& file);
   static bool_t unlink(const String& file);

@@ -628,6 +628,8 @@ void_t testNewDelete()
 void_t testFile()
 {
   // test open and close
+  File::unlink(_T("testfile.file.test"));
+  ASSERT(!File::exists(_T("testfile.file.test")));
   {
     File file;
     ASSERT(!file.isOpen());
@@ -637,6 +639,16 @@ void_t testFile()
     ASSERT(!file.isOpen());
     ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
     ASSERT(file.isOpen());
+  }
+
+  // test File::time function
+  {
+    File::Time time;
+    ASSERT(File::time(_T("testfile.file.test"), time));
+    timestamp_t now = Time::time();
+    //ASSERT(time.accessTime <= now + 1000 && time.accessTime > now - 10000);
+    ASSERT(time.writeTime <= now + 1000 && time.writeTime > now - 10000);
+    //ASSERT(time.creationTime <= now + 1000 && time.creationTime > now - 10000);
   }
 
   // test file exists

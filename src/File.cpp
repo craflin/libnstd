@@ -405,14 +405,14 @@ String File::getRelativePath(const String& from, const String& to)
   String simTo = simplifyPath(to);
   if(simFrom == simTo)
     return String(_T("."));
-  simFrom.append('/');
+  simFrom.append(_T('/'));
   if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
     return String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length());
   String result(_T("../"));
   while(simFrom.length() > 0)
   {
     simFrom.resize(simFrom.length() - 1);
-    const tchar_t* newEnd = simFrom.findLast('/');
+    const tchar_t* newEnd = simFrom.findLast(_T('/'));
     if(!newEnd)
       break;
     simFrom.resize((newEnd - (const tchar_t*)simFrom) + 1);
@@ -426,7 +426,7 @@ String File::getRelativePath(const String& from, const String& to)
   return String();
 }
 
-bool_t times(const String& file, File::Times& times)
+bool_t File::time(const String& file, File::Time& time)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
@@ -434,19 +434,18 @@ bool_t times(const String& file, File::Times& times)
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
   ASSERT(sizeof(DWORD) == 4);
-  // TODO: add
-  times.writeTime = ((timestamp_t)wfd.ftLastWriteTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftLastWriteTime.dwLowDateTime) / 10000LL - 11644473600LL;
-  times.accessTime = ((timestamp_t)wfd.ftLastAccessTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftLastAccessTime.dwLowDateTime) / 10000LL - 11644473600LL;
-  times.creationTime = ((timestamp_t)wfd.ftCreationTime.dwHighDateTime << 32LL | (timestamp_t)wfd.ftCreationTime.dwLowDateTime) / 10000LL - 11644473600LL;
+  time.writeTime = ((ULARGE_INTEGER&)wfd.ftLastWriteTime).QuadPart / 10000LL - 11644473600LL* 1000LL;
+  time.accessTime = ((ULARGE_INTEGER&)wfd.ftLastAccessTime).QuadPart / 10000LL - 11644473600LL * 1000LL;
+  time.creationTime = ((ULARGE_INTEGER&)wfd.ftCreationTime).QuadPart  / 10000LL - 11644473600LL * 1000LL;
   FindClose(hFind);
   return true;
 #else
   struct stat buf;
   if(stat(file, &buf) != 0)
     return false;
-  times.writeTime = ((long long)buf.st_mtim.tv_sec) * 1000LL + ((long long)buf.st_mtim.tv_nsec) / 1000000LL;
-  times.accessTime = ((long long)buf.st_atim.tv_sec) * 1000LL + ((long long)buf.st_atim.tv_nsec) / 1000000LL;
-  times.creationTime = ((long long)buf.st_ctim.tv_sec) * 1000LL + ((long long)buf.st_ctim.tv_nsec) / 1000000LL;
+  time.writeTime = ((long long)buf.st_mtim.tv_sec) * 1000LL + ((long long)buf.st_mtim.tv_nsec) / 1000000LL;
+  time.accessTime = ((long long)buf.st_atim.tv_sec) * 1000LL + ((long long)buf.st_atim.tv_nsec) / 1000000LL;
+  time.creationTime = ((long long)buf.st_ctim.tv_sec) * 1000LL + ((long long)buf.st_ctim.tv_nsec) / 1000000LL;
   return true;
 #endif
 }
