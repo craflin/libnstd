@@ -43,7 +43,7 @@ bool_t Library::load(const String& name)
 void_t* Library::findSymbol(const String& name)
 {
 #ifdef _WIN32
-  return GetProcAddress((HMODULE)library, (const tchar_t*)name);
+  return (void_t*)GetProcAddress((HMODULE)library, (const tchar_t*)name);
 #else
   return dlsym(library, (const tchar_t*)name);
 #endif
