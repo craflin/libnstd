@@ -52,6 +52,13 @@ public:
     return *this;
   }
 
+  void_t assign(const byte_t* data, size_t size)
+  {
+    resize(size);
+    Memory::copy(bufferStart, data, size);
+    *bufferEnd = 0;
+  }
+
   void_t append(const byte_t* data, size_t size)
   {
     resize(bufferEnd - bufferStart + size);
