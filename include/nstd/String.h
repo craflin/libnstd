@@ -156,27 +156,20 @@ public:
 
   String& operator=(const String& other)
   {
-    if(data->ref && Atomic::decrement(data->ref) == 0)
+    Data* otherData = other.data;
+    if(otherData->ref)
     {
-      if(this == &other)
-      {
-        Atomic::increment(data->ref);
-        return *this;
-      }
-      Memory::free(data);
-    }
-
-    if(other.data->ref)
-    {
-      data = other.data;
-      Atomic::increment(data->ref);
+      Atomic::increment(otherData->ref);
+      if(data->ref && Atomic::decrement(data->ref) == 0)
+        Memory::free(data);
+      data = otherData;
     }
     else
     {
-      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar_t)+ sizeof(Data));
+      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar_t) + sizeof(Data));
       data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-      Memory::copy((tchar_t*)data->str, other.data->str, (other.data->len + 1) * sizeof(tchar_t));
-      data->len = other.data->len;
+      Memory::copy((tchar_t*)data->str, otherData->str, (otherData->len + 1) * sizeof(tchar_t));
+      data->len = otherData->len;
       data->ref = 1;
     }
     return *this;
