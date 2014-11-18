@@ -18,8 +18,9 @@ public:
   {
     size_t size = other.bufferEnd - other.bufferStart;
     bufferStart = buffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
-    Memory::copy(buffer, other.bufferStart, size + 1);
+    Memory::copy(buffer, other.bufferStart, size);
     bufferEnd = bufferStart + size;
+    *bufferEnd = 0;
   }
 
   Buffer(const byte_t* data, size_t size)
@@ -46,17 +47,40 @@ public:
       Memory::free(buffer);
       buffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
     }
-    Memory::copy(buffer, other.bufferStart, size + 1);
+    else if(!buffer)
+      return *this;
+    Memory::copy(buffer, other.bufferStart, size);
     bufferStart = buffer;
     bufferEnd = buffer + size;
+    *bufferEnd = 0;
     return *this;
   }
 
   void_t assign(const byte_t* data, size_t size)
   {
-    resize(size);
-    Memory::copy(bufferStart, data, size);
+    if(size > _capacity)
+    {
+      Memory::free(buffer);
+      buffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
+    }
+    else if(!buffer)
+      return;
+    Memory::copy(buffer, data, size);
+    bufferStart = buffer;
+    bufferEnd = buffer + size;
     *bufferEnd = 0;
+  }
+
+  bool operator==(const Buffer& other) const
+  {
+    size_t size = bufferEnd - bufferStart;
+    return size == other.bufferEnd - other.bufferStart && Memory::compare(other.bufferStart, bufferStart, size) == 0;
+  }
+
+  bool operator!=(const Buffer& other) const
+  {
+    size_t size = bufferEnd - bufferStart;
+    return size != other.bufferEnd - other.bufferStart || Memory::compare(other.bufferStart, bufferStart, size) != 0;
   }
 
   void_t append(const byte_t* data, size_t size)
@@ -66,39 +90,35 @@ public:
     *bufferEnd = 0;
   }
 
-  void_t append(const Buffer& buffer)
+  void_t append(const Buffer& data)
   {
-    size_t size = buffer.bufferEnd - buffer.bufferStart;
+    size_t size = data.bufferEnd - data.bufferStart;
     resize(bufferEnd - bufferStart + size);
-    Memory::copy(bufferEnd - size, buffer.bufferStart, size);
+    Memory::copy(bufferEnd - size, data.bufferStart, size);
     *bufferEnd = 0;
   }
 
   void_t resize(size_t size)
   {
-    size_t requiredCapacity = bufferStart - buffer + size;
-    if(requiredCapacity > _capacity)
+    if(size > _capacity)
     {
-      if(size > _capacity || !buffer)
-      {
-        byte_t* newBuffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
-        Memory::copy(newBuffer, bufferStart, bufferEnd - bufferStart);
-        Memory::free(buffer);
-        bufferStart = buffer = newBuffer;
-        bufferEnd = newBuffer + size;
-        *bufferEnd = 0;
-      }
-      else
-      {
-        Memory::move(buffer, bufferStart, bufferEnd - bufferStart);
-        bufferStart = buffer;
-        bufferEnd = buffer + size;
-        *bufferEnd = 0;
-      }
+      byte_t* newBuffer = (byte_t*)Memory::alloc(size + 1, _capacity); --_capacity;
+      Memory::copy(newBuffer, bufferStart, bufferEnd - bufferStart);
+      Memory::free(buffer);
+      bufferStart = buffer = newBuffer;
+      bufferEnd = newBuffer + size;
+      *bufferEnd = 0;
+    }
+    else if(bufferStart + size <= buffer + _capacity)
+    {
+      bufferEnd = bufferStart + size;
+      *bufferEnd = 0;
     }
     else if(buffer)
     {
-      bufferEnd = bufferStart + size;
+      Memory::move(buffer, bufferStart, bufferEnd - bufferStart);
+      bufferStart = buffer;
+      bufferEnd = buffer + size;
       *bufferEnd = 0;
     }
   }
@@ -107,14 +127,15 @@ public:
   {
     bufferStart += size;
     if(bufferStart >= bufferEnd)
-      bufferStart = bufferEnd = buffer;
+      bufferStart = bufferEnd = buffer ? buffer : (byte_t*)&_capacity;
   }
 
   void_t removeBack(size_t size)
   {
-    bufferEnd -= size;
-    if(bufferStart >= bufferEnd)
-      bufferStart = bufferEnd = buffer;
+    if(bufferStart + size >= bufferEnd)
+      bufferStart = bufferEnd = buffer ? buffer : (byte_t*)&_capacity;
+    else
+      bufferEnd -= size;
     *bufferEnd = 0;
   }
 
@@ -127,10 +148,11 @@ public:
       return;
     byte_t* newBuffer = (byte_t*)Memory::alloc(capacity + 1, _capacity); --_capacity;
     size_t size = bufferEnd - bufferStart;
-    Memory::copy(newBuffer, bufferStart, size + 1);
+    Memory::copy(newBuffer, bufferStart, size);
     Memory::free(buffer);
     bufferStart = buffer = newBuffer;
     bufferEnd = newBuffer + size;
+    *bufferEnd = 0;
   }
 
   void_t clear()
@@ -174,4 +196,3 @@ private:
   byte_t* bufferEnd;
   size_t _capacity;
 };
-

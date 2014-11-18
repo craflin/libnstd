@@ -25,6 +25,19 @@
 #include <cctype>
 #include <cstdlib>
 
+void_t testBuffer()
+{
+  Buffer buffer1;
+  Buffer buffer2;
+  Buffer buffer3;
+  ASSERT(buffer1 == buffer2);
+  buffer1 = buffer2;
+  ASSERT(buffer1 == buffer2);
+  buffer3.assign((byte_t*)"123", 3);
+  buffer3 = buffer2;
+  ASSERT(buffer3 == buffer2);
+}
+
 void_t testThread()
 {
   Thread thread;
@@ -1275,6 +1288,7 @@ int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
+  testBuffer();
   testThread();
   testSempahore();
   testMutexRecursion();
