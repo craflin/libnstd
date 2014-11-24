@@ -35,25 +35,29 @@ bool_t File::open(const String& file, uint_t flags)
     SetLastError(ERROR_INVALID_HANDLE);
     return false;
   }
-  DWORD desiredAccess = 0, creationDisposition = 0;
-  if(flags & writeFlag)
+  DWORD desiredAccess, creationDisposition;
+  if((flags & (readFlag | writeFlag)) == (readFlag | writeFlag))
   {
-    desiredAccess |= GENERIC_WRITE;
+    desiredAccess = GENERIC_READ | GENERIC_WRITE;
+    creationDisposition = OPEN_ALWAYS;
+  }
+  else if(flags & writeFlag)
+  {
+    desiredAccess = GENERIC_WRITE;
     if(flags & appendFlag)
       creationDisposition = OPEN_ALWAYS;
     else
       creationDisposition = CREATE_ALWAYS;
   }
-  if(flags & readFlag)
+  else
   {
-    desiredAccess |= GENERIC_READ;
-    if(!(flags & writeFlag))
-      creationDisposition = OPEN_EXISTING;
+    desiredAccess = GENERIC_READ;
+    creationDisposition = OPEN_EXISTING;
   }
   fp = CreateFile(file, desiredAccess, FILE_SHARE_READ, NULL, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
   if(fp == INVALID_HANDLE_VALUE)
     return false;
-  if(creationDisposition == OPEN_ALWAYS)
+  if(flags & appendFlag)
   {
     if(SetFilePointer(fp, 0, NULL, FILE_END) == INVALID_SET_FILE_POINTER)
     {
