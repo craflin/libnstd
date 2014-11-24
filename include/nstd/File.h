@@ -11,6 +11,7 @@ public:
     readFlag = 0x0001,
     writeFlag = 0x0002,
     appendFlag = 0x0004,
+    openFlag = 0x0008,
   };
 
   enum Position
