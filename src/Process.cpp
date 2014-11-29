@@ -713,3 +713,132 @@ bool_t Process::setEnvironmentVariable(const String& name, const String& value)
   return setenv((const tchar_t*)name, (const tchar_t*)value, 1) == 0;
 #endif
 }
+
+bool_t Process::Arguments::nextChar()
+{
+  if(*arg)
+  {
+    ++arg;
+    return true;
+  }
+  if(argv < argvEnd)
+  {
+    arg = *(argv++);
+    inOpt = false;
+    return true;
+  }
+  return false;
+}
+
+bool_t Process::Arguments::read(int_t& character, String& argument)
+{
+  if(!nextChar())
+    return false;
+
+  if(!inOpt && !skipOpt)
+  {
+    if(*arg == '-')
+    {
+      if(arg[1] == '-')
+      { // handel '--' arg
+        arg += 2;
+        if(!*arg)
+        {
+          skipOpt = true;
+          if(!nextChar())
+            return false;
+        }
+        else
+        {
+          const tchar_t* end = String::find(arg, '=');
+          size_t argLen = end ? end - arg : String::length(arg);
+          for(const Option* opt = options; opt < optionsEnd; ++opt)
+            if(opt->name && String::compare(opt->name, arg, argLen) == 0 && !opt->name[argLen])
+            {
+              const char_t* argName = arg;
+              character = opt->character;
+              arg += end ? argLen + 1 : argLen;
+              if(opt->flags & Process::argumentFlag)
+              {
+                if(end || (!(opt->flags & Process::optionalFlag) && nextChar()))
+                {
+                  size_t len = String::length(arg);
+                  argument.attach(arg, len);
+                  arg += len;
+                  return true;
+                }
+                if(!(opt->flags & Process::optionalFlag))
+                {
+                  // missing argument
+                  argument.attach(argName - 2, argLen + 2);
+                  character = ':';
+                  return true;
+                }
+              }
+              argument.clear();
+              return true;
+            }
+
+          // unknown option
+          character = '?';
+          argument.attach(arg - 2, argLen + 2);
+          return true;
+        }
+      }
+      else
+      {
+        if(!*(++arg))
+        {
+          character = 0;
+          argument.attach(arg - 1, 1); // "-"
+          return true;
+        }
+        inOpt = true;
+      }
+    }
+  }
+
+  // find option *str
+  if(inOpt)
+  {
+    character = *(arg++);
+    for(const Option* opt = options; opt < optionsEnd; ++opt)
+      if(opt->character == character)
+      {
+        if(opt->flags & Process::argumentFlag)
+        {
+          if(!*arg)
+          {
+            if(!nextChar())
+            { // missing argument
+              argument.clear();
+              argument.append('-');
+              argument.append((char_t)character);
+              character = ':';
+              return true;
+            }
+          }
+          size_t len = String::length(arg);
+          argument.attach(arg, len);
+          arg += len;
+          return true;
+        }
+        argument.clear();
+        return true;
+      }
+
+    // unknown option
+    argument.clear();
+    argument.append('-');
+    argument.append((char_t)character);
+    character = '?';
+    return true;
+  }
+
+  // non option argument
+  character = '\0';
+  size_t len = String::length(arg);
+  argument.attach(arg, len);
+  arg += len;
+  return true;
+}

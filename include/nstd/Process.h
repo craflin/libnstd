@@ -65,6 +65,41 @@ public:
   static String getEnvironmentVariable(const String& name);
   static bool_t setEnvironmentVariable(const String& name, const String& value);
 
+public:
+  enum OptionFlags
+  {
+    optionFlag = 0x0,
+    argumentFlag = 0x1,
+    optionalFlag = 0x2,
+  };
+
+  struct Option
+  {
+    int_t character;
+    const char_t* name;
+    uint32_t flags;
+  };
+
+  class Arguments
+  {
+  public:
+    template<size_t N> Arguments(int_t argc, char_t* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(""), inOpt(false), skipOpt(false) {++this->argv;}
+
+    bool_t read(int_t& character, String& argument);
+
+  private:
+    char_t** argv;
+    char_t** argvEnd;
+    const Option* options;
+    const Option* optionsEnd;
+    const char_t* arg;
+    bool_t inOpt;
+    bool_t skipOpt;
+
+  private:
+    bool_t nextChar();
+  };
+
 private:
 #ifdef _WIN32
   void_t* hProcess;
