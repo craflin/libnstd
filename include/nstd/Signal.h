@@ -12,6 +12,7 @@ public:
   void_t set();
   void_t reset();
   bool_t wait();
+  bool_t wait(timestamp_t timeout);
 
 private:
   void* handle;

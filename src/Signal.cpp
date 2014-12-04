@@ -53,3 +53,13 @@ bool_t Signal::wait()
   return false;
 #endif
 }
+
+bool_t Signal::wait(timestamp_t timeout)
+{
+#ifdef _WIN32
+  return WaitForSingleObject(handle, (DWORD)timeout) == WAIT_OBJECT_0;
+#else
+  // todo
+  return false;
+#endif
+}
