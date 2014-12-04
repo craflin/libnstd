@@ -23,10 +23,11 @@ else {
 defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 
 targets = {
-  "test performance" = cppApplication + {
+  "test performance console" = cppApplication + {
+    folder = "Tests"
     dependencies = { "libnstd" }
     if(target == "test") {
-      dependencies += "performance"
+      dependencies += "performance console"
     }
     includePaths = { "include" }
     if(platform == "Win32" && tool != "vcxproj") {
@@ -37,8 +38,10 @@ targets = {
     output = "$(buildDir)/../../$(target)$(if $(Win32),.exe,)"
     if(target == "test") {
       root = "test"
-    } else {
+    } else if(target == "performance") {
       root = "test/Performance"
+    } else if(target == "console") {
+      root = "test/Console"
     }
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
@@ -51,8 +54,10 @@ targets = {
     files = {
       if(target == "test") {
         "test/Main.cpp" = cppSource,
-      } else {
+      } else if(target == "performance") {
         "test/Performance/**.cpp" = cppSource,
+      } else if(target == "console") {
+        "test/Console/**.cpp" = cppSource,
       }
     }
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
