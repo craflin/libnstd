@@ -750,12 +750,12 @@ bool_t Process::Arguments::read(int_t& character, String& argument)
         }
         else
         {
-          const tchar_t* end = String::find(arg, '=');
+          const tchar_t* end = String::find(arg, _T('='));
           size_t argLen = end ? end - arg : String::length(arg);
           for(const Option* opt = options; opt < optionsEnd; ++opt)
             if(opt->name && String::compare(opt->name, arg, argLen) == 0 && !opt->name[argLen])
             {
-              const char_t* argName = arg;
+              const tchar_t* argName = arg;
               character = opt->character;
               arg += end ? argLen + 1 : argLen;
               if(opt->flags & Process::argumentFlag)

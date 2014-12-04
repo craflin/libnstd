@@ -73,11 +73,11 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
   String name;
   static volatile unsigned long pipeCount = 0;
   unsigned long pipeId = InterlockedIncrement(&pipeCount);
-  name.printf("\\\\.\\pipe\\MyAnon.%08x.%08x", (unsigned int)GetCurrentProcessId(), (unsigned int)pipeId);
-  HANDLE hRead = CreateNamedPipeA((const tchar_t*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
+  name.printf(_T("\\\\.\\pipe\\MyAnon.%08x.%08x"), (unsigned int)GetCurrentProcessId(), (unsigned int)pipeId);
+  HANDLE hRead = CreateNamedPipe((const tchar_t*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
   if(!hRead)
     return FALSE;
-  HANDLE hWrite = CreateFileA((const tchar_t*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
+  HANDLE hWrite = CreateFile((const tchar_t*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
   if(hWrite == INVALID_HANDLE_VALUE)
   {
     DWORD dwError = GetLastError();
@@ -196,8 +196,8 @@ public:
   void_t writeConsole(const tchar_t* data, size_t len)
   {
     DWORD written;
-    VERIFY(WriteConsole(hOriginalStdOut, data, len, &written, NULL));
-    ASSERT(written == len);
+    VERIFY(WriteConsole(hOriginalStdOut, data, (DWORD)len, &written, NULL));
+    ASSERT(written == (DWORD)len);
   }
 
   void_t promptWrite(size_t offset = 0, const String& clearStr = String())
@@ -254,7 +254,7 @@ public:
       newInput.append(input.substr(caretPos));
       input = newInput;
       promptMoveLeft();
-      promptWrite(prompt.length() + caretPos, " ");
+      promptWrite(prompt.length() + caretPos, _T(" "));
     }
   }
 
@@ -266,7 +266,7 @@ public:
       newInput.append(input.substr(0, caretPos));
       newInput.append(input.substr(caretPos + 1));
       input = newInput;
-      promptWrite(prompt.length() + caretPos, " ");
+      promptWrite(prompt.length() + caretPos, _T(" "));
     }
   }
 

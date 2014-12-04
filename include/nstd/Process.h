@@ -76,23 +76,23 @@ public:
   struct Option
   {
     int_t character;
-    const char_t* name;
+    const tchar_t* name;
     uint32_t flags;
   };
 
   class Arguments
   {
   public:
-    template<size_t N> Arguments(int_t argc, char_t* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(""), inOpt(false), skipOpt(false) {++this->argv;}
+    template<size_t N> Arguments(int_t argc, tchar_t* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(_T("")), inOpt(false), skipOpt(false) {++this->argv;}
 
     bool_t read(int_t& character, String& argument);
 
   private:
-    char_t** argv;
-    char_t** argvEnd;
+    tchar_t** argv;
+    tchar_t** argvEnd;
     const Option* options;
     const Option* optionsEnd;
-    const char_t* arg;
+    const tchar_t* arg;
     bool_t inOpt;
     bool_t skipOpt;
 
