@@ -162,34 +162,35 @@ public:
     size_t oldX = from % width;
     size_t newY = to / width;
     size_t newX = to % width;
-    if(newY != oldY)
-    {
+    //if(newY != oldY)
+    //{
+      // the get/setCursorPosition combo resets the cursor blink timer!
       size_t cursorX, cursorY;
       getCursorPosition(cursorX, cursorY);
       setCursorPosition(newX, cursorY + ((ssize_t)newY - (ssize_t)oldY));
-    }
-    else if(newX == 0)
-    {
-      tchar_t c = _T('\r');
-      writeConsole(&c, 1);
-    }
-    else if(newX < oldX)
-    {
-      size_t count = oldX - newX;
-      String moveCmd(count);
-      for(size_t i = 0; i < count; ++i)
-        moveCmd.append(_T('\b'));
-      writeConsole(moveCmd, moveCmd.length());
-    }
-    else if(newX > oldX)
-    {
-      String buffer(prompt.length() + input.length());
-      buffer.append(prompt);
-      buffer.append(input);
-      size_t offset = newY * width + oldX;
-      size_t count = newX - oldX;
-      writeConsole((const tchar_t*)buffer + offset, count);
-    }
+    //}
+    //else if(newX == 0)
+    //{
+    //  tchar_t c = _T('\r');
+    //  writeConsole(&c, 1);
+    //}
+    //else if(newX < oldX)
+    //{
+    //  size_t count = oldX - newX;
+    //  String moveCmd(count);
+    //  for(size_t i = 0; i < count; ++i)
+    //    moveCmd.append(_T('\b'));
+    //  writeConsole(moveCmd, moveCmd.length());
+    //}
+    //else if(newX > oldX)
+    //{
+    //  String buffer(prompt.length() + input.length());
+    //  buffer.append(prompt);
+    //  buffer.append(input);
+    //  size_t offset = newY * width + oldX;
+    //  size_t count = newX - oldX;
+    //  writeConsole((const tchar_t*)buffer + offset, count);
+    //}
   }
 
   void_t writeConsole(const tchar_t* data, size_t len)
@@ -223,6 +224,8 @@ public:
     writeConsole((const tchar_t*)wrappedBuffer + offset, wrappedBuffer.length() - offset);
     if(caretPos < input.length() + clearStr.length())
       moveCursorPosition(prompt.length() + input.length() + clearStr.length(), -(ssize_t)(input.length() + clearStr.length() - caretPos));
+    else // enforce cursor blink reset
+      moveCursorPosition(prompt.length() + input.length() + clearStr.length(), 0);
   }
 
   void_t promptInsert(tchar_t character)
