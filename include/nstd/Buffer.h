@@ -74,13 +74,13 @@ public:
   bool operator==(const Buffer& other) const
   {
     size_t size = bufferEnd - bufferStart;
-    return size == other.bufferEnd - other.bufferStart && Memory::compare(other.bufferStart, bufferStart, size) == 0;
+    return size == (size_t)(other.bufferEnd - other.bufferStart) && Memory::compare(other.bufferStart, bufferStart, size) == 0;
   }
 
   bool operator!=(const Buffer& other) const
   {
     size_t size = bufferEnd - bufferStart;
-    return size != other.bufferEnd - other.bufferStart || Memory::compare(other.bufferStart, bufferStart, size) != 0;
+    return size != (size_t)(other.bufferEnd - other.bufferStart) || Memory::compare(other.bufferStart, bufferStart, size) != 0;
   }
 
   void_t append(const byte_t* data, size_t size)
