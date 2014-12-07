@@ -9,8 +9,11 @@ uint_t threadProc(void_t* param)
 {
   Signal* termSignal = (Signal*)param;
   int_t counter = 0;
-  while(!termSignal->wait(3000))
-    Console::printf(_T("%d\n"), counter++);
+  while(!termSignal->wait(1000))
+  {
+    Console::printf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? "\n" : " ");
+    ++counter;
+  }
   return 0;
 }
 

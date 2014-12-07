@@ -69,18 +69,6 @@ int_t Console::errorf(const tchar_t* format, ...)
   return result;
 }
 
-//#ifndef _WIN32
-//static int originalStdout = 0;
-//static void resetStdout()
-//{
-//  if(originalStdout)
-//  {
-//    dup2(originalStdout, STDOUT_FILENO);
-//    close(originalStdout);
-//  }
-//}
-//#endif
-
 #ifdef _WIN32
 static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD nSize, DWORD dwReadMode, DWORD dwWriteMode)
 {
@@ -154,6 +142,11 @@ public:
       VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
       ASSERT(written == read);
     }
+
+    // get screen width
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
+    stdoutScreenWidth = csbi.dwSize.X;
 #else
     if(originalStdout != -1)
       return; // yout should create more than a single instance of this class
@@ -229,15 +222,6 @@ public:
     close(stdoutRead);
     close(stdoutWrite);
     originalStdout = -1;
-#endif
-  }
-
-  size_t getScreenWidth() // todo remove this functions
-  {
-#ifdef _WIN32
-    return csbi.dwSize.X;
-#else
-    return stdoutScreenWidth;
 #endif
   }
 
@@ -320,12 +304,11 @@ public:
   void_t moveCursorPosition(size_t from, ssize_t x)
   {
 #ifdef _WIN32
-    size_t width = getScreenWidth();
     size_t to = from + x;
-    size_t oldY = from / width;
-    //size_t oldX = from % width;
-    size_t newY = to / width;
-    size_t newX = to % width;
+    size_t oldY = from / stdoutScreenWidth;
+    //size_t oldX = from % stdoutScreenWidth;
+    size_t newY = to / stdoutScreenWidth;
+    size_t newX = to % stdoutScreenWidth;
     //if(newY != oldY)
     //{
       // the get/setCursorPosition combo resets the cursor blink timer!
@@ -372,20 +355,19 @@ public:
 
   void_t promptWrite(size_t offset = 0, const String& clearStr = String())
   {
-    size_t width = getScreenWidth();
-    offset += offset / width * 2;
+    offset += offset / stdoutScreenWidth * 2;
     String buffer(prompt.length() + input.length() + clearStr.length());
     buffer.append(prompt);
     buffer.append(input);
     buffer.append(clearStr);
-    String wrappedBuffer(buffer.length() + buffer.length() / width * 2 + 2);
-    for(size_t i = 0, len = buffer.length(); i < len; i += width)
+    String wrappedBuffer(buffer.length() + buffer.length() / stdoutScreenWidth * 2 + 2);
+    for(size_t i = 0, len = buffer.length(); i < len; i += stdoutScreenWidth)
     {
       size_t lineEnd = len - i;
-      if(lineEnd > width)
-        lineEnd = width;
+      if(lineEnd > stdoutScreenWidth)
+        lineEnd = stdoutScreenWidth;
       wrappedBuffer.append((const tchar_t*)buffer + i, lineEnd);
-      if(lineEnd == width)
+      if(lineEnd == stdoutScreenWidth)
       {
         wrappedBuffer.append(_T('\r'));
         wrappedBuffer.append(_T('\n'));
@@ -480,20 +462,19 @@ public:
 
   void_t promptClear()
   {
-    size_t width = getScreenWidth();
     size_t bufferLen = prompt.length() + input.length();
-    size_t additionalLines = bufferLen / width;
+    size_t additionalLines = bufferLen / stdoutScreenWidth;
     if(additionalLines)
     {
       moveCursorPosition(prompt.length() + caretPos, -(ssize_t)(caretPos + prompt.length()));
-      String clearLine(width + 2);
-      for(size_t i = 0; i < width; ++i)
+      String clearLine(stdoutScreenWidth + 2);
+      for(size_t i = 0; i < stdoutScreenWidth; ++i)
         clearLine.append(_T(' '));
       clearLine.append(_T("\n\r"));
       String clearCmd(bufferLen + additionalLines * 2);
       for(size_t i = 0; i < additionalLines; ++i)
         clearCmd.append(clearLine);
-      for(size_t i = 0, count = bufferLen - additionalLines * width; i < count; ++i)
+      for(size_t i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
         clearCmd.append(_T(' '));
       writeConsole(clearCmd, clearCmd.length());
       moveCursorPosition(prompt.length() + input.length(), -(ssize_t)bufferLen);
@@ -522,26 +503,40 @@ public:
   {
     if(stdoutCursorX)
     {
+#ifdef _WIN32
+      CONSOLE_SCREEN_BUFFER_INFO csbi;
+      VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
+      csbi.dwCursorPosition.X = stdoutCursorX;
+      --csbi.dwCursorPosition.Y;
+      VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
+#else
       String moveCmd;
       moveCmd.printf("\x1b[A\r\x1b%dC", stdoutCursorX);
       writeConsole(moveCmd, moveCmd.length());
+#endif
     }
-    else
-      writeConsole("\r", 1);
   }
 
   void_t restoreTerminalMode()
   {
+#ifdef _WIN32
+    VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
+#else
     VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &originalTermios) == 0);
+#endif
   }
 
   void_t enableTerminalRawMode()
   {
+#ifdef _WIN32
+    VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
+#else
     termios raw = originalTermios;
     cfmakeraw(&raw);
     raw.c_lflag |= ISIG;
     raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;
     VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &raw) == 0);
+#endif
   }
 
   String getLine(const String& prompt)
@@ -552,33 +547,21 @@ public:
       return String();
     }
 
-#ifdef _WIN32
-    // disable eol wrap
-    VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
-
-    // save console cursor position
-    VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-
-    // move cursor to the next line
-    DWORD written;
-    bool addedNewLine = false;
-    if(csbi.dwCursorPosition.X != 0)
-    {
-      VERIFY(WriteConsole(hOriginalStdOut, (const tchar_t*)_T("\r\n"), 2, &written, NULL));
-      ASSERT(written == 2);
-      addedNewLine = true;
-    }
+    enableTerminalRawMode();
+    saveCursorPosition();
 
     // write prompt
     this->prompt = prompt;
     input.clear();
+    inputComplete = false;
     caretPos = 0;
     promptWrite();
 
+#ifdef _WIN32
     // wait for io
     HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE handles[] = {hStdIn, overlapped.hEvent};
-    for(;;)
+    while(!inputComplete)
     {
       DWORD dw = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
       switch(dw)
@@ -618,7 +601,8 @@ public:
               case _T('\t'):
                 break;
               case _T('\r'):
-                goto returnResult;
+                inputComplete = true;
+                break;
               case _T('\b'):
                 promptRemove();
                 break;
@@ -635,23 +619,13 @@ public:
           if(!GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
             continue;
 
-          // clear prompt line
+          //
           promptClear();
-
-          // restore cursor position
-          if(addedNewLine)
-          {
-            SHORT x = csbi.dwCursorPosition.X;
-            VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-            csbi.dwCursorPosition.X = x;
-            --csbi.dwCursorPosition.Y;
-            VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
-          }
-
-          // restore console mode
-          VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
+          restoreCursorPosition();
+          restoreTerminalMode();
 
           // add new output
+          DWORD written;
           VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
           ASSERT(written == read);
           while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
@@ -660,22 +634,9 @@ public:
             ASSERT(written == read);
           }
 
-          // set console mode back to no eol wrap
-          VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
-
-          // get new cursor position
-          VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-
-          // move cursor to the next line
-          addedNewLine = false;
-          if(csbi.dwCursorPosition.X != 0)
-          {
-            VERIFY(WriteConsole(hOriginalStdOut, (const tchar_t*)_T("\r\n"), 2, &written, NULL));
-            ASSERT(written == 2);
-            addedNewLine = true;
-          }
-
-          // write prompt
+          //
+          enableTerminalRawMode();
+          saveCursorPosition();
           promptWrite();
         }
         break;
@@ -684,33 +645,7 @@ public:
       }
     }
 
-  returnResult:
-    // clear prompt line
-    promptClear();
-
-    // restore cursor position
-    if(addedNewLine)
-    {
-      SHORT x = csbi.dwCursorPosition.X;
-      VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-      csbi.dwCursorPosition.X = x;
-      --csbi.dwCursorPosition.Y;
-      VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
-    }
-
-    // restore console mode
-    VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
 #else
-    enableTerminalRawMode();
-    saveCursorPosition();
-
-    // write prompt
-    this->prompt = prompt;
-    input.clear();
-    inputComplete = false;
-    caretPos = 0;
-    promptWrite();
-
     while(!inputComplete)
     {
       if(!bufferedInput.isEmpty())
@@ -747,7 +682,6 @@ public:
         VERIFY(write(originalStdout, buffer, i) == i);
 
         enableTerminalRawMode();
-
         saveCursorPosition();
         promptWrite();
       }
@@ -760,13 +694,14 @@ public:
       }
     }
 
+#endif
     promptClear();
     restoreCursorPosition();
     restoreTerminalMode();
-#endif
     return input;
   }
 
+#ifndef _WIN32
   void_t handleInput(const char_t* input, size_t len)
   {
     for(const char_t* end = input + len; input < end; ++input)
@@ -790,6 +725,7 @@ public:
 
     }
   }
+#endif
 
 private:
   bool_t valid;
@@ -800,31 +736,33 @@ private:
   int originalStdout;
   int newStdout;
   OVERLAPPED overlapped;
-  CONSOLE_SCREEN_BUFFER_INFO csbi;
   char stdoutBuffer[4096];
   DWORD consoleMode;
 #else
   static int originalStdout;
   int stdoutRead;
   int stdoutWrite;
-  size_t stdoutScreenWidth;
-  size_t stdoutCursorX;
+  
   static bool_t originalTermiosValid;
   static termios originalTermios;
-
-  bool_t inputComplete;
 
   Buffer bufferedInput;
 #endif
 
+  size_t stdoutScreenWidth;
+  size_t stdoutCursorX;
+
   String prompt;
   String input;
+  bool_t inputComplete;
   size_t caretPos;
 };
 
+#ifndef _WIN32
 int ConsolePromptPrivate::originalStdout = -1;
 bool_t ConsolePromptPrivate::originalTermiosValid = false;
 termios ConsolePromptPrivate::originalTermios;
+#endif
 
 Console::Prompt::Prompt() : data(new ConsolePromptPrivate) {}
 
