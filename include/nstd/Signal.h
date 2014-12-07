@@ -19,7 +19,7 @@ private:
   void* handle;
 #else
   #ifdef _AMD64
-  // todo
+  byte_t cdata[48]; // sizeof(pthread_cond_t)
   byte_t mdata[40]; // sizeof(pthread_mutex_t)
   #else
   byte_t cdata[48]; // sizeof(pthread_cond_t)
