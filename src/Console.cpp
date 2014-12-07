@@ -8,13 +8,22 @@
 #include <Windows.h>
 #include <io.h>
 #include <fcntl.h>
-#include <nstd/Debug.h>
-#include <conio.h>
+//#include <conio.h>
 #else
-// todo
+#include <unistd.h>
+#include <sys/eventfd.h>
+#include <fcntl.h>
+#include <pthread.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <cstring>
+#include <cctype>
+#include <cstdlib>
 #endif
 
+#include <nstd/Debug.h>
 #include <nstd/Console.h>
+#include <nstd/Buffer.h>
 
 int_t Console::print(const tchar_t* str)
 {
@@ -60,6 +69,18 @@ int_t Console::errorf(const tchar_t* format, ...)
   return result;
 }
 
+//#ifndef _WIN32
+//static int originalStdout = 0;
+//static void resetStdout()
+//{
+//  if(originalStdout)
+//  {
+//    dup2(originalStdout, STDOUT_FILENO);
+//    close(originalStdout);
+//  }
+//}
+//#endif
+
 #ifdef _WIN32
 static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD nSize, DWORD dwReadMode, DWORD dwWriteMode)
 {
@@ -91,12 +112,24 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
 }
 #endif
 
-#ifdef _WIN32
 class ConsolePromptPrivate
 {
 public:
+
+#ifndef _WIN32
+  static void restoreTermMode()
+  {
+    if(originalTermiosValid)
+    {
+      VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &originalTermios) == 0);
+      originalTermiosValid = false;
+    }
+  }
+#endif
+
   ConsolePromptPrivate() : valid(false)
   {
+#ifdef _WIN32
     if(!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &consoleMode))
       return; // no tty?
     valid = true;
@@ -121,45 +154,176 @@ public:
       VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
       ASSERT(written == read);
     }
+#else
+    if(originalStdout != -1)
+      return; // yout should create more than a single instance of this class
+    if(!isatty(STDIN_FILENO))
+      return;
+    valid = true;
+
+    originalStdout = eventfd(0, EFD_CLOEXEC); // create new file descriptor with O_CLOEXEC.. is there a better way to do this?
+    VERIFY(dup3(STDOUT_FILENO, originalStdout, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
+    int pipes[2];
+    VERIFY(pipe2(pipes, O_CLOEXEC) == 0);
+    stdoutRead = pipes[0];
+    stdoutWrite = pipes[1];
+    //::originalStdout = originalStdout;
+    //pthread_atfork(0, 0, resetStdout);
+    //arr? nun O_CLOEXEC von originalStdout entfernen?
+    //VERIFY(dup3(stdoutWrite, STDOUT_FILENO, O_CLOEXEC) != -1);
+    VERIFY(dup2(stdoutWrite, STDOUT_FILENO) != -1);
+    VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
+    // todo: install SIGWINCH handler
+
+    // save term mode
+    if(!originalTermiosValid)
+    {
+      VERIFY(tcgetattr(originalStdout, &originalTermios) == 0);
+      originalTermiosValid = true;
+      atexit(restoreTermMode);
+    }
+
+    // get screen width
+    {
+      winsize ws;
+      stdoutScreenWidth = 0;
+      if(ioctl(originalStdout, TIOCGWINSZ, &ws) == 0)
+        stdoutScreenWidth = ws.ws_col;
+      if(stdoutScreenWidth == 0)
+      {
+        size_t x, y;
+        getCursorPosition(x, y);
+        writeConsole("\x1b[999C", 6);
+        size_t newX, newY;
+        getCursorPosition(newX, newY);
+        if(newX > x)
+        {
+          String moveCmd;
+          moveCmd.printf("\x1b[%dD",newX - x);
+          writeConsole(moveCmd, moveCmd.length());
+        }
+        stdoutScreenWidth = newX + 1;
+      }
+    }
+
+#endif
   }
 
   ~ConsolePromptPrivate()
   {
     if(!valid)
       return;
+#ifdef _WIN32
     CancelIo(hStdOutRead);
     CloseHandle(overlapped.hEvent);
     _dup2(originalStdout, _fileno(stdout));
     _close(originalStdout); // this should close hOriginalStdOut
     _close(newStdout); // this should close hStdOutWrite
     CloseHandle(hStdOutRead);
+#else
+    // todo: uninstall SIGWINCH handler
+    restoreTermMode();
+    originalTermiosValid = false;
+    VERIFY(dup2(originalStdout, STDOUT_FILENO) != -1);
+    close(originalStdout);
+    close(stdoutRead);
+    close(stdoutWrite);
+    originalStdout = -1;
+#endif
   }
 
-  size_t getScreenWidth()
+  size_t getScreenWidth() // todo remove this functions
   {
+#ifdef _WIN32
     return csbi.dwSize.X;
+#else
+    return stdoutScreenWidth;
+#endif
   }
 
   void_t getCursorPosition(size_t& x, size_t& y)
   {
+#ifdef _WIN32
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
     x = csbi.dwCursorPosition.X;
     y = csbi.dwCursorPosition.Y;
+#else
+    VERIFY(write(originalStdout, "\x1b[6n", 4) == 4);
+    char_t buffer[64];
+    size_t bufferUsed = 0;
+    for(;;)
+    {
+    nextRead:
+      ssize_t len = read(STDIN_FILENO, buffer - bufferUsed, sizeof(buffer) - bufferUsed- 1);
+      VERIFY(len != -1);
+      len += bufferUsed;
+      buffer[len] = '\0';
+      char* search = buffer;
+      for(;;)
+      {
+        char* response = strstr(search, "\x1b");
+        if(!response)
+        {
+          bufferedInput.append((byte_t*)buffer, len);
+          goto nextRead;
+        }
+        char* responseEnd = response + 1;
+        if(*responseEnd == '[')
+          ++responseEnd;
+        while(*responseEnd && !isalpha(*responseEnd))
+          ++responseEnd;
+        if(!*responseEnd)
+        {
+          if(responseEnd - response < len)
+          {
+            search = responseEnd + 1;
+            continue;
+          }
+          // incomplete response
+          bufferedInput.append((byte_t*)buffer, response - buffer);
+          bufferUsed = len - (response - buffer);
+          Memory::move(buffer, response, bufferUsed);
+          goto nextRead;
+        }
+        if(*responseEnd != 'R' || response[1] != '[')
+        {
+          search = responseEnd + 1;
+          continue;
+        }
+        else
+        {
+          int ix, iy;
+          VERIFY(sscanf(response + 2, "%d;%d", &iy, &ix) == 2);
+          x = ix - 1;
+          y = iy - 1;
+          ++responseEnd;
+          if(response != buffer)
+            bufferedInput.append((byte_t*)buffer, response - buffer);
+          if(responseEnd - response < len)
+            bufferedInput.append((byte_t*)responseEnd, len - (responseEnd - response));
+          return;
+        }
+      }
+    }
+#endif
   }
 
+#ifdef _WIN32
   void_t setCursorPosition(size_t x, size_t y)
   {
     COORD pos = {(SHORT)x, (SHORT)y};
     VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos));
   }
+#endif
 
   void_t moveCursorPosition(size_t from, ssize_t x)
   {
+#ifdef _WIN32
     size_t width = getScreenWidth();
     size_t to = from + x;
     size_t oldY = from / width;
-    size_t oldX = from % width;
+    //size_t oldX = from % width;
     size_t newY = to / width;
     size_t newX = to % width;
     //if(newY != oldY)
@@ -191,13 +355,19 @@ public:
     //  size_t count = newX - oldX;
     //  writeConsole((const tchar_t*)buffer + offset, count);
     //}
+#else
+#endif
   }
 
   void_t writeConsole(const tchar_t* data, size_t len)
   {
+#ifdef _WIN32
     DWORD written;
     VERIFY(WriteConsole(hOriginalStdOut, data, (DWORD)len, &written, NULL));
     ASSERT(written == (DWORD)len);
+#else
+    VERIFY(write(originalStdout, data, len) == (ssize_t)len);
+#endif
   }
 
   void_t promptWrite(size_t offset = 0, const String& clearStr = String())
@@ -224,8 +394,10 @@ public:
     writeConsole((const tchar_t*)wrappedBuffer + offset, wrappedBuffer.length() - offset);
     if(caretPos < input.length() + clearStr.length())
       moveCursorPosition(prompt.length() + input.length() + clearStr.length(), -(ssize_t)(input.length() + clearStr.length() - caretPos));
+#ifdef _WIN32
     else // enforce cursor blink reset
       moveCursorPosition(prompt.length() + input.length() + clearStr.length(), 0);
+#endif
   }
 
   void_t promptInsert(tchar_t character)
@@ -337,6 +509,41 @@ public:
     }
   }
 
+  void_t saveCursorPosition()
+  {
+    size_t x, y;
+    getCursorPosition(x, y);
+    stdoutCursorX = x;
+    if(stdoutCursorX)
+      writeConsole("\r\n", 2);
+  }
+
+  void_t restoreCursorPosition()
+  {
+    if(stdoutCursorX)
+    {
+      String moveCmd;
+      moveCmd.printf("\x1b[A\r\x1b%dC", stdoutCursorX);
+      writeConsole(moveCmd, moveCmd.length());
+    }
+    else
+      writeConsole("\r", 1);
+  }
+
+  void_t restoreTerminalMode()
+  {
+    VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &originalTermios) == 0);
+  }
+
+  void_t enableTerminalRawMode()
+  {
+    termios raw = originalTermios;
+    cfmakeraw(&raw);
+    raw.c_lflag |= ISIG;
+    raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;
+    VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &raw) == 0);
+  }
+
   String getLine(const String& prompt)
   {
     if(!valid)
@@ -345,6 +552,7 @@ public:
       return String();
     }
 
+#ifdef _WIN32
     // disable eol wrap
     VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
 
@@ -492,12 +700,100 @@ public:
 
     // restore console mode
     VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
+#else
+    enableTerminalRawMode();
+    saveCursorPosition();
 
+    // write prompt
+    this->prompt = prompt;
+    input.clear();
+    inputComplete = false;
+    caretPos = 0;
+    promptWrite();
+
+    while(!inputComplete)
+    {
+      if(!bufferedInput.isEmpty())
+      {
+        handleInput((const char_t*)(const byte_t*)bufferedInput, bufferedInput.size());
+        bufferedInput.free();
+        if(inputComplete)
+          break;
+      }
+
+      fd_set fdr;
+      FD_ZERO(&fdr);
+      FD_SET(stdoutRead, &fdr);
+      FD_SET(STDIN_FILENO, &fdr);
+      timeval tv = {1000000, 0};
+      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
+      {
+      case 0:
+        continue;
+      case -1:
+        ASSERT(false);
+        return String();
+      }
+      if(FD_ISSET(stdoutRead, &fdr))
+      {
+        promptClear();
+        restoreCursorPosition();
+        char buffer[4096];
+        ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
+        VERIFY(i != -1);
+
+        restoreTerminalMode();
+        
+        VERIFY(write(originalStdout, buffer, i) == i);
+
+        enableTerminalRawMode();
+
+        saveCursorPosition();
+        promptWrite();
+      }
+      if(FD_ISSET(STDIN_FILENO, &fdr))
+      {
+        char buffer[4096];
+        ssize_t i = read(STDIN_FILENO, buffer, sizeof(buffer));
+        VERIFY(i != -1);
+        handleInput(buffer, i);
+      }
+    }
+
+    promptClear();
+    restoreCursorPosition();
+    restoreTerminalMode();
+#endif
     return input;
+  }
+
+  void_t handleInput(const char_t* input, size_t len)
+  {
+    for(const char_t* end = input + len; input < end; ++input)
+      handleInput(*input);
+  }
+
+  void_t handleInput(char_t c)
+  {
+    switch(c)
+    {
+    case _T('\t'):
+      break;
+    case _T('\r'):
+      inputComplete = true;
+      break;
+    case _T('\b'):
+      promptRemove();
+      break;
+    default:
+      promptInsert(c);
+
+    }
   }
 
 private:
   bool_t valid;
+#ifdef _WIN32
   HANDLE hStdOutRead;
   HANDLE hStdOutWrite;
   HANDLE hOriginalStdOut;
@@ -507,13 +803,28 @@ private:
   CONSOLE_SCREEN_BUFFER_INFO csbi;
   char stdoutBuffer[4096];
   DWORD consoleMode;
+#else
+  static int originalStdout;
+  int stdoutRead;
+  int stdoutWrite;
+  size_t stdoutScreenWidth;
+  size_t stdoutCursorX;
+  static bool_t originalTermiosValid;
+  static termios originalTermios;
+
+  bool_t inputComplete;
+
+  Buffer bufferedInput;
+#endif
 
   String prompt;
   String input;
   size_t caretPos;
 };
-#else
-#endif
+
+int ConsolePromptPrivate::originalStdout = -1;
+bool_t ConsolePromptPrivate::originalTermiosValid = false;
+termios ConsolePromptPrivate::originalTermios;
 
 Console::Prompt::Prompt() : data(new ConsolePromptPrivate) {}
 
