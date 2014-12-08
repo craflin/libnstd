@@ -511,7 +511,7 @@ public:
       VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
 #else
       String moveCmd;
-      moveCmd.printf("\x1b[A\r\x1b%dC", stdoutCursorX);
+      moveCmd.printf("\x1b[A\r\x1b[%dC", stdoutCursorX);
       writeConsole(moveCmd, moveCmd.length());
 #endif
     }
