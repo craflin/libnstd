@@ -20,10 +20,21 @@
 #include <nstd/Process.h>
 #include <nstd/Map.h>
 #include <nstd/Math.h>
+#include <nstd/Unicode.h>
 
 #include <cstring>
 #include <cctype>
 #include <cstdlib>
+
+void_t testUnicode()
+{
+  uint32_t ch = 0x5d8;
+  String encoded = Unicode::toString(ch);
+  ASSERT(Unicode::length(*(const tchar_t*)encoded) > 1);
+  ASSERT(Unicode::isValid(encoded));
+  ASSERT(!Unicode::isValid(String()));
+  ASSERT(Unicode::fromString(encoded) == ch);
+}
 
 void_t testBuffer()
 {
@@ -1288,6 +1299,7 @@ int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
+  testUnicode();
   testBuffer();
   testThread();
   testSempahore();
