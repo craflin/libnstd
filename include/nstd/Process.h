@@ -12,15 +12,15 @@ public:
 
   /**
   * Start an external process.
-  * @param  command The command to start the proces. The first word in \c command should be the name of the executable or a path 
-  *                 to the executable. Further words in \c command are used as arguments the process.
-  * @return The process id of the newly started process or \c 0 if an errors occured
+  * @param  command The command to start the process. The first word in \c command should be the name of the executable or a path
+  *                 to the executable. Further words in \c command are arguments for the process.
+  * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
   uint32_t start(const String& command);
 
   /**
   * Return the running state of the process.
-  * @return \c true when the process is currently running and can be joined using \c join()
+  * @return \c true when the process is currently running and can be joined using \c join().
   */
   bool isRunning() const;
 
@@ -32,8 +32,8 @@ public:
   bool_t join(uint32_t& exitCode);
 
   /**
-  * Kill and join the process.
-  * @return Whether the proces was properly joined.
+  * Kill and join the process. The method send a TERM signal to the process and waits for it to terminate.
+  * @return Whether the process terminated properly.
   */
   bool_t kill();
 
