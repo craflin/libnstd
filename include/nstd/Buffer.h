@@ -71,17 +71,47 @@ public:
     *bufferEnd = 0;
   }
 
-  bool operator==(const Buffer& other) const
+  bool_t operator==(const Buffer& other) const
   {
     size_t size = bufferEnd - bufferStart;
     return size == (size_t)(other.bufferEnd - other.bufferStart) && Memory::compare(other.bufferStart, bufferStart, size) == 0;
   }
 
-  bool operator!=(const Buffer& other) const
+  bool_t operator!=(const Buffer& other) const
   {
     size_t size = bufferEnd - bufferStart;
     return size != (size_t)(other.bufferEnd - other.bufferStart) || Memory::compare(other.bufferStart, bufferStart, size) != 0;
   }
+
+  void_t prepend(const byte_t* data, size_t size)
+  {
+    if((size_t)(bufferStart - buffer) >= size)
+    {
+      bufferStart -= size;
+      Memory::copy(bufferStart, data, size);
+      return;
+    }
+    size_t oldSize = bufferEnd - bufferStart;
+    size_t requiredCapacity = size + oldSize;
+    if(_capacity >= requiredCapacity)
+    {
+      Memory::move(buffer + size, bufferStart, oldSize);
+      Memory::copy(buffer, data, size);
+      bufferStart = buffer;
+      bufferEnd = buffer + requiredCapacity;
+    }
+    else
+    {
+      byte_t* newBuffer = (byte_t*)Memory::alloc(requiredCapacity + 1, _capacity); --_capacity;
+      Memory::copy(newBuffer, data, size);
+      Memory::copy(newBuffer + size, bufferStart, oldSize);
+      Memory::free(buffer);
+      bufferStart = buffer = newBuffer;
+      bufferEnd = newBuffer+ requiredCapacity;
+    }
+  }
+
+  void_t prepend(const Buffer& data) {prepend(data, data.size());}
 
   void_t append(const byte_t* data, size_t size)
   {
