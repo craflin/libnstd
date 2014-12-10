@@ -23,7 +23,12 @@
 
 #include <nstd/Debug.h>
 #include <nstd/Console.h>
+#ifndef _WIN32
 #include <nstd/Buffer.h>
+#include <nstd/Unicode.h>
+#include <nstd/Process.h>
+#include <nstd/Array.h>
+#endif
 
 int_t Console::print(const tchar_t* str)
 {
@@ -199,6 +204,8 @@ public:
       }
     }
 
+    // utf8 console?
+    utf8 = Process::getEnvironmentVariable("LANG").endsWith(".UTF-8"); // todo: endsWithNoCase?
 #endif
   }
 
@@ -235,61 +242,11 @@ public:
 #else
     VERIFY(write(originalStdout, "\x1b[6n", 4) == 4);
     char_t buffer[64];
-    size_t bufferUsed = 0;
-    for(;;)
-    {
-    nextRead:
-      ssize_t len = read(STDIN_FILENO, buffer - bufferUsed, sizeof(buffer) - bufferUsed- 1);
-      VERIFY(len != -1);
-      len += bufferUsed;
-      buffer[len] = '\0';
-      char* search = buffer;
-      for(;;)
-      {
-        char* response = strstr(search, "\x1b");
-        if(!response)
-        {
-          bufferedInput.append((byte_t*)buffer, len);
-          goto nextRead;
-        }
-        char* responseEnd = response + 1;
-        if(*responseEnd == '[')
-          ++responseEnd;
-        while(*responseEnd && !isalpha(*responseEnd))
-          ++responseEnd;
-        if(!*responseEnd)
-        {
-          if(responseEnd - response < len)
-          {
-            search = responseEnd + 1;
-            continue;
-          }
-          // incomplete response
-          bufferedInput.append((byte_t*)buffer, response - buffer);
-          bufferUsed = len - (response - buffer);
-          Memory::move(buffer, response, bufferUsed);
-          goto nextRead;
-        }
-        if(*responseEnd != 'R' || response[1] != '[')
-        {
-          search = responseEnd + 1;
-          continue;
-        }
-        else
-        {
-          int ix, iy;
-          VERIFY(sscanf(response + 2, "%d;%d", &iy, &ix) == 2);
-          x = ix - 1;
-          y = iy - 1;
-          ++responseEnd;
-          if(response != buffer)
-            bufferedInput.append((byte_t*)buffer, response - buffer);
-          if(responseEnd - response < len)
-            bufferedInput.append((byte_t*)responseEnd, len - (responseEnd - response));
-          return;
-        }
-      }
-    }
+    VERIFY(readNextUnbufferedEscapedSequence(buffer, '[', 'R') > 1);
+    int ix, iy;
+    VERIFY(sscanf(buffer + 2, "%d;%d", &iy, &ix) == 2);
+    x = ix - 1;
+    y = iy - 1;
 #endif
   }
 
@@ -648,12 +605,11 @@ public:
 #else
     while(!inputComplete)
     {
-      if(!bufferedInput.isEmpty())
+      while(!bufferedInput.isEmpty())
       {
-        handleInput((const char_t*)(const byte_t*)bufferedInput, bufferedInput.size());
-        bufferedInput.free();
-        if(inputComplete)
-          break;
+        char_t buffer[64];
+        size_t len = readChar(buffer);
+        handleInput(buffer, len);
       }
 
       fd_set fdr;
@@ -687,10 +643,12 @@ public:
       }
       if(FD_ISSET(STDIN_FILENO, &fdr))
       {
-        char buffer[4096];
-        ssize_t i = read(STDIN_FILENO, buffer, sizeof(buffer));
-        VERIFY(i != -1);
-        handleInput(buffer, i);
+        char buffer[64];
+        size_t len = readChar(buffer);
+        if(*buffer == '\x1b')
+          handleEscapedInput(buffer, len);
+        else
+          handleInput(buffer, len);
       }
     }
 
@@ -702,15 +660,148 @@ public:
   }
 
 #ifndef _WIN32
-  void_t handleInput(const char_t* input, size_t len)
+  size_t readChar(char_t* buffer)
   {
-    for(const char_t* end = input + len; input < end; ++input)
-      handleInput(*input);
+    if(utf8)
+      return readBufferedUtf8Char(buffer);
+    return readBufferedChar(buffer);
   }
 
-  void_t handleInput(char_t c)
+  size_t readNextUnbufferedEscapedSequence(char_t* buffer, char_t firstChar, char_t lastChar)
   {
-    switch(c)
+    for(char_t ch;;)
+    {
+      VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
+      if(ch == '\x1b')
+      {
+        *buffer = ch;
+        size_t len = 1 + readUnbufferedEscapedSequence(buffer + 1);
+        char_t sequenceType = buffer[len - 1];
+        if(sequenceType != lastChar || buffer[1] != firstChar)
+        {
+          bufferedInput.append((byte_t*)buffer, len);
+          continue;
+        }
+        return len;
+      }
+      else
+        bufferedInput.append((byte_t*)&ch, 1);
+    }
+  }
+
+  size_t readBufferedUtf8Char(char_t* buffer)
+  {
+    if(bufferedInput.isEmpty())
+    {
+      char_t ch;
+      VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
+      if(ch == '\x1b')
+      {
+        *buffer = '\x1b';
+        return 1 + readUnbufferedEscapedSequence(buffer + 1);
+      }
+      *buffer = ch;
+      return readUnbufferedUtf8Char(buffer, buffer + 1, Unicode::length(ch));
+    }
+    *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+    bufferedInput.removeFront(1);
+    if(*buffer == '\x1b')
+      return 1 + readBufferedEscapedSequence(buffer + 1);
+    char_t* start = buffer;
+    size_t len = Unicode::length(*(buffer++));
+    while((size_t)(buffer - start) < len)
+    {
+      if(bufferedInput.isEmpty())
+        return readUnbufferedUtf8Char(start, buffer, len);
+      *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+      bufferedInput.removeFront(1);
+      if(*buffer == '\x1b')
+      {
+        Buffer incompleteUtf8((const byte_t*)start, buffer - start);
+        *start = '\x1b';
+        size_t result = 1 + readBufferedEscapedSequence(start + 1);
+        bufferedInput.prepend(incompleteUtf8);
+        return result;
+      }
+      ++buffer;
+    }
+    *buffer = '\0';
+    return len;
+  }
+
+  size_t readUnbufferedUtf8Char(char_t* start,  char_t* buffer, size_t len)
+  {
+    while((size_t)(buffer - start) < len)
+    {
+      VERIFY(read(STDIN_FILENO, buffer, 1) == 1);
+      ++buffer;
+    }
+    *buffer = '\0';
+    return len;
+  }
+
+  size_t readBufferedChar(char_t* buffer)
+  {
+    if(bufferedInput.isEmpty())
+      return readUnbufferedChar(buffer);
+    *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+    bufferedInput.removeFront(1);
+    if(*buffer == '\x1b')
+      return 1 + readBufferedEscapedSequence(buffer + 1);
+    buffer[1] = '\0';
+    return 1;
+  }
+
+  size_t readUnbufferedChar(char_t* buffer)
+  {
+    VERIFY(read(STDIN_FILENO, buffer, 1) == 1);
+    if(*buffer == '\x1b')
+      return 1 + readUnbufferedEscapedSequence(buffer + 1);
+    buffer[1] = '\0';
+    return 1;
+  }
+
+  size_t readBufferedEscapedSequence(char_t* buffer)
+  {
+    for(char_t* start = buffer;;)
+    {
+      if(bufferedInput.isEmpty())
+        return buffer - start + readBufferedEscapedSequence(buffer);
+      *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+      bufferedInput.removeFront(1);
+      if(isalpha(*buffer))
+      {
+        ++buffer;
+        *buffer = '\0';
+        return buffer - start;
+      }
+      ++buffer;
+    }
+  }
+
+  size_t readUnbufferedEscapedSequence(char_t* buffer)
+  {
+    for(char_t* start = buffer, ch;;)
+    {
+      VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
+      *(buffer++) = ch;
+      if(isalpha(ch))
+      {
+        *buffer = '\0';
+        return buffer - start;
+      }
+    }
+  }
+
+  void_t handleEscapedInput(char_t* input, size_t len)
+  {
+    
+  }
+
+  void_t handleInput(char_t* input, size_t len)
+  {
+    uint32_t ch = utf8 ? Unicode::fromString(input, len) : *(uchar_t*)input;
+    switch(ch)
     {
     case _T('\t'):
       break;
@@ -721,8 +812,7 @@ public:
       promptRemove();
       break;
     default:
-      promptInsert(c);
-
+      promptInsert((char_t&)ch);
     }
   }
 #endif
@@ -739,6 +829,7 @@ private:
   char stdoutBuffer[4096];
   DWORD consoleMode;
 #else
+  bool_t utf8;
   static int originalStdout;
   int stdoutRead;
   int stdoutWrite;
