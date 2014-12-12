@@ -176,6 +176,39 @@ public:
     return *item;
   }
 
+  void_t append(const Array& values)
+  {
+    size_t size = _end.item - _begin.item;
+    size_t valuesSize = values.size();
+    reserve(size + valuesSize);
+    T* item = _end.item;
+    for(T* end = item + valuesSize, *src = values._begin.item; item < end; ++item, ++src)
+    {
+#ifdef VERIFY
+      VERIFY(new(item) T(*src) == item);
+#else
+      new(item) T(*src);
+#endif
+    }
+    _end.item = item;
+  }
+
+  void_t append(const T* values, size_t size)
+  {
+    size_t oldSize = _end.item - _begin.item;
+    reserve(oldSize + size);
+    T* item = _end.item;
+    for(T* end = item + size; item < end; ++item, ++values)
+    {
+#ifdef VERIFY
+      VERIFY(new(item) T(*values) == item);
+#else
+      new(item) T(*values);
+#endif
+    }
+    _end.item = item;
+  }
+
   void_t remove(size_t index)
   {
     size_t size = _end.item - _begin.item;
