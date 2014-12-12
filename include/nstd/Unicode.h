@@ -50,6 +50,14 @@ public:
     return false;
   }
 
+  static bool_t append(const uint32_t* data, size_t size, String& str)
+  {
+    bool result = true;
+    for(const uint32_t* end = data + size; data < end; ++data)
+      result &= append(*data, str);
+    return result;
+  }
+
   static size_t length(tchar_t ch)
   {
 #ifdef _UNICODE
