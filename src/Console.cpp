@@ -108,6 +108,11 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
 class ConsolePromptPrivate
 {
 public:
+#ifdef _WIN32
+  typedef tchar_t conchar_t;
+#else
+  typedef uint32_t conchar_t;
+#endif
 
 #ifndef _WIN32
   static void restoreTermMode()
@@ -296,6 +301,30 @@ public:
     //  writeConsole((const tchar_t*)buffer + offset, count);
     //}
 #else
+    size_t to = from + x;
+    size_t oldY = from / stdoutScreenWidth;
+    size_t oldX = from % stdoutScreenWidth;
+    size_t newY = to / stdoutScreenWidth;
+    size_t newX = to % stdoutScreenWidth;
+    String moveCmd;
+    if(newY < oldY)
+      moveCmd.printf("\x1b[%dA", (int)(oldY - newY));
+    else if(newY > oldY)
+      moveCmd.printf("\x1b[%dB", (int)(newY - oldY));
+    if(newX < oldX)
+    {
+      String add;
+      add.printf("\x1b[%dD", (int)(oldX - newX));
+      moveCmd += add;
+    }
+    else if(newX > oldX)
+    {
+      String add;
+      add.printf("\x1b[%dC", (int)(newX - oldX));
+      moveCmd += add;
+    }
+    if(!moveCmd.isEmpty())
+      writeConsole(moveCmd, moveCmd.length());
 #endif
   }
 
@@ -313,71 +342,93 @@ public:
   void_t promptWrite(size_t offset = 0, const String& clearStr = String())
   {
     offset += offset / stdoutScreenWidth * 2;
-    String buffer(prompt.length() + input.length() + clearStr.length());
+    Array<conchar_t> buffer(prompt.size() + input.size() + clearStr.length());
     buffer.append(prompt);
     buffer.append(input);
-    buffer.append(clearStr);
-    String wrappedBuffer(buffer.length() + buffer.length() / stdoutScreenWidth * 2 + 2);
-    for(size_t i = 0, len = buffer.length(); i < len; i += stdoutScreenWidth)
+    ASSERT(clearStr.isEmpty() || clearStr.length() == 1);
+    if(!clearStr.isEmpty())
+#ifdef _WIN32
+      buffer.append(*(const tchar_t*)clearStr);
+#else
+      buffer.append(*(const uchar_t*)(const tchar_t*)clearStr);
+#endif
+    Array<conchar_t> wrappedBuffer(buffer.size() + buffer.size() / stdoutScreenWidth * 2 + 2);
+    for(size_t i = 0, len = buffer.size(); i < len; i += stdoutScreenWidth)
     {
       size_t lineEnd = len - i;
       if(lineEnd > stdoutScreenWidth)
         lineEnd = stdoutScreenWidth;
-      wrappedBuffer.append((const tchar_t*)buffer + i, lineEnd);
+      wrappedBuffer.append((const conchar_t*)buffer + i, lineEnd);
       if(lineEnd == stdoutScreenWidth)
       {
         wrappedBuffer.append(_T('\r'));
         wrappedBuffer.append(_T('\n'));
       }
     }
-    writeConsole((const tchar_t*)wrappedBuffer + offset, wrappedBuffer.length() - offset);
-    if(caretPos < input.length() + clearStr.length())
-      moveCursorPosition(prompt.length() + input.length() + clearStr.length(), -(ssize_t)(input.length() + clearStr.length() - caretPos));
 #ifdef _WIN32
-    else // enforce cursor blink reset
+    writeConsole((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset);
+#else
+    String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t));
+    VERIFY(Unicode::append((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset, dataToWrite));
+    writeConsole(dataToWrite, dataToWrite.length());
+#endif
+    if(caretPos < input.size() + clearStr.length())
+      moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
+#ifdef _WIN32
+    else // enforce cursor blink timer reset
       moveCursorPosition(prompt.length() + input.length() + clearStr.length(), 0);
 #endif
   }
 
-  void_t promptInsert(tchar_t character)
+  void_t promptInsert(conchar_t character)
   {
-    if(caretPos != input.length())
+    if(caretPos != input.size())
     {
-      String newInput(input.length() + 1);
-      newInput.append(input.substr(0, caretPos));
+      Array<conchar_t> newInput(input.size() + 1);
+      newInput.append(input,  caretPos);
       newInput.append(character);
-      newInput.append(input.substr(caretPos));
-      input = newInput;
+      newInput.append((conchar_t*)input + caretPos, input.size() - caretPos);
+      input.swap(newInput);
     }
     else
       input.append(character);
     size_t oldCaretPos = caretPos;
     ++caretPos;
-    promptWrite(prompt.length() + oldCaretPos);
+    promptWrite(prompt.size() + oldCaretPos);
   }
 
   void_t promptRemove()
   {
     if(!input.isEmpty() && caretPos > 0)
     {
-      String newInput(input.length() - 1);
-      newInput.append(input.substr(0, caretPos - 1));
-      newInput.append(input.substr(caretPos));
-      input = newInput;
+      if(caretPos != input.size())
+      {
+        Array<conchar_t> newInput(input.size() - 1);
+        newInput.append(input,  caretPos -1);
+        newInput.append((conchar_t*)input + caretPos, input.size() - caretPos);
+        input.swap(newInput);
+      }
+      else
+        input.resize(input.size() - 1);
       promptMoveLeft();
-      promptWrite(prompt.length() + caretPos, _T(" "));
+      promptWrite(prompt.size() + caretPos, _T(" "));
     }
   }
 
   void_t promptRemoveNext()
   {
-    if(caretPos < input.length())
+    if(caretPos < input.size())
     {
-      String newInput(input.length() - 1);
-      newInput.append(input.substr(0, caretPos));
-      newInput.append(input.substr(caretPos + 1));
-      input = newInput;
-      promptWrite(prompt.length() + caretPos, _T(" "));
+      if(caretPos != input.size() - 1)
+      {
+        Array<conchar_t> newInput(input.size() - 1);
+        newInput.append(input,  caretPos);
+        newInput.append((conchar_t*)input + caretPos + 1, input.size() - caretPos);
+        input.swap(newInput);
+      }
+      else
+        input.resize(input.size() - 1);
+      promptWrite(prompt.size() + caretPos, _T(" "));
     }
   }
 
@@ -385,7 +436,7 @@ public:
   {
     if(caretPos > 0)
     {
-      moveCursorPosition(prompt.length() + caretPos, -1);
+      moveCursorPosition(prompt.size() + caretPos, -1);
       --caretPos;
     }
   }
@@ -394,36 +445,36 @@ public:
   {
     if(caretPos > 0)
     {
-      moveCursorPosition(prompt.length() + caretPos, -(ssize_t)caretPos);
+      moveCursorPosition(prompt.size() + caretPos, -(ssize_t)caretPos);
       caretPos = 0;
     }
   }
 
   void_t promptMoveRight()
   {
-    if(caretPos < input.length())
+    if(caretPos < input.size())
     {
-      moveCursorPosition(prompt.length() + caretPos, 1);
+      moveCursorPosition(prompt.size() + caretPos, 1);
       ++caretPos;
     }
   }
 
   void_t promptEnd()
   {
-    if(caretPos < input.length())
+    if(caretPos < input.size())
     {
-      moveCursorPosition(prompt.length() + caretPos, input.length() - caretPos);
-      caretPos = input.length();
+      moveCursorPosition(prompt.size() + caretPos, input.size() - caretPos);
+      caretPos = input.size();
     }
   }
 
   void_t promptClear()
   {
-    size_t bufferLen = prompt.length() + input.length();
+    size_t bufferLen = prompt.size() + input.size();
     size_t additionalLines = bufferLen / stdoutScreenWidth;
     if(additionalLines)
     {
-      moveCursorPosition(prompt.length() + caretPos, -(ssize_t)(caretPos + prompt.length()));
+      moveCursorPosition(prompt.size() + caretPos, -(ssize_t)(caretPos + prompt.size()));
       String clearLine(stdoutScreenWidth + 2);
       for(size_t i = 0; i < stdoutScreenWidth; ++i)
         clearLine.append(_T(' '));
@@ -434,7 +485,7 @@ public:
       for(size_t i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
         clearCmd.append(_T(' '));
       writeConsole(clearCmd, clearCmd.length());
-      moveCursorPosition(prompt.length() + input.length(), -(ssize_t)bufferLen);
+      moveCursorPosition(prompt.size() + input.size(), -(ssize_t)bufferLen);
     }
     else
     {
@@ -508,7 +559,30 @@ public:
     saveCursorPosition();
 
     // write prompt
-    this->prompt = prompt;
+    this->prompt.clear();
+    this->prompt.reserve(prompt.length());
+#ifdef _WIN32
+    for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end; ++i)
+      this->prompt.append(*i);
+#else
+    if(utf8)
+    {
+      for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end;)
+      {
+        size_t len = Unicode::length(*i);
+        if(len == 0 || (size_t)(end - i) < len)
+        {
+          ++i;
+          continue;
+        }
+        this->prompt.append(Unicode::fromString(i, len));
+        i += len;
+      }
+    }
+    else
+      for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end; ++i)
+        this->prompt.append(*(const uchar_t*)i);
+#endif
     input.clear();
     inputComplete = false;
     caretPos = 0;
@@ -656,7 +730,27 @@ public:
     promptClear();
     restoreCursorPosition();
     restoreTerminalMode();
-    return input;
+#ifdef _WIN32
+    input.append(_T('\0'));
+    input.resize(input.size() - 1);
+    String inputStr;
+    inputStr.attach(input, input.size());
+    return inputStr;
+#else
+    if(utf8)
+    {
+      String inputStr(input.size() * sizeof(uint32_t));
+      Unicode::append(input, input.size(), inputStr);
+      return inputStr;
+    }
+    else
+    {
+      String inputStr(input.size());
+      for(conchar_t* i = input, * end = i + input.size(); i < end; ++i)
+        inputStr.append((tchar_t&)*i);
+      return inputStr;
+    }
+#endif
   }
 
 #ifndef _WIN32
@@ -795,7 +889,20 @@ public:
 
   void_t handleEscapedInput(char_t* input, size_t len)
   {
-    
+    if(input[1] == '[')
+      switch(input[2])
+      {
+      case 'A': // up
+        break;
+      case 'B': // down
+        break;
+      case 'C': // right
+        promptMoveRight();
+        break;
+      case 'D': // left
+        promptMoveLeft();
+        break;
+      }
   }
 
   void_t handleInput(char_t* input, size_t len)
@@ -808,11 +915,12 @@ public:
     case _T('\r'):
       inputComplete = true;
       break;
-    case _T('\b'):
+    case '\b':
+    case 127: // backspace
       promptRemove();
       break;
     default:
-      promptInsert((char_t&)ch);
+      promptInsert(ch);
     }
   }
 #endif
@@ -843,8 +951,8 @@ private:
   size_t stdoutScreenWidth;
   size_t stdoutCursorX;
 
-  String prompt;
-  String input;
+  Array<conchar_t> prompt;
+  Array<conchar_t> input;
   bool_t inputComplete;
   size_t caretPos;
 };
