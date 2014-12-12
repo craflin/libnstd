@@ -555,6 +555,48 @@ public:
       return String();
     }
 
+    // write pending stdout data
+#ifdef _WIN32
+    // todo
+    // while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
+    // {
+    //    DWORD written;
+    //    VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
+    //    ASSERT(written == read);
+    //    while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
+    //    {
+    //      VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
+    //      ASSERT(written == read);
+    //    }
+    // }
+#else
+    for(;;)
+    {
+      fd_set fdr;
+      FD_ZERO(&fdr);
+      FD_SET(stdoutRead, &fdr);
+      timeval tv = {0, 0};
+      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
+      {
+      case 1:
+        {
+          char buffer[4096];
+          ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
+          VERIFY(i != -1);
+          VERIFY(write(originalStdout, buffer, i) == i);
+        }
+        continue;
+      case 0:
+        break;
+      default:
+        ASSERT(false);
+        return String();
+      }
+      break;
+    }
+#endif
+
+    //
     enableTerminalRawMode();
     saveCursorPosition();
 
@@ -583,6 +625,8 @@ public:
       for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end; ++i)
         this->prompt.append(*(const uchar_t*)i);
 #endif
+
+    // initialize and write prompt
     input.clear();
     inputComplete = false;
     caretPos = 0;
@@ -703,13 +747,13 @@ public:
       {
         promptClear();
         restoreCursorPosition();
+        restoreTerminalMode();
+        
         char buffer[4096];
         ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
         VERIFY(i != -1);
-
-        restoreTerminalMode();
-        
         VERIFY(write(originalStdout, buffer, i) == i);
+        //writeConsole(buffer, i);
 
         enableTerminalRawMode();
         saveCursorPosition();
@@ -915,8 +959,8 @@ public:
     case _T('\r'):
       inputComplete = true;
       break;
-    case '\b':
-    case 127: // backspace
+    case '\b': // backspace
+    case 127: // del
       promptRemove();
       break;
     default:
