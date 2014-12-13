@@ -335,9 +335,19 @@ public:
     VERIFY(WriteConsole(hOriginalStdOut, data, (DWORD)len, &written, NULL));
     ASSERT(written == (DWORD)len);
 #else
-    VERIFY(write(originalStdout, data, len) == (ssize_t)len);
+    bufferedOutput.append((const byte_t*)data, len);
 #endif
   }
+
+#ifndef _WIN32
+  void_t flushConsole()
+  {
+    if(bufferedOutput.isEmpty())
+      return;
+    VERIFY(write(originalStdout, bufferedOutput, bufferedOutput.size()) == (ssize_t)bufferedOutput.size());
+    bufferedOutput.free();
+  }
+#endif
 
   void_t promptWrite(size_t offset = 0, const String& clearStr = String())
   {
@@ -735,6 +745,7 @@ public:
       FD_SET(stdoutRead, &fdr);
       FD_SET(STDIN_FILENO, &fdr);
       timeval tv = {1000000, 0};
+      flushConsole();
       switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
       {
       case 0:
@@ -748,13 +759,13 @@ public:
         promptClear();
         restoreCursorPosition();
         restoreTerminalMode();
-        
+
         char buffer[4096];
         ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
         VERIFY(i != -1);
-        VERIFY(write(originalStdout, buffer, i) == i);
-        //writeConsole(buffer, i);
+        writeConsole(buffer, i);
 
+        flushConsole();
         enableTerminalRawMode();
         saveCursorPosition();
         promptWrite();
@@ -773,6 +784,7 @@ public:
 #endif
     promptClear();
     restoreCursorPosition();
+    flushConsole();
     restoreTerminalMode();
 #ifdef _WIN32
     input.append(_T('\0'));
@@ -990,6 +1002,7 @@ private:
   static termios originalTermios;
 
   Buffer bufferedInput;
+  Buffer bufferedOutput;
 #endif
 
   size_t stdoutScreenWidth;
