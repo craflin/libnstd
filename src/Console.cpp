@@ -540,7 +540,7 @@ public:
 #ifdef _WIN32
     VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
 #else
-    VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &originalTermios) == 0);
+    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &originalTermios) == 0);
 #endif
   }
 
@@ -553,7 +553,7 @@ public:
     cfmakeraw(&raw);
     raw.c_lflag |= ISIG;
     raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;
-    VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &raw) == 0);
+    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &raw) == 0);
 #endif
   }
 
@@ -731,14 +731,21 @@ public:
     }
 
 #else
-    while(!inputComplete)
+    for(;;)
     {
       while(!bufferedInput.isEmpty())
       {
         char_t buffer[64];
         size_t len = readChar(buffer);
-        handleInput(buffer, len);
+        if(*buffer == '\x1b')
+          handleEscapedInput(buffer, len);
+        else
+          handleInput(buffer, len);
+        if(inputComplete)
+          break;
       }
+      if(inputComplete)
+        break;
 
       fd_set fdr;
       FD_ZERO(&fdr);
