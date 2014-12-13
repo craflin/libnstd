@@ -8,7 +8,6 @@
 #include <Windows.h>
 #include <io.h>
 #include <fcntl.h>
-//#include <conio.h>
 #else
 #include <unistd.h>
 #include <sys/eventfd.h>
@@ -23,11 +22,11 @@
 
 #include <nstd/Debug.h>
 #include <nstd/Console.h>
+#include <nstd/Array.h>
 #ifndef _WIN32
 #include <nstd/Buffer.h>
 #include <nstd/Unicode.h>
 #include <nstd/Process.h>
-#include <nstd/Array.h>
 #endif
 
 int_t Console::print(const tchar_t* str)
@@ -386,7 +385,7 @@ public:
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
 #ifdef _WIN32
     else // enforce cursor blink timer reset
-      moveCursorPosition(prompt.length() + input.length() + clearStr.length(), 0);
+      moveCursorPosition(prompt.size() + input.size() + clearStr.length(), 0);
 #endif
   }
 
@@ -791,7 +790,9 @@ public:
 #endif
     promptClear();
     restoreCursorPosition();
+#ifndef _WIN32
     flushConsole();
+#endif
     restoreTerminalMode();
 #ifdef _WIN32
     input.append(_T('\0'));
