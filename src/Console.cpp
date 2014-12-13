@@ -127,7 +127,8 @@ public:
   ConsolePromptPrivate() : valid(false)
   {
 #ifdef _WIN32
-    if(!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &consoleMode))
+    if(!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &consoleOutputMode) ||
+       !GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &consoleInputMode))
       return; // no tty?
     valid = true;
 
@@ -138,6 +139,7 @@ public:
     ASSERT(newStdout != -1);
     VERIFY(_dup2(newStdout, _fileno(stdout)) == 0);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
+    SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
     hOriginalStdOut = (HANDLE)_get_osfhandle(originalStdout);
     ASSERT(hOriginalStdOut != INVALID_HANDLE_VALUE);
 
@@ -151,6 +153,9 @@ public:
       VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
       ASSERT(written == read);
     }
+
+    // enable window events
+    VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode | ENABLE_WINDOW_INPUT));
 
     // get screen width
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -233,9 +238,11 @@ public:
     CancelIo(hStdOutRead);
     CloseHandle(overlapped.hEvent);
     _dup2(originalStdout, _fileno(stdout));
+    SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
     _close(originalStdout); // this should close hOriginalStdOut
     _close(newStdout); // this should close hStdOutWrite
     CloseHandle(hStdOutRead);
+    VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode));
 #else
     // todo: uninstall SIGWINCH handler
     restoreTermMode();
@@ -549,7 +556,7 @@ public:
   void_t restoreTerminalMode()
   {
 #ifdef _WIN32
-    VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
+    VERIFY(SetConsoleMode(hOriginalStdOut, consoleOutputMode));
 #else
     VERIFY(tcsetattr(originalStdout, TCSADRAIN, &noEchoMode) == 0);
 #endif
@@ -574,18 +581,20 @@ public:
 
     // write pending stdout data
 #ifdef _WIN32
-    // todo
-    // while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
-    // {
-    //    DWORD written;
-    //    VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-    //    ASSERT(written == read);
-    //    while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
-    //    {
-    //      VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-    //      ASSERT(written == read);
-    //    }
-    // }
+    {
+      DWORD read;
+      while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
+      {
+         DWORD written;
+         VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
+         ASSERT(written == read);
+         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
+         {
+           VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
+           ASSERT(written == read);
+         }
+      }
+    }
 #else
     for(;;)
     {
@@ -665,7 +674,13 @@ public:
           VERIFY(ReadConsoleInput(hStdIn, records, 1, &read));
           size_t keyEvents = 0;
           for(DWORD i = 0; i < read; ++i)
-            if(records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown)
+            if(records[i].EventType == WINDOW_BUFFER_SIZE_EVENT)
+            {
+              promptClear();
+              stdoutScreenWidth = records[i].Event.WindowBufferSizeEvent.dwSize.X;
+              promptWrite();
+            }
+            else if(records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown)
             {
               char_t character = records[i].Event.KeyEvent.uChar.AsciiChar;
               switch(character)
@@ -1013,7 +1028,8 @@ private:
   int newStdout;
   OVERLAPPED overlapped;
   char stdoutBuffer[4096];
-  DWORD consoleMode;
+  DWORD consoleOutputMode;
+  DWORD consoleInputMode;
 #else
   bool_t utf8;
   static int originalStdout;
