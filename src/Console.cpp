@@ -451,7 +451,7 @@ public:
     }
   }
 
-  void_t promptHome()
+  void_t promptMoveHome()
   {
     if(caretPos > 0)
     {
@@ -469,7 +469,7 @@ public:
     }
   }
 
-  void_t promptEnd()
+  void_t promptMoveEnd()
   {
     if(caretPos < input.size())
     {
@@ -676,10 +676,10 @@ public:
                   promptRemoveNext();
                   break;
                 case VK_HOME:
-                  promptHome();
+                  promptMoveHome();
                   break;
                 case VK_END:
-                  promptEnd();
+                  promptMoveEnd();
                   break;
                 }
                 break;
@@ -957,6 +957,12 @@ public:
         break;
       case 'D': // left
         promptMoveLeft();
+        break;
+      case 'H': // home
+        promptMoveHome();
+        break;
+      case 'F': // end
+        promptMoveEnd();
         break;
       }
   }
