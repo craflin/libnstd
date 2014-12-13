@@ -118,7 +118,7 @@ public:
   {
     if(originalTermiosValid)
     {
-      VERIFY(tcsetattr(originalStdout, TCSAFLUSH, &originalTermios) == 0);
+      VERIFY(tcsetattr(originalStdout, TCSADRAIN, &originalTermios) == 0);
       originalTermiosValid = false;
     }
   }
@@ -183,6 +183,18 @@ public:
       VERIFY(tcgetattr(originalStdout, &originalTermios) == 0);
       originalTermiosValid = true;
       atexit(restoreTermMode);
+
+      // get raw mode
+      rawMode = originalTermios;
+      cfmakeraw(&rawMode);
+      rawMode.c_lflag |= ISIG;
+      rawMode.c_cc[VMIN] = 1;
+      rawMode.c_cc[VTIME] = 0;
+
+      // disable input character echo
+      noEchoMode = rawMode;
+      noEchoMode.c_oflag |= OPOST;
+      VERIFY(tcsetattr(originalStdout, TCSADRAIN, &noEchoMode) == 0);
     }
 
     // get screen width
@@ -539,7 +551,7 @@ public:
 #ifdef _WIN32
     VERIFY(SetConsoleMode(hOriginalStdOut, consoleMode));
 #else
-    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &originalTermios) == 0);
+    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &noEchoMode) == 0);
 #endif
   }
 
@@ -548,11 +560,7 @@ public:
 #ifdef _WIN32
     VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
 #else
-    termios raw = originalTermios;
-    cfmakeraw(&raw);
-    raw.c_lflag |= ISIG;
-    raw.c_cc[VMIN] = 1; raw.c_cc[VTIME] = 0;
-    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &raw) == 0);
+    VERIFY(tcsetattr(originalStdout, TCSADRAIN, &rawMode) == 0);
 #endif
   }
 
@@ -1014,6 +1022,8 @@ private:
   
   static bool_t originalTermiosValid;
   static termios originalTermios;
+  termios rawMode;
+  termios noEchoMode;
 
   Buffer bufferedInput;
   Buffer bufferedOutput;
