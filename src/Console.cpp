@@ -18,6 +18,8 @@
 #include <cstring>
 #include <cctype>
 #include <cstdlib>
+#include <signal.h>
+#include <errno.h>
 #endif
 
 #include <nstd/Debug.h>
@@ -122,6 +124,15 @@ public:
       originalTermiosValid = false;
     }
   }
+  static void handleWinch(int sig)
+  {
+    int eventFd = resizeEventFd;
+    if(eventFd)
+    {
+      uint64_t event = 1;
+      write(eventFd, &event, sizeof(uint64_t));
+    }
+  }
 #endif
 
   ConsolePromptPrivate() : valid(false)
@@ -202,28 +213,15 @@ public:
       VERIFY(tcsetattr(originalStdout, TCSADRAIN, &noEchoMode) == 0);
     }
 
-    // get screen width
+    // install console window resize signal handler
+    if(!resizeEventFd)
     {
-      winsize ws;
-      stdoutScreenWidth = 0;
-      if(ioctl(originalStdout, TIOCGWINSZ, &ws) == 0)
-        stdoutScreenWidth = ws.ws_col;
-      if(stdoutScreenWidth == 0)
-      {
-        size_t x, y;
-        getCursorPosition(x, y);
-        writeConsole("\x1b[999C", 6);
-        size_t newX, newY;
-        getCursorPosition(newX, newY);
-        if(newX > x)
-        {
-          String moveCmd;
-          moveCmd.printf("\x1b[%dD",newX - x);
-          writeConsole(moveCmd, moveCmd.length());
-        }
-        stdoutScreenWidth = newX + 1;
-      }
+      resizeEventFd = eventfd(0, EFD_CLOEXEC);
+      signal(SIGWINCH, handleWinch);
     }
+
+    // get screen width
+    stdoutScreenWidth = getScreenWidth();
 
     // utf8 console?
     utf8 = Process::getEnvironmentVariable("LANG").endsWith(".UTF-8"); // todo: endsWithNoCase?
@@ -244,7 +242,12 @@ public:
     CloseHandle(hStdOutRead);
     VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode));
 #else
-    // todo: uninstall SIGWINCH handler
+    if(resizeEventFd)
+    {
+      signal(SIGWINCH, SIG_IGN);
+      close(resizeEventFd);
+      resizeEventFd = 0;
+    }
     restoreTermMode();
     originalTermiosValid = false;
     VERIFY(dup2(originalStdout, STDOUT_FILENO) != -1);
@@ -254,6 +257,28 @@ public:
     originalStdout = -1;
 #endif
   }
+
+#ifndef _WIN32
+  size_t getScreenWidth()
+  {
+    winsize ws;
+    if(ioctl(originalStdout, TIOCGWINSZ, &ws) == 0)
+      if(ws.ws_col)
+        return ws.ws_col;
+    size_t x, y;
+    getCursorPosition(x, y);
+    write(originalStdout, "\x1b[999C", 6);
+    size_t newX, newY;
+    getCursorPosition(newX, newY);
+    if(newX > x)
+    {
+      String moveCmd;
+      moveCmd.printf("\x1b[%dD",newX - x);
+      write(originalStdout, (const char_t*)moveCmd, moveCmd.length());
+    }
+    return newX + 1;
+  }
+#endif
 
   void_t getCursorPosition(size_t& x, size_t& y)
   {
@@ -274,7 +299,7 @@ public:
   }
 
 #ifdef _WIN32
-  void_t setCursorPosition(size_t x, size_t y)
+  static void_t setCursorPosition(size_t x, size_t y)
   {
     COORD pos = {(SHORT)x, (SHORT)y};
     VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos));
@@ -398,7 +423,9 @@ public:
 #else
     String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t));
     VERIFY(Unicode::append((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset, dataToWrite));
+    writeConsole("\x1b[?7l", 5);
     writeConsole(dataToWrite, dataToWrite.length());
+    writeConsole("\x1b[?7h", 5);
 #endif
     if(caretPos < input.size() + clearStr.length())
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
@@ -498,6 +525,9 @@ public:
 
   void_t promptClear()
   {
+#ifndef _WIN32
+    writeConsole("\x1b[?7l", 5);
+#endif
     size_t bufferLen = prompt.size() + input.size();
     size_t additionalLines = bufferLen / stdoutScreenWidth;
     if(additionalLines)
@@ -524,6 +554,9 @@ public:
       clearCmd.append(_T('\r'));
       writeConsole(clearCmd, clearCmd.length());
     }
+#ifndef _WIN32
+    writeConsole("\x1b[?7h", 5);
+#endif
   }
 
   void_t saveCursorPosition()
@@ -773,13 +806,16 @@ public:
       FD_ZERO(&fdr);
       FD_SET(stdoutRead, &fdr);
       FD_SET(STDIN_FILENO, &fdr);
+      FD_SET(resizeEventFd, &fdr);
       timeval tv = {1000000, 0};
       flushConsole();
-      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
+      switch(select((stdoutRead > resizeEventFd ? stdoutRead : resizeEventFd) + 1, &fdr, 0, 0, &tv))
       {
       case 0:
         continue;
       case -1:
+        if(errno == EINTR)
+          continue;
         ASSERT(false);
         return String();
       }
@@ -807,6 +843,14 @@ public:
           handleEscapedInput(buffer, len);
         else
           handleInput(buffer, len);
+      }
+      if(FD_ISSET(resizeEventFd, &fdr))
+      {
+        uint64_t buffer;
+        read(resizeEventFd, &buffer, sizeof(uint64_t));
+        promptClear();
+        stdoutScreenWidth = getScreenWidth();
+        promptWrite();
       }
     }
 
@@ -1040,6 +1084,7 @@ private:
   static termios originalTermios;
   termios rawMode;
   termios noEchoMode;
+  static int resizeEventFd;
 
   Buffer bufferedInput;
   Buffer bufferedOutput;
@@ -1058,6 +1103,7 @@ private:
 int ConsolePromptPrivate::originalStdout = -1;
 bool_t ConsolePromptPrivate::originalTermiosValid = false;
 termios ConsolePromptPrivate::originalTermios;
+int ConsolePromptPrivate::resizeEventFd = 0;
 #endif
 
 Console::Prompt::Prompt() : data(new ConsolePromptPrivate) {}
