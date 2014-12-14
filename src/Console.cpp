@@ -147,7 +147,7 @@ public:
     // redirect stdout and stderr to pipe
     VERIFY(CreatePipeEx(&hStdOutRead, &hStdOutWrite, NULL, 0, FILE_FLAG_OVERLAPPED, 0));
     originalStdout = _dup(_fileno(stdout));
-    newStdout = _open_osfhandle((intptr_t)hStdOutWrite, _O_TEXT);
+    newStdout = _open_osfhandle((intptr_t)hStdOutWrite, _O_BINARY);
     ASSERT(newStdout != -1);
     VERIFY(_dup2(newStdout, _fileno(stdout)) == 0);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
@@ -581,7 +581,7 @@ public:
     getCursorPosition(x, y);
     stdoutCursorX = x;
     if(stdoutCursorX)
-      writeConsole("\r\n", 2);
+      writeConsole(_T("\r\n"), 2);
   }
 
   void_t restoreCursorPosition()
@@ -635,12 +635,12 @@ public:
       while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
       {
          DWORD written;
-         VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-         ASSERT(written == read);
+         VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+         ASSERT(written == read / sizeof(tchar_t));
          while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
          {
-           VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-           ASSERT(written == read);
+           VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+           ASSERT(written == read / sizeof(tchar_t));
          }
       }
     }
@@ -708,7 +708,11 @@ public:
             }
             else if(records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown)
             {
-              char_t character = records[i].Event.KeyEvent.uChar.AsciiChar;
+#ifdef _UNICODE
+              tchar_t character = records[i].Event.KeyEvent.uChar.UnicodeChar;
+#else
+              tchar_t character = records[i].Event.KeyEvent.uChar.AsciiChar;
+#endif
               switch(character)
               {
               case _T('\0'):
@@ -765,12 +769,12 @@ public:
 
           // add new output
           DWORD written;
-          VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-          ASSERT(written == read);
+          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+          ASSERT(written == read / sizeof(tchar_t));
           while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
           {
-            VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-            ASSERT(written == read);
+            VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+            ASSERT(written == read / sizeof(tchar_t));
           }
 
           //
