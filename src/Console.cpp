@@ -25,6 +25,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Console.h>
 #include <nstd/Array.h>
+#include <nstd/List.h>
 #ifndef _WIN32
 #include <nstd/Buffer.h>
 #include <nstd/Unicode.h>
@@ -299,7 +300,7 @@ public:
   }
 
 #ifdef _WIN32
-  static void_t setCursorPosition(size_t x, size_t y)
+  void_t setCursorPosition(size_t x, size_t y)
   {
     COORD pos = {(SHORT)x, (SHORT)y};
     VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos));
@@ -400,11 +401,7 @@ public:
     buffer.append(input);
     ASSERT(clearStr.isEmpty() || clearStr.length() == 1);
     if(!clearStr.isEmpty())
-#ifdef _WIN32
       buffer.append(*(const tchar_t*)clearStr);
-#else
-      buffer.append(*(const uchar_t*)(const tchar_t*)clearStr);
-#endif
     Array<conchar_t> wrappedBuffer(buffer.size() + buffer.size() / stdoutScreenWidth * 2 + 2);
     for(size_t i = 0, len = buffer.size(); i < len; i += stdoutScreenWidth)
     {
@@ -520,6 +517,51 @@ public:
     {
       moveCursorPosition(prompt.size() + caretPos, input.size() - caretPos);
       caretPos = input.size();
+    }
+  }
+
+  void_t promptHistoryUp()
+  {
+    if(historyPos == history.begin())
+      return;
+    String currentLine;
+    concharArrayToString(input, input.size(), currentLine);
+    if(historyPos == history.end())
+    {
+      --historyPos;
+      history.append(currentLine);
+      historyRemoveLast = true;
+    }
+    else
+    {
+      *historyPos = currentLine;
+      --historyPos;
+    }
+    promptClear();
+    stringToConcharArray(*historyPos, input);
+    caretPos = input.size();
+    promptWrite();
+  }
+
+  void_t promptHistoryDown()
+  {
+    if(historyPos == history.end())
+      return;
+    String currentLine;
+    concharArrayToString(input, input.size(), currentLine);
+    *historyPos = currentLine;
+    ++historyPos;
+    promptClear();
+    stringToConcharArray(*historyPos, input);
+    caretPos = input.size();
+    promptWrite();
+    List<String>::Iterator next = historyPos;
+    ++next;
+    if(next == history.end())
+    {
+      history.removeBack();
+      historyPos = history.end();
+      historyRemoveLast = false;
     }
   }
 
@@ -659,33 +701,10 @@ public:
     enableTerminalRawMode();
     saveCursorPosition();
 
-    // write prompt
-    this->prompt.clear();
-    this->prompt.reserve(prompt.length());
-#ifdef _WIN32
-    for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end; ++i)
-      this->prompt.append(*i);
-#else
-    if(utf8)
-    {
-      for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end;)
-      {
-        size_t len = Unicode::length(*i);
-        if(len == 0 || (size_t)(end - i) < len)
-        {
-          ++i;
-          continue;
-        }
-        this->prompt.append(Unicode::fromString(i, len));
-        i += len;
-      }
-    }
-    else
-      for(const tchar_t* i = prompt, * end = i + prompt.length(); i < end; ++i)
-        this->prompt.append(*(const uchar_t*)i);
-#endif
-
     // initialize and write prompt
+    stringToConcharArray(prompt, this->prompt);
+    historyPos = history.end();
+    historyRemoveLast = false;
     input.clear();
     inputComplete = false;
     caretPos = 0;
@@ -721,6 +740,12 @@ public:
               case _T('\0'):
                 switch(records[i].Event.KeyEvent.wVirtualKeyCode)
                 {
+                case VK_UP:
+                  promptHistoryUp();
+                  break;
+                case VK_DOWN:
+                  promptHistoryDown();
+                  break;
                 case VK_LEFT:
                   promptMoveLeft();
                   break;
@@ -861,27 +886,12 @@ public:
     flushConsole();
 #endif
     restoreTerminalMode();
-#ifdef _WIN32
-    input.append(_T('\0'));
-    input.resize(input.size() - 1);
-    String inputStr;
-    inputStr.attach(input, input.size());
-    return inputStr;
-#else
-    if(utf8)
-    {
-      String inputStr(input.size() * sizeof(uint32_t));
-      Unicode::append(input, input.size(), inputStr);
-      return inputStr;
-    }
-    else
-    {
-      String inputStr(input.size());
-      for(conchar_t* i = input, * end = i + input.size(); i < end; ++i)
-        inputStr.append((tchar_t&)*i);
-      return inputStr;
-    }
-#endif
+    String result;
+    concharArrayToString(input, input.size(), result);
+    if(historyRemoveLast)
+      history.removeBack();
+    history.append(result);
+    return result;
   }
 
 #ifndef _WIN32
@@ -1026,8 +1036,10 @@ public:
       switch(input[2])
       {
       case 'A': // up
+        promptHistoryUp();
         break;
       case 'B': // down
+        promptHistoryDown();
         break;
       case 'C': // right
         promptMoveRight();
@@ -1068,6 +1080,54 @@ public:
   }
 #endif
 
+  void_t concharArrayToString(const conchar_t* data, size_t len, String& result)
+  {
+    result.clear();
+#ifdef _WIN32
+    result.append(data, len);
+#else
+    if(utf8)
+    {
+      result.reserve(len * sizeof(uint32_t));
+      Unicode::append(data, len, result);
+    }
+    else
+    {
+      result.reserve(len);
+      for(conchar_t* i = data, * end = data + len; i < end; ++i)
+        result.append((const tchar_t&)*i);
+    }
+#endif
+  }
+
+  void_t stringToConcharArray(const String& data, Array<conchar_t>& result)
+  {
+    result.clear();
+    result.reserve(data.length());
+#ifdef _WIN32
+    for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
+      result.append(*i);
+#else
+    if(utf8)
+    {
+      for(const tchar_t* i = data, * end = i + data.length(); i < end;)
+      {
+        size_t len = Unicode::length(*i);
+        if(len == 0 || (size_t)(end - i) < len)
+        {
+          ++i;
+          continue;
+        }
+        result.append(Unicode::fromString(i, len));
+        i += len;
+      }
+    }
+    else
+      for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
+        data.append((const uchar_t&)i);
+#endif
+  }
+
 private:
   bool_t valid;
 #ifdef _WIN32
@@ -1103,6 +1163,10 @@ private:
   Array<conchar_t> input;
   bool_t inputComplete;
   size_t caretPos;
+
+  List<String> history;
+  List<String>::Iterator historyPos;
+  bool_t historyRemoveLast;
 };
 
 #ifndef _WIN32
