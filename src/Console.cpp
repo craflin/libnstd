@@ -168,14 +168,9 @@ public:
 
     // enable window events
     VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode | ENABLE_WINDOW_INPUT));
-
-    // get screen width
-    CONSOLE_SCREEN_BUFFER_INFO csbi;
-    VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-    stdoutScreenWidth = csbi.dwSize.X;
 #else
     if(originalStdout != -1)
-      return; // yout should create more than a single instance of this class
+      return; // you should not create more than a single instance of this class
     if(!isatty(STDIN_FILENO))
       return;
     valid = true;
@@ -186,13 +181,8 @@ public:
     VERIFY(pipe2(pipes, O_CLOEXEC) == 0);
     stdoutRead = pipes[0];
     stdoutWrite = pipes[1];
-    //::originalStdout = originalStdout;
-    //pthread_atfork(0, 0, resetStdout);
-    //arr? nun O_CLOEXEC von originalStdout entfernen?
-    //VERIFY(dup3(stdoutWrite, STDOUT_FILENO, O_CLOEXEC) != -1);
     VERIFY(dup2(stdoutWrite, STDOUT_FILENO) != -1);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
-    // todo: install SIGWINCH handler
 
     // save term mode
     if(!originalTermiosValid)
@@ -221,12 +211,12 @@ public:
       signal(SIGWINCH, handleWinch);
     }
 
-    // get screen width
-    stdoutScreenWidth = getScreenWidth();
-
     // utf8 console?
     utf8 = Process::getEnvironmentVariable("LANG").endsWith(".UTF-8"); // todo: endsWithNoCase?
 #endif
+
+    // get screen width
+    stdoutScreenWidth = getScreenWidth();
   }
 
   ~ConsolePromptPrivate()
@@ -259,9 +249,13 @@ public:
 #endif
   }
 
-#ifndef _WIN32
   size_t getScreenWidth()
   {
+#ifdef _WIN32
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
+    return csbi.dwSize.X;
+#else
     winsize ws;
     if(ioctl(originalStdout, TIOCGWINSZ, &ws) == 0)
       if(ws.ws_col)
@@ -278,8 +272,8 @@ public:
       write(originalStdout, (const char_t*)moveCmd, moveCmd.length());
     }
     return newX + 1;
-  }
 #endif
+  }
 
   void_t getCursorPosition(size_t& x, size_t& y)
   {
@@ -299,51 +293,17 @@ public:
 #endif
   }
 
-#ifdef _WIN32
-  void_t setCursorPosition(size_t x, size_t y)
-  {
-    COORD pos = {(SHORT)x, (SHORT)y};
-    VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos));
-  }
-#endif
-
   void_t moveCursorPosition(size_t from, ssize_t x)
   {
 #ifdef _WIN32
     size_t to = from + x;
     size_t oldY = from / stdoutScreenWidth;
-    //size_t oldX = from % stdoutScreenWidth;
     size_t newY = to / stdoutScreenWidth;
     size_t newX = to % stdoutScreenWidth;
-    //if(newY != oldY)
-    //{
-      // the get/setCursorPosition combo resets the cursor blink timer!
-      size_t cursorX, cursorY;
-      getCursorPosition(cursorX, cursorY);
-      setCursorPosition(newX, cursorY + ((ssize_t)newY - (ssize_t)oldY));
-    //}
-    //else if(newX == 0)
-    //{
-    //  tchar_t c = _T('\r');
-    //  writeConsole(&c, 1);
-    //}
-    //else if(newX < oldX)
-    //{
-    //  size_t count = oldX - newX;
-    //  String moveCmd(count);
-    //  for(size_t i = 0; i < count; ++i)
-    //    moveCmd.append(_T('\b'));
-    //  writeConsole(moveCmd, moveCmd.length());
-    //}
-    //else if(newX > oldX)
-    //{
-    //  String buffer(prompt.length() + input.length());
-    //  buffer.append(prompt);
-    //  buffer.append(input);
-    //  size_t offset = newY * width + oldX;
-    //  size_t count = newX - oldX;
-    //  writeConsole((const tchar_t*)buffer + offset, count);
-    //}
+    size_t cursorX, cursorY;
+    getCursorPosition(cursorX, cursorY);
+    COORD pos = {(SHORT)newX, (SHORT)(cursorY + ((ssize_t)newY - (ssize_t)oldY))};
+    VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos)); // this resets the caret blink timer
 #else
     size_t to = from + x;
     size_t oldY = from / stdoutScreenWidth;
