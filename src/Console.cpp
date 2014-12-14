@@ -850,7 +850,8 @@ public:
     concharArrayToString(input, input.size(), result);
     if(historyRemoveLast)
       history.removeBack();
-    history.append(result);
+    if(!result.isEmpty())
+      history.append(result);
     return result;
   }
 
