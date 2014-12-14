@@ -1055,7 +1055,7 @@ public:
     else
     {
       result.reserve(len);
-      for(conchar_t* i = data, * end = data + len; i < end; ++i)
+      for(const conchar_t* i = data, * end = data + len; i < end; ++i)
         result.append((const tchar_t&)*i);
     }
 #endif
@@ -1085,7 +1085,7 @@ public:
     }
     else
       for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
-        data.append((const uchar_t&)i);
+        result.append((const uchar_t&)*i);
 #endif
   }
 
