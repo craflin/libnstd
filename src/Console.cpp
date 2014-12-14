@@ -478,7 +478,7 @@ public:
       {
         Array<conchar_t> newInput(input.size() - 1);
         newInput.append(input,  caretPos);
-        newInput.append((conchar_t*)input + caretPos + 1, input.size() - caretPos);
+        newInput.append((conchar_t*)input + caretPos + 1, input.size() - (caretPos + 1));
         input.swap(newInput);
       }
       else
@@ -900,7 +900,7 @@ public:
       if(ch == '\x1b')
       {
         *buffer = ch;
-        size_t len = 1 + readUnbufferedEscapedSequence(buffer + 1);
+        size_t len = 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
         char_t sequenceType = buffer[len - 1];
         if(sequenceType != lastChar || buffer[1] != firstChar)
         {
@@ -923,7 +923,7 @@ public:
       if(ch == '\x1b')
       {
         *buffer = '\x1b';
-        return 1 + readUnbufferedEscapedSequence(buffer + 1);
+        return 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
       }
       *buffer = ch;
       return readUnbufferedUtf8Char(buffer, buffer + 1, Unicode::length(ch));
@@ -931,7 +931,7 @@ public:
     *buffer = *(const char_t*)(const byte_t*)bufferedInput;
     bufferedInput.removeFront(1);
     if(*buffer == '\x1b')
-      return 1 + readBufferedEscapedSequence(buffer + 1);
+      return 1 + readBufferedEscapedSequence(buffer, buffer + 1);
     char_t* start = buffer;
     size_t len = Unicode::length(*(buffer++));
     while((size_t)(buffer - start) < len)
@@ -944,7 +944,7 @@ public:
       {
         Buffer incompleteUtf8((const byte_t*)start, buffer - start);
         *start = '\x1b';
-        size_t result = 1 + readBufferedEscapedSequence(start + 1);
+        size_t result = 1 + readBufferedEscapedSequence(start, start + 1);
         bufferedInput.prepend(incompleteUtf8);
         return result;
       }
@@ -972,7 +972,7 @@ public:
     *buffer = *(const char_t*)(const byte_t*)bufferedInput;
     bufferedInput.removeFront(1);
     if(*buffer == '\x1b')
-      return 1 + readBufferedEscapedSequence(buffer + 1);
+      return 1 + readBufferedEscapedSequence(buffer, buffer + 1);
     buffer[1] = '\0';
     return 1;
   }
@@ -981,20 +981,22 @@ public:
   {
     VERIFY(read(STDIN_FILENO, buffer, 1) == 1);
     if(*buffer == '\x1b')
-      return 1 + readUnbufferedEscapedSequence(buffer + 1);
+      return 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
     buffer[1] = '\0';
     return 1;
   }
 
-  size_t readBufferedEscapedSequence(char_t* buffer)
+  static bool_t isSeqAttributeChar(char_t ch) {return isdigit(ch) || ch == ';' || ch == '?' || ch == '[';}
+
+  size_t readBufferedEscapedSequence(const char_t* seqStart, char_t* buffer)
   {
     for(char_t* start = buffer;;)
     {
       if(bufferedInput.isEmpty())
-        return buffer - start + readBufferedEscapedSequence(buffer);
+        return buffer - start + readUnbufferedEscapedSequence(seqStart, buffer);
       *buffer = *(const char_t*)(const byte_t*)bufferedInput;
       bufferedInput.removeFront(1);
-      if(isalpha(*buffer))
+      if(seqStart[1] != '[' || !isSeqAttributeChar(*buffer))
       {
         ++buffer;
         *buffer = '\0';
@@ -1004,13 +1006,13 @@ public:
     }
   }
 
-  size_t readUnbufferedEscapedSequence(char_t* buffer)
+  size_t readUnbufferedEscapedSequence(const char_t* seqStart, char_t* buffer)
   {
     for(char_t* start = buffer, ch;;)
     {
       VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
       *(buffer++) = ch;
-      if(isalpha(ch))
+      if(seqStart[1] != '[' || !isSeqAttributeChar(ch))
       {
         *buffer = '\0';
         return buffer - start;
@@ -1038,6 +1040,10 @@ public:
         break;
       case 'F': // end
         promptMoveEnd();
+        break;
+      case '3':
+        if(input[3] == '~') // del
+          promptRemoveNext();
         break;
       }
   }
