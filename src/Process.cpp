@@ -678,7 +678,7 @@ ssize_t Process::write(const void_t* buffer, size_t len)
 
 String Process::getEnvironmentVariable(const String& name)
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
   String buffer;
   DWORD bufferSize = 256;
   for(;;)
@@ -705,7 +705,7 @@ String Process::getEnvironmentVariable(const String& name)
 
 bool_t Process::setEnvironmentVariable(const String& name, const String& value)
 {
-#ifdef _WIN32
+#ifdef _MSC_VER
   return SetEnvironmentVariable((const tchar_t*)name, value.isEmpty() ? 0 : (const tchar_t*)value) == TRUE;
 #else
   if(value.isEmpty())
