@@ -378,11 +378,11 @@ public:
 #ifdef _WIN32
     writeConsole((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset);
 #else
-    String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t));
+    String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t) + 10);
+    dataToWrite.append("\x1b[?7l");
     VERIFY(Unicode::append((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset, dataToWrite));
-    writeConsole("\x1b[?7l", 5);
+    dataToWrite.append("\x1b[?7h");
     writeConsole(dataToWrite, dataToWrite.length());
-    writeConsole("\x1b[?7h", 5);
 #endif
     if(caretPos < input.size() + clearStr.length())
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
@@ -527,9 +527,6 @@ public:
 
   void_t promptClear()
   {
-#ifndef _WIN32
-    writeConsole("\x1b[?7l", 5);
-#endif
     size_t bufferLen = prompt.size() + input.size();
     size_t additionalLines = bufferLen / stdoutScreenWidth;
     if(additionalLines)
@@ -539,26 +536,43 @@ public:
       for(size_t i = 0; i < stdoutScreenWidth; ++i)
         clearLine.append(_T(' '));
       clearLine.append(_T("\n\r"));
-      String clearCmd(bufferLen + additionalLines * 2);
+      String clearCmd(bufferLen + additionalLines * 2
+#ifndef _WIN32
+        + 10
+#endif
+      );
+#ifndef _WIN32
+      clearCmd.append("\x1b[?7l");
+#endif
       for(size_t i = 0; i < additionalLines; ++i)
         clearCmd.append(clearLine);
       for(size_t i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
         clearCmd.append(_T(' '));
+#ifndef _WIN32
+      clearCmd.append("\x1b[?7h");
+#endif
       writeConsole(clearCmd, clearCmd.length());
       moveCursorPosition(prompt.size() + input.size(), -(ssize_t)bufferLen);
     }
     else
     {
-      String clearCmd(2 + bufferLen);
+      String clearCmd(2 + bufferLen
+#ifndef _WIN32
+        + 10
+#endif
+      );
+#ifndef _WIN32
+      clearCmd.append("\x1b[?7l");
+#endif
       clearCmd.append(_T('\r'));
       for(size_t i = 0, count = bufferLen; i < count; ++i)
         clearCmd.append(_T(' '));
       clearCmd.append(_T('\r'));
+#ifndef _WIN32
+      clearCmd.append("\x1b[?7h");
+#endif
       writeConsole(clearCmd, clearCmd.length());
     }
-#ifndef _WIN32
-    writeConsole("\x1b[?7h", 5);
-#endif
   }
 
   void_t saveCursorPosition()
