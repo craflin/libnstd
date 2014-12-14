@@ -4,13 +4,15 @@
 #ifdef _MSC_VER
 #include <tchar.h>
 #endif
-#ifdef _WIN32
+#ifdef _MSC_VER
 #include <Windows.h>
 #include <io.h>
 #include <fcntl.h>
 #else
 #include <unistd.h>
+#ifndef __CYGWIN__
 #include <sys/eventfd.h>
+#endif
 #include <fcntl.h>
 #include <pthread.h>
 #include <termios.h>
@@ -26,7 +28,7 @@
 #include <nstd/Console.h>
 #include <nstd/Array.h>
 #include <nstd/List.h>
-#ifndef _WIN32
+#ifndef _MSC_VER
 #include <nstd/Buffer.h>
 #include <nstd/Unicode.h>
 #include <nstd/Process.h>
@@ -76,7 +78,7 @@ int_t Console::errorf(const tchar_t* format, ...)
   return result;
 }
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_ATTRIBUTES lpSecurityAttributes, DWORD nSize, DWORD dwReadMode, DWORD dwWriteMode)
 {
   if((dwReadMode | dwWriteMode) & (~FILE_FLAG_OVERLAPPED))
@@ -110,13 +112,13 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
 class ConsolePromptPrivate
 {
 public:
-#ifdef _WIN32
+#ifdef _MSC_VER
   typedef tchar_t conchar_t;
 #else
   typedef uint32_t conchar_t;
 #endif
 
-#ifndef _WIN32
+#ifndef _MSC_VER
   static void restoreTermMode()
   {
     if(originalTermiosValid)
@@ -127,7 +129,11 @@ public:
   }
   static void handleWinch(int sig)
   {
+#ifdef __CYGWIN__
     int eventFd = resizeEventFd;
+#else
+    int eventFd = resizeEventFdWrite;
+#endif
     if(eventFd)
     {
       uint64_t event = 1;
@@ -138,7 +144,7 @@ public:
 
   ConsolePromptPrivate() : valid(false)
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     if(!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &consoleOutputMode) ||
        !GetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), &consoleInputMode))
       return; // no tty?
@@ -175,7 +181,11 @@ public:
       return;
     valid = true;
 
+#ifdef __CYGWIN__
+    originalStdout = open("/dev/null", O_CLOEXEC);
+#else
     originalStdout = eventfd(0, EFD_CLOEXEC); // create new file descriptor with O_CLOEXEC.. is there a better way to do this?
+#endif
     VERIFY(dup3(STDOUT_FILENO, originalStdout, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
     int pipes[2];
     VERIFY(pipe2(pipes, O_CLOEXEC) == 0);
@@ -197,6 +207,7 @@ public:
       rawMode.c_lflag |= ISIG;
       rawMode.c_cc[VMIN] = 1;
       rawMode.c_cc[VTIME] = 0;
+      rawMode.c_oflag |= OPOST; // workaround for cygwin, TCSADRAIN does not seem to work reliably
 
       // disable input character echo
       noEchoMode = rawMode;
@@ -207,7 +218,14 @@ public:
     // install console window resize signal handler
     if(!resizeEventFd)
     {
+#ifdef __CYGWIN__
+      int pipefd[2];
+      VERIFY(pipe2(pipefd, O_CLOEXEC) == 0);
+      resizeEventFd = pipefd[0];
+      resizeEventFdWrite = pipefd[1];
+#else
       resizeEventFd = eventfd(0, EFD_CLOEXEC);
+#endif
       signal(SIGWINCH, handleWinch);
     }
 
@@ -223,7 +241,7 @@ public:
   {
     if(!valid)
       return;
-#ifdef _WIN32
+#ifdef _MSC_VER
     CancelIo(hStdOutRead);
     CloseHandle(overlapped.hEvent);
     _dup2(originalStdout, _fileno(stdout));
@@ -237,6 +255,10 @@ public:
     {
       signal(SIGWINCH, SIG_IGN);
       close(resizeEventFd);
+#ifdef __CYGWIN__
+      close(resizeEventFdWrite);
+      resizeEventFdWrite = 0;
+#endif
       resizeEventFd = 0;
     }
     restoreTermMode();
@@ -251,7 +273,7 @@ public:
 
   size_t getScreenWidth()
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
     return csbi.dwSize.X;
@@ -277,7 +299,7 @@ public:
 
   void_t getCursorPosition(size_t& x, size_t& y)
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     CONSOLE_SCREEN_BUFFER_INFO csbi;
     VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
     x = csbi.dwCursorPosition.X;
@@ -295,7 +317,7 @@ public:
 
   void_t moveCursorPosition(size_t from, ssize_t x)
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     size_t to = from + x;
     size_t oldY = from / stdoutScreenWidth;
     size_t newY = to / stdoutScreenWidth;
@@ -334,7 +356,7 @@ public:
 
   void_t writeConsole(const tchar_t* data, size_t len)
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     DWORD written;
     VERIFY(WriteConsole(hOriginalStdOut, data, (DWORD)len, &written, NULL));
     ASSERT(written == (DWORD)len);
@@ -343,7 +365,7 @@ public:
 #endif
   }
 
-#ifndef _WIN32
+#ifndef _MSC_VER
   void_t flushConsole()
   {
     if(bufferedOutput.isEmpty())
@@ -375,7 +397,7 @@ public:
         wrappedBuffer.append(_T('\n'));
       }
     }
-#ifdef _WIN32
+#ifdef _MSC_VER
     writeConsole((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset);
 #else
     String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t) + 10);
@@ -386,7 +408,7 @@ public:
 #endif
     if(caretPos < input.size() + clearStr.length())
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
-#ifdef _WIN32
+#ifdef _MSC_VER
     else // enforce cursor blink timer reset
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), 0);
 #endif
@@ -537,18 +559,18 @@ public:
         clearLine.append(_T(' '));
       clearLine.append(_T("\n\r"));
       String clearCmd(bufferLen + additionalLines * 2
-#ifndef _WIN32
+#ifndef _MSC_VER
         + 10
 #endif
       );
-#ifndef _WIN32
+#ifndef _MSC_VER
       clearCmd.append("\x1b[?7l");
 #endif
       for(size_t i = 0; i < additionalLines; ++i)
         clearCmd.append(clearLine);
       for(size_t i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
         clearCmd.append(_T(' '));
-#ifndef _WIN32
+#ifndef _MSC_VER
       clearCmd.append("\x1b[?7h");
 #endif
       writeConsole(clearCmd, clearCmd.length());
@@ -557,18 +579,18 @@ public:
     else
     {
       String clearCmd(2 + bufferLen
-#ifndef _WIN32
+#ifndef _MSC_VER
         + 10
 #endif
       );
-#ifndef _WIN32
+#ifndef _MSC_VER
       clearCmd.append("\x1b[?7l");
 #endif
       clearCmd.append(_T('\r'));
       for(size_t i = 0, count = bufferLen; i < count; ++i)
         clearCmd.append(_T(' '));
       clearCmd.append(_T('\r'));
-#ifndef _WIN32
+#ifndef _MSC_VER
       clearCmd.append("\x1b[?7h");
 #endif
       writeConsole(clearCmd, clearCmd.length());
@@ -588,7 +610,7 @@ public:
   {
     if(stdoutCursorX)
     {
-#ifdef _WIN32
+#ifdef _MSC_VER
       CONSOLE_SCREEN_BUFFER_INFO csbi;
       VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
       csbi.dwCursorPosition.X = stdoutCursorX;
@@ -604,7 +626,7 @@ public:
 
   void_t restoreTerminalMode()
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     VERIFY(SetConsoleMode(hOriginalStdOut, consoleOutputMode));
 #else
     VERIFY(tcsetattr(originalStdout, TCSADRAIN, &noEchoMode) == 0);
@@ -613,7 +635,7 @@ public:
 
   void_t enableTerminalRawMode()
   {
-#ifdef _WIN32
+#ifdef _MSC_VER
     VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
 #else
     VERIFY(tcsetattr(originalStdout, TCSADRAIN, &rawMode) == 0);
@@ -629,7 +651,7 @@ public:
     }
 
     // write pending stdout data
-#ifdef _WIN32
+#ifdef _MSC_VER
     {
       DWORD read;
       while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
@@ -684,7 +706,7 @@ public:
     caretPos = 0;
     promptWrite();
 
-#ifdef _WIN32
+#ifdef _MSC_VER
     // wait for io
     HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
     HANDLE handles[] = {hStdIn, overlapped.hEvent};
@@ -860,7 +882,7 @@ public:
 #endif
     promptClear();
     restoreCursorPosition();
-#ifndef _WIN32
+#ifndef _MSC_VER
     flushConsole();
 #endif
     restoreTerminalMode();
@@ -873,7 +895,7 @@ public:
     return result;
   }
 
-#ifndef _WIN32
+#ifndef _MSC_VER
   size_t readChar(char_t* buffer)
   {
     if(utf8)
@@ -1062,7 +1084,7 @@ public:
   void_t concharArrayToString(const conchar_t* data, size_t len, String& result)
   {
     result.clear();
-#ifdef _WIN32
+#ifdef _MSC_VER
     result.append(data, len);
 #else
     if(utf8)
@@ -1083,7 +1105,7 @@ public:
   {
     result.clear();
     result.reserve(data.length());
-#ifdef _WIN32
+#ifdef _MSC_VER
     for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
       result.append(*i);
 #else
@@ -1109,7 +1131,7 @@ public:
 
 private:
   bool_t valid;
-#ifdef _WIN32
+#ifdef _MSC_VER
   HANDLE hStdOutRead;
   HANDLE hStdOutWrite;
   HANDLE hOriginalStdOut;
@@ -1130,6 +1152,9 @@ private:
   termios rawMode;
   termios noEchoMode;
   static int resizeEventFd;
+#ifdef __CYGWIN__
+  static int resizeEventFdWrite;
+#endif
 
   Buffer bufferedInput;
   Buffer bufferedOutput;
@@ -1148,11 +1173,14 @@ private:
   bool_t historyRemoveLast;
 };
 
-#ifndef _WIN32
+#ifndef _MSC_VER
 int ConsolePromptPrivate::originalStdout = -1;
 bool_t ConsolePromptPrivate::originalTermiosValid = false;
 termios ConsolePromptPrivate::originalTermios;
 int ConsolePromptPrivate::resizeEventFd = 0;
+#ifdef __CYGWIN__
+int ConsolePromptPrivate::resizeEventFdWrite = 0;
+#endif
 #endif
 
 Console::Prompt::Prompt() : data(new ConsolePromptPrivate) {}
