@@ -129,7 +129,7 @@ public:
   }
   static void handleWinch(int sig)
   {
-#ifdef __CYGWIN__
+#ifndef __CYGWIN__
     int eventFd = resizeEventFd;
 #else
     int eventFd = resizeEventFdWrite;
@@ -191,12 +191,15 @@ public:
     originalStdout = eventfd(0, EFD_CLOEXEC); // create new file descriptor with O_CLOEXEC.. is there a better way to do this?
 #endif
     VERIFY(dup3(STDOUT_FILENO, originalStdout, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
+    VERIFY(dup3(STDERR_FILENO, originalStderr, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
     int pipes[2];
     VERIFY(pipe2(pipes, O_CLOEXEC) == 0);
     stdoutRead = pipes[0];
     stdoutWrite = pipes[1];
     VERIFY(dup2(stdoutWrite, STDOUT_FILENO) != -1);
+    VERIFY(dup2(stdoutWrite, STDERR_FILENO) != -1);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
+    VERIFY(setvbuf(stderr, NULL, _IONBF, 0) == 0);
 
     // save term mode
     if(!originalTermiosValid)
@@ -271,7 +274,9 @@ public:
     restoreTermMode();
     originalTermiosValid = false;
     VERIFY(dup2(originalStdout, STDOUT_FILENO) != -1);
+    VERIFY(dup2(originalStderr, STDERR_FILENO) != -1);
     close(originalStdout);
+    close(originalStderr);
     close(stdoutRead);
     close(stdoutWrite);
     originalStdout = -1;
@@ -1152,6 +1157,7 @@ private:
 #else
   bool_t utf8;
   static int originalStdout;
+  int originalStderr;
   int stdoutRead;
   int stdoutWrite;
   
