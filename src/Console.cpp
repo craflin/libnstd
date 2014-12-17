@@ -248,6 +248,9 @@ public:
   {
     if(!valid)
       return;
+    redirectPendingData();
+    //hier muss ich alles von stderr und stdout lesen und nach was auch immer schreiben
+    //  vermutlich muss ich beim lesen stderr und stdout in getLine auch unter zwischen diesen beiden unterscheiden, damit ich sie an den richtigen original stream senden kann
 #ifdef _MSC_VER
     CancelIo(hStdOutRead);
     CloseHandle(overlapped.hEvent);
@@ -663,47 +666,7 @@ public:
     }
 
     // write pending stdout data
-#ifdef _MSC_VER
-    {
-      DWORD read;
-      while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
-      {
-         DWORD written;
-         VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-         ASSERT(written == read / sizeof(tchar_t));
-         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
-         {
-           VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-           ASSERT(written == read / sizeof(tchar_t));
-         }
-      }
-    }
-#else
-    for(;;)
-    {
-      fd_set fdr;
-      FD_ZERO(&fdr);
-      FD_SET(stdoutRead, &fdr);
-      timeval tv = {0, 0};
-      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
-      {
-      case 1:
-        {
-          char buffer[4096];
-          ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
-          VERIFY(i != -1);
-          VERIFY(write(originalStdout, buffer, i) == i);
-        }
-        continue;
-      case 0:
-        break;
-      default:
-        ASSERT(false);
-        return String();
-      }
-      break;
-    }
-#endif
+    redirectPendingData();
 
     //
     enableTerminalRawMode();
@@ -905,6 +868,51 @@ public:
     if(!result.isEmpty())
       history.append(result);
     return result;
+  }
+
+  void_t redirectPendingData()
+  {
+#ifdef _MSC_VER
+    {
+      DWORD read;
+      while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
+      {
+         DWORD written;
+         VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+         ASSERT(written == read / sizeof(tchar_t));
+         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
+         {
+           VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+           ASSERT(written == read / sizeof(tchar_t));
+         }
+      }
+    }
+#else
+    for(;;)
+    {
+      fd_set fdr;
+      FD_ZERO(&fdr);
+      FD_SET(stdoutRead, &fdr);
+      timeval tv = {0, 0};
+      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
+      {
+      case 1:
+        {
+          char buffer[4096];
+          ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
+          VERIFY(i != -1);
+          VERIFY(write(originalStdout, buffer, i) == i);
+        }
+        continue;
+      case 0:
+        break;
+      default:
+        ASSERT(false);
+        return;
+      }
+      break;
+    }
+#endif
   }
 
 #ifndef _MSC_VER
