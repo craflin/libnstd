@@ -153,11 +153,15 @@ public:
     // redirect stdout and stderr to pipe
     VERIFY(CreatePipeEx(&hStdOutRead, &hStdOutWrite, NULL, 0, FILE_FLAG_OVERLAPPED, 0));
     originalStdout = _dup(_fileno(stdout));
+    originalStderr = _dup(_fileno(stderr));
     newStdout = _open_osfhandle((intptr_t)hStdOutWrite, _O_BINARY);
     ASSERT(newStdout != -1);
     VERIFY(_dup2(newStdout, _fileno(stdout)) == 0);
+    VERIFY(_dup2(newStdout, _fileno(stderr)) == 0);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
+    VERIFY(setvbuf(stderr, NULL, _IONBF, 0) == 0);
     SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
+    SetStdHandle(STD_ERROR_HANDLE, (HANDLE)_get_osfhandle(_fileno(stderr)));
     hOriginalStdOut = (HANDLE)_get_osfhandle(originalStdout);
     ASSERT(hOriginalStdOut != INVALID_HANDLE_VALUE);
 
@@ -245,8 +249,11 @@ public:
     CancelIo(hStdOutRead);
     CloseHandle(overlapped.hEvent);
     _dup2(originalStdout, _fileno(stdout));
+    _dup2(originalStderr, _fileno(stderr));
     SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
+    SetStdHandle(STD_ERROR_HANDLE, (HANDLE)_get_osfhandle(_fileno(stderr)));
     _close(originalStdout); // this should close hOriginalStdOut
+    _close(originalStderr);
     _close(newStdout); // this should close hStdOutWrite
     CloseHandle(hStdOutRead);
     VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode));
@@ -1136,6 +1143,7 @@ private:
   HANDLE hStdOutWrite;
   HANDLE hOriginalStdOut;
   int originalStdout;
+  int originalStderr;
   int newStdout;
   OVERLAPPED overlapped;
   char stdoutBuffer[4096];

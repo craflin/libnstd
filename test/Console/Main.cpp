@@ -11,7 +11,10 @@ uint_t threadProc(void_t* param)
   int_t counter = 0;
   while(!termSignal->wait(1000))
   {
-    Console::printf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? _T("\n") : _T(" "));
+    if(counter % 5 == 0)
+      Console::errorf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? _T("\n") : _T(" "));
+    else
+      Console::printf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? _T("\n") : _T(" "));
     ++counter;
   }
   return 0;
