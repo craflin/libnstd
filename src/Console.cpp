@@ -756,10 +756,7 @@ public:
       {
         char_t buffer[64];
         size_t len = readChar(buffer);
-        if(*buffer == '\x1b')
-          handleEscapedInput(buffer, len);
-        else
-          handleInput(buffer, len);
+        handleInput(buffer, len);
         if(inputComplete)
           break;
       }
@@ -797,10 +794,7 @@ public:
       {
         char buffer[64];
         size_t len = readChar(buffer);
-        if(*buffer == '\x1b')
-          handleEscapedInput(buffer, len);
-        else
-          handleInput(buffer, len);
+        handleInput(buffer, len);
       }
       if(FD_ISSET(resizeEventFd, &fdr))
       {
@@ -867,7 +861,7 @@ public:
         return;
       case 0:
         break;
-      default:
+      default: // todo: redirect data character by character to ensure utf8 and escaped sequences are valid?
         if(FD_ISSET(stdoutRead, &fdr))
         {
           char buffer[4096];
@@ -939,6 +933,57 @@ public:
       promptInsert(ch);
     }
   }
+#else
+  void_t handleInput(char_t* input, size_t len)
+  {
+    if(*input == '\x1b')
+    {
+      if(input[1] == '[')
+        switch(input[2])
+        {
+        case 'A': // up
+          promptHistoryUp();
+          break;
+        case 'B': // down
+          promptHistoryDown();
+          break;
+        case 'C': // right
+          promptMoveRight();
+          break;
+        case 'D': // left
+          promptMoveLeft();
+          break;
+        case 'H': // home
+          promptMoveHome();
+          break;
+        case 'F': // end
+          promptMoveEnd();
+          break;
+        case '3':
+          if(input[3] == '~') // del
+            promptRemoveNext();
+          break;
+        }
+    }
+    else
+    {
+      uint32_t ch = utf8 ? Unicode::fromString(input, len) : *(uchar_t*)input;
+      switch(ch)
+      {
+      case _T('\t'):
+        break;
+      case _T('\r'):
+        inputComplete = true;
+        break;
+      case '\b': // backspace
+      case 127: // del
+        promptRemove();
+        break;
+      default:
+        promptInsert(ch);
+      }
+    }
+  }
 #endif
 
 #ifdef _MSC_VER
@@ -952,13 +997,15 @@ public:
     DWORD read;
     if(!GetOverlappedResult(hStdRead, &overlapped, &read, FALSE))
       return;
+#endif
 
-    //
+    // restore console
     promptClear();
     restoreCursorPosition();
     restoreTerminalMode();
 
     // add new output
+#ifdef _MSC_VER
     DWORD written;
     VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
     ASSERT(written == read / sizeof(tchar_t));
@@ -967,26 +1014,18 @@ public:
       VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
       ASSERT(written == read / sizeof(tchar_t));
     }
-
-    //
-    enableTerminalRawMode();
-    saveCursorPosition();
-    promptWrite();
 #else
-    promptClear();
-    restoreCursorPosition();
-    restoreTerminalMode();
-
     char buffer[4096];
     ssize_t i = read(fd, buffer, sizeof(buffer));
     VERIFY(i != -1);
-    writeConsole(buffer, i); // todo writ to originalFd
-
+    writeConsole(buffer, i); // todo: write to originalFd and ensure utf8 sequences are valid
     flushConsole();
+#endif
+
+    // add prompt
     enableTerminalRawMode();
     saveCursorPosition();
     promptWrite();
-#endif
   }
 
 #ifndef _MSC_VER
@@ -1122,55 +1161,6 @@ public:
         *buffer = '\0';
         return buffer - start;
       }
-    }
-  }
-
-  void_t handleEscapedInput(char_t* input, size_t len)
-  {
-    if(input[1] == '[')
-      switch(input[2])
-      {
-      case 'A': // up
-        promptHistoryUp();
-        break;
-      case 'B': // down
-        promptHistoryDown();
-        break;
-      case 'C': // right
-        promptMoveRight();
-        break;
-      case 'D': // left
-        promptMoveLeft();
-        break;
-      case 'H': // home
-        promptMoveHome();
-        break;
-      case 'F': // end
-        promptMoveEnd();
-        break;
-      case '3':
-        if(input[3] == '~') // del
-          promptRemoveNext();
-        break;
-      }
-  }
-
-  void_t handleInput(char_t* input, size_t len)
-  {
-    uint32_t ch = utf8 ? Unicode::fromString(input, len) : *(uchar_t*)input;
-    switch(ch)
-    {
-    case _T('\t'):
-      break;
-    case _T('\r'):
-      inputComplete = true;
-      break;
-    case '\b': // backspace
-    case 127: // del
-      promptRemove();
-      break;
-    default:
-      promptInsert(ch);
     }
   }
 #endif
