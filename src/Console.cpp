@@ -769,11 +769,17 @@ public:
       fd_set fdr;
       FD_ZERO(&fdr);
       FD_SET(stdoutRead, &fdr);
+      FD_SET(stderrRead, &fdr);
       FD_SET(STDIN_FILENO, &fdr);
       FD_SET(resizeEventFd, &fdr);
+      int nfds = stdoutRead;
+      if(stderrRead > nfds)
+        nfds = stderrRead;
+      if(resizeEventFd > nfds)
+        nfds = resizeEventFd;
       timeval tv = {1000000, 0};
       flushConsole();
-      switch(select((stdoutRead > resizeEventFd ? stdoutRead : resizeEventFd) + 1, &fdr, 0, 0, &tv))
+      switch(select(nfds + 1, &fdr, 0, 0, &tv))
       {
       case 0:
         continue;
@@ -784,21 +790,9 @@ public:
         return String();
       }
       if(FD_ISSET(stdoutRead, &fdr))
-      {
-        promptClear();
-        restoreCursorPosition();
-        restoreTerminalMode();
-
-        char buffer[4096];
-        ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
-        VERIFY(i != -1);
-        writeConsole(buffer, i);
-
-        flushConsole();
-        enableTerminalRawMode();
-        saveCursorPosition();
-        promptWrite();
-      }
+        handleOutput(stdoutRead, originalStdout);
+      if(FD_ISSET(stderrRead, &fdr))
+        handleOutput(stderrRead, originalStderr);
       if(FD_ISSET(STDIN_FILENO, &fdr))
       {
         char buffer[64];
@@ -864,22 +858,31 @@ public:
       fd_set fdr;
       FD_ZERO(&fdr);
       FD_SET(stdoutRead, &fdr);
+      FD_SET(stderrRead, &fdr);
       timeval tv = {0, 0};
-      switch(select(stdoutRead + 1, &fdr, 0, 0, &tv))
+      switch(select((stdoutRead > stderrRead ? stdoutRead : stderrRead) + 1, &fdr, 0, 0, &tv))
       {
-      case 1:
+      case -1:
+        ASSERT(false);
+        return;
+      case 0:
+        break;
+      default:
+        if(FD_ISSET(stdoutRead, &fdr))
         {
           char buffer[4096];
           ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
           VERIFY(i != -1);
           VERIFY(write(originalStdout, buffer, i) == i);
         }
+        if(FD_ISSET(stderrRead, &fdr))
+        {
+          char buffer[4096];
+          ssize_t i = read(stderrRead, buffer, sizeof(buffer));
+          VERIFY(i != -1);
+          VERIFY(write(originalStderr, buffer, i) == i);
+        }
         continue;
-      case 0:
-        break;
-      default:
-        ASSERT(false);
-        return;
       }
       break;
     }
@@ -893,6 +896,7 @@ public:
     promptWrite();
   }
 
+#ifdef _MSC_VER
   void_t handleInput(tchar_t ch, WORD virtualKeyCode)
   {
     switch(ch)
@@ -935,14 +939,15 @@ public:
       promptInsert(ch);
     }
   }
-
+#endif
 
 #ifdef _MSC_VER
   void_t handleOutput(HANDLE hStdRead, HANDLE hOriginalStd, char_t* buffer, size_t bufferSize, OVERLAPPED& overlapped)
 #else
-  ???
+  void_t handleOutput(int fd, int originalFd)
 #endif
   {
+#ifdef _MSC_VER
     // get new output
     DWORD read;
     if(!GetOverlappedResult(hStdRead, &overlapped, &read, FALSE))
@@ -967,6 +972,21 @@ public:
     enableTerminalRawMode();
     saveCursorPosition();
     promptWrite();
+#else
+    promptClear();
+    restoreCursorPosition();
+    restoreTerminalMode();
+
+    char buffer[4096];
+    ssize_t i = read(fd, buffer, sizeof(buffer));
+    VERIFY(i != -1);
+    writeConsole(buffer, i); // todo writ to originalFd
+
+    flushConsole();
+    enableTerminalRawMode();
+    saveCursorPosition();
+    promptWrite();
+#endif
   }
 
 #ifndef _MSC_VER
@@ -1228,7 +1248,9 @@ private:
   int originalStderr;
   int stdoutRead;
   int stdoutWrite;
-  
+  int stderrRead;
+  int stderrWrite;
+
   static bool_t originalTermiosValid;
   static termios originalTermios;
   termios rawMode;
