@@ -152,28 +152,40 @@ public:
 
     // redirect stdout and stderr to pipe
     VERIFY(CreatePipeEx(&hStdOutRead, &hStdOutWrite, NULL, 0, FILE_FLAG_OVERLAPPED, 0));
+    VERIFY(CreatePipeEx(&hStdErrRead, &hStdErrWrite, NULL, 0, FILE_FLAG_OVERLAPPED, 0));
     originalStdout = _dup(_fileno(stdout));
     originalStderr = _dup(_fileno(stderr));
     newStdout = _open_osfhandle((intptr_t)hStdOutWrite, _O_BINARY);
     ASSERT(newStdout != -1);
+    newStderr = _open_osfhandle((intptr_t)hStdErrWrite, _O_BINARY);
     VERIFY(_dup2(newStdout, _fileno(stdout)) == 0);
-    VERIFY(_dup2(newStdout, _fileno(stderr)) == 0);
+    VERIFY(_dup2(newStderr, _fileno(stderr)) == 0);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
     VERIFY(setvbuf(stderr, NULL, _IONBF, 0) == 0);
     SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
     SetStdHandle(STD_ERROR_HANDLE, (HANDLE)_get_osfhandle(_fileno(stderr)));
     hOriginalStdOut = (HANDLE)_get_osfhandle(originalStdout);
     ASSERT(hOriginalStdOut != INVALID_HANDLE_VALUE);
+    hOriginalStdErr = (HANDLE)_get_osfhandle(originalStderr);
+    ASSERT(hOriginalStdErr != INVALID_HANDLE_VALUE);
 
     // initialize overlapped reading of hStdOutRead
-    ZeroMemory(&overlapped, sizeof(overlapped));
-    VERIFY(overlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL));
+    ZeroMemory(&outOverlapped, sizeof(outOverlapped));
+    ZeroMemory(&errOverlapped, sizeof(errOverlapped));
+    VERIFY(outOverlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL));
+    VERIFY(errOverlapped.hEvent = CreateEvent(NULL, TRUE, TRUE, NULL));
     DWORD read;
-    while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
+    while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
     {
       DWORD written;
-      VERIFY(WriteFile(hOriginalStdOut, stdoutBuffer, read, &written, NULL));
-      ASSERT(written == read);
+      VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+      ASSERT(written == read / sizeof(tchar_t));
+    }
+    while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
+    {
+      DWORD written;
+      VERIFY(WriteFile(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
+      ASSERT(written == read / sizeof(tchar_t));
     }
 
     // enable window events
@@ -187,17 +199,23 @@ public:
 
 #ifdef __CYGWIN__
     originalStdout = open("/dev/null", O_CLOEXEC);
+    originalStderr = open("/dev/null", O_CLOEXEC);
 #else
     originalStdout = eventfd(0, EFD_CLOEXEC); // create new file descriptor with O_CLOEXEC.. is there a better way to do this?
+    originalStderr = eventfd(0, EFD_CLOEXEC); // create new file descriptor with O_CLOEXEC.. is there a better way to do this?
 #endif
     VERIFY(dup3(STDOUT_FILENO, originalStdout, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
-    VERIFY(dup3(STDERR_FILENO, originalStderr, O_CLOEXEC) != -1); // create copy of STDOUT_FILENO
-    int pipes[2];
-    VERIFY(pipe2(pipes, O_CLOEXEC) == 0);
-    stdoutRead = pipes[0];
-    stdoutWrite = pipes[1];
+    VERIFY(dup3(STDERR_FILENO, originalStderr, O_CLOEXEC) != -1); // create copy of STDERR_FILENO
+    int stdoutPipes[2];
+    int stderrPipes[2];
+    VERIFY(pipe2(stdoutPipes, O_CLOEXEC) == 0);
+    VERIFY(pipe2(stderrPipes, O_CLOEXEC) == 0);
+    stdoutRead = stdoutPipes[0];
+    stdoutWrite = stdoutPipes[1];
+    stderrRead = stderrPipes[0];
+    stderrWrite = stderrPipes[1];
     VERIFY(dup2(stdoutWrite, STDOUT_FILENO) != -1);
-    VERIFY(dup2(stdoutWrite, STDERR_FILENO) != -1);
+    VERIFY(dup2(stderrWrite, STDERR_FILENO) != -1);
     VERIFY(setvbuf(stdout, NULL, _IONBF, 0) == 0);
     VERIFY(setvbuf(stderr, NULL, _IONBF, 0) == 0);
 
@@ -249,19 +267,21 @@ public:
     if(!valid)
       return;
     redirectPendingData();
-    //hier muss ich alles von stderr und stdout lesen und nach was auch immer schreiben
-    //  vermutlich muss ich beim lesen stderr und stdout in getLine auch unter zwischen diesen beiden unterscheiden, damit ich sie an den richtigen original stream senden kann
 #ifdef _MSC_VER
     CancelIo(hStdOutRead);
-    CloseHandle(overlapped.hEvent);
+    CancelIo(hStdErrRead);
+    CloseHandle(outOverlapped.hEvent);
+    CloseHandle(errOverlapped.hEvent);
     _dup2(originalStdout, _fileno(stdout));
     _dup2(originalStderr, _fileno(stderr));
     SetStdHandle(STD_OUTPUT_HANDLE, (HANDLE)_get_osfhandle(_fileno(stdout)));
     SetStdHandle(STD_ERROR_HANDLE, (HANDLE)_get_osfhandle(_fileno(stderr)));
     _close(originalStdout); // this should close hOriginalStdOut
-    _close(originalStderr);
+    _close(originalStderr); // this should close hOriginalStdErr
     _close(newStdout); // this should close hStdOutWrite
+    _close(newStderr); // this should close hStdOutWrite
     CloseHandle(hStdOutRead);
+    CloseHandle(hStdErrRead);
     VERIFY(SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE), consoleInputMode));
 #else
     if(resizeEventFd)
@@ -282,6 +302,8 @@ public:
     close(originalStderr);
     close(stdoutRead);
     close(stdoutWrite);
+    close(stderrRead);
+    close(stderrWrite);
     originalStdout = -1;
 #endif
   }
@@ -684,10 +706,10 @@ public:
 #ifdef _MSC_VER
     // wait for io
     HANDLE hStdIn = GetStdHandle(STD_INPUT_HANDLE);
-    HANDLE handles[] = {hStdIn, overlapped.hEvent};
+    HANDLE handles[] = {hStdIn, outOverlapped.hEvent, errOverlapped.hEvent};
     while(!inputComplete)
     {
-      DWORD dw = WaitForMultipleObjects(2, handles, FALSE, INFINITE);
+      DWORD dw = WaitForMultipleObjects(3, handles, FALSE, INFINITE);
       switch(dw)
       {
       case WAIT_OBJECT_0:
@@ -697,90 +719,32 @@ public:
           VERIFY(ReadConsoleInput(hStdIn, records, 1, &read));
           size_t keyEvents = 0;
           for(DWORD i = 0; i < read; ++i)
-            if(records[i].EventType == WINDOW_BUFFER_SIZE_EVENT)
+            switch(records[i].EventType)
             {
-              promptClear();
-              stdoutScreenWidth = records[i].Event.WindowBufferSizeEvent.dwSize.X;
-              promptWrite();
-            }
-            else if(records[i].EventType == KEY_EVENT && records[i].Event.KeyEvent.bKeyDown)
-            {
-#ifdef _UNICODE
-              tchar_t character = records[i].Event.KeyEvent.uChar.UnicodeChar;
-#else
-              tchar_t character = records[i].Event.KeyEvent.uChar.AsciiChar;
-#endif
-              switch(character)
+            case WINDOW_BUFFER_SIZE_EVENT:
+              handleResize(records[i].Event.WindowBufferSizeEvent.dwSize.X);
+              break;
+            case KEY_EVENT:
               {
-              case _T('\0'):
-                switch(records[i].Event.KeyEvent.wVirtualKeyCode)
-                {
-                case VK_UP:
-                  promptHistoryUp();
-                  break;
-                case VK_DOWN:
-                  promptHistoryDown();
-                  break;
-                case VK_LEFT:
-                  promptMoveLeft();
-                  break;
-                case VK_RIGHT:
-                  promptMoveRight();
-                  break;
-                case VK_DELETE:
-                  promptRemoveNext();
-                  break;
-                case VK_HOME:
-                  promptMoveHome();
-                  break;
-                case VK_END:
-                  promptMoveEnd();
-                  break;
-                }
-                break;
-              case _T('\t'):
-                break;
-              case _T('\r'):
-                inputComplete = true;
-                break;
-              case _T('\b'):
-                promptRemove();
-                break;
-              default:
-                promptInsert(character);
+                const KEY_EVENT_RECORD& keyEvent = records[i].Event.KeyEvent;
+                if(keyEvent.bKeyDown)
+#ifdef _UNICODE
+                  handleInput(keyEvent.uChar.UnicodeChar, keyEvent.wVirtualKeyCode);
+#else
+                  handleInput(keyEvent.uChar.AsciiChar, keyEvent.wVirtualKeyCode);
+#endif
               }
+              break;
             }
         }
         break;
       case WAIT_OBJECT_0 + 1:
-        {
-          // get new output
-          DWORD read;
-          if(!GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
-            continue;
-
-          //
-          promptClear();
-          restoreCursorPosition();
-          restoreTerminalMode();
-
-          // add new output
-          DWORD written;
-          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-          ASSERT(written == read / sizeof(tchar_t));
-          while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
-          {
-            VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-            ASSERT(written == read / sizeof(tchar_t));
-          }
-
-          //
-          enableTerminalRawMode();
-          saveCursorPosition();
-          promptWrite();
-        }
+        handleOutput(hStdOutRead, hOriginalStdOut, stdoutBuffer, sizeof(stdoutBuffer), outOverlapped);
         break;
       case WAIT_OBJECT_0 + 2:
+        handleOutput(hStdErrRead, hOriginalStdErr, stderrBuffer, sizeof(stderrBuffer), errOverlapped);
+        break;
+      default:
         break;
       }
     }
@@ -848,9 +812,7 @@ public:
       {
         uint64_t buffer;
         read(resizeEventFd, &buffer, sizeof(uint64_t));
-        promptClear();
-        stdoutScreenWidth = getScreenWidth();
-        promptWrite();
+        handleResize(getScreenWidth());
       }
     }
 
@@ -873,19 +835,28 @@ public:
   void_t redirectPendingData()
   {
 #ifdef _MSC_VER
+    DWORD read;
+    while(GetOverlappedResult(hStdOutRead, &outOverlapped, &read, FALSE))
     {
-      DWORD read;
-      while(GetOverlappedResult(hStdOutRead, &overlapped, &read, FALSE))
-      {
-         DWORD written;
-         VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-         ASSERT(written == read / sizeof(tchar_t));
-         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &overlapped))
-         {
-           VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-           ASSERT(written == read / sizeof(tchar_t));
-         }
-      }
+        DWORD written;
+        VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+        ASSERT(written == read / sizeof(tchar_t));
+        while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
+        {
+          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
+          ASSERT(written == read / sizeof(tchar_t));
+        }
+    }
+    while(GetOverlappedResult(hStdErrRead, &errOverlapped, &read, FALSE))
+    {
+        DWORD written;
+        VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
+        ASSERT(written == read / sizeof(tchar_t));
+        while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
+        {
+          VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
+          ASSERT(written == read / sizeof(tchar_t));
+        }
     }
 #else
     for(;;)
@@ -913,6 +884,89 @@ public:
       break;
     }
 #endif
+  }
+
+  void_t handleResize(size_t newWidth)
+  {
+    promptClear();
+    stdoutScreenWidth = newWidth;
+    promptWrite();
+  }
+
+  void_t handleInput(tchar_t ch, WORD virtualKeyCode)
+  {
+    switch(ch)
+    {
+    case _T('\0'):
+      switch(virtualKeyCode)
+      {
+      case VK_UP:
+        promptHistoryUp();
+        break;
+      case VK_DOWN:
+        promptHistoryDown();
+        break;
+      case VK_LEFT:
+        promptMoveLeft();
+        break;
+      case VK_RIGHT:
+        promptMoveRight();
+        break;
+      case VK_DELETE:
+        promptRemoveNext();
+        break;
+      case VK_HOME:
+        promptMoveHome();
+        break;
+      case VK_END:
+        promptMoveEnd();
+        break;
+      }
+      break;
+    case _T('\t'):
+      break;
+    case _T('\r'):
+      inputComplete = true;
+      break;
+    case _T('\b'):
+      promptRemove();
+      break;
+    default:
+      promptInsert(ch);
+    }
+  }
+
+
+#ifdef _MSC_VER
+  void_t handleOutput(HANDLE hStdRead, HANDLE hOriginalStd, char_t* buffer, size_t bufferSize, OVERLAPPED& overlapped)
+#else
+  ???
+#endif
+  {
+    // get new output
+    DWORD read;
+    if(!GetOverlappedResult(hStdRead, &overlapped, &read, FALSE))
+      return;
+
+    //
+    promptClear();
+    restoreCursorPosition();
+    restoreTerminalMode();
+
+    // add new output
+    DWORD written;
+    VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
+    ASSERT(written == read / sizeof(tchar_t));
+    while(ReadFile(hStdRead, buffer, bufferSize, &read, &overlapped))
+    {
+      VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
+      ASSERT(written == read / sizeof(tchar_t));
+    }
+
+    //
+    enableTerminalRawMode();
+    saveCursorPosition();
+    promptWrite();
   }
 
 #ifndef _MSC_VER
@@ -1154,12 +1208,18 @@ private:
 #ifdef _MSC_VER
   HANDLE hStdOutRead;
   HANDLE hStdOutWrite;
+  HANDLE hStdErrRead;
+  HANDLE hStdErrWrite;
   HANDLE hOriginalStdOut;
+  HANDLE hOriginalStdErr;
   int originalStdout;
   int originalStderr;
   int newStdout;
-  OVERLAPPED overlapped;
+  int newStderr;
+  OVERLAPPED outOverlapped;
+  OVERLAPPED errOverlapped;
   char stdoutBuffer[4096];
+  char stderrBuffer[4096];
   DWORD consoleOutputMode;
   DWORD consoleInputMode;
 #else
