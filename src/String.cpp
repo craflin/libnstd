@@ -64,7 +64,7 @@ int_t String::printf(const tchar_t* format, ...)
   va_start(ap, format);
 
   {
-    size_t capacity = Memory::size(data) - sizeof(Data);
+    size_t capacity = (Memory::size(data) - sizeof(Data)) / sizeof(tchar_t);
 #ifdef _UNICODE
     result = _vsnwprintf((wchar_t*)data->str, capacity, format, ap);
 #else
