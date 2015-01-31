@@ -29,19 +29,19 @@ targets = {
     if(target == "test") {
       dependencies += "performance console"
     }
-    includePaths = { "include" }
+    includePaths = { "$(mareDir)/include" }
     if(platform == "Win32" && tool != "vcxproj") {
       buildDir = "build/$(configuration)_cygwin/obj/$(target)"
     } else {
       buildDir = "build/$(configuration)/obj/$(target)"
     }
-    output = "$(buildDir)/../../$(target)$(if $(Win32),.exe,)"
+    outputDir = "$(buildDir)/../.."
     if(target == "test") {
-      root = "test"
+      root = "$(mareDir)/test"
     } else if(target == "performance") {
-      root = "test/Performance"
+      root = "$(mareDir)/test/Performance"
     } else if(target == "console") {
-      root = "test/Console"
+      root = "$(mareDir)/test/Console"
     }
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
@@ -53,11 +53,11 @@ targets = {
     }
     files = {
       if(target == "test") {
-        "test/Main.cpp" = cppSource,
+        "$(mareDir)/test/Main.cpp" = cppSource,
       } else if(target == "performance") {
-        "test/Performance/**.cpp" = cppSource,
+        "$(mareDir)/test/Performance/**.cpp" = cppSource,
       } else if(target == "console") {
-        "test/Console/**.cpp" = cppSource,
+        "$(mareDir)/test/Console/**.cpp" = cppSource,
       }
     }
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
@@ -73,9 +73,9 @@ targets = {
   include "libnstd.mare"
   libnstd += {
     if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin"
+      buildDir = "build/$(configuration)_cygwin/obj/$(target)"
     } else {
-      buildDir = "build/$(configuration)"
+      buildDir = "build/$(configuration)/obj/$(target)"
     }
     outputDir = "lib"
     output = "$(outputDir)/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,.a)"
