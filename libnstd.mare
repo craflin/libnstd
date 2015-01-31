@@ -1,0 +1,12 @@
+
+libnstd = cppStaticLibrary + {
+  includePaths = { "$(mareDir)/include" }
+  root = { "$(mareDir)/src", "$(mareDir)/include/nstd" }
+  files = {
+    "$(mareDir)/src/*.cpp" = cppSource,
+    "$(mareDir)/include/nstd/*.h"
+  }
+  if tool == "vcxproj" {
+    defines += { "_CRT_SECURE_NO_WARNINGS" }
+  }
+}

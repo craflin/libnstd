@@ -69,19 +69,16 @@ targets = {
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
     }
   }
-  libnstd = cppStaticLibrary + {
-    includePaths = { "include" }
+
+  include "libnstd.mare"
+  libnstd += {
     if(platform == "Win32" && tool != "vcxproj") {
       buildDir = "build/$(configuration)_cygwin"
     } else {
       buildDir = "build/$(configuration)"
     }
-    output = "lib/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,.a)"
-    root = { "src", "include/nstd" }
-    files = {
-      "src/*.cpp" = cppSource,
-      "include/nstd/*.h"
-    }
+    outputDir = "lib"
+    output = "$(outputDir)/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,.a)"
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
