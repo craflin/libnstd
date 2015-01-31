@@ -297,10 +297,16 @@ bool_t Directory::create(const String& dir)
       return false;
   }
 #ifdef _WIN32
-  return CreateDirectory(dir, NULL) == TRUE;
+  if(!CreateDirectory(dir, NULL))
 #else
-  return mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) == 0;
+  if(!mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
 #endif
+  {
+    String basename = File::basename(dir);
+    if(basename == "." || basename == "..")
+      return true;
+  }
+  return true;
 }
 
 bool_t Directory::unlink(const String& dir)
