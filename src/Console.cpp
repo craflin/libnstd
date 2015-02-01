@@ -650,7 +650,7 @@ public:
 #ifdef _MSC_VER
       CONSOLE_SCREEN_BUFFER_INFO csbi;
       VERIFY(GetConsoleScreenBufferInfo(hOriginalStdOut, &csbi));
-      csbi.dwCursorPosition.X = stdoutCursorX;
+      csbi.dwCursorPosition.X = (SHORT)stdoutCursorX;
       --csbi.dwCursorPosition.Y;
       VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
 #else
@@ -1009,7 +1009,7 @@ public:
     DWORD written;
     VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
     ASSERT(written == read / sizeof(tchar_t));
-    while(ReadFile(hStdRead, buffer, bufferSize, &read, &overlapped))
+    while(ReadFile(hStdRead, buffer, (DWORD)bufferSize, &read, &overlapped))
     {
       VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
       ASSERT(written == read / sizeof(tchar_t));
