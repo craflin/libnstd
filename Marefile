@@ -23,12 +23,9 @@ else {
 defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 
 targets = {
-  "test performance console" = cppApplication + {
+  "UnitTest Performance Console" = cppApplication + {
     folder = "Tests"
     dependencies = { "libnstd" }
-    if(target == "test") {
-      dependencies += "performance console"
-    }
     includePaths = { "$(mareDir)/include" }
     if(platform == "Win32" && tool != "vcxproj") {
       buildDir = "build/$(configuration)_cygwin/obj/$(target)"
@@ -36,13 +33,7 @@ targets = {
       buildDir = "build/$(configuration)/obj/$(target)"
     }
     outputDir = "$(buildDir)/../.."
-    if(target == "test") {
-      root = "$(mareDir)/test"
-    } else if(target == "performance") {
-      root = "$(mareDir)/test/Performance"
-    } else if(target == "console") {
-      root = "$(mareDir)/test/Console"
-    }
+    root = "$(mareDir)/test/$(target)"
     libPaths = { "lib" }
     libs = { "nstd$(if $(Debug),D,)" }
     if(tool != "vcxproj") {
@@ -52,13 +43,7 @@ targets = {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
     }
     files = {
-      if(target == "test") {
-        "$(mareDir)/test/Main.cpp" = cppSource,
-      } else if(target == "performance") {
-        "$(mareDir)/test/Performance/**.cpp" = cppSource,
-      } else if(target == "console") {
-        "$(mareDir)/test/Console/**.cpp" = cppSource,
-      }
+      "$(mareDir)/test/$(target)/**.cpp" = cppSource,
     }
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
