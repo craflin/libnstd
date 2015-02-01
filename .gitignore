@@ -1,9 +1,8 @@
-bin/
 lib/
 build/
-ipch/
 *.sdf
 *.opensdf
 *.suo
 *.vcxproj.user
-*.aps
+*.vcxproj.filters
+*.vcxproj
