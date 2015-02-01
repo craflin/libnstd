@@ -5,6 +5,7 @@ configurations = { "Debug", "Release" }
 
 Debug = "$(if $(patsubst Debug%,,$(configuration)),,true)"
 Unicode = "$(if $(patsubst %_Unicode,,$(configuration)),,true)"
+Cygwin = "$(if $(patsubst %_cygwin,,$(configuration)),,true)"
 
 if(tool == "vcxproj") {
   configurations += { "Debug_Unicode", "Release_Unicode", "Debug_cygwin", "Release_cygwin" }
@@ -24,6 +25,18 @@ defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICOD
 
 tests = "UnitTest Performance Console"
 
+buildDir = {
+  if(host == "Win32" && tool != "vcxproj") {
+    "build/$(configuration)_cygwin/$(target)"
+  }
+  else if(tool == "vcxproj" && platform == "x64" && !Cygwin) {
+    "build/$(configuration)_x64/$(target)"
+  }
+  else {
+    "build/$(configuration)/$(target)"
+  }
+}
+
 targets = {
   all = {
     dependencies = { "libnstd", "$(tests)" }
@@ -32,11 +45,6 @@ targets = {
     folder = "Tests"
     dependencies = { "libnstd" }
     includePaths = { "$(mareDir)/include" }
-    if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin/$(target)"
-    } else {
-      buildDir = "build/$(configuration)/$(target)"
-    }
     root = "$(mareDir)/test/$(target)"
     libPaths = { "$(dir $(buildDir))/libnstd" }
     libs = { "nstd" }
@@ -49,30 +57,23 @@ targets = {
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,
     }
-    if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
+    if (tool == "vcxproj" && Cygwin) {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
-      configuration = "$(patsubst %_cygwin,%,$(configuration))"
-      buildDir = "build/$(configuration)_cygwin/$(target)"
-      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
-      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
-      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      config = "$(patsubst %_cygwin,%,$(configuration))"
+      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
     }
   }
 
   include "libnstd.mare"
   libnstd += {
-    if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin/$(target)"
-    } else {
-      buildDir = "build/$(configuration)/$(target)"
-    }
-    if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
+    if (tool == "vcxproj" && Cygwin) {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
-      configuration = "$(patsubst %_cygwin,%,$(configuration))"
-      buildDir = "build/$(configuration)_cygwin/$(target)"
-      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
-      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
-      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      config = "$(patsubst %_cygwin,%,$(configuration))"
+      buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
+      reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
     }
   }
 }
