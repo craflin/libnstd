@@ -750,6 +750,7 @@ void_t testFile()
       ASSERT(Memory::compare(result + sizeof(buf1), buf2, sizeof(buf2)) == 0);
     }
   }
+  ASSERT(File::unlink(_T("testfile.file.test")));
 }
 
 void_t testFileName()
