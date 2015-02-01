@@ -22,20 +22,24 @@ else {
 
 defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 
+tests = "UnitTest Performance Console"
+
 targets = {
-  "UnitTest Performance Console" = cppApplication + {
+  all = {
+    dependencies = { "libnstd", "$(tests)" }
+  }
+  "$(tests)" = cppApplication + {
     folder = "Tests"
     dependencies = { "libnstd" }
     includePaths = { "$(mareDir)/include" }
     if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin/obj/$(target)"
+      buildDir = "build/$(configuration)_cygwin/$(target)"
     } else {
-      buildDir = "build/$(configuration)/obj/$(target)"
+      buildDir = "build/$(configuration)/$(target)"
     }
-    outputDir = "$(buildDir)/../.."
     root = "$(mareDir)/test/$(target)"
-    libPaths = { "lib" }
-    libs = { "nstd$(if $(Debug),D,)" }
+    libPaths = { "$(dir $(buildDir))/libnstd" }
+    libs = { "nstd" }
     if(tool != "vcxproj") {
       libs +=  { "pthread", "rt" }
     }
@@ -48,7 +52,7 @@ targets = {
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
-      buildDir = "build/$(configuration)_cygwin/obj/$(target)"
+      buildDir = "build/$(configuration)_cygwin/$(target)"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
@@ -58,16 +62,14 @@ targets = {
   include "libnstd.mare"
   libnstd += {
     if(platform == "Win32" && tool != "vcxproj") {
-      buildDir = "build/$(configuration)_cygwin/obj/$(target)"
+      buildDir = "build/$(configuration)_cygwin/$(target)"
     } else {
-      buildDir = "build/$(configuration)/obj/$(target)"
+      buildDir = "build/$(configuration)/$(target)"
     }
-    outputDir = "lib"
-    output = "$(outputDir)/$(if $(Win32),,lib)nstd$(if $(Debug),D,)$(if $(Win32),.lib,.a)"
     if (tool == "vcxproj" && "$(patsubst %_cygwin,cygwin,$(configuration))" == "cygwin") {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       configuration = "$(patsubst %_cygwin,%,$(configuration))"
-      buildDir = "build/$(configuration)_cygwin"
+      buildDir = "build/$(configuration)_cygwin/$(target)"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       cleanCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies clean $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
       reBuildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies rebuild $(target) config=$(configuration) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
