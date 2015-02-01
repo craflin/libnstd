@@ -303,7 +303,7 @@ bool_t Directory::create(const String& dir)
 #endif
   {
     String basename = File::basename(dir);
-    if(basename == "." || basename == "..")
+    if(basename == _T(".") || basename == _T(".."))
       return true;
   }
   return true;
