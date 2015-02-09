@@ -185,6 +185,20 @@ String& String::toUpperCase()
 #endif
 
 #ifdef _UNICODE
+int_t String::toInt(const tchar_t* s) {return _wtoi(s);}
+uint_t String::toUInt(const tchar_t* s) {return wcstoul(s, 0, 10);}
+int64_t String::toInt64(const tchar_t* s) {return _wtoll(s);}
+uint64_t String::toUInt64(const tchar_t* s) {return wcstoull(s, 0, 10);}
+double String::toDouble(const tchar_t* s) {return _wtof(s);}
+#else
+int_t String::toInt(const tchar_t* s) {return atoi(s);}
+uint_t String::toUInt(const tchar_t* s) {return strtoul(s, 0, 10);}
+int64_t String::toInt64(const tchar_t* s) {return atoll(s);}
+uint64_t String::toUInt64(const tchar_t* s) {return strtoull(s, 0, 10);}
+double String::toDouble(const tchar_t* s) {return atof(s);}
+#endif
+
+#ifdef _UNICODE
 wchar_t String::toLowerCase(wchar_t c) {return towlower(c);}
 wchar_t String::toUpperCase(wchar_t c) {return towupper(c);}
 bool_t String::isSpace(wchar_t c) {return iswspace(c) != 0;}

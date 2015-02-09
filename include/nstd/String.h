@@ -320,6 +320,12 @@ public:
     return hashCode;
   }
 
+  static int_t toInt(const tchar_t* s);
+  static uint_t toUInt(const tchar_t* s);
+  static int64_t toInt64(const tchar_t* s);
+  static uint64_t toUInt64(const tchar_t* s);
+  static double toDouble(const tchar_t* s);
+
 #ifdef _UNICODE
   static tchar_t toLowerCase(tchar_t c);
   static tchar_t toUpperCase(tchar_t c);
