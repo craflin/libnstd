@@ -12,6 +12,7 @@
 #include <cstring>
 #include <signal.h>
 #include <cstdlib> // setenv
+#include <fcntl.h>
 #endif
 
 #include <nstd/Debug.h>
@@ -842,3 +843,26 @@ bool_t Process::Arguments::read(int_t& character, String& argument)
   arg += len;
   return true;
 }
+
+#ifndef _WIN32
+bool_t Process::daemonize(const String& logFile)
+{
+  int fd = ::open(logFile, O_CREAT | O_WRONLY |  O_CLOEXEC, S_IRUSR | S_IWUSR);
+  if(fd == -1)
+    return false;
+  VERIFY(dup2(fd, STDOUT_FILENO) != -1);
+  VERIFY(dup2(fd, STDERR_FILENO) != -1);
+  close(fd);
+
+  pid_t childPid = fork();
+  if(childPid == -1)
+    return false;
+  if(childPid != 0)
+  {
+    exit(0);
+    return false;
+  }
+  VERIFY(setsid() != -1);
+  return true;
+}
+#endif

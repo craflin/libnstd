@@ -65,6 +65,10 @@ public:
   static String getEnvironmentVariable(const String& name);
   static bool_t setEnvironmentVariable(const String& name, const String& value);
 
+#ifndef _WIN32
+  static bool_t daemonize(const String& logFile = "/dev/null");
+#endif
+
 public:
   enum OptionFlags
   {
