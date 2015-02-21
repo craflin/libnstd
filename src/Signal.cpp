@@ -15,8 +15,13 @@ Signal::Signal(bool set)
 #else
   ASSERT(sizeof(cdata) >= sizeof(pthread_cond_t));
   ASSERT(sizeof(mdata) >= sizeof(pthread_mutex_t));
+#if __cplusplus >= 201103L
   *(pthread_cond_t*)cdata = PTHREAD_COND_INITIALIZER;
   *(pthread_mutex_t*)mdata = PTHREAD_MUTEX_INITIALIZER;
+#else
+  pthread_cond_init((pthread_cond_t*)cdata, 0);
+  pthread_mutex_init((pthread_mutex_t*)mdata, 0);
+#endif
   if(set)
   {
     signaled = true;
