@@ -54,6 +54,6 @@ void_t Mutex::unlock()
 #ifdef _WIN32
   LeaveCriticalSection(&(CRITICAL_SECTION&)data);
 #else
-  VERIFY(pthread_mutex_lock(&(pthread_mutex_t&)data) == 0);
+  VERIFY(pthread_mutex_unlock(&(pthread_mutex_t&)data) == 0);
 #endif
 }
