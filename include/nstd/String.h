@@ -420,7 +420,7 @@ private:
   } emptyData;
 
 #ifndef _UNICODE
-  static tchar_t lowerCaseMap[0x100];
-  static tchar_t upperCaseMap[0x100];
+  static tchar_t lowerCaseMap[0x101];
+  static tchar_t upperCaseMap[0x101];
 #endif
 };
