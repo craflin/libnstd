@@ -15,7 +15,7 @@ void __cdecl __debugbreak(void);
 #define TRAP() __debugbreak()
 #else
 #if defined(__GNUC__) && defined(_ARM)
-__attribute__((gnu_inline, always_inline)) static void __inline__ TRAP(void) {__asm__ volatile(".inst 0xe7f001f0");}
+__attribute__((gnu_inline, always_inline)) static void __inline__ TRAP(void) {__asm__ volatile("BKPT");}
 #else
 #define TRAP() __builtin_trap()
 #endif
