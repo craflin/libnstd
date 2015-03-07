@@ -137,7 +137,8 @@ public:
     if(eventFd)
     {
       uint64_t event = 1;
-      write(eventFd, &event, sizeof(uint64_t));
+      if(write(eventFd, &event, sizeof(uint64_t)) != sizeof(uint64_t))
+        return;
     }
   }
 #endif
@@ -321,14 +322,16 @@ public:
         return ws.ws_col;
     size_t x, y;
     getCursorPosition(x, y);
-    write(originalStdout, "\x1b[999C", 6);
+    if(write(originalStdout, "\x1b[999C", 6) != 6)
+      return 80;
     size_t newX, newY;
     getCursorPosition(newX, newY);
     if(newX > x)
     {
       String moveCmd;
       moveCmd.printf("\x1b[%dD",newX - x);
-      write(originalStdout, (const char_t*)moveCmd, moveCmd.length());
+      if(write(originalStdout, (const char_t*)moveCmd, moveCmd.length()) != (ssize_t)moveCmd.length())
+        return 80;
     }
     return newX + 1;
 #endif
@@ -799,8 +802,8 @@ public:
       if(FD_ISSET(resizeEventFd, &fdr))
       {
         uint64_t buffer;
-        read(resizeEventFd, &buffer, sizeof(uint64_t));
-        handleResize(getScreenWidth());
+        if(read(resizeEventFd, &buffer, sizeof(uint64_t)) == sizeof(uint64_t))
+          handleResize(getScreenWidth());
       }
     }
 

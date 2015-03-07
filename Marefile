@@ -57,7 +57,10 @@ targets = {
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,
     }
-    if (tool == "vcxproj" && Cygwin) {
+    if(target == "UnitTest") {
+      defines -= "NDEBUG"
+    }
+    if(tool == "vcxproj" && Cygwin) {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       config = "$(patsubst %_cygwin,%,$(configuration))"
       buildCommand = "bash -c \"LANG=en_US ./mare --ignore-dependencies $(target) config=$(config) 2>&1 | sed -u -e \\\"s=:\\([0-9][0-9]*\\):\\([0-9][0-9]*\\)[:,]=(\\1,\\2) :=\\\" -e \\\"s=:\\([0-9][0-9]*\\)[:,]=(\\1) :=\\\" -e \\\"s=/=\\\\\\\\\\\\=g\\\" 1>&2\""
