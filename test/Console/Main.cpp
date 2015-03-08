@@ -29,6 +29,7 @@ int_t main(int_t argc, tchar_t* argv[])
     Process::Option options[] = {
         {_T('p'), _T("password"), Process::argumentFlag},
         {_T('u'), _T("user"), Process::argumentFlag},
+        {_T('h'), _T("help"), Process::optionFlag},
     };
     Process::Arguments arguments(argc, argv, options);
     int_t character;
@@ -52,7 +53,7 @@ int_t main(int_t argc, tchar_t* argv[])
         Console::errorf(_T("Option %s required an argument.\n"), (const tchar_t*)argument);
         return 1;
       default:
-        Console::errorf(_T("Usage: %s [-u <user>] [-p <password>] [<address>]\n"));
+        Console::errorf(_T("Usage: %s [-u <user>] [-p <password>] [<address>]\n"), argv[0]);
         return 1;
       }
   }
