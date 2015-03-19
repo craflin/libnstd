@@ -866,3 +866,81 @@ bool_t Process::daemonize(const String& logFile)
   return true;
 }
 #endif
+
+#ifdef _WIN32
+static class ProcessFramework
+{
+public:
+  static HANDLE hInterruptEvent;
+  static CRITICAL_SECTION criticalSection;
+  ProcessFramework() {InitializeCriticalSection(&criticalSection);}
+  ~ProcessFramework()
+  {
+    DeleteCriticalSection(&criticalSection);
+    if(hInterruptEvent != INVALID_HANDLE_VALUE)
+      CloseHandle(hInterruptEvent);
+  }
+} processFramework;
+HANDLE ProcessFramework::hInterruptEvent = INVALID_HANDLE_VALUE;;
+CRITICAL_SECTION ProcessFramework::criticalSection;
+#endif
+
+Process* Process::wait(Process* processes, size_t count)
+{
+#ifdef _WIN32
+  EnterCriticalSection(&ProcessFramework::criticalSection);
+  if(ProcessFramework::hInterruptEvent == INVALID_HANDLE_VALUE)
+    ProcessFramework::hInterruptEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+  LeaveCriticalSection(&ProcessFramework::criticalSection);
+  HANDLE handles[MAXIMUM_WAIT_OBJECTS];
+  Process* processMap[MAXIMUM_WAIT_OBJECTS];
+  Process** p = processMap;
+  handles[0] = ProcessFramework::hInterruptEvent;
+  Process* pend = processes + count;
+  HANDLE* hend = handles + MAXIMUM_WAIT_OBJECTS;
+  for(HANDLE* h = handles + 1; processes < pend; ++processes)
+  {
+    if(processes->hProcess == INVALID_HANDLE_VALUE)
+      continue;
+    *(h++) = processes->hProcess;
+    *(p++) = processes;
+    if(h >= hend)
+      break;
+  }
+  DWORD dw = WaitForMultipleObjects(hend - handles, handles, FALSE, INFINITE);
+  ssize_t pIndex = dw - WAIT_OBJECT_0;
+  if(dw == WAIT_OBJECT_0 || pIndex >= p - processMap)
+    return 0;
+  return processMap[pIndex];
+#else
+  int status;
+  pid_t pid = ::wait(&wait);
+  if(pid)
+    for(Process* end = processes + count; processes < end; ++processes)
+      if(pid == processes->pid)
+        return processes;
+  return 0;
+#endif
+}
+
+void_t Process::interrupt()
+{
+#ifdef _WIN32
+  EnterCriticalSection(&ProcessFramework::criticalSection);
+  if(ProcessFramework::hInterruptEvent == INVALID_HANDLE_VALUE)
+    ProcessFramework::hInterruptEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+   SetEvent(ProcessFramework::hInterruptEvent);
+  LeaveCriticalSection(&ProcessFramework::criticalSection);
+#else
+  pid_t pid = vfork(); // todo: is there an easier way to interrupt wait()?
+  switch(pid)
+  {
+  case 0:
+    exit(0);
+  case -1:
+    return;
+  }
+  int status;
+  waitpid(pid, &status, 0);
+#endif
+}
