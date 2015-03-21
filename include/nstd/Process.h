@@ -65,7 +65,7 @@ public:
   static String getEnvironmentVariable(const String& name);
   static bool_t setEnvironmentVariable(const String& name, const String& value);
 
-  static Process* wait(Process* processes, size_t count);
+  static Process* wait(Process** processes, size_t count);
   static void_t interrupt();
 
 #ifndef _WIN32

@@ -885,7 +885,7 @@ HANDLE ProcessFramework::hInterruptEvent = INVALID_HANDLE_VALUE;;
 CRITICAL_SECTION ProcessFramework::criticalSection;
 #endif
 
-Process* Process::wait(Process* processes, size_t count)
+Process* Process::wait(Process** processes, size_t count)
 {
 #ifdef _WIN32
   EnterCriticalSection(&ProcessFramework::criticalSection);
@@ -896,14 +896,15 @@ Process* Process::wait(Process* processes, size_t count)
   Process* processMap[MAXIMUM_WAIT_OBJECTS];
   Process** p = processMap;
   handles[0] = ProcessFramework::hInterruptEvent;
-  Process* pend = processes + count;
+  Process** pend = processes + count;
   HANDLE* hend = handles + MAXIMUM_WAIT_OBJECTS;
   for(HANDLE* h = handles + 1; processes < pend; ++processes)
   {
-    if(processes->hProcess == INVALID_HANDLE_VALUE)
+    Process* process = *processes;
+    if(process->hProcess == INVALID_HANDLE_VALUE)
       continue;
-    *(h++) = processes->hProcess;
-    *(p++) = processes;
+    *(h++) = process->hProcess;
+    *(p++) = process;
     if(h >= hend)
       break;
   }
@@ -914,11 +915,12 @@ Process* Process::wait(Process* processes, size_t count)
   return processMap[pIndex];
 #else
   int status;
-  pid_t pid = ::wait(&wait);
-  if(pid)
-    for(Process* end = processes + count; processes < end; ++processes)
-      if(pid == processes->pid)
-        return processes;
+  siginfo_t sigInfo;
+  pid_t pid = waitid(P_ALL, 0, &sigInfo, WNOWAIT);
+  if(pid != -1)
+    for(Process** end = processes + count; processes < end; ++processes)
+      if(pid == (*processes)->pid)
+        return *processes;
   return 0;
 #endif
 }
