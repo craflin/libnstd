@@ -908,7 +908,7 @@ Process* Process::wait(Process** processes, size_t count)
     if(h >= hend)
       break;
   }
-  DWORD dw = WaitForMultipleObjects(hend - handles, handles, FALSE, INFINITE);
+  DWORD dw = WaitForMultipleObjects((DWORD)(hend - handles), handles, FALSE, INFINITE);
   ssize_t pIndex = dw - WAIT_OBJECT_0;
   if(dw == WAIT_OBJECT_0 || pIndex >= p - processMap)
     return 0;

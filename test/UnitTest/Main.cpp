@@ -17,7 +17,6 @@
 #include <nstd/Error.h>
 #include <nstd/Buffer.h>
 #include <nstd/Variant.h>
-#include <nstd/Process.h>
 #include <nstd/Map.h>
 #include <nstd/Math.h>
 #include <nstd/Unicode.h>
@@ -25,6 +24,8 @@
 #include <cstring>
 #include <cctype>
 #include <cstdlib>
+
+void_t testProcess();
 
 void_t testUnicode()
 {
@@ -1159,32 +1160,6 @@ void_t testTime()
   ASSERT(timeUtc != time);
   ASSERT(timeUtc2 == timeUtc);
   ASSERT(timeUtc2.toTimestamp() == now);
-}
-
-void_t testProcess()
-{
-  {
-    Process process;
-    uint32_t id = process.start(_T("sleep 1"));
-    ASSERT(id != 0);
-    ASSERT(process.isRunning());
-    uint32_t exitCode = 0xfffa2;
-    ASSERT(process.join(exitCode));
-    ASSERT(!process.isRunning());
-    ASSERT(exitCode == 0);
-  }
-
-  {
-    Process process;
-    ASSERT(process.open(_T("ls"), Process::stdoutStream));
-    ASSERT(process.isRunning());
-    char_t buffer[123];
-    ASSERT(process.read(buffer, sizeof(buffer)) > 0);
-    uint32_t exitCode = 0xfffa2;
-    ASSERT(process.join(exitCode));
-    ASSERT(!process.isRunning());
-    ASSERT(exitCode == 0);
-  }
 }
 
 void_t testMap()
