@@ -898,7 +898,8 @@ Process* Process::wait(Process** processes, size_t count)
   handles[0] = ProcessFramework::hInterruptEvent;
   Process** pend = processes + count;
   HANDLE* hend = handles + MAXIMUM_WAIT_OBJECTS;
-  for(HANDLE* h = handles + 1; processes < pend; ++processes)
+  HANDLE* h = handles + 1;
+  for(; processes < pend; ++processes)
   {
     Process* process = *processes;
     if(process->hProcess == INVALID_HANDLE_VALUE)
@@ -908,9 +909,9 @@ Process* Process::wait(Process** processes, size_t count)
     if(h >= hend)
       break;
   }
-  DWORD dw = WaitForMultipleObjects((DWORD)(hend - handles), handles, FALSE, INFINITE);
-  ssize_t pIndex = dw - WAIT_OBJECT_0;
-  if(dw == WAIT_OBJECT_0 || pIndex >= p - processMap)
+  DWORD dw = WaitForMultipleObjects((DWORD)(h - handles), handles, FALSE, INFINITE);
+  ssize_t pIndex;
+  if(dw <= WAIT_OBJECT_0 || (pIndex = dw - (WAIT_OBJECT_0 + 1)) >= p - processMap)
     return 0;
   return processMap[pIndex];
 #else
