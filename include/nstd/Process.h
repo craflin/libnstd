@@ -32,7 +32,7 @@ public:
   bool_t join(uint32_t& exitCode);
 
   /**
-  * Kill and join the process. The method send a TERM signal to the process and waits for it to terminate.
+  * Kill and join the process. The method send a hard KILL signal to the process and waits for it to terminate.
   * @return Whether the process terminated properly.
   */
   bool_t kill();
