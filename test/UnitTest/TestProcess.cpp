@@ -67,6 +67,11 @@ void_t testProcess()
     ASSERT(process2.start(_T("sleep 1")) != 0);
     Process* processes[] = {&process2, &process};
     ASSERT(Process::wait(processes, 2) == &process);
+    uint32_t exitCode;
+    ASSERT(process.join(exitCode));
+    ASSERT(exitCode == 0);
     ASSERT(Process::wait(processes, 1) == &process2);
+    ASSERT(process2.join(exitCode));
+    ASSERT(exitCode == 0);
   }
 }

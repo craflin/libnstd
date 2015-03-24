@@ -13,6 +13,7 @@
 #include <signal.h>
 #include <cstdlib> // setenv
 #include <fcntl.h>
+#include <pthread.h>
 #endif
 
 #include <nstd/Debug.h>
@@ -883,6 +884,29 @@ public:
 } processFramework;
 HANDLE ProcessFramework::hInterruptEvent = INVALID_HANDLE_VALUE;;
 CRITICAL_SECTION ProcessFramework::criticalSection;
+#else
+static class ProcessFramework
+{
+public:
+  static pthread_mutex_t mutex;
+  static pthread_cond_t condition;
+  static int_t signaled;
+  static int_t waitState;
+  ProcessFramework()
+  {
+    VERIFY(pthread_mutex_init(&mutex, 0) == 0);
+    VERIFY(pthread_cond_init(&condition, 0) == 0);
+  }
+  ~ProcessFramework()
+  {
+    pthread_mutex_destroy(&mutex);
+    pthread_cond_destroy(&condition);
+  }
+} processFramework;
+pthread_mutex_t ProcessFramework::mutex;
+pthread_cond_t ProcessFramework::condition;
+int_t ProcessFramework::signaled = 0;
+int_t ProcessFramework::waitState = 0;
 #endif
 
 Process* Process::wait(Process** processes, size_t count)
@@ -915,13 +939,64 @@ Process* Process::wait(Process** processes, size_t count)
     return 0;
   return processMap[pIndex];
 #else
-  int status;
+  VERIFY(pthread_mutex_lock(&ProcessFramework::mutex) == 0);
+  switch(ProcessFramework::signaled)
+  {
+  case 0:
+    if(count == 0)
+    {
+      ProcessFramework::waitState = 1;
+      for(;;)
+      {
+        VERIFY(pthread_cond_wait(&ProcessFramework::condition, &ProcessFramework::mutex) == 0);
+        if(ProcessFramework::signaled)
+        {
+          ASSERT(ProcessFramework::signaled < 0);
+          ProcessFramework::signaled = 0;
+          ProcessFramework::waitState = 0;
+          VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
+          return 0;
+        }
+      }
+    }
+    else
+      ProcessFramework::waitState = 2;
+    break;
+  case -1:
+    ProcessFramework::signaled = 0;
+    VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
+    return 0;
+  default:
+    {
+      int status;
+      pid_t pid = waitpid(ProcessFramework::signaled, &status, 0);
+      if(pid == ProcessFramework::signaled)
+        ProcessFramework::signaled = 0;
+      ProcessFramework::waitState = 0;
+    }
+    VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
+    return 0;
+  }
+  VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
   siginfo_t sigInfo;
-  pid_t pid = waitid(P_ALL, 0, &sigInfo, WNOWAIT);
-  if(pid != -1)
+  pid_t ret = waitid(P_ALL, 0, &sigInfo, WEXITED | WNOWAIT);
+  if(ret != -1)
+  {
+    pid_t pid = sigInfo.si_pid;
     for(Process** end = processes + count; processes < end; ++processes)
-      if(pid == (*processes)->pid)
+      if(pid == (pid_t)(*processes)->pid)
         return *processes;
+    VERIFY(pthread_mutex_lock(&ProcessFramework::mutex) == 0);
+    if(pid == ProcessFramework::signaled)
+    {
+        int status;
+        pid_t pid = waitpid(ProcessFramework::signaled, &status, 0);
+        if(pid == ProcessFramework::signaled)
+          ProcessFramework::signaled = 0;
+    }
+    ProcessFramework::waitState = 0;
+    VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
+  }
   return 0;
 #endif
 }
@@ -935,15 +1010,31 @@ void_t Process::interrupt()
    SetEvent(ProcessFramework::hInterruptEvent);
   LeaveCriticalSection(&ProcessFramework::criticalSection);
 #else
-  pid_t pid = vfork(); // todo: is there an easier way to interrupt wait()?
-  switch(pid)
-  {
-  case 0:
-    exit(0);
-  case -1:
-    return;
-  }
-  int status;
-  waitpid(pid, &status, 0);
+  VERIFY(pthread_mutex_lock(&ProcessFramework::mutex) == 0);
+  if(!ProcessFramework::signaled)
+    switch(ProcessFramework::waitState)
+    {
+    case 2:
+      {
+        pid_t pid = vfork();
+        switch(pid)
+        {
+        case 0:
+          exit(0);
+        case -1:
+          break;
+        default:
+          ProcessFramework::signaled = pid;
+        }
+      }
+      break;
+    case 1:
+      ProcessFramework::signaled = -1;
+      VERIFY(pthread_cond_signal(&ProcessFramework::condition) == 0);
+      break;
+    default:
+      ProcessFramework::signaled = -1;
+    }
+  VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
 #endif
 }
