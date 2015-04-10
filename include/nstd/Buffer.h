@@ -36,6 +36,14 @@ public:
     Memory::free(buffer);
   }
 
+  void_t attach(byte_t* data, size_t length)
+  {
+    Memory::free(buffer);
+    buffer = 0;
+    bufferStart = data;
+    bufferEnd = data + length;
+  }
+
   operator const byte_t*() const {return bufferStart;}
   operator byte_t*() {return bufferStart;}
 
@@ -192,6 +200,8 @@ public:
       bufferStart = bufferEnd = buffer;
       *bufferEnd = 0;
     }
+    else
+      bufferEnd = bufferStart;
   }
 
   bool_t isEmpty() const {return bufferStart == bufferEnd;}
