@@ -190,6 +190,31 @@ bool_t File::unlink(const String& file)
   return true;
 }
 
+bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
+{
+#ifdef _WIN32
+  return MoveFileEx(from, to, MOVEFILE_COPY_ALLOWED | (failIfExists ? 0 : MOVEFILE_REPLACE_EXISTING)) == TRUE;
+#else
+  if(failIfExists)
+  {
+    int fd = open(to, O_CREAT | O_EXCL | O_CLOEXEC)
+    if(fd == -1)
+      return false;
+    if(rename(from, to) != 0)
+    {
+      int err = errno;
+      close(fd);
+      errno = err;
+      return false;
+    }
+    close(fd);
+    return true;
+  }
+  else
+    return rename(from, to) == 0;
+#endif
+}
+
 ssize_t File::read(void_t* buffer, size_t len)
 {
 #ifdef _WIN32

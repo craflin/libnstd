@@ -70,6 +70,14 @@ public:
 
   bool_t write(const String& data);
 
+  /**
+  * Move the read or write offset position within the file.
+  *
+  * @param  [in] offset The offset in bytes from \c start.
+  * @param  [in] start  The position from where to start the move operation.
+  *
+  * @return The position in the file relative to the beginning of the file after the seek operation.
+  */
   int64_t seek(int64_t offset, Position start = setPosition);
 
   bool_t flush();
@@ -85,6 +93,7 @@ public:
 
   static bool_t exists(const String& file);
   static bool_t unlink(const String& file);
+  static bool_t rename(const String& from, const String& to, bool_t failIfExists = true);
 
 private:
   void_t* fp;
