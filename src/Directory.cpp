@@ -244,25 +244,24 @@ bool_t Directory::read(String& name, bool_t& isDir)
     const char_t* const str = dent->d_name;
     if(!*pattern || fnmatch(pattern, str, 0) == 0)
     {
-      name = String(str, strlen(str));
-      isDir = false;
-      if(dent->d_type == DT_DIR)
-        isDir = true;
-      else if(dent->d_type == DT_LNK || dent->d_type == DT_UNKNOWN)
+      isDir = dent->d_type == DT_DIR;
+      if(dirsOnly && !isDir)
+        continue;
+      if(!isDir && (dent->d_type == DT_LNK || dent->d_type == DT_UNKNOWN))
       {
         String path = dirpath;
         if(!dirpath.isEmpty())
           path.append(_T('/'));
-        path.append(name);
+        path.append(str, strlen(str));
         struct stat buff;
-        if(stat(path, &buff) == 0)
-          if(S_ISDIR(buff.st_mode))
-            isDir = true;
+        if(stat(path, &buff) == 0 && S_ISDIR(buff.st_mode))
+          isDir = true;
+        else if(dirsOnly)
+          continue;
       }
-      if(dirsOnly && !isDir)
-        continue;
       if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
         continue;
+      name = String(str, strlen(str));
       return true;
     }
   }
