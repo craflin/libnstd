@@ -513,3 +513,16 @@ bool_t File::exists(const String& file)
   return true;
 #endif
 }
+
+bool_t File::isExecutable(const String& file)
+{
+#ifdef _WIN32
+  String extension = File::extension(file).toLowerCase();
+  return extension == "exe" || extension == "com" || extension == "bat";
+#else
+  struct stat buf;
+  if(stat(file, &buf) != 0)
+    return false;
+  return (buf.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0;
+#endif
+}

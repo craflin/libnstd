@@ -84,7 +84,14 @@ public:
 
   static String dirname(const String& file); // TODO: rename getDirname()?
   static String basename(const String& file, const String& extension = String()); // TODO: rename getBasename()?
+  
+  /**
+  * Get the extension of a file name or path (without the dot).
+  *
+  * @param  [in] file The file name or path off which to get the extension.
+  */
   static String extension(const String& file); // TODO: rename getExtension()?
+
   static String simplifyPath(const String& path);
   static bool_t isAbsolutePath(const String& path);
   static String getRelativePath(const String& from, const String& to);
@@ -94,6 +101,8 @@ public:
   static bool_t exists(const String& file);
   static bool_t unlink(const String& file);
   static bool_t rename(const String& from, const String& to, bool_t failIfExists = true);
+
+  static bool_t isExecutable(const String& file);
 
 private:
   void_t* fp;
