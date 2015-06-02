@@ -35,12 +35,12 @@ public:
   /**
   * Search for the next matching entry in the opened directory.
   *
-  * @param  [out] path  The path of the next matching entry.
+  * @param  [out] name  The name of the next matching entry.
   * @param  [out] isDir Whether the entry is a directory or not.
   *
   * @return \c true when matching entry was found.
   */
-  bool_t read(String& path, bool_t& isDir);
+  bool_t read(String& name, bool_t& isDir);
 
   static bool_t exists(const String& dir);
 
