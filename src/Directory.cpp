@@ -91,7 +91,7 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
   // solutions:
   // 1) when pattern contains an '?', test if results really match
   // 2) replace '?' with '*', when pattern ends with '.*' or does not end with '*', test if results really match
-  // 3) when FindFirstFileEx result invalid handle fails, then try again using '*' as pattern and test if results really match (probably they don't)
+  // 3) when FindFirstFileEx results in an invalid handle, then try again using '*' as pattern and test if results really match (probably they don't)
 
   String searchPat = pattern;
   this->pattern.clear();
