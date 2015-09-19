@@ -54,23 +54,6 @@ Directory::~Directory()
 #endif
 }
 
-bool_t Directory::remove(const String& dir)
-{
-  String path = dir;
-  while(path != _T("."))
-  {
-#ifdef _WIN32
-    if(!RemoveDirectory(path))
-      return false;
-#else
-    if(rmdir(path) != 0)
-      return false;
-#endif
-    path = File::dirname(path);
-  }
-  return true;
-}
-
 bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirsOnly)
 {
 #ifdef _WIN32
@@ -315,6 +298,19 @@ bool_t Directory::unlink(const String& dir)
 #else
   return ::rmdir(dir) == 0;
 #endif
+}
+
+bool_t Directory::unlinkAll(const String& path)
+{
+  for (String i = path; i != _T("."); i = File::dirname(i))
+#ifdef _WIN32
+    if(!RemoveDirectory(i))
+      return false;
+#else
+    if(rmdir(i) != 0)
+      return false;
+#endif
+  return true;
 }
 
 bool_t Directory::change(const String& dir)

@@ -46,8 +46,6 @@ public:
 
   static bool_t create(const String& dir);
 
-  static bool_t remove(const String& dir);
-
   /**
   * Remove directory from file system. The directory has to be empty.
   *
@@ -56,6 +54,15 @@ public:
   * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
   */
   static bool_t unlink(const String& dir);
+
+  /**
+  * Remove directory including its parents. The directory has to be empty. The parent directories have to after its child has been removed.
+  *
+  * @param  [in] path   The path to be removed.
+  *
+  * @return \c true when all directies of the path were removed successfully. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
+  */
+  static bool_t unlinkAll(const String& path);
 
   static bool_t change(const String& dir);
 
