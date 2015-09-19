@@ -107,7 +107,7 @@ void_t Thread::yield()
 #endif
 }
 
-void_t Thread::sleep(timestamp_t milliseconds)
+void_t Thread::sleep(int64_t milliseconds)
 {
 #ifdef _WIN32
   Sleep((DWORD)milliseconds);

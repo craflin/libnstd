@@ -43,7 +43,7 @@ public:
   * @param timeout The maximum time to wait. (in ms).
   * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool_t wait(timestamp_t timeout);
+  bool_t wait(int64_t timeout);
 
   /**
   * Try to decrement the semaphore counter. This method returns immediately.

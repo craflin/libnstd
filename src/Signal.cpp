@@ -78,7 +78,7 @@ bool_t Signal::wait()
 #endif
 }
 
-bool_t Signal::wait(timestamp_t timeout)
+bool_t Signal::wait(int64_t timeout)
 {
 #ifdef _WIN32
   return WaitForSingleObject(handle, (DWORD)timeout) == WAIT_OBJECT_0;

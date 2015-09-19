@@ -35,9 +35,9 @@ void_t testProcess()
   {
     Process::interrupt();
     Process* processes[1];
-    timestamp_t start = Time::ticks();
+    int64_t start = Time::ticks();
     ASSERT(Process::wait(processes, 0) == 0);
-    timestamp_t waitDuration = Time::ticks() - start;
+    int64_t waitDuration = Time::ticks() - start;
     ASSERT(waitDuration < 10);
   }
   {
@@ -53,9 +53,9 @@ void_t testProcess()
     Thread thread;
     thread.start(InterrupterThread::proc, 0);
     Process* processes[1];
-    timestamp_t start = Time::ticks();
+    int64_t start = Time::ticks();
     ASSERT(Process::wait(processes, 0) == 0);
-    timestamp_t waitDuration = Time::ticks() - start;
+    int64_t waitDuration = Time::ticks() - start;
     ASSERT(waitDuration > 20);
   }
 

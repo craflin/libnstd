@@ -12,7 +12,7 @@ public:
   void_t set();
   void_t reset();
   bool_t wait();
-  bool_t wait(timestamp_t timeout);
+  bool_t wait(int64_t timeout);
 
 private:
 #ifdef _WIN32

@@ -14,7 +14,7 @@
 class _Time
 {
 public:
-  static timestamp_t perfFreq;
+  static int64_t perfFreq;
 
 private:
   static _Time data;
@@ -33,7 +33,7 @@ _Time _Time::data;
 #else
 _Time _Time::data __attribute__ ((init_priority (101)));
 #endif
-timestamp_t _Time::perfFreq;
+int64_t _Time::perfFreq;
 #endif
 
 Time::Time(bool_t utc) : utc(utc)
@@ -52,7 +52,7 @@ Time::Time(bool_t utc) : utc(utc)
   dst = !!tm->tm_isdst;
 }
 
-Time::Time(timestamp_t time, bool_t utc) : utc(utc)
+Time::Time(int64_t time, bool_t utc) : utc(utc)
 {
   time_t now = (time_t)(time / 1000LL);
   tm* tm = utc ? ::gmtime(&now) : ::localtime(&now);
@@ -79,7 +79,7 @@ Time::Time(const Time& other) :
   dst(other.dst),
   utc(other.utc) {}
 
-timestamp_t Time::toTimestamp()
+int64_t Time::toTimestamp()
 {
   tm tm;
   tm.tm_sec = sec;
@@ -105,7 +105,7 @@ Time& Time::toUtc()
 {
   if(!utc)
   {
-    timestamp_t timestamp = toTimestamp();
+    int64_t timestamp = toTimestamp();
     *this = Time(timestamp, true);
   }
   return *this;
@@ -115,7 +115,7 @@ Time& Time::toLocal()
 {
   if(utc)
   {
-    timestamp_t timestamp = toTimestamp();
+    int64_t timestamp = toTimestamp();
     *this = Time(timestamp, false);
   }
   return *this;
@@ -149,23 +149,23 @@ bool_t Time::operator!=(const Time& other) const
     utc != other.utc;
 }
 
-timestamp_t Time::time()
+int64_t Time::time()
 {
   return ::time(0) * 1000LL;
 }
 
-timestamp_t Time::ticks()
+int64_t Time::ticks()
 {
 #ifdef _WIN32
   return GetTickCount();
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (timestamp_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+  return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 #endif
 }
 
-timestamp_t Time::microTicks()
+int64_t Time::microTicks()
 {
 #ifdef _WIN32
   LARGE_INTEGER li;
@@ -174,7 +174,7 @@ timestamp_t Time::microTicks()
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (timestamp_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+  return (int64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 #endif
 }
 
@@ -212,7 +212,7 @@ String Time::toString(const tchar_t* format)
   return result;
 }
 
-String Time::toString(timestamp_t time, const tchar_t* format, bool_t utc)
+String Time::toString(int64_t time, const tchar_t* format, bool_t utc)
 {
   if(!*format)
     return String();

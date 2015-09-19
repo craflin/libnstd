@@ -19,7 +19,7 @@ public:
   bool_t utc;
 
   explicit Time(bool_t utc = false);
-  Time(timestamp_t time, bool_t utc = false);
+  Time(int64_t time, bool_t utc = false);
   Time(const Time& other);
 
   Time& toUtc();
@@ -27,7 +27,7 @@ public:
 
   String toString(const tchar_t* format);
 
-  timestamp_t toTimestamp();
+  int64_t toTimestamp();
 
   bool_t operator==(const Time& other) const;
   bool_t operator!=(const Time& other) const;
@@ -36,15 +36,15 @@ public:
   * Retrieve local system time. The function returns the local system time in milliseconds since 1 January 1970 (Unix time with millisesond precision).
   * @return The current local system time (in milliseconds).
   */
-  static timestamp_t time();
+  static int64_t time();
 
   /**
   * Retrieve ticks (in milliseconds) that have passed since the system was started.
   * @return The ticks (in milliseconds) that have currently passed since the system was started.
   */
-  static timestamp_t ticks();
+  static int64_t ticks();
 
-  static timestamp_t microTicks();
+  static int64_t microTicks();
 
-  static String toString(timestamp_t time, const tchar_t* format, bool_t utc = false);
+  static String toString(int64_t time, const tchar_t* format, bool_t utc = false);
 };

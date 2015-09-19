@@ -96,9 +96,9 @@ void_t testSempahore()
   ASSERT(sem.wait());
   ASSERT(sem.wait());
   ASSERT(!sem.tryWait());
-  timestamp_t start = Time::ticks();
+  int64_t start = Time::ticks();
   ASSERT(!sem.wait(300));
-  timestamp_t waitTime = Time::ticks() - start;
+  int64_t waitTime = Time::ticks() - start;
   ASSERT(waitTime > 200);
 }
 
@@ -674,7 +674,7 @@ void_t testFile()
   {
     File::Time time;
     ASSERT(File::time(_T("testfile.file.test"), time));
-    timestamp_t now = Time::time();
+    int64_t now = Time::time();
     //ASSERT(time.accessTime <= now + 1000 && time.accessTime > now - 10000);
     ASSERT(time.writeTime <= now + 1000 && time.writeTime > now - 10000);
     //ASSERT(time.creationTime <= now + 1000 && time.creationTime > now - 10000);
@@ -1143,7 +1143,7 @@ void_t testTime()
     ASSERT(time.sec == 3);
   }
 
-  timestamp_t now = Time::time();
+  int64_t now = Time::time();
   Time time(now);
   ASSERT(time.toTimestamp() == now);
   Time time2(time);

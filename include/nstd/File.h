@@ -23,9 +23,9 @@ public:
 
   struct Time
   {
-    timestamp_t writeTime;
-    timestamp_t accessTime;
-    timestamp_t creationTime;
+    int64_t writeTime;
+    int64_t accessTime;
+    int64_t creationTime;
   };
 
   File();

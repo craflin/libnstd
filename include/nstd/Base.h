@@ -34,20 +34,17 @@ typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 typedef unsigned long long int size_t;
 typedef long long int ssize_t;
-typedef long long int timestamp_t;
 #else
 typedef long int int64_t;
 typedef unsigned long int uint64_t;
 typedef unsigned long int size_t;
 typedef long int ssize_t;
-typedef long int timestamp_t;
 #endif
 #else
 typedef long long int int64_t;
 typedef unsigned long long int uint64_t;
 typedef unsigned int size_t;
 typedef int ssize_t;
-typedef long long int timestamp_t;
 #endif
 
 #ifdef _UNICODE
