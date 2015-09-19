@@ -27,6 +27,7 @@ as possible. Right now it consists of following headers:
     * [Mutex.h](include/nstd/Mutex.h): Abstraction layer for native mutual exclusion features.
     * [Semaphore.h](include/nstd/Semaphore.h): Abstraction layer for a native semaphore.
     * [Signal.h](include/nstd/Signal.h): Abstraction layer for native signals.
+    * [Monitor.h](include/nstd/Monitor.h): Abstraction layer for native monitor constructs.
  * I/O
     * [File.h](include/nstd/File.h): Abstraction layer for file I/O.
     * [Directory.h](include/nstd/Directory.h): Abstraction layer for directory access.

@@ -26,6 +26,7 @@
 #include <cstdlib>
 
 void_t testProcess();
+void_t testMonitor();
 
 void_t testUnicode()
 {
@@ -1279,6 +1280,7 @@ int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
+  testMonitor();
   testUnicode();
   testBuffer();
   testThread();

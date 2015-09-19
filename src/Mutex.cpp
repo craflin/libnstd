@@ -27,7 +27,7 @@ Mutex::~Mutex()
 #ifdef _WIN32
   DeleteCriticalSection(&(CRITICAL_SECTION&)data);
 #else
-  pthread_mutex_destroy((pthread_mutex_t*)data);
+  VERIFY(pthread_mutex_destroy((pthread_mutex_t*)data) == 0);
 #endif
 }
 
