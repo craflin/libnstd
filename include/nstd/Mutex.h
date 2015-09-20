@@ -22,9 +22,9 @@ private:
   #endif
 #else
   #ifdef _AMD64
-  byte_t data[40]; // sizeof(pthread_mutex_t)
+  int64_t data[5]; // sizeof(pthread_mutex_t)
   #else
-  byte_t data[24]; // sizeof(pthread_mutex_t)
+  int64_t data[3]; // sizeof(pthread_mutex_t)
   #endif
 #endif
 
