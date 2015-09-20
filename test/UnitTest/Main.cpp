@@ -27,6 +27,7 @@
 
 void_t testProcess();
 void_t testMonitor();
+void_t testSignal();
 
 void_t testUnicode()
 {
@@ -1280,6 +1281,7 @@ int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
+  testSignal();
   testMonitor();
   testUnicode();
   testBuffer();
