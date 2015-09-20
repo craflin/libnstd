@@ -4,12 +4,8 @@
 #include <nstd/Thread.h>
 #include <nstd/Monitor.h>
 
-#include <nstd/Console.h>
-#include <Windows.h>
-
 void_t testMonitor()
 {
-
   // test wait with timeout - running into a timeout
   {
     Monitor monitor;

@@ -28,11 +28,11 @@ private:
   #endif
 #else
   #ifdef _AMD64
-  byte_t cdata[48]; // sizeof(pthread_cond_t)
-  byte_t mdata[40]; // sizeof(pthread_mutex_t)
+  int64_t cdata[6]; // sizeof(pthread_cond_t)
+  int64_t mdata[5]; // sizeof(pthread_mutex_t)
   #else
-  byte_t cdata[48]; // sizeof(pthread_cond_t)
-  byte_t mdata[24]; // sizeof(pthread_mutex_t)
+  int64_t cdata[6]; // sizeof(pthread_cond_t)
+  int64_t mdata[3]; // sizeof(pthread_mutex_t)
   #endif
 #endif
 
