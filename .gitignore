@@ -6,3 +6,11 @@ build/
 *.vcxproj.user
 *.vcxproj.filters
 *.vcxproj
+
+.*
+*.mk
+*.project
+*.workspace
+*.txt
+Makefile
+
