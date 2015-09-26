@@ -197,7 +197,7 @@ bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
 #else
   if(failIfExists)
   {
-    int fd = ::open(to, O_CREAT | O_EXCL | O_CLOEXEC);
+    int fd = ::open(to, O_CREAT | O_EXCL | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if(fd == -1)
       return false;
     if(rename(from, to) != 0)
