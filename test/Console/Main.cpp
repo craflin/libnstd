@@ -4,6 +4,7 @@
 
 #include <nstd/Thread.h>
 #include <nstd/Signal.h>
+#include <nstd/Log.h>
 
 uint_t threadProc(void_t* param)
 {
@@ -64,6 +65,10 @@ int_t main(int_t argc, tchar_t* argv[])
   Console::printf(_T("Hello World!\n"));
 
   Console::Prompt prompt;
+
+  Log::infof(_T("Hello World!"));
+  Log::warningf(_T("%s"), _T("This is a warning!"));
+  
   Thread thread;
   Signal termSignal;
   thread.start(threadProc, &termSignal);
