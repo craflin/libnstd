@@ -16,6 +16,13 @@ public:
   static void_t yield();
   static void_t sleep(int64_t milliseconds);
 
+  /**
+  * Get the id of the calling thread.
+  *
+  * @return The thread id.
+  */
+  static uint32_t getCurrentThreadId();
+
 private:
   void_t* thread;
   //uint_t threadId;

@@ -116,9 +116,11 @@ void_t Thread::sleep(int64_t milliseconds)
 #endif
 }
 
-/*
-uint Thread::getCurrentThreadId()
+uint32_t Thread::getCurrentThreadId()
 {
-  return GetCurrentThreadId();
+#ifdef _WIN32
+  return (uint32_t)GetCurrentThreadId();
+#else
+  return (uint32_t)pthread_self();
+#endif
 }
-*/
