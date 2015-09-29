@@ -32,6 +32,7 @@ as possible. Right now it consists of following headers:
     * [File.h](include/nstd/File.h): Abstraction layer for file I/O.
     * [Directory.h](include/nstd/Directory.h): Abstraction layer for directory access.
     * [Console.h](include/nstd/Console.h): Helper function for Console I/O and command prompting.
+    * [Log.h](include/nstd/Log.h): Logging helper functions.
  * Processes:
     * [Process.h](include/nstd/Process.h): Abstraction layer for process launching with or without I/O redirecting.
     * [Library.h](include/nstd/Library.h): Abstraction layer for dll / shared object loading.
