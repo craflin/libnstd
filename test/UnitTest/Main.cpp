@@ -15,11 +15,9 @@
 #include <nstd/Semaphore.h>
 #include <nstd/Time.h>
 #include <nstd/Error.h>
-#include <nstd/Buffer.h>
 #include <nstd/Variant.h>
 #include <nstd/Map.h>
 #include <nstd/Math.h>
-#include <nstd/Unicode.h>
 
 #include <cstring>
 #include <cctype>
@@ -29,19 +27,7 @@ void_t testProcess();
 void_t testMonitor();
 void_t testSignal();
 void_t testUnicode();
-
-void_t testBuffer()
-{
-  Buffer buffer1;
-  Buffer buffer2;
-  Buffer buffer3;
-  ASSERT(buffer1 == buffer2);
-  buffer1 = buffer2;
-  ASSERT(buffer1 == buffer2);
-  buffer3.assign((byte_t*)"123", 3);
-  buffer3 = buffer2;
-  ASSERT(buffer3 == buffer2);
-}
+void_t testBuffer();
 
 void_t testThread()
 {
