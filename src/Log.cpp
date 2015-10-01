@@ -49,7 +49,7 @@ public:
         result = _vscprintf(format, vl);
 #endif
 #else
-        result = vsnprintf(0, 0, format, ap);
+        result = vsnprintf(0, 0, format, vl);
 #endif
         ASSERT(result >= 0);
         if(result >= 0)
