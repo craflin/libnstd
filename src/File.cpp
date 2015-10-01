@@ -518,7 +518,7 @@ bool_t File::isExecutable(const String& file)
 {
 #ifdef _WIN32
   String extension = File::extension(file).toLowerCase();
-  return extension == "exe" || extension == "com" || extension == "bat";
+  return extension == _T("exe") || extension == _T("com") || extension == _T("bat");
 #else
   struct stat buf;
   if(stat(file, &buf) != 0)
