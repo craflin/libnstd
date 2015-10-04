@@ -51,11 +51,8 @@ Design Principles
 Supported Platforms
 -------------------
 
- * Windows x86
- * Windows x86 Unicode
- * Windows x86_64
- * Windows x86_64 Unicode
- * Cygwin i686
- * Linux i686
- * Linux x86_64
+ * Windows x86/x86_64 (since Windows Vista / Server 2008)
+ * Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
+ * Cygwin i686 (since Windows Vista / Server 2008)
+ * Linux i686/x86_64
  * Linux armv61

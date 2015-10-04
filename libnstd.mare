@@ -9,4 +9,7 @@ libnstd = cppStaticLibrary + {
   if tool == "vcxproj" {
     defines += { "_CRT_SECURE_NO_WARNINGS" }
   }
+  if Win32 {
+    defines += { "_WIN32_WINNT=0x0600" }
+  }
 }
