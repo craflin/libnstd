@@ -12,7 +12,6 @@
 #include <nstd/Directory.h>
 #include <nstd/Array.h>
 #include <nstd/Thread.h>
-#include <nstd/Semaphore.h>
 #include <nstd/Time.h>
 #include <nstd/Error.h>
 #include <nstd/Variant.h>
@@ -29,21 +28,7 @@ void_t testSignal();
 void_t testUnicode();
 void_t testBuffer();
 void_t testThread();
-
-void_t testSempahore()
-{
-  Semaphore sem(3);
-  sem.signal();
-  ASSERT(sem.wait());
-  ASSERT(sem.wait());
-  ASSERT(sem.wait());
-  ASSERT(sem.wait());
-  ASSERT(!sem.tryWait());
-  int64_t start = Time::ticks();
-  ASSERT(!sem.wait(300));
-  int64_t waitTime = Time::ticks() - start;
-  ASSERT(waitTime > 200);
-}
+void_t testSempahore();
 
 void_t testMutexRecursion()
 {
