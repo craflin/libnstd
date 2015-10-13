@@ -217,13 +217,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
   {
     struct dirent* dent = readdir((DIR*)dp);
     if(!dent)
-    {
-      int lastErrno = errno;
-      closedir((DIR*)dp);
-      dp = 0;
-      errno = lastErrno;
-      return false;
-    }
+      break;
     const char_t* const str = dent->d_name;
     if(!*pattern || fnmatch(pattern, str, 0) == 0)
     {
@@ -248,7 +242,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
       return true;
     }
   }
-  return false; // unreachable
+  return false;
 #endif
 }
 
@@ -291,24 +285,105 @@ bool_t Directory::create(const String& dir)
   return true;
 }
 
-bool_t Directory::unlink(const String& dir)
+bool_t Directory::unlink(const String& dir, bool recursive)
 {
 #ifdef _WIN32
+  if(RemoveDirectory(dir))
+    return true;
+  if(!recursive || GetLastError() != ERROR_DIR_NOT_EMPTY)
+    return false;
+  WIN32_FIND_DATA ffd;
+  HANDLE findFile = FindFirstFileEx(dir + _T("/*"),
+#if _WIN32_WINNT > 0x0600
+    FindExInfoBasic,
+#else
+    FindExInfoStandard,
+#endif
+    &ffd, FindExSearchNameMatch, NULL, 0);
+  if(findFile == INVALID_HANDLE_VALUE)
+    return false;
+  String prefix = dir + _T("/");
+  do
+  {
+    bool_t isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+    const tchar_t* str = ffd.cFileName;
+    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+      continue;
+    if(isDir)
+    {
+      if(!unlink(prefix + String(str, String::length(str)), true))
+      {
+        DWORD err = GetLastError();
+        FindClose(findFile);
+        SetLastError(err);
+        return false;
+      }
+    }
+    else if(!File::unlink(prefix + String(str, String::length(str))))
+    {
+      DWORD err = GetLastError();
+      FindClose(findFile);
+      SetLastError(err);
+      return false;
+    }
+  } while(FindNextFile(findFile, &ffd));
+  FindClose(findFile);
   return RemoveDirectory(dir) == TRUE;
 #else
+  if(::rmdir(dir) == 0)
+    return true;
+  DIR* dp = opendir(dir);
+  if(!dp)
+    return false;
+  String prefix = dir + _T("/");
+  for(;;)
+  {
+    struct dirent* dent = readdir(dp);
+    if(!dent)
+    {
+      int lastErrno = errno;
+      closedir(dp);
+      errno = lastErrno;
+      return false;
+    }
+    const char_t* const str = dent->d_name;
+    bool_t isDir = dent->d_type == DT_DIR;
+    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+      continue;
+    if(isDir)
+    {
+      if(!unlink(prefix + String(str, String::length(str)), true))
+      {
+        int lastErrno = errno;
+        closedir(dp);
+        errno = lastErrno;
+        return false;
+      }
+    }
+    else if(!File::unlink(prefix + String(str, String::length(str))))
+    {
+      int lastErrno = errno;
+      closedir(dp);
+      errno = lastErrno;
+      return false;
+    }
+  }
+  closedir(dp);
   return ::rmdir(dir) == 0;
 #endif
 }
 
-bool_t Directory::unlinkAll(const String& path)
+bool_t Directory::purge(const String& path, bool recursive)
 {
-  for (String i = path; i != _T("."); i = File::dirname(i))
+  if(!unlink(path, recursive))
+    return false;
+  for (String i = File::dirname(path); i != _T("."); i = File::dirname(i))
 #ifdef _WIN32
     if(!RemoveDirectory(i))
-      return false;
+      break;
 #else
     if(rmdir(i) != 0)
-      return false;
+      break;
 #endif
   return true;
 }

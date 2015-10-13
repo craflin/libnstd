@@ -61,22 +61,24 @@ public:
   static bool_t create(const String& dirPath);
 
   /**
-  * Remove directory from file system. The directory has to be empty.
+  * Remove a directory from the file system. The function will fail if the directory is not empty and \c recursive is not set to \c true.
   *
-  * @param  [in] dirPath  The path to the directory.
+  * @param  [in] dirPath    The path to the directory to be removed.
+  * @param  [in] recursive  Whether the directory should be removed removed recursively.
   *
   * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
   */
-  static bool_t unlink(const String& dirPath);
+  static bool_t unlink(const String& dirPath, bool recursive = false);
 
   /**
-  * Remove directory including its parents. The directory has to be empty. The parent directories have to after its child has been removed.
+  * Remove a directory including its parents. The function will fail if the directory is not empty and \c recursive is not set to \c true. Parent directories are removed if they would remain empty.
   *
-  * @param  [in] dirPath   The path to be removed.
+  * @param  [in] dirPath    The path to be removed.
+  * @param  [in] recursive  Whether the directory should be removed removed recursively.
   *
-  * @return \c true when all directories of the path were removed successfully. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
+  * @return \c true when the directories was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error. Parent directories may still exist even when this function returned \c true.
   */
-  static bool_t unlinkAll(const String& dirPath);
+  static bool_t purge(const String& dirPath, bool recursive = false);
 
   /**
   * Change current working directory.
