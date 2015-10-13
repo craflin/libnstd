@@ -230,6 +230,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
   }
 
   const char_t* pattern = this->pattern;
+  errno = 0;
   for(;;)
   {
     struct dirent* dent = readdir((DIR*)dp);
@@ -353,12 +354,15 @@ bool_t Directory::unlink(const String& dir, bool recursive)
   if(!dp)
     return false;
   String prefix = dir + _T("/");
+  errno = 0;
   for(;;)
   {
     struct dirent* dent = readdir(dp);
     if(!dent)
     {
       int lastErrno = errno;
+      if(!lastErrno)
+        break;
       closedir(dp);
       errno = lastErrno;
       return false;
