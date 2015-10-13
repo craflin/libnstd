@@ -137,6 +137,23 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
 #endif
 }
 
+void_t Directory::close()
+{
+#ifdef _WIN32
+  if(findFile != INVALID_HANDLE_VALUE)
+  {
+    FindClose((HANDLE)findFile);
+    findFile = INVALID_HANDLE_VALUE;
+  }
+#else
+  if(dp)
+  {
+    closedir((DIR*)dp);
+    dp = 0;
+  }
+#endif
+}
+
 bool_t Directory::read(String& name, bool_t& isDir)
 {
 #ifdef _WIN32

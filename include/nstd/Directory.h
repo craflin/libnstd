@@ -29,6 +29,11 @@ public:
   bool_t open(const String& dirPath, const String& pattern, bool_t dirsOnly);
 
   /**
+  * Close the opened directory.
+  */
+  void_t close();
+
+  /**
   * Search for the next matching entry in the opened directory.
   * @param  [out] name    The name of the next matching entry.
   * @param  [out] isDir   Whether the entry is a directory.
