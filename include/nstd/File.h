@@ -37,21 +37,17 @@ public:
 
   /**
   * Get size of the file.
-  *
   * @return The size of the file in bytes. In case of an error -1 is returned.
   */
   int64_t size();
 
   /**
   * Read a data block from the file at the current read position.
-  *
   * The file has to be opened with Flags::readFlag. If successful, the read position changes to after 
   * the block that was read.
-  *
   * @param  [in] buffer A buffer where the data should be stored. It has to be large 
   *                     enough to hold \c length bytes.
   * @param  [in] length The count of the bytes to read.
-  *
   * @return The amount of bytes that was read. This could be equal 0 or less than \c length when the end of the
   *         file was reached. In case of an error -1 is returned.
   */
@@ -59,9 +55,7 @@ public:
 
   /**
   * Read all data from current read position till the end of the file.
-  *
   * @param  [out] data  The data.
-  *
   * @return Whether the data was successfully read.
   */
   bool_t readAll(String& data);
@@ -72,10 +66,8 @@ public:
 
   /**
   * Move the read or write offset position within the file.
-  *
   * @param  [in] offset The offset in bytes from \c start.
   * @param  [in] start  The position from where to start the move operation.
-  *
   * @return The position in the file relative to the beginning of the file after the seek operation.
   */
   int64_t seek(int64_t offset, Position start = setPosition);
@@ -87,7 +79,6 @@ public:
   
   /**
   * Get the extension of a file name or path (without the dot).
-  *
   * @param  [in] file The file name or path off which to get the extension.
   */
   static String extension(const String& file); // TODO: rename getExtension()?

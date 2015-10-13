@@ -1,8 +1,6 @@
 /**
-* @file Directory.h
-*
+* @file
 * Declaration of an object to access a directory.
-*
 * @author Colin Graf
 */
 
@@ -23,59 +21,47 @@ public:
 
   /**
   * Open a directory to search for files in this directory.
-  *
   * @param  [in] dirPath    The path to the directory to be searched.
   * @param  [in] pattern    A search pattern (e.g. "*.inf").
   * @param  [in] dirsOnly   Whether the search should ignore files and should only return directories.
-  *
   * @return \c true when the directory was successfully opened. If directory could not be opened, Error::getLastError() can be used for further information on the error.
   */
   bool_t open(const String& dirPath, const String& pattern, bool_t dirsOnly);
 
   /**
   * Search for the next matching entry in the opened directory.
-  *
   * @param  [out] name    The name of the next matching entry.
   * @param  [out] isDir   Whether the entry is a directory.
-  *
   * @return \c true when a matching entry was found. \c false indicates that there are no more matching entries or that another error occurred. Error::getLastError() can be used for further information on the error.
   */
   bool_t read(String& name, bool_t& isDir);
 
   /**
   * Check if directory exists.
-  *
   * @param  [in] dirPath  The directory.
-  *
   * @return \c true if it exists.
   */
   static bool_t exists(const String& dirPath);
 
   /**
   * Create a directory. The parent directories in the path are created as well if they do not exist.
-  *
   * @ param [in] dirPath  The path of the directory to be created.
-  *
   * @return \c true if the directory was created successfully.
   */
   static bool_t create(const String& dirPath);
 
   /**
   * Remove a directory from the file system. The function will fail if the directory is not empty and \c recursive is not set to \c true.
-  *
   * @param  [in] dirPath    The path to the directory to be removed.
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
-  *
   * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
   */
   static bool_t unlink(const String& dirPath, bool recursive = false);
 
   /**
   * Remove a directory including its parents. The function will fail if the directory is not empty and \c recursive is not set to \c true. Parent directories are removed if they would remain empty.
-  *
   * @param  [in] dirPath    The path to be removed.
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
-  *
   * @return \c true when the directories was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error. Parent directories may still exist even when this function returned \c true.
   */
   static bool_t purge(const String& dirPath, bool recursive = false);
@@ -83,16 +69,13 @@ public:
   /**
   * Change current working directory.
   * @note This affects all threads of the process.
-  *
   * @param  [in] dirPath  The directory to change to. This can be an absolute or relative path.
-  *
   * @return \c true if the working directory was changed successfully. If it could not be changed, Error::getLastError() can be used for further information on the error.
   */
   static bool_t change(const String& dirPath);
 
   /**
   * Get current working directory.
-  *
   * @return The absolute path of the current working directory.
   */
   static String getCurrent();

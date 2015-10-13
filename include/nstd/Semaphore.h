@@ -1,4 +1,5 @@
 /**
+* @file
 * A classic Semaphore for synchronization in multi thread environments.
 * @author Colin Graf
 */
