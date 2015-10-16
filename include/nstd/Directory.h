@@ -26,7 +26,7 @@ public:
   * @param  [in] dirsOnly   Whether the search should ignore files and should only return directories.
   * @return \c true when the directory was successfully opened. If directory could not be opened, Error::getLastError() can be used for further information on the error.
   */
-  bool_t open(const String& dirPath, const String& pattern, bool_t dirsOnly);
+  bool_t open(const String& dirPath, const String& pattern = String(), bool_t dirsOnly = false);
 
   /**
   * Close the opened directory.
@@ -49,14 +49,14 @@ public:
   static bool_t exists(const String& dirPath);
 
   /**
-  * Create a directory. The parent directories in the path are created as well if they do not exist.
+  * Create a directory. The parent directories in the path are created if they do not exist.
   * @ param [in] dirPath  The path of the directory to be created.
   * @return \c true if the directory was created successfully.
   */
   static bool_t create(const String& dirPath);
 
   /**
-  * Remove a directory from the file system. The function will fail if the directory is not empty and \c recursive is not set to \c true.
+  * Remove a directory from the file system. If \c recursive is not set to \c true, the function will fail if the directory is not empty.
   * @param  [in] dirPath    The path to the directory to be removed.
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
   * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
@@ -64,7 +64,7 @@ public:
   static bool_t unlink(const String& dirPath, bool recursive = false);
 
   /**
-  * Remove a directory including its parents. The function will fail if the directory is not empty and \c recursive is not set to \c true. Parent directories are removed if they would remain empty.
+  * Remove a directory including its parents. If \c recursive is not set to \c true, the function will fail if the directory is not empty. Parent directories are removed if they would remain empty.
   * @param  [in] dirPath    The path to be removed.
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
   * @return \c true when the directories was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error. Parent directories may still exist even when this function returned \c true.
