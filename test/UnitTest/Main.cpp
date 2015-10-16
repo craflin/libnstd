@@ -29,15 +29,7 @@ void_t testBuffer();
 void_t testThread();
 void_t testSempahore();
 void_t testDirectory();
-
-void_t testMutexRecursion()
-{
-  Mutex mutex;
-  mutex.lock();
-  mutex.lock();
-  mutex.unlock();
-  mutex.unlock();
-}
+void_t testMutex();
 
 void_t testMemoryAllocSmall()
 {
@@ -993,7 +985,7 @@ int_t main(int_t argc, char_t* argv[])
   testBuffer();
   testThread();
   testSempahore();
-  testMutexRecursion();
+  testMutex();
   testMemoryAllocSmall();
   testMemoryAllocLarge();
   //testConsolePrintf();
