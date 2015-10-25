@@ -23,7 +23,7 @@
 #endif
 #include <nstd/Process.h>
 
-Process::Process()
+Process::Process() : pid(0)
 {
 #ifdef _WIN32
   ASSERT(sizeof(hProcess) >= sizeof(HANDLE));
@@ -32,7 +32,6 @@ Process::Process()
   hStdErrRead = INVALID_HANDLE_VALUE;
   hStdInWrite = INVALID_HANDLE_VALUE;
 #else
-  pid = 0;
   fdStdOutRead = 0;
   fdStdErrRead = 0;
   fdStdInWrite = 0;
@@ -79,6 +78,7 @@ uint32_t Process::start(const String& commandLine)
 
   ASSERT(pi.hProcess);
   hProcess = pi.hProcess;
+  pid = pi.dwProcessId;
 
   return pi.dwProcessId;
 
@@ -183,6 +183,7 @@ bool_t Process::kill()
     CloseHandle(hStdInWrite);
     hStdInWrite = INVALID_HANDLE_VALUE;
   }
+  pid = 0;
   return true;
 #else
   if(!pid)
@@ -194,7 +195,6 @@ bool_t Process::kill()
   int status;
   if(waitpid(pid, &status, 0) != (pid_t)pid)
     return false;
-  pid = 0;
   if(fdStdOutRead)
   {
     close(fdStdOutRead);
@@ -210,6 +210,7 @@ bool_t Process::kill()
     close(fdStdInWrite);
     fdStdInWrite = 0;
   }
+  pid = 0;
   return true;
 #endif
 }
@@ -250,6 +251,7 @@ bool_t Process::join(uint32_t& exitCode)
     CloseHandle(hStdInWrite);
     hStdInWrite = INVALID_HANDLE_VALUE;
   }
+  pid = 0;
   return true;
 #else
   if(!pid)
@@ -261,7 +263,6 @@ bool_t Process::join(uint32_t& exitCode)
   if(waitpid(pid, &status, 0) != (pid_t)pid)
     return false;
   exitCode = WEXITSTATUS(status);
-  pid = 0;
   if(fdStdOutRead)
   {
     close(fdStdOutRead);
@@ -277,6 +278,7 @@ bool_t Process::join(uint32_t& exitCode)
     close(fdStdInWrite);
     fdStdInWrite = 0;
   }
+  pid = 0;
   return true;
 #endif
 }
@@ -362,6 +364,7 @@ bool_t Process::open(const String& commandLine, uint_t streams)
 
   ASSERT(pi.hProcess);
   hProcess = pi.hProcess;
+  pid = pi.dwProcessId;
   return true;
 error:
   DWORD err = GetLastError();

@@ -19,6 +19,12 @@ public:
   uint32_t start(const String& command);
 
   /**
+  * Get id of the process.
+  * @return The process id or \c 0 if a process was not started.
+  */
+  uint32_t getProcessId() const {return pid;}
+
+  /**
   * Return the running state of the process.
   * @return \c true when the process is currently running and can be joined using \c join().
   */
@@ -106,11 +112,11 @@ private:
   void_t* hStdErrRead;
   void_t* hStdInWrite;
 #else
-  uint32_t pid;
   int_t fdStdOutRead;
   int_t fdStdErrRead;
   int_t fdStdInWrite;
 #endif
+  uint32_t pid;
 
   Process(const Process&);
   Process& operator=(const Process&);
