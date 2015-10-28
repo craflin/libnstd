@@ -293,7 +293,7 @@ bool_t Directory::create(const String& dir)
 #ifdef _WIN32
   if(!CreateDirectory(dir, NULL))
 #else
-  if(!mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
+  if(mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
 #endif
   {
     String basename = File::basename(dir);
