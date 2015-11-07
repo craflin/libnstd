@@ -477,7 +477,13 @@ bool_t File::time(const String& file, File::Time& time)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
-  HANDLE hFind = FindFirstFile(file, &wfd); // TODO: use another function for this ?
+  HANDLE hFind = FindFirstFileEx(file, // FindFirstFile is faster than GetFileAttribute
+#if _WIN32_WINNT > 0x0600
+    FindExInfoBasic,
+#else
+    FindExInfoStandard,
+#endif
+    &wfd, FindExSearchNameMatch, NULL, 0);
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
   ASSERT(sizeof(DWORD) == 4);
@@ -501,9 +507,15 @@ bool_t File::exists(const String& file)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
-  HANDLE hFind = FindFirstFile(file, &wfd); // TODO: use GetFileAttribute ?
-  if(hFind == INVALID_HANDLE_VALUE)         // I guess GetFileAttribute does not work on network drives. But it will produce
-    return false;                           // an error code that can be used to fall back to another implementation.
+  HANDLE hFind = FindFirstFileEx(file, // FindFirstFile is faster than GetFileAttribute
+#if _WIN32_WINNT > 0x0600
+    FindExInfoBasic,
+#else
+    FindExInfoStandard,
+#endif
+    &wfd, FindExSearchNameMatch, NULL, 0);
+  if(hFind == INVALID_HANDLE_VALUE)
+    return false;
   FindClose(hFind);
   return true;
 #else
