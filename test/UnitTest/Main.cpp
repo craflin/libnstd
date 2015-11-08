@@ -30,6 +30,7 @@ void_t testThread();
 void_t testSempahore();
 void_t testDirectory();
 void_t testMutex();
+void_t testPool();
 
 void_t testMemoryAllocSmall()
 {
@@ -1010,6 +1011,7 @@ int_t main(int_t argc, char_t* argv[])
   testTime();
   testProcess();
   testMap();
+  testPool();
 
   Console::printf(_T("%s\n"), _T("done"));
 
