@@ -4,7 +4,7 @@
 #include <nstd/Pool.h>
 #include <nstd/Error.h>
 #include <nstd/Buffer.h>
-#include <nstd/HashSet.h>
+#include <nstd/List.h>
 #include <nstd/MultiMap.h>
 #include <nstd/Time.h>
 
@@ -16,7 +16,18 @@ struct Server::Handle
     timerType,
     listenerType,
   };
+
+  enum State
+  {
+    connectingState,
+    connectedState,
+    suspendedState,
+    closingState,
+    closedState,
+  };
+
   Type type;
+  State state;
 };
 
 class Server::Private
@@ -36,18 +47,8 @@ public:
 
   struct Client : public Handle
   {
-    enum State
-    {
-      connectingState,
-      connectedState,
-      suspendedState,
-      closingState,
-      closedState,
-    };
-
     HandleSocket socket;
     Buffer sendBuffer;
-    State state;
   };
 
   struct Timer : public Handle
@@ -55,17 +56,23 @@ public:
     void_t* userData;
     int64_t executionTime;
     int64_t interval;
+    bool_t queued;
   };
 
 public:
   Pool<Listener> listeners;
   Pool<Client> clients;
   Pool<Timer> timers;
-  MultiMap<int64_t, Timer*> sortedTimers;
+  MultiMap<int64_t, Timer*> queuedTimers;
   Socket::Poll sockets;
-  HashSet<Handle*> closingHandles;
+  List<Handle*> closingHandles;
 
 public:
+  Private()
+  {
+    queuedTimers.insert(0, 0); // add default timeout timer
+  }
+
   Handle* listen(uint16_t port, void_t* userData)
   {
     Socket socket;
@@ -76,6 +83,7 @@ public:
       return 0;
     Listener& listener = listeners.append();
     listener.type = Handle::listenerType;
+    listener.state = Handle::connectedState;
     listener.socket.swap(socket);
     listener.socket.handle = &listener;
     listener.socket.userData = userData;
@@ -96,7 +104,7 @@ public:
       return 0;
     Client& client = clients.append();
     client.type = Handle::clientType;
-    client.state = Client::connectedState;
+    client.state = Handle::connectedState;
     client.socket.swap(socket);
     client.socket.handle = &client;
     client.socket.userData = userData;
@@ -113,7 +121,7 @@ public:
       return 0;
     Client& client = clients.append();
     client.type = Handle::clientType;
-    client.state = Client::connectingState;
+    client.state = Handle::connectingState;
     client.socket.swap(socket);
     client.socket.handle = &client;
     client.socket.userData = userData;
@@ -131,7 +139,7 @@ public:
     return 0;
     Client& client = clients.append();
     client.type = Handle::clientType;
-    client.state = Client::connectedState;
+    client.state = Handle::connectedState;
     client.socket.swap(socket);
     client.socket.handle = &client;
     client.socket.userData = userData;
@@ -144,10 +152,12 @@ public:
     int64_t executionTime = Time::ticks() + interval;
     Timer& timer = timers.append();
     timer.type = Handle::timerType;
+    timer.state = Handle::connectedState;
     timer.userData = userData;
     timer.executionTime = executionTime;
     timer.interval = interval;
-    sortedTimers.insert(executionTime, &timer);
+    timer.queued = true;
+    queuedTimers.insert(executionTime, &timer);
     return &timer;
   }
 
@@ -172,6 +182,7 @@ public:
       case 0:
         client.state = Client::closingState;
         closingHandles.append(&client);
+        queuedTimers.insert(queuedTimers.begin(), 0, 0); // schedule cleanup
         return false;
       }
       if((size_t)sent >= size)
@@ -207,6 +218,7 @@ public:
     case 0:
       client.state = Client::closingState;
       closingHandles.append(&client);
+      queuedTimers.insert(queuedTimers.begin(), 0, 0); // schedule cleanup
       return false;
     }
     size = received;
@@ -215,82 +227,103 @@ public:
 
   void_t close(Handle& handle)
   {
-    closingHandles.remove(&handle);
-    switch(handle.type)
+    handle.state = Client::closedState;
+    if(closingHandles.find(&handle) == closingHandles.end())
     {
-    case Handle::clientType:
-      {
-        Client& client = (Client&)handle;
-        sockets.remove(client.socket);
-        clients.remove(client);
-      }
-      break;
-    case Handle::timerType:
-      {
-        Timer& timer = (Timer&)handle;
-        for(MultiMap<int64_t, Timer*>::Iterator i = sortedTimers.find(timer.executionTime), end = sortedTimers.end(); i != end; ++i)
-        {
-          if(*i == &timer)
-          {
-            sortedTimers.remove(i);
-            break;
-          }
-          if(i.key() != timer.executionTime)
-            break;
-        }
-        timers.remove(timer);
-      }
-      break;
-    case Handle::listenerType:
-      {
-        Listener& listener = (Listener&)handle;
-        sockets.remove(listener.socket);
-        listeners.remove(listener);
-      }
-      break;
+      closingHandles.append(&handle);
+      queuedTimers.insert(queuedTimers.begin(), 0, 0); // schedule cleanup
     }
   }
 
   bool_t poll(Event& event)
   {
-    while(!closingHandles.isEmpty())
-    {
-      Handle& handle = *closingHandles.front();
-      closingHandles.removeFront();
-      switch(handle.type)
-      {
-      case Handle::clientType:
-        {
-          Client& client = (Client&)handle;
-          if(client.state == Client::closingState)
-          {
-            event.handle = &client;
-            event.userData = client.socket.userData;
-            event.type = Event::closeType;
-            client.state = Client::closedState;
-            sockets.remove(client.socket);
-            return true;
-          }
-        }
-        break;
-      }
-    }
-
     for(Socket::Poll::Event pollEvent;;)
     {
-      int64_t timeout = sortedTimers.isEmpty() ? 300 * 1000 : sortedTimers.begin().key() - Time::ticks();
-
-      if(timeout <= 0)
+      int64_t now = Time::ticks();
+      int64_t timeout = queuedTimers.begin().key() - now;
+      for(; timeout <= 0; timeout = queuedTimers.begin().key() - now)
       {
-        Timer& timer = *sortedTimers.front();
-        sortedTimers.removeFront();
-        timer.executionTime += timer.interval;
-        sortedTimers.insert(timer.executionTime, &timer);
-        event.handle = &timer;
-        event.userData = timer.userData;
-        event.type = Event::timerType;
-        return true;
+        Timer* timer = queuedTimers.front();
+        if(timer && timer->state == Handle::connectedState) // user timer
+        {
+          event.handle = timer;
+          event.userData = timer->userData;
+          event.type = Event::timerType;
+          queuedTimers.front() = 0; // convert timer to "cleanup now" timer
+          timer->queued = false;
+          closingHandles.append(timer);
+          return true;
+        }
+        else // "default timeout" or "cleanup now" timer
+        {
+          queuedTimers.removeFront();
+          if(queuedTimers.isEmpty())
+            queuedTimers.insert(now + 300 * 1000, 0); // keep "default timeout" timer
+
+          while(!closingHandles.isEmpty())
+          {
+            Handle& handle = *closingHandles.front();
+            closingHandles.removeFront();
+            switch(handle.type)
+            {
+            case Handle::clientType:
+              {
+                Client& client = (Client&)handle;
+                if(client.state == Client::closingState)
+                {
+                  event.handle = &client;
+                  event.userData = client.socket.userData;
+                  event.type = Event::closeType;
+                  client.state = Client::closedState;
+                  sockets.remove(client.socket);
+                  return true;
+                }
+                else
+                {
+                  sockets.remove(client.socket);
+                  clients.remove(client);
+                }
+              }
+              break;
+            case Handle::timerType:
+              {
+                Timer& timer = (Timer&)handle;
+                if(timer.state != Handle::closedState)
+                {
+                  ASSERT(!timer.queued);
+                  timer.executionTime += timer.interval;
+                  queuedTimers.insert(timer.executionTime, &timer);
+                }
+                else
+                {
+                  if(timer.queued)
+                    for(MultiMap<int64_t, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
+                    {
+                      if(*i == &timer)
+                      {
+                        queuedTimers.remove(i);
+                        break;
+                      }
+                      if(i.key() != timer.executionTime)
+                        break;
+                    }
+                  timers.remove(timer);
+                }
+              }
+              break;
+            case Handle::listenerType:
+              {
+                Listener& listener = (Listener&)handle;
+                sockets.remove(listener.socket);
+                listeners.remove(listener);
+              }
+              break;
+            }
+          }
+        }
       }
+
+      ASSERT(closingHandles.isEmpty());
 
       if(!sockets.poll(pollEvent, timeout))
         break;
