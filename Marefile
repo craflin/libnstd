@@ -53,6 +53,7 @@ targets = {
     }
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
+      libs += { "ws2_32" }
     }
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,
@@ -71,6 +72,7 @@ targets = {
 
   include "libnstd.mare"
   libnstd += {
+    enableSocket = "true"
     if (tool == "vcxproj" && Cygwin) {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       config = "$(patsubst %_cygwin,%,$(configuration))"

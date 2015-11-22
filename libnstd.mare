@@ -5,6 +5,10 @@ libnstd = cppStaticLibrary + {
   files = {
     "$(mareDir)/src/*.cpp" = cppSource,
     "$(mareDir)/include/nstd/*.h"
+    if enableSocket {
+      "$(mareDir)/src/Socket/*.cpp" = cppSource,
+      "$(mareDir)/include/nstd/Socket/*.h"
+    }
   }
   if tool == "vcxproj" {
     defines += { "_CRT_SECURE_NO_WARNINGS" }
