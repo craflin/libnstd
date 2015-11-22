@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <nstd/Base.h>
 
 class Socket;
