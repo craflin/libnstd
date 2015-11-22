@@ -17,13 +17,7 @@ Signal::Signal(bool set)
   ASSERT(sizeof(mdata) >= sizeof(pthread_mutex_t));
   pthread_cond_init((pthread_cond_t*)cdata, 0);
   pthread_mutex_init((pthread_mutex_t*)mdata, 0);
-  if(set)
-  {
-    signaled = true;
-    VERIFY(pthread_cond_signal((pthread_cond_t*)cdata) == 0);
-  }
-  else
-    signaled = false;
+  signaled = set;
 #endif
 }
 
