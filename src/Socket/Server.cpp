@@ -56,7 +56,6 @@ public:
     void_t* userData;
     int64_t executionTime;
     int64_t interval;
-    bool_t queued;
   };
 
 public:
@@ -156,7 +155,6 @@ public:
     timer.userData = userData;
     timer.executionTime = executionTime;
     timer.interval = interval;
-    timer.queued = true;
     queuedTimers.insert(executionTime, &timer);
     return &timer;
   }
@@ -225,9 +223,41 @@ public:
 
   void_t close(Handle& handle)
   {
-    handle.state = Client::closedState;
-    if(closingHandles.find(&handle) == closingHandles.end())
-      closingHandles.append(&handle);
+    closingHandles.remove(&handle);
+    switch(handle.type)
+    {
+    case Handle::clientType:
+      {
+        Client& client = (Client&)handle;
+        sockets.remove(client.socket);
+        clients.remove(client);
+      }
+      break;
+    case Handle::timerType:
+      {
+        Timer& timer = (Timer&)handle;
+        if(timer.state == Handle::connectedState)
+          for(MultiMap<int64_t, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
+          {
+            if(*i == &timer)
+            {
+              queuedTimers.remove(i);
+              break;
+            }
+            if(i.key() != timer.executionTime)
+              break;
+          }
+        timers.remove(timer);
+      }
+      break;
+    case Handle::listenerType:
+      {
+        Listener& listener = (Listener&)handle;
+        sockets.remove(listener.socket);
+        listeners.remove(listener);
+      }
+      break;
+    }
   }
 
   bool_t poll(Event& event)
@@ -239,55 +269,24 @@ public:
       switch(handle.type)
       {
       case Handle::clientType:
+        if(handle.state == Handle::closingState)
         {
           Client& client = (Client&)handle;
-          if(client.state == Client::closingState)
-          {
-            event.handle = &client;
-            event.userData = client.socket.userData;
-            event.type = Event::closeType;
-            client.state = Client::closedState;
-            sockets.remove(client.socket);
-            return true;
-          }
-          else
-          {
-            sockets.remove(client.socket);
-            clients.remove(client);
-          }
+          event.handle = &client;
+          event.userData = client.socket.userData;
+          event.type = Event::closeType;
+          client.state = Client::closedState;
+          sockets.remove(client.socket);
+          return true;
         }
         break;
       case Handle::timerType:
+        if(handle.state == Handle::suspendedState)
         {
           Timer& timer = (Timer&)handle;
-          if(timer.state != Handle::closedState)
-          {
-            ASSERT(!timer.queued);
-            timer.executionTime += timer.interval;
-            queuedTimers.insert(timer.executionTime, &timer);
-          }
-          else
-          {
-            if(timer.queued)
-              for(MultiMap<int64_t, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
-              {
-                if(*i == &timer)
-                {
-                  queuedTimers.remove(i);
-                  break;
-                }
-                if(i.key() != timer.executionTime)
-                  break;
-              }
-            timers.remove(timer);
-          }
-        }
-        break;
-      case Handle::listenerType:
-        {
-          Listener& listener = (Listener&)handle;
-          sockets.remove(listener.socket);
-          listeners.remove(listener);
+          timer.executionTime += timer.interval;
+          queuedTimers.insert(timer.executionTime, &timer);
+          timer.state = Handle::connectedState;
         }
         break;
       }
@@ -306,7 +305,7 @@ public:
           event.handle = timer;
           event.userData = timer->userData;
           event.type = Event::timerType;
-          timer->queued = false;
+          timer->state = Handle::suspendedState;
           closingHandles.append(timer);
           return true;
         }
