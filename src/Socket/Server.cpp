@@ -90,13 +90,13 @@ public:
     return &listener;
   }
 
-  Handle* accept(Handle& handle, void_t* userData)
+  Handle* accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port)
   {
     Listener& listener = (Listener&)handle;
     Socket socket;
-    uint32_t ip;
-    uint16_t port;
-    if(!listener.socket.accept(socket, ip, port) ||
+    uint32_t addr2;
+    uint16_t port2;
+    if(!listener.socket.accept(socket, addr ? *addr : addr2, port ? *port : port2) ||
       !listener.socket.setNonBlocking() ||
       !listener.socket.setKeepAlive() ||
       !listener.socket.setNoDelay())
@@ -414,7 +414,7 @@ Server::~Server() {delete p;}
 Server::Handle* Server::listen(uint16_t port, void_t* userData) {return p->listen(port, userData);}
 Server::Handle* Server::connect(uint32_t addr, uint16_t port, void_t* userData) {return p->connect(addr, port, userData);}
 Server::Handle* Server::pair(Socket& socket, void_t* userData) {return p->pair(socket, userData);}
-Server::Handle* Server::accept(Handle& handle, void_t* userData) {return p->accept(handle, userData);}
+Server::Handle* Server::accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port) {return p->accept(handle, userData, addr, port);}
 Server::Handle* Server::createTimer(int64_t interval, void_t* userData) {return p->createTimer(interval, userData);}
 bool_t Server::write(Handle& handle, const byte_t* data, size_t size, size_t* postponed) {return p->write(handle, data, size, postponed);}
 bool_t Server::read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size) {return p->read(handle, buffer, maxSize, size);}

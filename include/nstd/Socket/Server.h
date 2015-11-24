@@ -36,7 +36,7 @@ public:
   Handle* pair(Socket& socket, void_t* userData);
   Handle* createTimer(int64_t interval, void_t* userData);
 
-  Handle* accept(Handle& handle, void_t* userData);
+  Handle* accept(Handle& handle, void_t* userData, uint32_t* addr = 0, uint16_t* port = 0);
 
   bool_t write(Handle& handle, const byte_t* data, size_t size, size_t* postponed = 0);
   bool_t read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size);
