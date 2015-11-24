@@ -48,6 +48,11 @@ public:
   void_t suspend(Handle& handle);
   void_t resume(Handle& handle);
 
+  void_t setKeepAlive(bool_t enable = true);
+  void_t setNoDelay(bool_t enable = true);
+  void_t setSendBufferSize(int_t size);
+  void_t setReceiveBufferSize(int_t size);
+
 private:
   Server(const Server&);
   Server& operator=(const Server&);

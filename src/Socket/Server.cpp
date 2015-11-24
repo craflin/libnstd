@@ -58,7 +58,7 @@ public:
     int64_t interval;
   };
 
-public:
+private:
   Pool<Listener> listeners;
   Pool<Client> clients;
   Pool<Timer> timers;
@@ -66,8 +66,13 @@ public:
   Socket::Poll sockets;
   List<Handle*> closingHandles;
 
+  bool_t keepAlive;
+  bool_t noDelay;
+  int_t sendBufferSize;
+  int_t receiveBufferSize;
+
 public:
-  Private()
+  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0)
   {
     queuedTimers.insert(0, 0); // add default timeout timer
   }
@@ -97,9 +102,11 @@ public:
     uint32_t addr2;
     uint16_t port2;
     if(!listener.socket.accept(socket, addr ? *addr : addr2, port ? *port : port2) ||
-      !listener.socket.setNonBlocking() ||
-      !listener.socket.setKeepAlive() ||
-      !listener.socket.setNoDelay())
+      !socket.setNonBlocking() ||
+      (keepAlive && !socket.setKeepAlive()) ||
+      (noDelay && !socket.setNoDelay()) ||
+      (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
+      (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
       return 0;
     Client& client = clients.append();
     client.type = Handle::clientType;
@@ -133,9 +140,14 @@ public:
     Socket socket;
     if(!socket.pair(otherSocket) ||
       !socket.setNonBlocking() ||
-      !socket.setKeepAlive() ||
-      !socket.setNoDelay())
-    return 0;
+      (keepAlive && !socket.setKeepAlive()) ||
+      (noDelay && !socket.setNoDelay()) ||
+      (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
+      (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
+    {
+      otherSocket.close();
+      return 0;
+    }
     Client& client = clients.append();
     client.type = Handle::clientType;
     client.state = Handle::connectedState;
@@ -364,7 +376,8 @@ public:
       else if(pollEvent.flags & Socket::Poll::connectFlag)
       {
         Client& client = *(Client*)event.handle;
-        int error = pollEvent.socket->getAndResetErrorStatus();
+        Socket& socket = client.socket;
+        int error = socket.getAndResetErrorStatus();
         if(error)
         {
           Error::setLastError(error);
@@ -374,9 +387,21 @@ public:
         }
         else
         {
-          client.state = Client::connectedState;
-          event.type = Event::openType;
-          sockets.set(*pollEvent.socket, Socket::Poll::readFlag);
+          if((keepAlive && !socket.setKeepAlive()) ||
+            (noDelay && !socket.setNoDelay()) ||
+            (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
+            (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
+          {
+            event.type = Event::failType;
+            client.state = Client::closedState;
+            sockets.remove(client.socket);
+          }
+          else
+          {
+            client.state = Client::connectedState;
+            event.type = Event::openType;
+            sockets.set(*pollEvent.socket, Socket::Poll::readFlag);
+          }
         }
         return true;
       }
@@ -407,6 +432,11 @@ public:
       sockets.set(client.socket, Socket::Poll::readFlag);
     client.state = Client::connectedState;
   }
+
+  void_t setKeepAlive(bool_t enable) {keepAlive = enable;}
+  void_t setNoDelay(bool_t enable) {noDelay = enable;}
+  void_t setSendBufferSize(int_t size) {sendBufferSize = size;}
+  void_t setReceiveBufferSize(int_t size) {receiveBufferSize = size;}
 };
 
 Server::Server() : p(new Private) {}
@@ -422,3 +452,7 @@ void_t Server::close(Handle& handle) {return p->close(handle);}
 bool_t Server::poll(Event& event) {return p->poll(event);}
 void_t Server::suspend(Handle& handle) {return p->suspend(handle);}
 void_t Server::resume(Handle& handle) {return p->resume(handle);}
+void_t Server::setKeepAlive(bool_t enable) {return p->setKeepAlive(enable);}
+void_t Server::setNoDelay(bool_t enable) {return p->setNoDelay(enable);}
+void_t Server::setSendBufferSize(int_t size) {return p->setSendBufferSize(size);}
+void_t Server::setReceiveBufferSize(int_t size) {return p->setReceiveBufferSize(size);}
