@@ -28,6 +28,7 @@ struct Server::Handle
 
   Type type;
   State state;
+  void_t* userData;
 };
 
 class Server::Private
@@ -37,7 +38,6 @@ public:
   {
   public:
     Handle* handle;
-    void_t* userData;
   };
 
   struct Listener : public Handle
@@ -53,7 +53,6 @@ public:
 
   struct Timer : public Handle
   {
-    void_t* userData;
     int64_t executionTime;
     int64_t interval;
   };
@@ -90,7 +89,7 @@ public:
     listener.state = Handle::connectedState;
     listener.socket.swap(socket);
     listener.socket.handle = &listener;
-    listener.socket.userData = userData;
+    listener.userData = userData;
     sockets.set(listener.socket, Socket::Poll::acceptFlag);
     return &listener;
   }
@@ -113,7 +112,7 @@ public:
     client.state = Handle::connectedState;
     client.socket.swap(socket);
     client.socket.handle = &client;
-    client.socket.userData = userData;
+    client.userData = userData;
     sockets.set(client.socket, Socket::Poll::readFlag);
     return &client;
   }
@@ -130,7 +129,7 @@ public:
     client.state = Handle::connectingState;
     client.socket.swap(socket);
     client.socket.handle = &client;
-    client.socket.userData = userData;
+    client.userData = userData;
     sockets.set(client.socket, Socket::Poll::connectFlag);
     return &client;
   }
@@ -153,7 +152,7 @@ public:
     client.state = Handle::connectedState;
     client.socket.swap(socket);
     client.socket.handle = &client;
-    client.socket.userData = userData;
+    client.userData = userData;
     sockets.set(client.socket, Socket::Poll::readFlag);
     return &client;
   }
@@ -285,7 +284,7 @@ public:
         {
           Client& client = (Client&)handle;
           event.handle = &client;
-          event.userData = client.socket.userData;
+          event.userData = client.userData;
           event.type = Event::closeType;
           client.state = Client::closedState;
           sockets.remove(client.socket);
@@ -331,7 +330,7 @@ public:
       if(!pollEvent.flags)
         continue; // timeout
       event.handle = ((HandleSocket*)pollEvent.socket)->handle;
-      event.userData = ((HandleSocket*)pollEvent.socket)->userData;
+      event.userData = event.handle->userData;
       if(pollEvent.flags & Socket::Poll::readFlag)
       {
         event.type = Event::readType;
@@ -444,8 +443,10 @@ Server::~Server() {delete p;}
 Server::Handle* Server::listen(uint16_t port, void_t* userData) {return p->listen(port, userData);}
 Server::Handle* Server::connect(uint32_t addr, uint16_t port, void_t* userData) {return p->connect(addr, port, userData);}
 Server::Handle* Server::pair(Socket& socket, void_t* userData) {return p->pair(socket, userData);}
-Server::Handle* Server::accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port) {return p->accept(handle, userData, addr, port);}
 Server::Handle* Server::createTimer(int64_t interval, void_t* userData) {return p->createTimer(interval, userData);}
+Server::Handle* Server::accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port) {return p->accept(handle, userData, addr, port);}
+void_t Server::setUserData(Handle& handle, void_t* userData) {handle.userData = userData;}
+void_t* Server::getUserData(Handle& handle) {return handle.userData;}
 bool_t Server::write(Handle& handle, const byte_t* data, size_t size, size_t* postponed) {return p->write(handle, data, size, postponed);}
 bool_t Server::read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size) {return p->read(handle, buffer, maxSize, size);}
 void_t Server::close(Handle& handle) {return p->close(handle);}
