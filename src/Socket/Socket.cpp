@@ -1,7 +1,11 @@
 
 #ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // todo: get rid of this
+#define _CRT_NO_POSIX_ERROR_CODES
 #include <winsock2.h>
+#ifdef EINVAL
+#undef EINVAL
+#endif
 #else
 #include <unistd.h>
 #include <sys/socket.h>
