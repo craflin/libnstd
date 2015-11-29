@@ -9,19 +9,31 @@ void_t testProcess()
   // test start() and join()
   {
     Process process;
+#ifdef _WIN32
+    uint32_t id = process.start(_T("cmd /C \"choice /T 1 /D N >NUL\""));
+#else
     uint32_t id = process.start(_T("sleep 1"));
+#endif
     ASSERT(id != 0);
     ASSERT(process.isRunning());
     uint32_t exitCode = 0xfffa2;
     ASSERT(process.join(exitCode));
     ASSERT(!process.isRunning());
+#ifdef _WIN32
+    ASSERT(exitCode == 2);
+#else
     ASSERT(exitCode == 0);
+#endif
   }
 
   // test open(), read() and join()
   {
     Process process;
+#ifdef _WIN32
+    ASSERT(process.open(_T("cmd /C dir"), Process::stdoutStream));
+#else
     ASSERT(process.open(_T("ls"), Process::stdoutStream));
+#endif
     ASSERT(process.isRunning());
     char_t buffer[123];
     ASSERT(process.read(buffer, sizeof(buffer)) > 0);
@@ -63,8 +75,13 @@ void_t testProcess()
   {
     Process process;
     Process process2;
+#ifdef _WIN32
+    ASSERT(process.open(_T("cmd /C dir")) != 0);
+    ASSERT(process2.start(_T("cmd /C \"choice /T 1 /D N >NUL\"")) != 0);
+#else
     ASSERT(process.open(_T("ls")) != 0);
     ASSERT(process2.start(_T("sleep 1")) != 0);
+#endif
     Process* processes[] = {&process2, &process};
     ASSERT(Process::wait(processes, 2) == &process);
     uint32_t exitCode;
@@ -72,6 +89,10 @@ void_t testProcess()
     ASSERT(exitCode == 0);
     ASSERT(Process::wait(processes, 1) == &process2);
     ASSERT(process2.join(exitCode));
+#ifdef _WIN32
+    ASSERT(exitCode == 2);
+#else
     ASSERT(exitCode == 0);
+#endif
   }
 }
