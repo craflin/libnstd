@@ -452,8 +452,15 @@ String Socket::getErrorString(int_t error)
 #endif
 }
 
-uint32_t Socket::inetAddr(const String& addr)
+uint32_t Socket::inetAddr(const String& addr, uint16_t* port)
 {
+  const char_t* portStr = addr.find(':');
+  if(portStr)
+  {
+    if(port)
+      *port = String::toUInt(portStr + 1);
+    return ntohl(inet_addr((const char_t*)addr.substr(0, portStr - (const char_t*)addr)));
+  }
   return ntohl(inet_addr((const char_t*)addr));
 }
 
