@@ -32,6 +32,7 @@ public:
   ~Server();
 
   Handle* listen(uint16_t port, void_t* userData);
+  Handle* listen(uint32_t addr, uint16_t port, void_t* userData);
   Handle* connect(uint32_t addr, uint16_t port, void_t* userData);
   Handle* pair(Socket& socket, void_t* userData);
   Handle* createTimer(int64_t interval, void_t* userData);

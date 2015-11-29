@@ -76,12 +76,12 @@ public:
     queuedTimers.insert(0, 0); // add default timeout timer
   }
 
-  Handle* listen(uint16_t port, void_t* userData)
+  Handle* listen(uint32_t addr, uint16_t port, void_t* userData)
   {
     Socket socket;
     if(!socket.open() ||
       !socket.setReuseAddress() ||
-      !socket.bind(Socket::anyAddr, port) ||
+      !socket.bind(addr, port) ||
       !socket.listen())
       return 0;
     Listener& listener = listeners.append();
@@ -440,7 +440,8 @@ public:
 
 Server::Server() : p(new Private) {}
 Server::~Server() {delete p;}
-Server::Handle* Server::listen(uint16_t port, void_t* userData) {return p->listen(port, userData);}
+Server::Handle* Server::listen(uint16_t port, void_t* userData) {return p->listen(Socket::anyAddr, port, userData);}
+Server::Handle* Server::listen(uint32_t addr, uint16_t port, void_t* userData) {return p->listen(addr, port, userData);}
 Server::Handle* Server::connect(uint32_t addr, uint16_t port, void_t* userData) {return p->connect(addr, port, userData);}
 Server::Handle* Server::pair(Socket& socket, void_t* userData) {return p->pair(socket, userData);}
 Server::Handle* Server::createTimer(int64_t interval, void_t* userData) {return p->createTimer(interval, userData);}
