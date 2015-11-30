@@ -300,6 +300,8 @@ public:
           timer.state = Handle::connectedState;
         }
         break;
+      default:
+        break;
       }
     }
 
