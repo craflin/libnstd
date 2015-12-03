@@ -10,30 +10,33 @@
 #include <nstd/Debug.h>
 #endif
 
-#ifdef _WIN32
-class _Time
+class Time::Private
 {
+#ifdef _WIN32
 public:
   static int64_t perfFreq;
-
-private:
-  static _Time data;
-
-  _Time()
+  static class Framework
   {
-    LARGE_INTEGER li;
-    VERIFY(QueryPerformanceFrequency(&li));
-    perfFreq = li.QuadPart / 1000000LL;
-  }
+  public:
+    Framework()
+    {
+      LARGE_INTEGER li;
+      VERIFY(QueryPerformanceFrequency(&li));
+      perfFreq = li.QuadPart / 1000000LL;
+    }
+  } framework;
+#endif
 };
+
+#ifdef _WIN32
 #ifdef _MSC_VER
 #pragma warning(disable: 4073) 
 #pragma init_seg(lib)
-_Time _Time::data;
+Time::Private::Framework Time::Private::framework;
 #else
-_Time _Time::data __attribute__ ((init_priority (101)));
+Time::Private::Framework Time::Private::framework __attribute__ ((init_priority (101)));
 #endif
-int64_t _Time::perfFreq;
+int64_t Time::Private::perfFreq;
 #endif
 
 Time::Time(bool_t utc) : utc(utc)
@@ -170,7 +173,7 @@ int64_t Time::microTicks()
 #ifdef _WIN32
   LARGE_INTEGER li;
   VERIFY(QueryPerformanceCounter(&li));
-  return li.QuadPart / _Time::perfFreq;
+  return li.QuadPart / Private::perfFreq;
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);

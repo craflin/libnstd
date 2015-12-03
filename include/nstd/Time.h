@@ -47,4 +47,7 @@ public:
   static int64_t microTicks();
 
   static String toString(int64_t time, const tchar_t* format, bool_t utc = false);
+
+private:
+  class Private;
 };
