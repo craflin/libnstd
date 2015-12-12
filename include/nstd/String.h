@@ -396,6 +396,8 @@ public:
   static String fromUInt64(uint64_t value);
   static String fromDouble(double value);
 
+  static bool startsWith(const tchar_t* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
+
 private:
   struct Data
   {
