@@ -27,7 +27,7 @@ public:
   *                          %T - The id of the calling thread.
   * @param  [in] timeFormat     The format of the timestamp similar to the format string of Time::toString.
   */
-  static void_t setFormat(const String& lineFormat, const String& timeFormat = _T("%H:%M:%S"));
+  static void_t setFormat(const String& lineFormat, const String& timeFormat = String(_T("%H:%M:%S")));
 
   static void_t setLevel(int_t level);
 
