@@ -12,6 +12,7 @@
 #include <nstd/Debug.h>
 
 #ifndef _MSC_VER
+#define _tcschr strchr
 #define _tcsstr strstr
 #define _tcspbrk strpbrk
 #endif
