@@ -161,8 +161,11 @@ uint64_t String::toUInt64() const {return strtoull(data->str, 0, 10);}
 double String::toDouble() const {return atof(data->str);}
 #endif
 
+const tchar_t* String::find(tchar_t c, size_t start) const {return start >= data->len ? 0 : _tcschr(data->str + start, c);}
 const tchar_t* String::find(const tchar_t* str) const {return _tcsstr(data->str, str);}
+const tchar_t* String::find(const tchar_t* str, size_t start) const {return start >= data->len ? 0 : _tcsstr(data->str + start, str);}
 const tchar_t* String::findOneOf(const tchar_t* chars) const {return _tcspbrk(data->str, chars);}
+const tchar_t* String::findOneOf(const tchar_t* chars, size_t start) const {return start >= data->len ? 0 : _tcspbrk(data->str + start, chars);}
 const tchar_t* String::findLast(const tchar_t* str) const {return String::findLast(data->str, str);}
 const tchar_t* String::findLastOf(const tchar_t* chars) const {return String::findLastOf(data->str, chars);}
 

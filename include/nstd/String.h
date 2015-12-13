@@ -223,8 +223,11 @@ public:
     return 0;
   }
 
+  const tchar_t* find(tchar_t c, size_t start) const;
   const tchar_t* find(const tchar_t* str) const;
+  const tchar_t* find(const tchar_t* str, size_t start) const;
   const tchar_t* findOneOf(const tchar_t* chars) const;
+  const tchar_t* findOneOf(const tchar_t* chars, size_t start) const;
   const tchar_t* findLast(const tchar_t* str) const;
   const tchar_t* findLastOf(const tchar_t* chars) const;
 
