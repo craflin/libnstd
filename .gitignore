@@ -6,6 +6,8 @@ build/
 *.vcxproj.user
 *.vcxproj.filters
 *.vcxproj
+*.sln
+*.VC.opendb
 
 .*
 *.mk
