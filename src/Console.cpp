@@ -109,7 +109,7 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
 }
 #endif
 
-class ConsolePromptPrivate
+class Console::Prompt::Private
 {
 public:
 #ifdef _MSC_VER
@@ -143,7 +143,7 @@ public:
   }
 #endif
 
-  ConsolePromptPrivate() : valid(false)
+  Private() : valid(false)
   {
 #ifdef _MSC_VER
     if(!GetConsoleMode(GetStdHandle(STD_OUTPUT_HANDLE), &consoleOutputMode) ||
@@ -263,7 +263,7 @@ public:
     stdoutScreenWidth = getScreenWidth();
   }
 
-  ~ConsolePromptPrivate()
+  ~Private()
   {
     if(!valid)
       return;
@@ -1280,8 +1280,6 @@ int ConsolePromptPrivate::resizeEventFdWrite = 0;
 #endif
 #endif
 
-Console::Prompt::Prompt() : data(new ConsolePromptPrivate) {}
-
-Console::Prompt::~Prompt() {delete data;}
-
-String Console::Prompt::getLine(const String& str) {return data->getLine(str);}
+Console::Prompt::Prompt() : p(new Private) {}
+Console::Prompt::~Prompt() {delete p;}
+String Console::Prompt::getLine(const String& str) {return p->getLine(str);}

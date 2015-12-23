@@ -3,8 +3,6 @@
 
 #include <nstd/String.h>
 
-class ConsolePromptPrivate;
-
 class Console
 {
 public:
@@ -22,6 +20,7 @@ public:
     String getLine(const String& prompt);
 
   private:
-    ConsolePromptPrivate* data;
+    class Private;
+    Private* p;
   };
 };
