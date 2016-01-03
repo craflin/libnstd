@@ -289,3 +289,33 @@ String String::fromDouble(double value)
   result.printf(_T("%f"), value);
   return result;
 }
+
+String String::token(char_t separator, size_t& start) const
+{
+  const char_t* endStr = find(separator, start);
+  if(endStr)
+  {
+    size_t len = endStr - (data->str + start);
+    String result = String::substr(start, len);
+    start += len + 1;
+    return result;
+  }
+  String result = substr(start);
+  start = data->len;
+  return result;
+}
+
+String String::token(const char_t* separators, size_t& start) const
+{
+  const char_t* endStr = findOneOf(separators, start);
+  if(endStr)
+  {
+    size_t len = endStr - (data->str + start);
+    String result = substr(start, len);
+    start += len + 1;
+    return result;
+  }
+  String result = substr(start);
+  start = data->len;
+  return result;
+}

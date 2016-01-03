@@ -301,6 +301,9 @@ public:
   uint64_t toUInt64() const;
   double toDouble() const;
 
+  String token(char_t separator, size_t& start) const;
+  String token(const char_t* separators, size_t& start) const;
+
   /**
   * Compute a hash code for this string.
   * @return The hash code
@@ -323,6 +326,7 @@ public:
     return hashCode;
   }
 
+public:
   static int_t toInt(const tchar_t* s);
   static uint_t toUInt(const tchar_t* s);
   static int64_t toInt64(const tchar_t* s);
