@@ -251,7 +251,7 @@ bool_t File::readAll(String& data)
   if(fileSize < 0)
     return false;
   data.resize((size_t)fileSize / sizeof(tchar_t));
-  size_t dataCount = read((tchar_t*)data, data.length() * sizeof(tchar_t));
+  ssize_t dataCount = read((tchar_t*)data, data.length() * sizeof(tchar_t));
   if(dataCount < 0)
   {
     data.clear();
