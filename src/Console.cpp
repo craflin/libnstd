@@ -329,7 +329,7 @@ public:
     if(newX > x)
     {
       String moveCmd;
-      moveCmd.printf("\x1b[%dD",newX - x);
+      moveCmd.printf("\x1b[%dD", (int)(newX - x));
       if(write(originalStdout, (const char_t*)moveCmd, moveCmd.length()) != (ssize_t)moveCmd.length())
         return 80;
     }
@@ -658,7 +658,7 @@ public:
       VERIFY(SetConsoleCursorPosition(hOriginalStdOut, csbi.dwCursorPosition));
 #else
       String moveCmd;
-      moveCmd.printf("\x1b[A\r\x1b[%dC", stdoutCursorX);
+      moveCmd.printf("\x1b[A\r\x1b[%dC", (int)stdoutCursorX);
       writeConsole(moveCmd, moveCmd.length());
 #endif
     }
