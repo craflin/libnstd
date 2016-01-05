@@ -357,7 +357,7 @@ bool_t Socket::getPeerName(uint32_t& ip, uint16_t& port)
 
 ssize_t Socket::send(const byte_t* data, size_t size)
 {
-  int r = ::send(s, (const char*)data, size, MSG_NOSIGNAL);
+  ssize_t r = ::send(s, (const char*)data, size, MSG_NOSIGNAL);
   if(r == SOCKET_ERROR)
   {
     if(ERRNO == EWOULDBLOCK 
@@ -375,7 +375,7 @@ ssize_t Socket::send(const byte_t* data, size_t size)
 
 ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
 {
-  int r = ::recv(s, (char*)data, maxSize, 0);
+  ssize_t r = ::recv(s, (char*)data, maxSize, 0);
   switch(r)
   {
   case SOCKET_ERROR:
@@ -390,10 +390,12 @@ ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
     return -1;
   case 0:
     return 0;
+  default:
+    break;
   }
   if((size_t)r >= minSize)
     return r;
-  size_t received = r;
+  size_t received = (size_t)r;
   for(;;)
   {
     r = ::recv(s, (char*)data + received, maxSize - received, 0);
@@ -412,6 +414,8 @@ ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
       return -1;
     case 0:
       return 0;
+    default:
+      break;
     }
     received += r;
     if(received >= minSize)
@@ -458,7 +462,7 @@ uint32_t Socket::inetAddr(const String& addr, uint16_t* port)
   if(portStr)
   {
     if(port)
-      *port = String::toUInt(portStr + 1);
+      *port = (uint16_t)String::toUInt(portStr + 1);
     return ntohl(inet_addr((const char_t*)addr.substr(0, portStr - (const char_t*)addr)));
   }
   return ntohl(inet_addr((const char_t*)addr));
@@ -660,7 +664,7 @@ bool_t Socket::Poll::poll(Event& event, int64_t timeout)
           ASSERT(it != p->fdToSocket.end());
           Private::SocketInfo* sockInfo = *it;
           uint_t events = 0;
-          uint_t revents = i->revents;
+          int revents = i->revents;
 
           if(revents & (POLLIN | POLLRDHUP | POLLHUP))
             events |= sockInfo->events & (readFlag | acceptFlag);

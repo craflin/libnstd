@@ -100,7 +100,7 @@ public:
     Socket socket;
     uint32_t addr2;
     uint16_t port2;
-    if(!listener.socket.accept(socket, addr ? *addr : addr2, port ? *port : port2) ||
+    if(!listener.socket.accept(socket, *(addr ? addr : &addr2), *(port ? port : &port2)) ||
       !socket.setNonBlocking() ||
       (keepAlive && !socket.setKeepAlive()) ||
       (noDelay && !socket.setNoDelay()) ||
@@ -182,6 +182,7 @@ public:
       ssize_t sent = client.socket.send(data, size);
       switch(sent)
       {
+      case -1:
         if(Socket::getLastError() == 0) // EWOULDBLOCK
         {
           sent = 0;
@@ -192,6 +193,8 @@ public:
         client.state = Client::closingState;
         closingHandles.append(&client);
         return false;
+      default:
+        break;
       }
       if((size_t)sent >= size)
       {
@@ -227,8 +230,10 @@ public:
       client.state = Client::closingState;
       closingHandles.append(&client);
       return false;
+    default:
+      break;
     }
-    size = received;
+    size = (size_t)received;
     return true;
   }
 
@@ -356,15 +361,19 @@ public:
             client.state = Client::closedState;
             sockets.remove(client.socket);
             return true;
+          default:
+            break;
           }
-          client.sendBuffer.removeFront(sent);
+          client.sendBuffer.removeFront((size_t)sent);
         }
         if(client.sendBuffer.isEmpty())
         {
           client.sendBuffer.free();
           event.type = Event::writeType;
           if(client.state != Client::suspendedState)
-            sockets.set(*pollEvent.socket, Socket::Poll::readFlag);
+            sockets.set(client.socket, Socket::Poll::readFlag);
+          else
+            sockets.remove(client.socket);
           return true;
         }
         continue;
@@ -378,10 +387,10 @@ public:
       {
         Client& client = *(Client*)event.handle;
         Socket& socket = client.socket;
-        int error = socket.getAndResetErrorStatus();
+        int_t error = socket.getAndResetErrorStatus();
         if(error)
         {
-          Error::setLastError(error);
+          Error::setLastError((uint_t)error);
           event.type = Event::failType;
           client.state = Client::closedState;
           sockets.remove(client.socket);
