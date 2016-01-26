@@ -212,7 +212,8 @@ void_t testString()
   // test detach
   {
     tchar_t buf[100];
-    Memory::fill(buf, _T('a'), 8);
+    for(size_t i = 0; i < 8; ++i)
+      buf[i] = _T('a');
     String bufWrapper;
     buf[8] = _T('\0');
     bufWrapper.attach(buf, 8);

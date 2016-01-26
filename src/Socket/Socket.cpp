@@ -3,6 +3,10 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // todo: get rid of this
 #define _CRT_NO_POSIX_ERROR_CODES
 #include <winsock2.h>
+#ifdef UNICODE
+#include <Mstcpip.h>
+#undef ASSERT
+#endif
 #ifdef EINVAL
 #undef EINVAL
 #endif
@@ -436,8 +440,8 @@ int_t Socket::getLastError()
 String Socket::getErrorString(int_t error)
 {
 #ifdef _WIN32
-  char errorMessage[256];
-  DWORD len = FormatMessageA(
+  TCHAR errorMessage[256];
+  DWORD len = FormatMessage(
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL,
@@ -458,21 +462,39 @@ String Socket::getErrorString(int_t error)
 
 uint32_t Socket::inetAddr(const String& addr, uint16_t* port)
 {
-  const char_t* portStr = addr.find(':');
+  const tchar_t* portStr = addr.find(':');
   if(portStr)
   {
     if(port)
       *port = (uint16_t)String::toUInt(portStr + 1);
-    return ntohl(inet_addr((const char_t*)addr.substr(0, portStr - (const char_t*)addr)));
+#ifdef UNICODE
+    in_addr inaddr;
+    LPCWSTR end; 
+    return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
+#else
+    return ntohl(inet_addr((const tchar_t*)addr.substr(0, (portStr - (const tchar_t*)addr) / sizeof(tchar_t))));
+#endif
   }
-  return ntohl(inet_addr((const char_t*)addr));
+#ifdef UNICODE
+  in_addr inaddr;
+  LPCWSTR end; 
+  return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
+#else
+  return ntohl(inet_addr((const tchar_t*)addr));
+#endif
 }
 
 String Socket::inetNtoA(uint32_t ip)
 {
   in_addr in;
   in.s_addr = htonl(ip);
+#ifdef UNICODE
+  WCHAR buf[17];
+  buf[0] = _T('\0');
+  RtlIpv4AddressToString(&in, buf);
+#else
   char* buf = inet_ntoa(in);
+#endif
   return String(buf, String::length(buf));
 }
 

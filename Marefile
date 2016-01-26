@@ -53,7 +53,7 @@ targets = {
     }
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
-      libs += { "ws2_32" }
+      libs += { "ws2_32", "ntdll" }
     }
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,
