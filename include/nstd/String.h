@@ -25,31 +25,36 @@ public:
     }
     else
     {
-      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar_t) + sizeof(Data));
+      size_t capacity;
+      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
       data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
       Memory::copy((tchar_t*)data->str, other.data->str, (other.data->len + 1) * sizeof(tchar_t));
       data->len = other.data->len;
       data->ref = 1;
+      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
     }
   }
 
   String(const tchar_t* str, size_t length)
   {
-    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar_t) + sizeof(Data));
+    size_t capacity;
+    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
     data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
     Memory::copy((tchar_t*)data->str, str, length * sizeof(tchar_t));
     data->len = length;
     ((tchar_t*)data->str)[length] = _T('\0');
     data->ref = 1;
+    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
   }
 
   explicit String(size_t capacity)
   {
-    data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar_t) + sizeof(Data));
+    data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
     data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
     *((tchar_t*)data->str) = _T('\0');
     data->len = 0;
     data->ref = 1;
+    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
   }
 
   ~String()
@@ -72,7 +77,7 @@ public:
   size_t capacity() const
   {
     if(data->ref == 1)
-      return (Memory::size(data) - sizeof(Data)) / sizeof(tchar_t) - 1;
+      return data->capacity;
     return 0;
   }
 
@@ -166,11 +171,13 @@ public:
     }
     else
     {
-      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar_t) + sizeof(Data));
+      size_t capacity;
+      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
       data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
       Memory::copy((tchar_t*)data->str, otherData->str, (otherData->len + 1) * sizeof(tchar_t));
       data->len = otherData->len;
       data->ref = 1;
+      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
     }
     return *this;
   }
@@ -410,13 +417,44 @@ private:
   {
     const tchar_t* str;
     size_t len;
+    size_t capacity;
     volatile size_t ref;
   };
 
   Data* data;
   Data _data;
 
-  void_t detach(size_t copyLength, size_t minCapacity);
+  void_t detach(size_t copyLength, size_t minCapacity)
+  {
+#ifdef ASSERT
+    ASSERT(copyLength <= minCapacity);
+#endif
+    if(data->ref == 1 && minCapacity <= data->capacity)
+    {
+      data->len = copyLength;
+      ((tchar_t*)data->str)[copyLength] = _T('\0');
+      return;
+    }
+
+    size_t capacity;
+    Data* newData = (Data*)Memory::alloc((minCapacity + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
+    newData->str = (tchar_t*)((byte_t*)newData + sizeof(Data));
+    if(data->len > 0)
+    {
+      Memory::copy((tchar_t*)newData->str, data->str, (data->len < copyLength ? data->len : copyLength) * sizeof(tchar_t));
+      ((tchar_t*)newData->str)[copyLength] = _T('\0');
+    }
+    else
+      *(tchar_t*)newData->str = _T('\0');
+    newData->len = copyLength;
+    newData->ref = 1;
+    newData->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+
+    if(data->ref && Atomic::decrement(data->ref) == 0)
+      Memory::free(data);
+
+    data = newData;
+  }
 
   static struct EmptyData : public Data
   {
