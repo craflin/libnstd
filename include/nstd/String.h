@@ -107,17 +107,10 @@ public:
     _data.len = length;
   }
 
+  void_t detach() {detach(data->len, data->len);}
   bool_t isEmpty() const {return data->len == 0;}
-
-  void_t resize(size_t length)
-  {
-    detach(length, length);
-  }
-
-  void_t reserve(size_t size)
-  {
-    detach(data->len, size < data->len ? data->len : size);
-  }
+  void_t resize(size_t length) {detach(length, length);}
+  void_t reserve(size_t size) {detach(data->len, size < data->len ? data->len : size);}
 
   String& prepend(const String& str)
   {
@@ -183,27 +176,16 @@ public:
   }
 
   String& operator+=(const String& other) {return append(other);}
-
   String& operator+=(tchar_t c) { return append(c); }
-
   String operator+(const String& other) const {return String(*this).append(other);}
-
   template<size_t N> String operator+(const tchar_t(&str)[N]) const {return String(*this).append(String(str));}
-
   bool operator==(const String& other) const {return data->len == other.data->len && Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) == 0;}
-
   template<size_t N> bool operator==(const tchar_t (&str)[N]) const {return data->len == N - 1 && Memory::compare(data->str, str, (N - 1) * sizeof(tchar_t)) == 0;}
-
   bool operator!=(const String& other) const {return data->len != other.data->len || Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) != 0;}
-
   template<size_t N> bool operator!=(const tchar_t (&str)[N]) const {return data->len != N - 1 || Memory::compare(data->str, str, (N - 1) * sizeof(tchar_t)) != 0;}
-
   bool_t operator>(const String& other) const {return compare(other) > 0;}
-
   bool_t operator>=(const String& other) const {return compare(other) >= 0;}
-
   bool_t operator<(const String& other) const {return compare(other) < 0;}
-
   bool_t operator<=(const String& other) const {return compare(other) <= 0;}
 
   int_t compare(const String& other) const
@@ -308,8 +290,8 @@ public:
   uint64_t toUInt64() const;
   double toDouble() const;
 
-  String token(char_t separator, size_t& start) const;
-  String token(const char_t* separators, size_t& start) const;
+  String token(tchar_t separator, size_t& start) const;
+  String token(const tchar_t* separators, size_t& start) const;
 
   /**
   * Compute a hash code for this string.

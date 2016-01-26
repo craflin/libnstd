@@ -204,10 +204,22 @@ void_t testString()
 
   // test external buffer attaching
   tchar_t buf[100];
-  Memory::fill(buf, 'a', 8);
+  Memory::fill(buf, _T('a'), 8);
   String bufWrapper;
   bufWrapper.attach(buf, 4);
   ASSERT(bufWrapper == String(buf, 4));
+
+  // test detach
+  {
+    tchar_t buf[100];
+    Memory::fill(buf, _T('a'), 8);
+    String bufWrapper;
+    buf[8] = _T('\0');
+    bufWrapper.attach(buf, 8);
+    bufWrapper.detach();
+    buf[2] = _T('b');
+    ASSERT(bufWrapper == _T("aaaaaaaa"));
+  }
 }
 
 void_t testHashSet()

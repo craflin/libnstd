@@ -256,9 +256,9 @@ String String::fromDouble(double value)
   return result;
 }
 
-String String::token(char_t separator, size_t& start) const
+String String::token(tchar_t separator, size_t& start) const
 {
-  const char_t* endStr = find(separator, start);
+  const tchar_t* endStr = find(separator, start);
   if(endStr)
   {
     size_t len = endStr - (data->str + start);
@@ -271,9 +271,9 @@ String String::token(char_t separator, size_t& start) const
   return result;
 }
 
-String String::token(const char_t* separators, size_t& start) const
+String String::token(const tchar_t* separators, size_t& start) const
 {
-  const char_t* endStr = findOneOf(separators, start);
+  const tchar_t* endStr = findOneOf(separators, start);
   if(endStr)
   {
     size_t len = endStr - (data->str + start);
