@@ -41,6 +41,15 @@ public:
     endItem.next = 0;
   }
 
+  Map(const Map& other) : _end(&endItem), _begin(&endItem), root(0), _size(0), freeItem(0), blocks(0)
+  {
+    endItem.parent = 0;
+    endItem.prev = 0;
+    endItem.next = 0;
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      insert(i->key, i->value);
+  }
+
   ~Map()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
@@ -50,6 +59,14 @@ public:
       next = i->next;
       Memory::free(i);
     }
+  }
+
+  Map& operator=(const Map& other)
+  {
+    clear();
+    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
+      insert(i->key, i->value);
+    return *this;
   }
 
   const Iterator& begin() const {return _begin;}
@@ -390,6 +407,10 @@ private:
       ++_size;
       if(!parent)
       { // first item
+        if(_begin.item != &endItem)
+        {
+          int k = 42;
+        }
         ASSERT(_begin.item == &endItem);
         item->prev = 0;
         item->next = _begin.item;
