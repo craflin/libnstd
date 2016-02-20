@@ -407,10 +407,6 @@ private:
       ++_size;
       if(!parent)
       { // first item
-        if(_begin.item != &endItem)
-        {
-          int k = 42;
-        }
         ASSERT(_begin.item == &endItem);
         item->prev = 0;
         item->next = _begin.item;
