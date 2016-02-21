@@ -192,9 +192,9 @@ public:
     return item->next;
   }
 
-  void_t remove(const T& key)
+  void_t remove(const T& value)
   {
-    Iterator it = find(key);
+    Iterator it = find(value);
     if(it != _end)
       remove(it);
   }
