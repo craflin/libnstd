@@ -37,6 +37,7 @@ void testVariant();
 void testFile();
 void testXML();
 void testJSON();
+void testReceiver();
 
 void testConsolePrintf()
 {
@@ -757,6 +758,7 @@ int main(int argc, char* argv[])
   testVariant();
   testXML();
   testJSON();
+  testReceiver();
 
   Console::printf(_T("%s\n"), _T("done"));
 
