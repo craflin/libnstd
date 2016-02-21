@@ -11,16 +11,20 @@ class Receiver
 public:
   ~Receiver();
 
+  template<class X, class Y> void connect(X* src, void (X::*signal)(), void (Y::*slot)()) {connect(src, *(void**)&signal, this, *(void**)&slot);}
   template<class X, class Y, typename A> void connect(X* src, void (X::*signal)(A), void (Y::*slot)(A)) {connect(src, *(void**)&signal, this, *(void**)&slot);}
   template<class X, class Y, typename A, typename B> void connect(X* src, void (X::*signal)(A, B), void (Y::*slot)(A, B)) {connect(src, *(void**)&signal, this, *(void**)&slot);}
 
+  template<class X, class Y> void disconnect(X* src, void (X::*signal)(), void (Y::*slot)()) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
   template<class X, class Y, typename A> void disconnect(X* src, void (X::*signal)(A), void (Y::*slot)(A)) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
   template<class X, class Y, typename A, typename B> void disconnect(X* src, void (X::*signal)(A, B), void (Y::*slot)(A, B)) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
 
 public:
+  template<class X, class Y> static void connect(X* src, void (X::*signal)(), Y* dest, void (Y::*slot)()) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
   template<class X, class Y, typename A> static void connect(X* src, void (X::*signal)(A), Y* dest, void (Y::*slot)(A)) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
   template<class X, class Y, typename A, typename B> static void connect(X* src, void (X::*signal)(A, B), Y* dest, void (Y::*slot)(A, B)) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
 
+  template<class X, class Y> static void disconnect(X* src, void (X::*signal)(), Y* dest, void (Y::*slot)()) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
   template<class X, class Y, typename A> static void disconnect(X* src, void (X::*signal)(A), Y* dest, void (Y::*slot)(A)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
   template<class X, class Y, typename A, typename B> static void disconnect(X* src, void (X::*signal)(A, B), Y* dest, void (Y::*slot)(A, B)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
 
