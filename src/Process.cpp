@@ -333,18 +333,24 @@ bool_t Process::open(const String& commandLine, uint_t streams)
       !SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0))
       goto error;
   }
+  else
+    si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
   if(streams & stderrStream)
   {
    if(!CreatePipe(&hStdErrRead, &si.hStdError, &sa, 0) ||
       !SetHandleInformation(hStdErrRead, HANDLE_FLAG_INHERIT, 0))
       goto error;
   }
+  else
+    si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
   if(streams & stdinStream)
   {
    if(!CreatePipe(&si.hStdInput, &hStdInWrite, &sa, 0) ||
       !SetHandleInformation(hStdInWrite, HANDLE_FLAG_INHERIT, 0))
       goto error;
   }
+  else
+    si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
   {
     String args(commandLine);
@@ -355,11 +361,11 @@ bool_t Process::open(const String& commandLine, uint_t streams)
 
   CloseHandle(pi.hThread);
 
-  if(si.hStdOutput != INVALID_HANDLE_VALUE)
+  if(streams & stdoutStream && si.hStdOutput != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdOutput);
-  if(si.hStdError != INVALID_HANDLE_VALUE)
+  if(streams & stderrStream && si.hStdError != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdError);
-  if(si.hStdInput != INVALID_HANDLE_VALUE)
+  if(streams & stdinStream && si.hStdInput != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdInput);
 
   ASSERT(pi.hProcess);
