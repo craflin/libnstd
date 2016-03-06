@@ -229,6 +229,8 @@ public:
     return *this;
   }
 
+  String& replace(const String& needle, const String& replacement);
+
   bool startsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str, str.data->str, str.data->len) == 0;}
   bool endsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str + data->len - str.data->len, str.data->str, str.data->len) == 0;}
 

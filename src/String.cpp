@@ -136,6 +136,27 @@ const tchar_t* String::findOneOf(const tchar_t* chars, size_t start) const {retu
 const tchar_t* String::findLast(const tchar_t* str) const {return String::findLast(data->str, str);}
 const tchar_t* String::findLastOf(const tchar_t* chars) const {return String::findLastOf(data->str, chars);}
 
+String& String::replace(const String& needle, const String& replacement)
+{
+  const tchar_t* p = data->str;
+  const tchar_t* match = _tcsstr(p, needle);
+  if(!match)
+    return *this;
+  String result(data->len + replacement.data->len * 10);
+  for(;;)
+  {
+    result.append(p, match - p);
+    result.append(replacement);
+    p = match + needle.data->len;
+    match = _tcsstr(p, needle);
+    if(!match)
+    {
+      result.append(p, data->len - (p - data->str));
+      return *this = result;
+    }
+  }
+}
+
 #ifdef _UNICODE
 String& String::toLowerCase()
 {
