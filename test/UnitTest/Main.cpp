@@ -32,6 +32,7 @@ void_t testDirectory();
 void_t testMutex();
 void_t testPool();
 void_t testServer();
+void_t testMultiMap();
 
 void_t testMemoryAllocSmall()
 {
@@ -1027,6 +1028,7 @@ int_t main(int_t argc, char_t* argv[])
   testProcess();
   testMap();
   testPool();
+  testMultiMap();
 
   Console::printf(_T("%s\n"), _T("done"));
 

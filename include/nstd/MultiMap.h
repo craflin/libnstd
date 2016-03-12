@@ -102,6 +102,17 @@ public:
 
   bool_t contains(const T& key) const {return find(key) != _end;}
 
+  size_t count(const T& key)
+  {
+    Iterator it = find(key);
+    if(it == _end)
+      return 0;
+    size_t count = 1;
+    for(Item* item = it.item->next; item && item->key == key; item = item->next)
+      ++count;
+    return count;
+  }
+
   Iterator insert(const Iterator& position, const T& key, const V& value)
   {
     Item* insertPos = position.item;
