@@ -123,6 +123,17 @@ public:
     return *this;
   }
 
+  String& prepend(const tchar_t* str, size_t len)
+  {
+    String copy(*this);
+    size_t newLen = len + copy.data->len;
+    detach(0, newLen);
+    Memory::copy((tchar_t*)data->str, str, len * sizeof(tchar_t));
+    Memory::copy((tchar_t*)data->str + len, copy.data->str, (copy.data->len + 1) * sizeof(tchar_t));
+    data->len = newLen;
+    return *this;
+  }
+
   String& append(const String& str)
   {
     size_t newLen = data->len + str.data->len;
