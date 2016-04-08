@@ -10,6 +10,7 @@
 
 #include <nstd/String.h>
 #include <nstd/Debug.h>
+#include <nstd/List.h>
 
 #ifndef _MSC_VER
 #define _tcschr strchr
@@ -294,10 +295,11 @@ String String::token(tchar_t separator, size_t& start) const
 
 String String::token(const tchar_t* separators, size_t& start) const
 {
-  const tchar_t* endStr = findOneOf(separators, start);
+  const tchar_t* p = data->str + start;
+  const tchar_t* endStr = _tcspbrk(p, separators);
   if(endStr)
   {
-    size_t len = endStr - (data->str + start);
+    size_t len = endStr - p;
     String result = substr(start, len);
     start += len + 1;
     return result;
@@ -305,4 +307,53 @@ String String::token(const tchar_t* separators, size_t& start) const
   String result = substr(start);
   start = data->len;
   return result;
+}
+
+size_t String::split(List<String>& tokens, const tchar_t* separators, bool_t skipEmpty) const
+{
+  tokens.clear();
+
+  const tchar_t* start = data->str;
+  const tchar_t* p = start, * endStr;
+  for(;;)
+  {
+    endStr = _tcspbrk(p, separators);
+    if(endStr)
+    {
+      size_t len = endStr - p;
+      if(len)
+      {
+        tokens.append(substr(p - start, len));
+        p = endStr + 1;
+      }
+      else
+      {
+        if(!skipEmpty)
+          tokens.append(String());
+        ++p;
+      }
+    }
+    else
+    {
+      if(p < start + data->len)
+        tokens.append(substr(p - start));
+      else if(!skipEmpty)
+        tokens.append(String());
+      break;
+    }
+  }
+  return tokens.size();
+}
+
+String& String::join(const List<String>& tokens, tchar_t separator)
+{
+  clear();
+  for(List<String>::Iterator i = tokens.begin(), end = tokens.end();;)
+  {
+    append(*i);
+    if(++i == end)
+      break;
+    append(separator);
+  }
+  return *this;
 }

@@ -4,6 +4,8 @@
 #include <nstd/Atomic.h>
 #include <nstd/Memory.h>
 
+template<typename T> class List;
+
 class String
 {
 public:
@@ -305,6 +307,9 @@ public:
 
   String token(tchar_t separator, size_t& start) const;
   String token(const tchar_t* separators, size_t& start) const;
+
+  size_t split(List<String>& tokens, const tchar_t* separators, bool_t skipEmpty = true) const;
+  String& join(const List<String>& tokens, tchar_t separator);
 
   /**
   * Compute a hash code for this string.
