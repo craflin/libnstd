@@ -32,6 +32,8 @@ void_t testServer()
       {
       case Server::Event::failType:
         goto done;
+      default:
+        break;
       }
     } done: ;
   }
