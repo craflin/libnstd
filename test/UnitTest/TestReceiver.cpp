@@ -56,7 +56,6 @@ void testReceiver()
     }
   };
 
-
   // test simple connect and disconnect
   {
     MyEmitter emitter;
@@ -203,5 +202,37 @@ void testReceiver()
     Receiver::connect(&emitter2, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
     emitter->emitMySignal("test2");
     emitter2.emitMySignal("test2");
+  }
+
+  // test signal/slot with 8 arguments
+  {
+    class MyEmitter8 : public Emitter
+    {
+    public:
+      virtual ~MyEmitter8() {}
+      void emitMySignal()
+      {
+        emit(&MyEmitter8::mySignal, 1, 2, 3, 4, 5, 6, 7, 8);
+      }
+    public: // signals
+      void mySignal(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {}
+    };
+
+    class MyReceiver8 : public Receiver
+    {
+    public:
+      bool slotCalled;
+      MyReceiver8() : slotCalled(false) {}
+    public: // slots
+      virtual void mySlot(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {slotCalled = true;}
+    };
+
+    MyEmitter8 emitter;
+    MyReceiver8 receiver;
+    Receiver::connect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
+    emitter.emitMySignal();
+    Receiver::disconnect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
+    emitter.emitMySignal();
+
   }
 }
