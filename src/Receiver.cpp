@@ -4,7 +4,7 @@
 
 Receiver::~Receiver()
 {
-  for(Map<Emitter*, List<Signal> >::Iterator i = connections.begin(); i != connections.end(); ++i)
+  for(Map<Emitter*, List<Signal> >::Iterator i = slotData.begin(); i != slotData.end(); ++i)
   {
     Emitter* emitter = i.key();
     const List<Signal>& signals = *i;
@@ -24,11 +24,7 @@ Receiver::~Receiver()
               signalData.dirty = true;
             }
             else
-            {
               signalData.slots.remove(i);
-              if(signalData.slots.isEmpty())
-                emitter->signalData.remove(it);
-            }
             break;
           }
       }
@@ -46,8 +42,8 @@ void Receiver::connect(Emitter* emitter, void* signal, Receiver* receiver, void*
   slotData.object = object;
   slotData.slot = slot;
 
-  Map<Emitter*, List<Receiver::Signal> >::Iterator it2 = receiver->connections.find(emitter);
-  Receiver::Signal& signalData2 = (it2 == receiver->connections.end() ? receiver->connections.insert(emitter, List<Receiver::Signal>()) : it2)->append(Receiver::Signal());
+  Map<Emitter*, List<Receiver::Signal> >::Iterator it2 = receiver->slotData.find(emitter);
+  Receiver::Signal& signalData2 = (it2 == receiver->slotData.end() ? receiver->slotData.insert(emitter, List<Receiver::Signal>()) : it2)->append(Receiver::Signal());
   signalData2.signal = signal;
   signalData2.slot = slot;
 }
@@ -68,22 +64,16 @@ void Receiver::disconnect(Emitter* emitter, void* signal, Receiver* receiver, vo
         signalData.dirty = true;
       }
       else
-      {
         signalData.slots.remove(i);
-        if(signalData.slots.isEmpty())
-          emitter->signalData.remove(it);
-      }
       break;
     }
 
-  Map<Emitter*, List<Receiver::Signal> >::Iterator it2 = receiver->connections.find(emitter);
+  Map<Emitter*, List<Receiver::Signal> >::Iterator it2 = receiver->slotData.find(emitter);
   List<Receiver::Signal>& signals = *it2;
   for(List<Receiver::Signal>::Iterator i = signals.begin(); i != signals.end(); ++i)
     if(i->signal == signal && i->slot == slot)
     {
       signals.remove(i);
-      if(signals.isEmpty())
-        receiver->connections.remove(it2);
       break;
     }
 }

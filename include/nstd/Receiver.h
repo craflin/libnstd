@@ -28,7 +28,7 @@ private:
   };
 
 private:
-  Map<Emitter*, List<Signal> > connections;
+  Map<Emitter*, List<Signal> > slotData;
 
 private:
   static void connect(Emitter* emitter, void* signal, Receiver* receiver, void* object, void* slot);

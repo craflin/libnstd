@@ -15,16 +15,14 @@ Emitter::~Emitter()
       Slot& slotData = *i;
       if(slotData.state == Slot::disconnected)
         continue;
-      Map<Emitter*, List<Receiver::Signal> >::Iterator it = slotData.receiver->connections.find(this);
-      if(it != slotData.receiver->connections.end())
+      Map<Emitter*, List<Receiver::Signal> >::Iterator it = slotData.receiver->slotData.find(this);
+      if(it != slotData.receiver->slotData.end())
       {
         List<Receiver::Signal>& signals = *it;
         for(List<Receiver::Signal>::Iterator i = signals.begin(); i != signals.end(); ++i)
           if(i->signal == signal && i->slot == slotData.slot)
           {
             signals.remove(i);
-            if(signals.isEmpty())
-              slotData.receiver->connections.remove(it);
             break;
           }
       }

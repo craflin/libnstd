@@ -69,24 +69,6 @@ private:
     bool dirty;
 
     SignalData() : activation(0), dirty(false) {}
-
-    void cleanup()
-    {
-      for(List<Slot>::Iterator i = slots.begin(), end = slots.end(); i != end;)
-        switch(i->state)
-        {
-        case Slot::disconnected:
-          i = slots.remove(i);
-          break;
-        case Slot::connecting:
-          i->state = Slot::connected;
-        default:
-          ++i;
-        }
-      // todo: remove slot data?
-      //if(slots.isEmpty())
-      //  ??
-    }
   };
 
   struct SignalActivation
@@ -118,7 +100,17 @@ private:
       if(!invalidated)
       {
         if(data && !(data->activation = next) && data->dirty)
-          data->cleanup();
+          for(List<Slot>::Iterator i = data->slots.begin(), end = data->slots.end(); i != end;)
+            switch(i->state)
+            {
+            case Slot::disconnected:
+              i = data->slots.remove(i);
+              break;
+            case Slot::connecting:
+              i->state = Slot::connected;
+            default:
+              ++i;
+            }
       }
       else if(next)
         next->invalidated = true;
