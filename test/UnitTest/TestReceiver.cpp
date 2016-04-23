@@ -9,6 +9,7 @@ void testReceiver()
   class MyEmitter : public Emitter
   {
   public:
+    virtual ~MyEmitter() {}
     void emitMySignal(const String& arg)
     {
       emit(&MyEmitter::mySignal, arg);
@@ -29,6 +30,8 @@ void testReceiver()
   public:
     MyReceiver* check;
     MyEmitter* emitter;
+
+    virtual ~MyReceiver() {}
 
   public: // slots
     virtual void mySlot(String arg)
