@@ -10,17 +10,25 @@ Receiver::~Receiver()
     const List<Signal>& signals = *i;
     for(List<Signal>::Iterator i = signals.begin(); i != signals.end(); ++i)
     {
-      Signal& signalData = *i;
-      Map<void*, List<Emitter::Slot> >::Iterator it = emitter->connections.find(signalData.signal);
-      if(it != emitter->connections.end())
+      Signal& signalData1 = *i;
+      Map<void*, Emitter::SignalData>::Iterator it = emitter->signalData.find(signalData1.signal);
+      if(it != emitter->signalData.end())
       {
-        List<Emitter::Slot>& slots = *it;
-        for(List<Emitter::Slot>::Iterator i = slots.begin(); i != slots.end(); ++i)
-          if(i->receiver == this && i->slot == signalData.slot)
+        Emitter::SignalData& signalData = *it;
+        for(List<Emitter::Slot>::Iterator i = signalData.slots.begin(); i != signalData.slots.end(); ++i)
+          if(i->receiver == this && i->slot == signalData1.slot)
           {
-            slots.remove(i);
-            if(slots.isEmpty())
-              emitter->connections.remove(it);
+            if(signalData.activation)
+            {
+              i->state = Emitter::Slot::disconnected;
+              signalData.dirty = true;
+            }
+            else
+            {
+              signalData.slots.remove(i);
+              if(signalData.slots.isEmpty())
+                emitter->signalData.remove(it);
+            }
             break;
           }
       }
@@ -28,31 +36,43 @@ Receiver::~Receiver()
   }
 }
 
-void Receiver::connect(Emitter* emitter, void* signal, Receiver* receiver, void* slot)
+void Receiver::connect(Emitter* emitter, void* signal, Receiver* receiver, void* object, void* slot)
 {
-  Map<void*, List<Emitter::Slot> >::Iterator it = emitter->connections.find(*(void**)&signal);
-  Emitter::Slot& slotData = (it == emitter->connections.end() ? emitter->connections.insert(signal, List<Emitter::Slot>()) : it)->append(Emitter::Slot());
+  Map<void*, Emitter::SignalData>::Iterator it = emitter->signalData.find(signal);
+  Emitter::SignalData& signalData = it == emitter->signalData.end() ? *emitter->signalData.insert(signal, Emitter::SignalData()) : *it;
+  Emitter::Slot& slotData = signalData.slots.append(Emitter::Slot());
+  slotData.state = signalData.activation ? Emitter::Slot::connecting : Emitter::Slot::connected;
   slotData.receiver = receiver;
+  slotData.object = object;
   slotData.slot = slot;
 
   Map<Emitter*, List<Receiver::Signal> >::Iterator it2 = receiver->connections.find(emitter);
-  Receiver::Signal& signalData = (it2 == receiver->connections.end() ? receiver->connections.insert(emitter, List<Receiver::Signal>()) : it2)->append(Receiver::Signal());
-  signalData.signal = signal;
-  signalData.slot = slot;
+  Receiver::Signal& signalData2 = (it2 == receiver->connections.end() ? receiver->connections.insert(emitter, List<Receiver::Signal>()) : it2)->append(Receiver::Signal());
+  signalData2.signal = signal;
+  signalData2.slot = slot;
 }
 
 void Receiver::disconnect(Emitter* emitter, void* signal, Receiver* receiver, void* slot)
 {
-  Map<void*, List<Emitter::Slot> >::Iterator it = emitter->connections.find(signal);
-  if(it == emitter->connections.end())
+  Map<void*, Emitter::SignalData>::Iterator it = emitter->signalData.find(signal);
+  if(it == emitter->signalData.end())
     return;
-  List<Emitter::Slot>& slots = *it;
-  for(List<Emitter::Slot>::Iterator i = slots.begin(); i != slots.end(); ++i)
+
+  Emitter::SignalData& signalData = *it;
+  for(List<Emitter::Slot>::Iterator i = signalData.slots.begin(); i != signalData.slots.end(); ++i)
     if(i->receiver == receiver && i->slot == slot)
     {
-      slots.remove(i);
-      if(slots.isEmpty())
-        emitter->connections.remove(it);
+      if(signalData.activation)
+      {
+        i->state = Emitter::Slot::disconnected;
+        signalData.dirty = true;
+      }
+      else
+      {
+        signalData.slots.remove(i);
+        if(signalData.slots.isEmpty())
+          emitter->signalData.remove(it);
+      }
       break;
     }
 

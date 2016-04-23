@@ -11,22 +11,14 @@ class Receiver
 public:
   ~Receiver();
 
-  template<class X, class Y> void connect(X* src, void (X::*signal)(), void (Y::*slot)()) {connect(src, *(void**)&signal, this, *(void**)&slot);}
-  template<class X, class Y, typename A> void connect(X* src, void (X::*signal)(A), void (Y::*slot)(A)) {connect(src, *(void**)&signal, this, *(void**)&slot);}
-  template<class X, class Y, typename A, typename B> void connect(X* src, void (X::*signal)(A, B), void (Y::*slot)(A, B)) {connect(src, *(void**)&signal, this, *(void**)&slot);}
-
-  template<class X, class Y> void disconnect(X* src, void (X::*signal)(), void (Y::*slot)()) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
-  template<class X, class Y, typename A> void disconnect(X* src, void (X::*signal)(A), void (Y::*slot)(A)) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
-  template<class X, class Y, typename A, typename B> void disconnect(X* src, void (X::*signal)(A, B), void (Y::*slot)(A, B)) {disconnect(src, *(void**)&signal, this, *(void**)&slot);}
-
 public:
-  template<class X, class Y> static void connect(X* src, void (X::*signal)(), Y* dest, void (Y::*slot)()) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
-  template<class X, class Y, typename A> static void connect(X* src, void (X::*signal)(A), Y* dest, void (Y::*slot)(A)) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
-  template<class X, class Y, typename A, typename B> static void connect(X* src, void (X::*signal)(A, B), Y* dest, void (Y::*slot)(A, B)) {connect(src, *(void**)&signal, dest, *(void**)&slot);}
+  template<class X, class Y, class V, class W> static void connect(V* src, void (X::*signal)(), W* dest, void (Y::*slot)()) {X* x = src; Y* y = dest; connect(x, *(void**)&signal, y, y, *(void**)&slot);}
+  template<class X, class Y, class V, class W, typename A> static void connect(V* src, void (X::*signal)(A), W* dest, void (Y::*slot)(A)) {X* x = src; Y* y = dest; connect(x, *(void**)&signal, y, y, *(void**)&slot);}
+  template<class X, class Y, class V, class W, typename A, typename B> static void connect(V* src, void (X::*signal)(A, B), W* dest, void (Y::*slot)(A, B)) {X* x = src; Y* y = dest; connect(x, *(void**)&signal, y, y, *(void**)&slot);}
 
-  template<class X, class Y> static void disconnect(X* src, void (X::*signal)(), Y* dest, void (Y::*slot)()) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
-  template<class X, class Y, typename A> static void disconnect(X* src, void (X::*signal)(A), Y* dest, void (Y::*slot)(A)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
-  template<class X, class Y, typename A, typename B> static void disconnect(X* src, void (X::*signal)(A, B), Y* dest, void (Y::*slot)(A, B)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
+  template<class X, class Y, class V, class W> static void disconnect(V* src, void (X::*signal)(), W* dest, void (Y::*slot)()) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
+  template<class X, class Y, class V, class W, typename A> static void disconnect(V* src, void (X::*signal)(A), W* dest, void (Y::*slot)(A)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
+  template<class X, class Y, class V, class W, typename A, typename B> static void disconnect(V* src, void (X::*signal)(A, B), W* dest, void (Y::*slot)(A, B)) {disconnect(src, *(void**)&signal, dest, *(void**)&slot);}
 
 private:
   struct Signal
@@ -39,7 +31,7 @@ private:
   Map<Emitter*, List<Signal> > connections;
 
 private:
-  static void connect(Emitter* emitter, void* signal, Receiver* receiver, void* slot);
+  static void connect(Emitter* emitter, void* signal, Receiver* receiver, void* object, void* slot);
   static void disconnect(Emitter* emitter, void* signal, Receiver* receiver, void* slot);
 
 private:

@@ -4,13 +4,17 @@
 
 Emitter::~Emitter()
 {
-  for(Map<void*, List<Slot> >::Iterator i = connections.begin(); i != connections.end(); ++i)
+  for(Map<void*, SignalData>::Iterator i = signalData.begin(); i != signalData.end(); ++i)
   {
     void* signal = i.key();
-    const List<Slot>& slots = *i;
-    for(List<Slot>::Iterator i = slots.begin(); i != slots.end(); ++i)
+    SignalData& data = *i;
+    if(data.activation)
+      data.activation->invalidated = true;
+    for(List<Slot>::Iterator i = data.slots.begin(), end = data.slots.end(); i != end; ++i)
     {
       Slot& slotData = *i;
+      if(slotData.state == Slot::disconnected)
+        continue;
       Map<Emitter*, List<Receiver::Signal> >::Iterator it = slotData.receiver->connections.find(this);
       if(it != slotData.receiver->connections.end())
       {
@@ -26,12 +30,4 @@ Emitter::~Emitter()
       }
     }
   }
-}
-
-List<Emitter::Slot>::Iterator Emitter::findSlots(void* signal, List<Slot>::Iterator& start)
-{
-  Map<void*, List<Slot> >::Iterator it = connections.find(*(void**)&signal);
-  if(it == connections.end())
-    return start = connections.end()->end();
-  return start = it->begin(), it->end();
 }
