@@ -37,7 +37,13 @@ void Receiver::connect(Emitter* emitter, void* signal, Receiver* receiver, void*
   Map<void*, Emitter::SignalData>::Iterator it = emitter->signalData.find(signal);
   Emitter::SignalData& signalData = it == emitter->signalData.end() ? *emitter->signalData.insert(signal, Emitter::SignalData()) : *it;
   Emitter::Slot& slotData = signalData.slots.append(Emitter::Slot());
-  slotData.state = signalData.activation ? Emitter::Slot::connecting : Emitter::Slot::connected;
+  if(signalData.activation)
+  {
+    slotData.state = Emitter::Slot::connecting;
+    signalData.dirty = true;
+  }
+  else
+    slotData.state = Emitter::Slot::connected;
   slotData.receiver = receiver;
   slotData.object = object;
   slotData.slot = slot;
