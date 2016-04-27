@@ -54,46 +54,8 @@ private:
     SignalData* data;
     List<Slot>::Iterator begin;
     List<Slot>::Iterator end;
-    SignalActivation(Emitter* emitter, void* signal) : invalidated(false)
-    {
-      Map<void*, SignalData>::Iterator it = emitter->signalData.find(*(void**)&signal);
-      if(it == emitter->signalData.end())
-      {
-        data = 0;
-        next = 0;
-      }
-      else
-      {
-        data = &*it;
-        next = data->activation;
-        data->activation = this;
-        begin = data->slots.begin();
-        end = data->slots.end();
-      }
-    }
-    ~SignalActivation()
-    {
-      if(!invalidated)
-      {
-        if(data && !(data->activation = next) && data->dirty)
-        {
-          for(List<Slot>::Iterator i = data->slots.begin(), end = data->slots.end(); i != end;)
-            switch(i->state)
-            {
-            case Slot::disconnected:
-              i = data->slots.remove(i);
-              break;
-            case Slot::connecting:
-              i->state = Slot::connected;
-            default:
-              ++i;
-            }
-          data->dirty = false;
-        }
-      }
-      else if(next)
-        next->invalidated = true;
-    }
+    SignalActivation(Emitter* emitter, void* signal);
+    ~SignalActivation();
   };
 
 private:
