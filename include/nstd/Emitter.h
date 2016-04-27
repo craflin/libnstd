@@ -76,6 +76,7 @@ private:
       if(!invalidated)
       {
         if(data && !(data->activation = next) && data->dirty)
+        {
           for(List<Slot>::Iterator i = data->slots.begin(), end = data->slots.end(); i != end;)
             switch(i->state)
             {
@@ -87,6 +88,8 @@ private:
             default:
               ++i;
             }
+          data->dirty = false;
+        }
       }
       else if(next)
         next->invalidated = true;
