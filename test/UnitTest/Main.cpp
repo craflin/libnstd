@@ -33,6 +33,7 @@ void_t testMutex();
 void_t testPool();
 void_t testServer();
 void_t testMultiMap();
+void_t testError();
 
 void_t testMemoryAllocSmall()
 {
@@ -836,13 +837,6 @@ void_t testArrayString()
   ASSERT(myArray.back() == _T("2"));
 }
 
-void_t testError()
-{
-  File file;
-  ASSERT(!file.open(_T("thisshouldbeanonexisting file")));
-  ASSERT(!Error::getErrorString().isEmpty());
-}
-
 void_t testTime()
 {
   String test = Time::toString(123 * 1000, _T("%Y-%m-%d %H:%M:%S"), true);
@@ -1022,13 +1016,13 @@ int_t main(int_t argc, char_t* argv[])
   testFileName();
   testArray();
   testArrayString();
-  testError();
   testDirectory();
   testTime();
   testProcess();
   testMap();
   testPool();
   testMultiMap();
+  testError();
 
   Console::printf(_T("%s\n"), _T("done"));
 
