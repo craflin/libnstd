@@ -43,7 +43,12 @@ Time::Time(bool_t utc) : utc(utc)
 {
   time_t now;
   ::time(&now);
-  tm* tm = utc ? ::gmtime(&now) : ::localtime(&now);
+#ifdef _WIN32
+  tm* tm = utc ? ::gmtime(&now) : ::localtime(&now); // win32 gmtime and localtime are thread save
+#else
+  struct tm tmBuf;
+  tm* tm = utc ? ::gmtime_r(&now, &tmBuf) : ::localtime_r(&now, &tmBuf);
+#endif
   sec = tm->tm_sec;
   min = tm->tm_min;
   hour = tm->tm_hour;
@@ -58,7 +63,12 @@ Time::Time(bool_t utc) : utc(utc)
 Time::Time(int64_t time, bool_t utc) : utc(utc)
 {
   time_t now = (time_t)(time / 1000LL);
-  tm* tm = utc ? ::gmtime(&now) : ::localtime(&now);
+#ifdef _WIN32
+  tm* tm = utc ? ::gmtime(&now) : ::localtime(&now); // win32 gmtime and localtime are thread save
+#else
+  struct tm tmBuf;
+  tm* tm = utc ? ::gmtime_r(&now, &tmBuf) : ::localtime_r(&now, &tmBuf);
+#endif
   sec = tm->tm_sec;
   min = tm->tm_min;
   hour = tm->tm_hour;
