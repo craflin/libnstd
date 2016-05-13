@@ -5,6 +5,9 @@
 #include <errno.h>
 #include <cstring>
 #include <pthread.h>
+#include <sched.h>
+#include <unistd.h>
+#include <sys/syscall.h>
 #endif
 
 #include <nstd/Error.h>
@@ -47,7 +50,7 @@ public:
 #ifdef _WIN32
 CRITICAL_SECTION Error::Private::cs;
 #else
-pthread_mutex_t CRITICAL_SECTION Error::Private::mutex;
+pthread_mutex_t Error::Private::mutex;
 #endif
 Map<uint32_t, String> Error::Private::userErrorStrings;
 Error::Private::Framework Error::Private::framework;
@@ -84,7 +87,7 @@ String Error::getErrorString(uint_t error)
 #ifdef _WIN32
     uint32_t threadId = (uint32_t)GetCurrentThreadId();
 #else
-    uint32_t threadId = (uint32_t)pthread_self();
+    uint32_t threadId = (uint32_t)syscall(__NR_gettid);
 #endif
     Map<uint32_t, String>::Iterator it = Private::userErrorStrings.find(threadId);
     if(it != Private::userErrorStrings.end())
@@ -129,7 +132,7 @@ void_t Error::setErrorString(const String& error)
 #ifdef _WIN32
   uint32_t threadId = (uint32_t)GetCurrentThreadId();
 #else
-  uint32_t threadId = (uint32_t)pthread_self();
+  uint32_t threadId = (uint32_t)syscall(__NR_gettid);
 #endif
 
   String* threadErrorMsg = 0;
@@ -148,9 +151,8 @@ void_t Error::setErrorString(const String& error)
     else
       CloseHandle(handle);
 #else
-    int policy;
-    struct sched_param param;
-    if(pthread_getschedparam((pthread_t)i.key(), &policy, &param) != 0 && errno == ESRCH)
+    cpu_set_t cpuset;
+    if(sched_getaffinity((pid_t)i.key(), sizeof(cpu_set_t), &cpuset) != 0)
     {
       Private::userErrorStrings.remove(i);
       continue;
