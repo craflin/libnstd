@@ -4,6 +4,7 @@
 #else
 #include <pthread.h>
 #include <unistd.h> // usleep
+#include <sys/syscall.h>
 #endif
 
 #include <nstd/Debug.h>
@@ -121,6 +122,6 @@ uint32_t Thread::getCurrentThreadId()
 #ifdef _WIN32
   return (uint32_t)GetCurrentThreadId();
 #else
-  return (uint32_t)pthread_self();
+  return (uint32_t)syscall(__NR_gettid);
 #endif
 }
