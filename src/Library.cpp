@@ -10,7 +10,7 @@
 
 #include <nstd/Library.h>
 #include <nstd/Debug.h>
-#ifdef _WIN32
+#ifndef _WIN32
 #include <nstd/Error.h>
 #endif
 
@@ -39,7 +39,12 @@ bool_t Library::load(const String& name)
   if(library)
     return false;
   library = dlopen((const char_t*)name, RTLD_NOW | RTLD_GLOBAL);
-  return library != 0;
+  if(!library)
+  {
+    Error::setErrorString(String::fromCString(dlerror()));
+    return false;
+  }
+  return true;
 #endif
 }
 
@@ -56,16 +61,12 @@ void_t* Library::findSymbol(const String& name)
   return (void_t*)GetProcAddress((HMODULE)library, (const tchar_t*)name);
 #endif
 #else
-  return dlsym(library, (const tchar_t*)name);
-#endif
-}
-
-String Library::getErrorString()
-{
-#ifdef _WIN32
-  return Error::getErrorString();
-#else
-  const tchar_t* error = dlerror();
-  return String(error, String::length(error));
+  void_t* sym = dlsym(library, (const tchar_t*)name);
+  if(!sym)
+  {
+    Error::setErrorString(String::fromCString(dlerror()));
+    return 0;
+  }
+  return sym;
 #endif
 }

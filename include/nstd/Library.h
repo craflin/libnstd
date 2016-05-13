@@ -13,8 +13,6 @@ public:
 
   void_t* findSymbol(const String& name);
 
-  String getErrorString();
-
 private:
   void_t* library;
 
