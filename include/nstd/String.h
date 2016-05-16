@@ -25,6 +25,8 @@ public:
       data = other.data;
       Atomic::increment(data->ref);
     }
+    else if(other.data == &emptyData)
+      data = &emptyData;
     else
     {
       size_t capacity;
@@ -177,6 +179,8 @@ public:
     }
     else
     {
+      if(data->ref && Atomic::decrement(data->ref) == 0)
+        Memory::free(data);
       size_t capacity;
       data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
       data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
