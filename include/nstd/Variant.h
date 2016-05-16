@@ -22,86 +22,167 @@ public:
     stringType,
   };
 
-  Variant() : type(nullType) {data.data = 0;}
+  Variant() : data2(&nullData) {}
   ~Variant() {clear();}
 
-  Variant(const Variant& other) : type(other.type)
+  Variant(const Variant& other)
   {
-    switch(other.type)
+    if(other.data2->ref)
     {
-    case nullType: data.data = 0; break;
-    case boolType: data.boolData = other.data.boolData; break;
-    case doubleType: data.doubleData = other.data.doubleData; break;
-    case intType: data.intData = other.data.intData; break;
-    case uintType: data.uintData = other.data.uintData; break;
-    case int64Type: data.int64Data = other.data.int64Data; break;
-    case uint64Type: data.uint64Data = other.data.uint64Data; break;
-    case mapType: data.data = new HashMap<String, Variant>(*(const HashMap<String, Variant>*)other.data.data); break;
-    case listType: data.data = new List<Variant>(*(const List<Variant>*)other.data.data); break;
-    case stringType: data.data = new String(*(const String*)other.data.data); break;
+      data2 = other.data2;
+      Atomic::increment(data2->ref);
+    }
+    else switch(other.data2->type)
+    {
+      case nullType:
+      case boolType:
+        _data2.type = boolType;
+        _data2.ref = 0;
+        _data2.data.boolData = other.data2->data.boolData;
+        data2 = &_data2;
+        break;
+      case intType:
+      case uintType:
+        _data2.type = other.data2->type;
+        _data2.ref = 0;
+        _data2.data.intData = other.data2->data.intData;
+        data2 = &_data2;
+        break;
+      case doubleType:
+      case int64Type:
+      case uint64Type:
+        _data2.type = other.data2->type;
+        _data2.ref = 0;
+        _data2.data.int64Data = other.data2->data.int64Data;
+        data2 = &_data2;
+        break;
+#ifdef ASSERT
+      case mapType:
+      case listType:
+      case stringType:
+        ASSERT(false);
+        // no break
+#endif
+      default:
+        data2 = &nullData;
+        break;
+        break;
     }
   }
 
-  Variant(bool_t val) : type(boolType) {data.boolData = val;}
-  Variant(double val) : type(doubleType) {data.doubleData = val;}
-  Variant(int_t val) : type(intType) {data.intData = val;}
-  Variant(uint_t val) : type(uintType) {data.uintData = val;}
-  Variant(int64_t val) : type(int64Type) {data.int64Data = val;}
-  Variant(uint64_t val) : type(uint64Type) {data.uint64Data = val;}
-  Variant(const HashMap<String, Variant>& val) : type(mapType) {data.data = new HashMap<String, Variant>(val);}
-  Variant(const List<Variant>& val) : type(listType) {data.data = new List<Variant>(val);}
-  Variant(const String& val) : type(stringType) {data.data = new String(val);}
+  Variant(bool_t val) : data2(&_data2) {_data2.type = boolType; _data2.ref = 0; _data2.data.boolData = val;}
+  Variant(double val) : data2(&_data2) {_data2.type = doubleType; _data2.ref = 0; _data2.data.doubleData = val;}
+  Variant(int_t val) : data2(&_data2) {_data2.type = intType; _data2.ref = 0; _data2.data.intData = val;}
+  Variant(uint_t val) : data2(&_data2) {_data2.type = uintType; _data2.ref = 0; _data2.data.uintData = val;}
+  Variant(int64_t val) : data2(&_data2) {_data2.type = int64Type; _data2.ref = 0; _data2.data.int64Data = val;}
+  Variant(uint64_t val) : data2(&_data2) {_data2.type = uint64Type; _data2.ref = 0; _data2.data.uint64Data = val;}
+
+  Variant(const HashMap<String, Variant>& val)
+  {
+    data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+    HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data2 + 1);
+    new (map) HashMap<String, Variant>(val);
+    data2->type = mapType;
+    data2->ref = 1;
+  }
+
+  Variant(const List<Variant>& val)
+  {
+    data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+    List<Variant>* list = (List<Variant>*)(data2 + 1);
+    new (list) List<Variant>(val);
+    data2->type = listType;
+    data2->ref = 1;
+  }
+
+  Variant(const String& val)
+  {
+    data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+    String* string = (String*)(data2 + 1);
+    new (string) String(val);
+    data2->type = stringType;
+    data2->ref = 1;
+  }
 
   void_t clear()
   {
-    switch(type)
+    if(data2->ref && Atomic::decrement(data2->ref) == 0)
     {
-    case mapType: delete (HashMap<String, Variant>*)data.data; break;
-    case listType: delete (List<Variant>*)data.data; break;
-    case stringType: delete (String*)data.data; break;
-    default: break;
+      switch(data2->type)
+      {
+      case mapType: ((HashMap<String, Variant>*)(data2 + 1))->~HashMap<String, Variant>(); break;
+      case listType: ((List<Variant>*)(data2 + 1))->~List<Variant>(); break;
+      case stringType: ((String*)(data2 + 1))->~String(); break;
+      default: break;
+      }
+      Memory::free(data2);
     }
-    type = nullType;
-    data.data = 0;
+    data2 = &nullData;
   }
 
   Variant& operator=(const Variant& other)
   {
     clear();
-    type = other.type;
-    switch(other.type)
+    if(other.data2->ref)
     {
-    case nullType: data.data = 0; break;
-    case boolType: data.boolData = other.data.boolData; break;
-    case doubleType: data.doubleData = other.data.doubleData; break;
-    case intType: data.intData = other.data.intData; break;
-    case uintType: data.uintData = other.data.uintData; break;
-    case int64Type: data.int64Data = other.data.int64Data; break;
-    case uint64Type: data.uint64Data = other.data.uint64Data; break;
-    case mapType: data.data = new HashMap<String, Variant>(*(const HashMap<String, Variant>*)other.data.data); break;
-    case listType: data.data = new List<Variant>(*(const List<Variant>*)other.data.data); break;
-    case stringType: data.data = new String(*(const String*)other.data.data); break;
+      data2 = other.data2;
+      Atomic::increment(data2->ref);
+    }
+    else switch(other.data2->type)
+    {
+      case boolType:
+        _data2.type = boolType;
+        _data2.ref = 0;
+        _data2.data.boolData = other.data2->data.boolData;
+        data2 = &_data2;
+        break;
+      case intType:
+      case uintType:
+        _data2.type = other.data2->type;
+        _data2.ref = 0;
+        _data2.data.intData = other.data2->data.intData;
+        data2 = &_data2;
+        break;
+      case doubleType:
+      case int64Type:
+      case uint64Type:
+        _data2.type = other.data2->type;
+        _data2.ref = 0;
+        _data2.data.int64Data = other.data2->data.int64Data;
+        data2 = &_data2;
+        break;
+#ifdef ASSERT
+      case mapType:
+      case listType:
+      case stringType:
+        ASSERT(false);
+        // no break
+#endif
+      default:
+        data2 = &nullData;
+        break;
+        break;
     }
     return *this;
   }
 
-  Type getType() const {return type;}
+  Type getType() const {return data2->type;}
 
-  bool_t isNull() const {return type == nullType;}
+  bool_t isNull() const {return data2->type == nullType;}
 
   bool_t toBool() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData;
-    case doubleType: return data.doubleData != 0.;
-    case intType: return data.intData != 0;
-    case uintType: return data.uintData != 0;
-    case int64Type: return data.int64Data != 0;
-    case uint64Type: return data.uint64Data != 0;
+    case boolType: return data2->data.boolData;
+    case doubleType: return data2->data.doubleData != 0.;
+    case intType: return data2->data.intData != 0;
+    case uintType: return data2->data.uintData != 0;
+    case int64Type: return data2->data.int64Data != 0;
+    case uint64Type: return data2->data.uint64Data != 0;
     case stringType:
       {
-        const String& string = *(const String*)data.data;
+        const String& string = *(const String*)(data2 + 1);
         return string == _T("true") || string == _T("1");
       }
     default:
@@ -111,26 +192,27 @@ public:
 
   Variant& operator=(bool_t other)
   {
-    if(type != boolType)
+    if(data2->type != boolType)
     {
       clear();
-      type = boolType;
+      data2 = &_data2;
+      _data2.type = boolType;
     }
-    data.boolData = other;
+    _data2.data.boolData = other;
     return *this;
   }
 
   double toDouble() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData ? 1. : 0.;
-    case doubleType: return data.doubleData;
-    case intType: return (double)data.intData;
-    case uintType: return (double)data.uintData;
-    case int64Type: return (double)data.int64Data;
-    case uint64Type: return (double)data.uint64Data;
-    case stringType: return ((const String*)data.data)->toDouble();
+    case boolType: return data2->data.boolData ? 1. : 0.;
+    case doubleType: return data2->data.doubleData;
+    case intType: return (double)data2->data.intData;
+    case uintType: return (double)data2->data.uintData;
+    case int64Type: return (double)data2->data.int64Data;
+    case uint64Type: return (double)data2->data.uint64Data;
+    case stringType: return ((const String*)(data2 + 1))->toDouble();
     default:
       return 0.;
     }
@@ -138,26 +220,27 @@ public:
 
   Variant& operator=(double other)
   {
-    if(type != doubleType)
+    if(data2->type != doubleType)
     {
       clear();
-      type = doubleType;
+      data2 = &_data2;
+      _data2.type = doubleType;
     }
-    data.doubleData = other;
+    _data2.data.doubleData = other;
     return *this;
   }
 
   int_t toInt() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData ? 1 : 0;
-    case doubleType: return (int_t)data.doubleData;
-    case intType: return data.intData;
-    case uintType: return (int_t)data.uintData;
-    case int64Type: return (int_t)data.int64Data;
-    case uint64Type: return (int_t)data.uint64Data;
-    case stringType: return ((const String*)data.data)->toInt();
+    case boolType: return data2->data.boolData ? 1 : 0;
+    case doubleType: return (int_t)data2->data.doubleData;
+    case intType: return data2->data.intData;
+    case uintType: return (int_t)data2->data.uintData;
+    case int64Type: return (int_t)data2->data.int64Data;
+    case uint64Type: return (int_t)data2->data.uint64Data;
+    case stringType: return ((const String*)(data2 + 1))->toInt();
     default:
       return 0;
     }
@@ -165,26 +248,27 @@ public:
 
   Variant& operator=(int_t other)
   {
-    if(type != intType)
+    if(data2->type != intType)
     {
       clear();
-      type = intType;
+      data2 = &_data2;
+      _data2.type = intType;
     }
-    data.intData = other;
+    _data2.data.intData = other;
     return *this;
   }
 
   int_t toUInt() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData ? 1 : 0;
-    case doubleType: return (uint_t)data.doubleData;
-    case intType: return (uint_t)data.intData;
-    case uintType: return data.uintData;
-    case int64Type: return (uint_t)data.int64Data;
-    case uint64Type: return (uint_t)data.uint64Data;
-    case stringType: return ((const String*)data.data)->toUInt();
+    case boolType: return data2->data.boolData ? 1 : 0;
+    case doubleType: return (uint_t)data2->data.doubleData;
+    case intType: return (uint_t)data2->data.intData;
+    case uintType: return data2->data.uintData;
+    case int64Type: return (uint_t)data2->data.int64Data;
+    case uint64Type: return (uint_t)data2->data.uint64Data;
+    case stringType: return ((const String*)(data2 + 1))->toUInt();
     default:
       return 0;
     }
@@ -192,26 +276,27 @@ public:
 
   Variant& operator=(uint_t other)
   {
-    if(type != uintType)
+    if(data2->type != uintType)
     {
       clear();
-      type = uintType;
+      data2 = &_data2;
+      _data2.type = uintType;
     }
-    data.uintData = other;
+    _data2.data.uintData = other;
     return *this;
   }
 
   int64_t toInt64() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData ? 1 : 0;
-    case doubleType: return (int64_t)data.doubleData;
-    case intType: return (int64_t)data.intData;
-    case uintType: return (int64_t)data.uintData;
-    case int64Type: return data.int64Data;
-    case uint64Type: return (int64_t)data.uint64Data;
-    case stringType: return ((const String*)data.data)->toInt64();
+    case boolType: return data2->data.boolData ? 1 : 0;
+    case doubleType: return (int64_t)data2->data.doubleData;
+    case intType: return (int64_t)data2->data.intData;
+    case uintType: return (int64_t)data2->data.uintData;
+    case int64Type: return data2->data.int64Data;
+    case uint64Type: return (int64_t)data2->data.uint64Data;
+    case stringType: return ((const String*)(data2 + 1))->toInt64();
     default:
       return 0;
     }
@@ -219,26 +304,27 @@ public:
 
   Variant& operator=(int64_t other)
   {
-    if(type != int64Type)
+    if(data2->type != int64Type)
     {
       clear();
-      type = int64Type;
+      data2 = &_data2;
+      _data2.type = int64Type;
     }
-    data.int64Data = other;
+    _data2.data.int64Data = other;
     return *this;
   }
 
   uint64_t toUInt64() const
   {
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: return data.boolData ? 1 : 0;
-    case doubleType: return (uint64_t)data.doubleData;
-    case intType: return (uint64_t)data.intData;
-    case uintType: return (uint64_t)data.uintData;
-    case int64Type: return (uint64_t)data.int64Data;
-    case uint64Type: return data.uint64Data;
-    case stringType: return ((const String*)data.data)->toUInt64();
+    case boolType: return data2->data.boolData ? 1 : 0;
+    case doubleType: return (uint64_t)data2->data.doubleData;
+    case intType: return (uint64_t)data2->data.intData;
+    case uintType: return (uint64_t)data2->data.uintData;
+    case int64Type: return (uint64_t)data2->data.int64Data;
+    case uint64Type: return data2->data.uint64Data;
+    case stringType: return ((const String*)(data2 + 1))->toUInt64();
     default:
       return 0;
     }
@@ -246,92 +332,129 @@ public:
 
   Variant& operator=(uint64_t other)
   {
-    if(type != uint64Type)
+    if(data2->type != uint64Type)
     {
       clear();
-      type = uint64Type;
+      data2 = &_data2;
+      _data2.type = uint64Type;
     }
-    data.uint64Data = other;
+    _data2.data.uint64Data = other;
     return *this;
   }
 
   const HashMap<String, Variant>& toMap() const
   {
-    if(type == mapType)
-      return *(const HashMap<String, Variant>*)data.data;
+    if(data2->type == mapType)
+      return *(const HashMap<String, Variant>*)(data2 + 1);
     static const HashMap<String, Variant> map;
     return map;
   }
 
   HashMap<String, Variant>& toMap()
   {
-    if(type != mapType)
+    if(data2->type != mapType)
     {
       clear();
-      type = mapType;
-      data.data = new HashMap<String, Variant>();
+      data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+      HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data2 + 1);
+      new (map) HashMap<String, Variant>;
+      data2->type = mapType;
+      data2->ref = 1;
+      return *map;
     }
-    return *(HashMap<String, Variant>*)data.data;
+    else if(data2->ref > 1)
+    {
+      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+      HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data2 + 1);
+      new (map) HashMap<String, Variant>(*(const HashMap<String, Variant>*)(data2 + 1));
+      clear();
+      data2 = newData;
+      data2->type = mapType;
+      data2->ref = 1;
+      return *map;
+    }
+    return *(HashMap<String, Variant>*)(data2 + 1);
   }
 
   Variant& operator=(const HashMap<String, Variant>& other)
   {
-    if(type != mapType)
+    if(data2->type != mapType || data2->ref > 1)
     {
       clear();
-      type = mapType;
-      data.data = new HashMap<String, Variant>(other);
+      data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+      HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data2 + 1);
+      new (map) HashMap<String, Variant>(other);
+      data2->type = mapType;
+      data2->ref = 1;
     }
     else
-      *(HashMap<String, Variant>*)data.data = other;
+      *(HashMap<String, Variant>*)(data2 + 1) = other;
     return *this;
   }
 
   const List<Variant>& toList() const
   {
-    if(type == listType)
-      return *(const List<Variant>*)data.data;
+    if(data2->type == listType)
+      return *(const List<Variant>*)(data2 + 1);
     static const List<Variant> list;
     return list;
   }
 
   List<Variant>& toList()
   {
-    if(type != listType)
+    if(data2->type != listType)
     {
       clear();
-      type = listType;
-      data.data = new List<Variant>();
+      data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+      List<Variant>* list = (List<Variant>*)(data2 + 1);
+      new (list) List<Variant>;
+      data2->type = listType;
+      data2->ref = 1;
+      return *list;
     }
-    return *(List<Variant>*)data.data;
+    else if(data2->ref > 1)
+    {
+      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(List< Variant>));
+      List<Variant>* list = (List<Variant>*)(data2 + 1);
+      new (list) List<Variant>(*(const List<Variant>*)(data2 + 1));
+      clear();
+      data2 = newData;
+      data2->type = listType;
+      data2->ref = 1;
+      return *list;
+    }
+    return *(List<Variant>*)(data2 + 1);
   }
 
   Variant& operator=(const List<Variant>& other)
   {
-    if(type != listType)
+    if(data2->type != listType || data2->ref > 1)
     {
       clear();
-      type = listType;
-      data.data = new List<Variant>(other);
+      data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+      List< Variant>* list = (List<Variant>*)(data2 + 1);
+      new (list) List<Variant>(other);
+      data2->type = listType;
+      data2->ref = 1;
     }
     else
-      *(List<Variant>*)data.data = other;
+      *(List<Variant>*)(data2 + 1) = other;
     return *this;
   }
 
   String toString() const
   {
-    if(type == stringType)
-      return *(const String*)data.data;
+    if(data2->type == stringType)
+      return *(const String*)(data2 + 1);
     String string;
-    switch(type)
+    switch(data2->type)
     {
-    case boolType: if(data.boolData) string = _T("true"); else string = _T("false"); break;
-    case doubleType: string.printf(_T("%f"), data.doubleData); break;
-    case intType: string.printf(_T("%d"), data.intData); break;
-    case uintType: string.printf(_T("%u"), data.uintData); break;
-    case int64Type: string.printf(_T("%lld"), data.int64Data); break;
-    case uint64Type: string.printf(_T("%llu"), data.uint64Data); break;
+    case boolType: string = data2->data.boolData ? String(_T("true")) : String(_T("false")); break;
+    case doubleType: string.printf(_T("%f"), data2->data.doubleData); break;
+    case intType: string.printf(_T("%d"), data2->data.intData); break;
+    case uintType: string.printf(_T("%u"), data2->data.uintData); break;
+    case int64Type: string.printf(_T("%lld"), data2->data.int64Data); break;
+    case uint64Type: string.printf(_T("%llu"), data2->data.uint64Data); break;
     default: break;
     }
     return string;
@@ -339,37 +462,52 @@ public:
 
   Variant& operator=(const String& other)
   {
-    if(type != stringType)
+    if(data2->type != stringType || data2->ref > 1)
     {
       clear();
-      type = stringType;
-      data.data = new String(other);
+      data2 = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+      String* string = (String*)(data2 + 1);
+      new (string) String(other);
+      data2->type = stringType;
+      data2->ref = 1;
     }
     else
-      *(String*)data.data = other;
+      *(String*)(data2 + 1) = other;
     return *this;
   }
 
   void_t swap(Variant& other)
   {
-    Type tmpType = type;
-    Data tmpData = data;
-    type = other.type;
-    data = other.data;
-    other.type = tmpType;
-    other.data = tmpData;
+    Variant tmp = other;
+    other = *this;
+    *this = tmp;
   }
 
 private:
-  Type type;
-  union Data
+  struct Data
   {
-    int_t intData;
-    uint_t uintData;
-    double doubleData;
-    bool_t boolData;
-    int64_t int64Data;
-    uint64_t uint64Data;
-    void_t* data;
-  } data;
+    Type type;
+    union Data2
+    {
+      int_t intData;
+      uint_t uintData;
+      double doubleData;
+      bool_t boolData;
+      int64_t int64Data;
+      uint64_t uint64Data;
+    } data;
+    volatile size_t ref;
+  };
+
+  static struct NullData : public Data
+  {
+    NullData()
+    {
+      type = nullType;
+      ref = 0;
+    }
+  } nullData;
+
+  Data* data2;
+  Data _data2;
 };
