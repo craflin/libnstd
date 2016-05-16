@@ -12,7 +12,7 @@ as possible. Right now it consists of following headers:
  * [Math.h](include/nstd/Math.h): Basic mathematics functions.
  * Data types:
     * [String.h](include/nstd/String.h): A lazy copying string class.
-    * [Variant.h](include/nstd/Variant.h): A variable data type for strings, lists, maps, integers and floats.
+    * [Variant.h](include/nstd/Variant.h): A lazy copying variable data type for strings, lists, maps, integers and floats.
     * [Buffer.h](include/nstd/Buffer.h): A dynamic byte buffer.
     * [Time.h](include/nstd/Time.h): Date and time functions.
  * Containers
@@ -40,7 +40,7 @@ as possible. Right now it consists of following headers:
 Design Principles
 -----------------
 
- * Be as much optimized as currently possible. (Unfortunately I do not have the time to optimize the shit out of each function, but some functions area already pretty optimized.)
+ * Be as much optimized as currently possible. (Unfortunately, I do not have the time to optimize the shit out of each function, but some classes/functions are already pretty optimized and fast than STL.)
  * Do not use macros except for code that should be excluded in release builds.
  * Use templates only when it is required to improve performance.
  * Do not include system header files in libnstd header files.
