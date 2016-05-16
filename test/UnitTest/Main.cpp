@@ -34,6 +34,7 @@ void_t testMultiMap();
 void_t testError();
 void_t testString();
 void_t testMemory();
+void_t testVariant();
 
 void_t testConsolePrintf()
 {
@@ -881,6 +882,7 @@ int_t main(int_t argc, char_t* argv[])
   testPool();
   testMultiMap();
   testError();
+  testVariant();
 
   Console::printf(_T("%s\n"), _T("done"));
 
