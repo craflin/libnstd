@@ -17,7 +17,6 @@
 #include <nstd/Map.h>
 #include <nstd/Math.h>
 
-#include <cstring>
 #include <cstdlib>
 
 void_t testProcess();
@@ -34,41 +33,7 @@ void_t testServer();
 void_t testMultiMap();
 void_t testError();
 void_t testString();
-
-void_t testMemoryAllocSmall()
-{
-  size_t size;
-  void_t* buffer = Memory::alloc(123, size);
-  ASSERT(buffer);
-  ASSERT(size >= 123);
-  ASSERT(Memory::size(buffer) == size);
-  Memory::free(buffer);
-  buffer = Memory::alloc(123, size);
-  ASSERT(size >= 123);
-  
-  char_t testBuffer[100];
-  memset(testBuffer, 'a', sizeof(testBuffer));
-  Memory::fill(buffer, 'b', size);
-  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) != 0);
-  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) == memcmp(buffer, testBuffer, sizeof(testBuffer)));
-  ASSERT(Memory::compare(testBuffer, buffer, sizeof(testBuffer)) == memcmp(testBuffer, buffer, sizeof(testBuffer)));
-  Memory::fill(buffer, 'a', size);
-  ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) == 0);
-
-  Memory::free(buffer);
-}
-
-void_t testMemoryAllocLarge()
-{
-  size_t size;
-  void_t* buffer = Memory::alloc(50000 * 5, size);
-  ASSERT(buffer);
-  ASSERT(size >= 50000 * 5);
-  Memory::free(buffer);
-  buffer = Memory::alloc(50000 * 5, size);
-  ASSERT(size >= 50000 * 5);
-  Memory::free(buffer);
-}
+void_t testMemory();
 
 void_t testConsolePrintf()
 {
@@ -891,8 +856,7 @@ int_t main(int_t argc, char_t* argv[])
   testThread();
   testSempahore();
   testMutex();
-  testMemoryAllocSmall();
-  testMemoryAllocLarge();
+  testMemory();
   //testConsolePrintf();
   //testDebugPrintf();
   testAtomic();
