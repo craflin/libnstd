@@ -1276,7 +1276,7 @@ bool_t Console::Prompt::Private::originalTermiosValid = false;
 termios Console::Prompt::Private::originalTermios;
 int Console::Prompt::Private::resizeEventFd = 0;
 #ifdef __CYGWIN__
-int ConsolePromptPrivate::resizeEventFdWrite = 0;
+int Console::Prompt::Private::resizeEventFdWrite = 0;
 #endif
 #endif
 
