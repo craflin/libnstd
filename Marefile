@@ -23,7 +23,7 @@ else {
 
 defines += "$(if $(Win32),_WIN32) $(if $(Debug),,NDEBUG) $(if $(Unicode),_UNICODE)"
 
-tests = "UnitTest Performance Console"
+tests = "UnitTest Performance Console MemoryLeak"
 
 buildDir = {
   if(host == "Win32" && tool != "vcxproj") {
@@ -50,10 +50,19 @@ targets = {
     libs = { "nstd" }
     if(tool != "vcxproj") {
       libs +=  { "pthread", "rt" }
+      if(Win32) {
+        libs += { "ws2_32" }
+        if (Debug) {
+          libs += "Dbghelp"
+        }
+      }
     }
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
       libs += { "ws2_32", "ntdll" }
+      if (Debug) {
+        libs += "Dbghelp"
+      }
     }
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,

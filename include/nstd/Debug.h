@@ -8,6 +8,8 @@ class Debug
 public:
   static int_t print(const tchar_t* str);
   static int_t printf(const tchar_t* format, ...);
+
+  static bool_t getSymbol(void* addr, const tchar_t*& file, int_t& line);
 };
 
 #ifdef _MSC_VER

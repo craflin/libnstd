@@ -16,4 +16,12 @@ public:
   static void_t fill(void_t* buffer, byte_t value, size_t count);
   static void_t zero(void_t* buffer, size_t count);
   static int_t compare(const void_t* ptr1, const void_t* ptr2, size_t count);
+
+private:
+  class Private;
+
+  friend void_t* operator new(size_t size);
+  friend void_t* operator new [](size_t size);
+  friend void_t operator delete(void_t* buffer);
+  friend void_t operator delete[](void_t* buffer);
 };

@@ -21,7 +21,7 @@
 
 #ifdef USE_PAGE_ALIGNED_ALLOCATION
 
-class _Memory
+class Memory::Private
 {
 public:
     struct PageHeader
@@ -56,9 +56,9 @@ public:
     static const size_t maxFreePageCount = 64;
 
 private:
-    static _Memory memory;
+    static Private memory;
 
-    _Memory()
+    Private()
     {
 #ifdef _WIN32
 #ifndef __CYGWIN__
@@ -71,7 +71,7 @@ private:
       pageSize = sysconf(_SC_PAGESIZE);
 #endif
     }
-    ~_Memory()
+    ~Private()
     {
 #ifdef _WIN32
       DeleteCriticalSection(&criticalSection);
@@ -82,17 +82,17 @@ private:
 #ifdef _MSC_VER
 #pragma warning(disable: 4073) 
 #pragma init_seg(lib)
-_Memory _Memory::memory;
+Memory::Private Memory::Private::memory;
 #else
-_Memory _Memory::memory __attribute__ ((init_priority (101)));
+Memory::Private Memory::Private::memory __attribute__ ((init_priority (101)));
 #endif
-size_t _Memory::pageSize;
-_Memory::FreePage* _Memory::firstFreePage = 0;
-size_t _Memory::freePageCount = 0;
+size_t Memory::Private::pageSize;
+Memory::Private::FreePage* Memory::Private::firstFreePage = 0;
+size_t Memory::Private::freePageCount = 0;
 #ifdef _WIN32
-CRITICAL_SECTION _Memory::criticalSection;
+CRITICAL_SECTION Memory::Private::criticalSection;
 #else
-pthread_mutex_t _Memory::mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t Memory::Private::mutex = PTHREAD_MUTEX_INITIALIZER;
 #endif
 
 void_t* Memory::alloc(size_t size)
@@ -104,55 +104,55 @@ void_t* Memory::alloc(size_t size)
 void_t* Memory::alloc(size_t size, size_t& rsize)
 {
 #ifdef __CYGWIN__
-  if(_Memory::pageSize == 0)
+  if(Memory::Private::pageSize == 0)
   {
-      InitializeCriticalSection(&_Memory::criticalSection);
+      InitializeCriticalSection(&Memory::Private::criticalSection);
       SYSTEM_INFO si;
       GetSystemInfo(&si);
-      _Memory::pageSize = si.dwPageSize;
+      Memory::Private::pageSize = si.dwPageSize;
   }
 #else
-  ASSERT(_Memory::pageSize > 0);
+  ASSERT(Memory::Private::pageSize > 0);
 #endif
-  size_t minAllocSize = size + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-  if(minAllocSize <= _Memory::pageSize)
+  size_t minAllocSize = size + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  if(minAllocSize <= Memory::Private::pageSize)
   {
 #ifdef _WIN32
-    EnterCriticalSection(&_Memory::criticalSection);
+    EnterCriticalSection(&Memory::Private::criticalSection);
 #else
-    pthread_mutex_lock(&_Memory::mutex);
+    pthread_mutex_lock(&Memory::Private::mutex);
 #endif
-    if(_Memory::firstFreePage)
+    if(Memory::Private::firstFreePage)
     {
-      _Memory::PageHeader* header = _Memory::firstFreePage;
-      _Memory::firstFreePage = _Memory::firstFreePage->next;
-      --_Memory::freePageCount;
+      Memory::Private::PageHeader* header = Memory::Private::firstFreePage;
+      Memory::Private::firstFreePage = Memory::Private::firstFreePage->next;
+      --Memory::Private::freePageCount;
 #ifdef _WIN32
-      LeaveCriticalSection(&_Memory::criticalSection);
+      LeaveCriticalSection(&Memory::Private::criticalSection);
 #else
-      pthread_mutex_unlock(&_Memory::mutex);
+      pthread_mutex_unlock(&Memory::Private::mutex);
 #endif
-      rsize = _Memory::pageSize - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-      header->checkValue = _Memory::headerCheckValue;
-      return (uint8_t*)header + sizeof(_Memory::PageHeader);
+      rsize = Memory::Private::pageSize - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+      header->checkValue = Memory::Private::headerCheckValue;
+      return (uint8_t*)header + sizeof(Memory::Private::PageHeader);
     }
     else
     {
 #ifdef _WIN32
-      LeaveCriticalSection(&_Memory::criticalSection);
+      LeaveCriticalSection(&Memory::Private::criticalSection);
 #else
-      pthread_mutex_unlock(&_Memory::mutex);
+      pthread_mutex_unlock(&Memory::Private::mutex);
 #endif
     }
   }
-  size_t pageCount = (minAllocSize + _Memory::pageSize - 1) / _Memory::pageSize;
-  size_t allocSize = pageCount * _Memory::pageSize;
+  size_t pageCount = (minAllocSize + Memory::Private::pageSize - 1) / Memory::Private::pageSize;
+  size_t allocSize = pageCount * Memory::Private::pageSize;
 
-  _Memory::PageHeader* header;
+  Memory::Private::PageHeader* header;
 #ifdef _WIN32
-  header = (_Memory::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+  header = (Memory::Private::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 #else
-  header = (_Memory::PageHeader*)memalign(_Memory::pageSize, allocSize);
+  header = (Memory::Private::PageHeader*)memalign(Memory::Private::pageSize, allocSize);
 #endif
   if(!header) // out of memory?
   {
@@ -161,28 +161,28 @@ void_t* Memory::alloc(size_t size, size_t& rsize)
     {
 #ifdef _WIN32
       Sleep(5000);
-      header = (_Memory::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+      header = (Memory::Private::PageHeader*)VirtualAlloc(NULL, allocSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 #else
       sleep(5);
-      header = (_Memory::PageHeader*)memalign(_Memory::pageSize, allocSize);
+      header = (Memory::Private::PageHeader*)memalign(Memory::Private::pageSize, allocSize);
 #endif
     } while(!header);
   }
-  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + allocSize - sizeof(_Memory::PageFooter));
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + allocSize - sizeof(Memory::Private::PageFooter));
   header->size = allocSize;
-  header->checkValue = _Memory::headerCheckValue;
-  footer->checkValue = _Memory::footerCheckValue;
-  rsize = allocSize - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-  return (void_t*)((uint8_t*)header + sizeof(_Memory::PageHeader));
+  header->checkValue = Memory::Private::headerCheckValue;
+  footer->checkValue = Memory::Private::footerCheckValue;
+  rsize = allocSize - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
 }
 
 size_t Memory::size(void_t* buffer)
 {
   if(!buffer) return 0;
-  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
-  if(header->checkValue != _Memory::headerCheckValue)
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  if(header->checkValue != Memory::Private::headerCheckValue)
   {
-    if(header->checkValue == _Memory::headerCheckValueUsed)
+    if(header->checkValue == Memory::Private::headerCheckValueUsed)
     {
       Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); TRAP();
       return 0;
@@ -190,21 +190,21 @@ size_t Memory::size(void_t* buffer)
     Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return 0;
   }
-  return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
+  return header->size - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
 }
 /*
 size_t Memory::pageSize()
 {
-  return _Memory::pageSize;
+  return Memory::Private::pageSize;
 }
 */
 void_t Memory::free(void_t* buffer)
 {
   if(!buffer) return;
-  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
-  if(header->checkValue != _Memory::headerCheckValue)
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  if(header->checkValue != Memory::Private::headerCheckValue)
   {
-    if(header->checkValue == _Memory::headerCheckValueUsed)
+    if(header->checkValue == Memory::Private::headerCheckValueUsed)
     {
       Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); TRAP();
       return;
@@ -212,14 +212,14 @@ void_t Memory::free(void_t* buffer)
     Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return;
   }
-  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + header->size - sizeof(_Memory::PageFooter));
-  if(footer->checkValue != _Memory::footerCheckValue)
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + header->size - sizeof(Memory::Private::PageFooter));
+  if(footer->checkValue != Memory::Private::footerCheckValue)
   {
     Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
-    footer->checkValue = _Memory::footerCheckValue;
+    footer->checkValue = Memory::Private::footerCheckValue;
   }
 
-  if(header->size > _Memory::pageSize || _Memory::freePageCount >= _Memory::maxFreePageCount)
+  if(header->size > Memory::Private::pageSize || Memory::Private::freePageCount >= Memory::Private::maxFreePageCount)
   {
 #ifdef _WIN32
     VERIFY(VirtualFree(header, 0, MEM_RELEASE));
@@ -229,21 +229,21 @@ void_t Memory::free(void_t* buffer)
     return;
   }
 
-  header->checkValue = _Memory::headerCheckValueUsed;
-  ((_Memory::FreePage*)header)->next = 0;
+  header->checkValue = Memory::Private::headerCheckValueUsed;
+  ((Memory::Private::FreePage*)header)->next = 0;
 
 #ifdef _WIN32
-  EnterCriticalSection(&_Memory::criticalSection);
+  EnterCriticalSection(&Memory::Private::criticalSection);
 #else
-  pthread_mutex_lock(&_Memory::mutex);
+  pthread_mutex_lock(&Memory::Private::mutex);
 #endif
-  ((_Memory::FreePage*)header)->next = _Memory::firstFreePage;
-  _Memory::firstFreePage = (_Memory::FreePage*)header;
-  ++_Memory::freePageCount;
+  ((Memory::Private::FreePage*)header)->next = Memory::Private::firstFreePage;
+  Memory::Private::firstFreePage = (Memory::Private::FreePage*)header;
+  ++Memory::Private::freePageCount;
 #ifdef _WIN32
-  LeaveCriticalSection(&_Memory::criticalSection);
+  LeaveCriticalSection(&Memory::Private::criticalSection);
 #else
-  pthread_mutex_unlock(&_Memory::mutex);
+  pthread_mutex_unlock(&Memory::Private::mutex);
 #endif
 }
 
@@ -273,6 +273,9 @@ void_t operator delete[](void_t* buffer)
 
 #ifdef _WIN32
 #include <Windows.h>
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 #else
 #include <cstdlib>
 #include <malloc.h>
@@ -280,23 +283,23 @@ void_t operator delete[](void_t* buffer)
 #include <cstring>
 #endif
 
-class _Memory
+class Memory::Private
 {
 public:
     struct PageHeader
     {
-      uint64_t checkValue;
       size_t size;
+      void* returnAddr;
+#ifndef NDEBUG
+      PageHeader* next;
+      PageHeader** previous;
+#endif
+      uint64_t checkValue;
     };
 
     struct PageFooter 
     {
       uint64_t checkValue;
-    };
-    
-    struct FreePage : public PageHeader
-    {
-      FreePage* next;
     };
 
     static const uint64_t headerCheckValue = 0x1235543212355432LL;
@@ -306,39 +309,89 @@ public:
 #ifdef _WIN32
     static HANDLE processHeap;
 #endif
-private:
-    static _Memory memory;
+#ifndef NDEBUG
+#ifdef _WIN32
+    static CRITICAL_SECTION criticalSection; // TODO: is it possible to use atomic operations instead?
+#else
+    // todo
+#endif
+    static PageHeader* first;
+#endif
 
-    _Memory()
+public:
+  static inline void_t* alloc(size_t minSize, size_t& rsize, void* returnAddr);
+  static inline void_t free(void_t* buffer);
+
+private:
+    static Private memory;
+
+    Private()
     {
 #ifdef _WIN32
       processHeap = GetProcessHeap();
 #endif
+#ifndef NDEBUG
+#ifdef _WIN32
+      InitializeCriticalSection(&criticalSection);
+#else
+      // todo
+#endif
+#endif
     }
+
+#ifndef NDEBUG
+    ~Private()
+    {
+      for(PageHeader* i = first; i; i = i->next)
+      {
+        const tchar_t* file;
+        int_t line;
+        if(!Debug::getSymbol(i->returnAddr, file, line))
+          Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
+        else
+#ifdef _MSC_VER
+          Debug::printf(_T("%s(%d): Found memory leak.\n"), file, line);
+#else
+          Debug::printf(_T("%s:%d: Found memory leak.\n"), file, line);
+#endif
+      }
+      if(first)
+        TRAP();
+#ifdef _WIN32
+      DeleteCriticalSection(&criticalSection);
+#endif
+    }
+#endif
 };
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4073) 
 #pragma init_seg(lib)
-_Memory _Memory::memory;
+Memory::Private Memory::Private::memory;
 #else
-_Memory _Memory::memory __attribute__ ((init_priority (101)));
+Memory::Private Memory::Private::memory __attribute__ ((init_priority (101)));
 #endif
 #ifdef _WIN32
-HANDLE _Memory::processHeap = 0;
+HANDLE Memory::Private::processHeap = 0;
+#endif
+#ifndef NDEBUG
+#ifdef _WIN32
+CRITICAL_SECTION Memory::Private::criticalSection;
+#endif
+Memory::Private::PageHeader* Memory::Private::first = 0;
 #endif
 
-void_t* Memory::alloc(size_t minSize, size_t& rsize)
+void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
 {
 #ifdef _WIN32
-  ASSERT(_Memory::processHeap);
+  ASSERT(Memory::Private::processHeap);
 #endif
-  size_t minAllocSize = minSize + (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-  _Memory::PageHeader* header;
+  size_t minAllocSize = minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  Memory::Private::PageHeader* header;
 #ifdef _WIN32
-  header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, 0, minAllocSize);
+  header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
 #else
-  header = (_Memory::PageHeader*)malloc(minAllocSize);
+  header = (Memory::Private::PageHeader*)malloc(minAllocSize);
 #endif
   if(!header) // out of memory?
   {
@@ -347,57 +400,45 @@ void_t* Memory::alloc(size_t minSize, size_t& rsize)
     {
 #ifdef _WIN32
       Sleep(5000);
-      header = (_Memory::PageHeader*)HeapAlloc(_Memory::processHeap, 0, minAllocSize);
+      header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
 #else
       sleep(5);
-      header = (_Memory::PageHeader*)malloc(minAllocSize);
+      header = (Memory::Private::PageHeader*)malloc(minAllocSize);
 #endif
     } while(!header);
   }
   size_t allocSize;
 #ifdef _WIN32
-  allocSize = HeapSize(_Memory::processHeap, 0, header);
+  allocSize = HeapSize(Memory::Private::processHeap, 0, header);
 #else
   allocSize = malloc_usable_size(header);
 #endif
-  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + allocSize - sizeof(_Memory::PageFooter));
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + allocSize - sizeof(Memory::Private::PageFooter));
   header->size = allocSize;
-  header->checkValue = _Memory::headerCheckValue;
-  footer->checkValue = _Memory::footerCheckValue;
-  rsize = allocSize - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-  return (void_t*)((uint8_t*)header + sizeof(_Memory::PageHeader));
+#ifndef NDEBUG
+  header->returnAddr = returnAddr;
+#endif
+  header->checkValue = Memory::Private::headerCheckValue;
+  footer->checkValue = Memory::Private::footerCheckValue;
+  rsize = allocSize - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+#ifndef NDEBUG
+  EnterCriticalSection(&Private::criticalSection);
+  if((header->next = Private::first))
+    header->next->previous = &header->next;
+  header->previous = &Private::first;
+  Private::first = header;
+  LeaveCriticalSection(&Private::criticalSection);
+#endif
+  return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
 }
 
-void_t* Memory::alloc(size_t size)
-{
-  size_t allocatedSize;
-  return alloc(size, allocatedSize);
-}
-
-size_t Memory::size(void_t* buffer)
-{
-  if(!buffer) return 0;
-  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
-  if(header->checkValue != _Memory::headerCheckValue)
-  {
-    if(header->checkValue == _Memory::headerCheckValueUsed)
-    {
-      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); TRAP();
-      return 0;
-    }
-    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); TRAP();
-    return 0;
-  }
-  return header->size - (sizeof(_Memory::PageHeader) + sizeof(_Memory::PageFooter));
-}
-
-void_t Memory::free(void_t* buffer)
+void_t Memory::Private::free(void_t* buffer)
 {
   if(!buffer) return;
-  _Memory::PageHeader* header = (_Memory::PageHeader*)((uint8_t*)buffer - sizeof(_Memory::PageHeader));
-  if(header->checkValue != _Memory::headerCheckValue)
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  if(header->checkValue != Memory::Private::headerCheckValue)
   {
-    if(header->checkValue == _Memory::headerCheckValueUsed)
+    if(header->checkValue == Memory::Private::headerCheckValueUsed)
     {
       Debug::print(_T("Memory::free: error: The passed buffer was already freed.\n")); TRAP();
       return;
@@ -405,39 +446,113 @@ void_t Memory::free(void_t* buffer)
     Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return;
   }
-  _Memory::PageFooter* footer = (_Memory::PageFooter*)((uint8_t*)header + header->size - sizeof(_Memory::PageFooter));
-  if(footer->checkValue != _Memory::footerCheckValue)
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + header->size - sizeof(Memory::Private::PageFooter));
+  if(footer->checkValue != Memory::Private::footerCheckValue)
   {
     Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
-    footer->checkValue = _Memory::footerCheckValue;
+    footer->checkValue = Memory::Private::footerCheckValue;
   }
+#ifndef NDEBUG
+  EnterCriticalSection(&Private::criticalSection);
+  *(header->previous) = header->next;
+  LeaveCriticalSection(&Private::criticalSection);
+#endif
 #ifdef _WIN32
-  VERIFY(HeapFree(_Memory::processHeap, 0, header));
+  VERIFY(HeapFree(Memory::Private::processHeap, 0, header));
 #else
   ::free(header);
 #endif
 }
 
+void_t* Memory::alloc(size_t minSize, size_t& rsize)
+{
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  void* returnAddr = _ReturnAddress();
+#else
+  void* returnAddr = 0; // todo
+#endif
+#else
+  void* returnAddr = 0;
+#endif
+  return Private::alloc(minSize, rsize, returnAddr);
+}
+
+void_t* Memory::alloc(size_t size)
+{
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  void* returnAddr = _ReturnAddress();
+#else
+  void* returnAddr = 0; // todo
+#endif
+#else
+  void* returnAddr = 0;
+#endif
+  size_t allocatedSize;
+  return Private::alloc(size, allocatedSize, returnAddr);
+}
+
+size_t Memory::size(void_t* buffer)
+{
+  if(!buffer) return 0;
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  if(header->checkValue != Memory::Private::headerCheckValue)
+  {
+    if(header->checkValue == Memory::Private::headerCheckValueUsed)
+    {
+      Debug::print(_T("Memory::size: error: The passed buffer was freed.\n")); TRAP();
+      return 0;
+    }
+    Debug::print(_T("Memory::size: error: The passed buffer is invalid or corrupted.\n")); TRAP();
+    return 0;
+  }
+  return header->size - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+}
+
+void_t Memory::free(void_t* buffer)
+{
+  Private::free(buffer);
+}
+
 void_t* operator new(size_t size)
 {
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  void* returnAddr = _ReturnAddress();
+#else
+  void* returnAddr = 0; // todo
+#endif
+#else
+  void* returnAddr = 0;
+#endif
   size_t allocatedSize;
-  return Memory::alloc(size, allocatedSize);
+  return Memory::Private::alloc(size, allocatedSize, returnAddr);
 }
 
 void_t* operator new [](size_t size)
 {
+#ifndef NDEBUG
+#ifdef _MSC_VER
+  void* returnAddr = _ReturnAddress();
+#else
+  void* returnAddr = 0; // todo
+#endif
+#else
+  void* returnAddr = 0;
+#endif
   size_t allocatedSize;
-  return Memory::alloc(size, allocatedSize);
+  return Memory::Private::alloc(size, allocatedSize, returnAddr);
 }
 
 void_t operator delete(void_t* buffer)
 {
-  Memory::free(buffer);
+  Memory::Private::free(buffer);
 }
 
 void_t operator delete[](void_t* buffer)
 {
-  Memory::free(buffer);
+  Memory::Private::free(buffer);
 }
 
 #endif // !USE_PAGE_ALIGNED_ALLOCATION

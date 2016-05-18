@@ -1,6 +1,9 @@
 
-#ifdef _MSC_VER
+#if defined(_WIN32)
 #include <Windows.h>
+#ifndef NDEBUG
+#include <Dbghelp.h>
+#endif
 #endif
 #include <cstdio>
 #include <cstdarg>
@@ -68,5 +71,35 @@ int_t Debug::printf(const tchar_t* format, ...)
   int_t result = vfprintf(stderr, format, ap);
   va_end(ap);
   return result;
+#endif
+}
+
+bool_t Debug::getSymbol(void* addr, const tchar_t*& file, int_t& line)
+{
+#ifndef NDEBUG
+  static bool initialized = false;
+  HANDLE hProcess = GetCurrentProcess();
+  if(!initialized)
+  {
+    if(!SymInitialize(hProcess, NULL, TRUE))
+      return false;
+    initialized = true;
+  }
+  IMAGEHLP_LINE64 ihLine;
+  ihLine.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
+  DWORD displacement;
+  if(!SymGetLineFromAddr64(hProcess, (DWORD64)addr, &displacement, &ihLine))
+    return false;
+#ifdef UNICODE
+  static wchar_t fileName[MAX_PATH];
+  mbstowcs(fileName, ihLine.FileName, strlen(ihLine.FileName));
+  file = fileName;
+#else
+  file = ihLine.FileName;
+#endif
+  line = ihLine.LineNumber;
+  return true;
+#else
+  return false;
 #endif
 }
