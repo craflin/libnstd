@@ -14,13 +14,13 @@ void_t testError()
 
   // test user error code
   {
-    Error::setErrorString("blah");
-    ASSERT(Error::getErrorString() == "blah");
+    Error::setErrorString(_T("blah"));
+    ASSERT(Error::getErrorString() == _T("blah"));
   }
 
   // test user error code again
   {
-    Error::setErrorString("blah");
-    ASSERT(Error::getErrorString() == "blah");
+    Error::setErrorString(_T("blah"));
+    ASSERT(Error::getErrorString() == _T("blah"));
   }
 }
