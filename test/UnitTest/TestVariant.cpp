@@ -20,10 +20,10 @@ void_t testVariant()
   // test map constructor
   {
     HashMap<String, Variant> map;
-    map.append("dasd", Variant(String("yes")));
+    map.append(_T("dasd"), Variant(String(_T("yes"))));
     Variant var(map);
-    ASSERT(((const Variant&)var).toMap().find("dasd")->toString() == "yes");
-    ASSERT(var.toMap().find("dasd")->toString() == "yes");
+    ASSERT(((const Variant&)var).toMap().find(_T("dasd"))->toString() == _T("yes"));
+    ASSERT(var.toMap().find(_T("dasd"))->toString() == _T("yes"));
   }
 
 }
