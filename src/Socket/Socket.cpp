@@ -429,7 +429,7 @@ ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
 
 void_t Socket::setLastError(int_t error)
 {
-  SET_ERRNO(errno);
+  SET_ERRNO(error);
 }
 
 int_t Socket::getLastError()
