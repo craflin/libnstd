@@ -17,6 +17,10 @@ public:
   static void_t zero(void_t* buffer, size_t count);
   static int_t compare(const void_t* ptr1, const void_t* ptr2, size_t count);
 
+#ifndef NDEBUG
+  static void_t dump();
+#endif
+
 private:
   class Private;
 

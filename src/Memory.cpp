@@ -283,6 +283,12 @@ void_t operator delete[](void_t* buffer)
 #include <cstring>
 #endif
 
+#ifndef NDEBUG
+#include <nstd/HashMap.h>
+#include <nstd/String.h>
+#include <nstd/MultiMap.h>
+#endif
+
 class Memory::Private
 {
 public:
@@ -464,6 +470,38 @@ void_t Memory::Private::free(void_t* buffer)
   ::free(header);
 #endif
 }
+
+#ifndef NDEBUG
+void_t Memory::dump()
+{
+  HashMap<String, size_t> allocatedMemory;
+  EnterCriticalSection(&Private::criticalSection);
+  for(Private::PageHeader* i = Private::first; i; i = i->next)
+  {
+    const tchar_t* file;
+    int_t line;
+    bool success = Debug::getSymbol(i->returnAddr, file, line);
+    String key;
+    if(success)
+#ifdef _WIN32
+      key.printf("%s(%d)", file, line);
+#else
+      key.printf("%s:%d", file, line);
+#endif
+    HashMap<String, size_t>::Iterator it = allocatedMemory.find(key);
+    if(it == allocatedMemory.end())
+      allocatedMemory.append(key, i->size);
+    else
+      *it += i->size;
+  }
+  LeaveCriticalSection(&Private::criticalSection);
+  MultiMap<size_t, String> sortedAllocatedMemory;
+  for(HashMap<String, size_t>::Iterator i = allocatedMemory.begin(), end = allocatedMemory.end(); i != end; ++i)
+    sortedAllocatedMemory.insert(*i, i.key());
+  for(MultiMap<size_t, String>::Iterator i = sortedAllocatedMemory.begin(), end = sortedAllocatedMemory.end(); i != end; ++i)
+    Debug::printf("%s: %llu bytes\n", (const tchar_t*)*i, (uint64_t)i.key());
+}
+#endif
 
 void_t* Memory::alloc(size_t minSize, size_t& rsize)
 {
