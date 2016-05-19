@@ -849,6 +849,7 @@ int_t main(int_t argc, char_t* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
+  testMemory();
   testServer();
   testSignal();
   testMonitor();
@@ -857,7 +858,6 @@ int_t main(int_t argc, char_t* argv[])
   testThread();
   testSempahore();
   testMutex();
-  testMemory();
   //testConsolePrintf();
   //testDebugPrintf();
   testAtomic();

@@ -454,7 +454,8 @@ void_t Memory::Private::free(void_t* buffer)
   }
 #ifndef NDEBUG
   EnterCriticalSection(&Private::criticalSection);
-  *(header->previous) = header->next;
+  if((*(header->previous) = header->next))
+    header->next->previous = header->previous;
   LeaveCriticalSection(&Private::criticalSection);
 #endif
 #ifdef _WIN32
