@@ -4,6 +4,10 @@
 #ifndef NDEBUG
 #include <Dbghelp.h>
 #endif
+#else
+#ifndef NDEBUG
+#include <dlfcn.h>
+#endif
 #endif
 #include <cstdio>
 #include <cstdarg>
@@ -74,9 +78,10 @@ int_t Debug::printf(const tchar_t* format, ...)
 #endif
 }
 
-bool_t Debug::getSymbol(void* addr, const tchar_t*& file, int_t& line)
-{
 #ifndef NDEBUG
+bool_t Debug::getSourceLine(void* addr, const tchar_t*& file, int_t& line)
+{
+#ifdef _WIN32
   static bool initialized = false;
   HANDLE hProcess = GetCurrentProcess();
   if(!initialized)
@@ -100,6 +105,12 @@ bool_t Debug::getSymbol(void* addr, const tchar_t*& file, int_t& line)
   line = ihLine.LineNumber;
   return true;
 #else
-  return false;
+  Dl_info dli;
+  if(dladdr(addr, &dli) == 0)
+    return false;
+  file = dli.dli_sname;
+  line;
+  return true;
 #endif
 }
+#endif

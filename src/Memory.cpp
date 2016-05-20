@@ -281,6 +281,9 @@ void_t operator delete[](void_t* buffer)
 #include <malloc.h>
 #include <unistd.h>
 #include <cstring>
+#ifndef NDEBUG
+#include <pthread.h>
+#endif
 #endif
 
 #ifndef NDEBUG
@@ -319,7 +322,7 @@ public:
 #ifdef _WIN32
     static CRITICAL_SECTION criticalSection; // TODO: is it possible to use atomic operations instead?
 #else
-    // todo
+    static pthread_mutex_t mutex;
 #endif
     static PageHeader* first;
 #endif
@@ -340,7 +343,10 @@ private:
 #ifdef _WIN32
       InitializeCriticalSection(&criticalSection);
 #else
-      // todo
+      pthread_mutexattr_t attr; // TODO: use global var for this?
+      pthread_mutexattr_init(&attr);
+      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+      VERIFY(pthread_mutex_init(&mutex, &attr) == 0);
 #endif
 #endif
     }
@@ -352,19 +358,21 @@ private:
       {
         const tchar_t* file;
         int_t line;
-        if(!Debug::getSymbol(i->returnAddr, file, line))
+        if(!Debug::getSourceLine(i->returnAddr, file, line))
           Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
         else
 #ifdef _MSC_VER
           Debug::printf(_T("%s(%d): Found memory leak.\n"), file, line);
 #else
-          Debug::printf(_T("%s:%d: Found memory leak.\n"), file, line);
+          Debug::printf(_T("%s: Found memory leak.\n"), file, line);
 #endif
       }
       if(first)
         TRAP();
 #ifdef _WIN32
       DeleteCriticalSection(&criticalSection);
+#else
+      VERIFY(pthread_mutex_destroy(&mutex) == 0);
 #endif
     }
 #endif
@@ -383,6 +391,8 @@ HANDLE Memory::Private::processHeap = 0;
 #ifndef NDEBUG
 #ifdef _WIN32
 CRITICAL_SECTION Memory::Private::criticalSection;
+#else
+pthread_mutex_t Memory::Private::mutex;
 #endif
 Memory::Private::PageHeader* Memory::Private::first = 0;
 #endif
@@ -428,12 +438,20 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
   footer->checkValue = Memory::Private::footerCheckValue;
   rsize = allocSize - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
 #ifndef NDEBUG
+#ifdef _WIN32
   EnterCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_lock(&Private::mutex) == 0);
+#endif
   if((header->next = Private::first))
     header->next->previous = &header->next;
   header->previous = &Private::first;
   Private::first = header;
+#ifdef _WIN32
   LeaveCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
+#endif
 #endif
   return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
 }
@@ -459,10 +477,18 @@ void_t Memory::Private::free(void_t* buffer)
     footer->checkValue = Memory::Private::footerCheckValue;
   }
 #ifndef NDEBUG
-  EnterCriticalSection(&Private::criticalSection);
+#ifdef _WIN32
+    EnterCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_lock(&Private::mutex) == 0);
+#endif
   if((*(header->previous) = header->next))
     header->next->previous = header->previous;
-  LeaveCriticalSection(&Private::criticalSection);
+#ifdef _WIN32
+    LeaveCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
+#endif
 #endif
 #ifdef _WIN32
   VERIFY(HeapFree(Memory::Private::processHeap, 0, header));
@@ -475,18 +501,22 @@ void_t Memory::Private::free(void_t* buffer)
 void_t Memory::dump()
 {
   HashMap<String, size_t> allocatedMemory;
+#ifdef _WIN32
   EnterCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_lock(&Private::mutex) == 0);
+#endif
   for(Private::PageHeader* i = Private::first; i; i = i->next)
   {
     const tchar_t* file;
     int_t line;
-    bool success = Debug::getSymbol(i->returnAddr, file, line);
+    bool success = Debug::getSourceLine(i->returnAddr, file, line);
     String key;
     if(success)
 #ifdef _WIN32
       key.printf("%s(%d)", file, line);
 #else
-      key.printf("%s:%d", file, line);
+      key.printf("%s", file);
 #endif
     HashMap<String, size_t>::Iterator it = allocatedMemory.find(key);
     if(it == allocatedMemory.end())
@@ -494,7 +524,11 @@ void_t Memory::dump()
     else
       *it += i->size;
   }
+#ifdef _WIN32
   LeaveCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
+#endif
   MultiMap<size_t, String> sortedAllocatedMemory;
   for(HashMap<String, size_t>::Iterator i = allocatedMemory.begin(), end = allocatedMemory.end(); i != end; ++i)
     sortedAllocatedMemory.insert(*i, i.key());
@@ -509,7 +543,7 @@ void_t* Memory::alloc(size_t minSize, size_t& rsize)
 #ifdef _MSC_VER
   void* returnAddr = _ReturnAddress();
 #else
-  void* returnAddr = 0; // todo
+  void* returnAddr = __builtin_extract_return_addr(__builtin_return_address(0));
 #endif
 #else
   void* returnAddr = 0;
@@ -523,7 +557,7 @@ void_t* Memory::alloc(size_t size)
 #ifdef _MSC_VER
   void* returnAddr = _ReturnAddress();
 #else
-  void* returnAddr = 0; // todo
+  void* returnAddr = __builtin_extract_return_addr(__builtin_return_address(0));
 #endif
 #else
   void* returnAddr = 0;
@@ -560,7 +594,7 @@ void_t* operator new(size_t size)
 #ifdef _MSC_VER
   void* returnAddr = _ReturnAddress();
 #else
-  void* returnAddr = 0; // todo
+  void* returnAddr = __builtin_extract_return_addr(__builtin_return_address(0));
 #endif
 #else
   void* returnAddr = 0;
@@ -575,7 +609,7 @@ void_t* operator new [](size_t size)
 #ifdef _MSC_VER
   void* returnAddr = _ReturnAddress();
 #else
-  void* returnAddr = 0; // todo
+  void* returnAddr = __builtin_extract_return_addr(__builtin_return_address(0));
 #endif
 #else
   void* returnAddr = 0;

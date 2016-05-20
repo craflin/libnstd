@@ -56,6 +56,9 @@ targets = {
           libs += "Dbghelp"
         }
       }
+      else if(Debug) {
+        libs += "dl"
+      }
     }
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
