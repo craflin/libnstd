@@ -105,12 +105,13 @@ bool_t Debug::getSourceLine(void* addr, const tchar_t*& file, int_t& line)
   line = ihLine.LineNumber;
   return true;
 #else
-  Dl_info dli;
-  if(dladdr(addr, &dli) == 0)
-    return false;
-  file = dli.dli_sname;
-  line;
-  return true;
+  return false;
+  //Dl_info dli;
+  //if(dladdr(addr, &dli) == 0)
+  //  return false;
+  //file = dli.dli_sname;
+  //line = 0;
+  //return true;
 #endif
 }
 #endif
