@@ -197,6 +197,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = boolType;
+      _data2.ref = 0;
     }
     _data2.data.boolData = other;
     return *this;
@@ -225,6 +226,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = doubleType;
+      _data2.ref = 0;
     }
     _data2.data.doubleData = other;
     return *this;
@@ -253,6 +255,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = intType;
+      _data2.ref = 0;
     }
     _data2.data.intData = other;
     return *this;
@@ -281,6 +284,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = uintType;
+      _data2.ref = 0;
     }
     _data2.data.uintData = other;
     return *this;
@@ -309,6 +313,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = int64Type;
+      _data2.ref = 0;
     }
     _data2.data.int64Data = other;
     return *this;
@@ -337,6 +342,7 @@ public:
       clear();
       data2 = &_data2;
       _data2.type = uint64Type;
+      _data2.ref = 0;
     }
     _data2.data.uint64Data = other;
     return *this;
