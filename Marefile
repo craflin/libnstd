@@ -52,9 +52,6 @@ targets = {
       libs +=  { "pthread", "rt" }
       if(Win32) {
         libs += { "ws2_32" }
-        if (Debug) {
-          libs += "Dbghelp"
-        }
       }
       else if(Debug) {
         libs += "dl"
@@ -63,9 +60,6 @@ targets = {
     if(tool == "vcxproj") {
       linkFlags += { "/SUBSYSTEM:CONSOLE" }
       libs += { "ws2_32", "ntdll" }
-      if (Debug) {
-        libs += "Dbghelp"
-      }
     }
     files = {
       "$(mareDir)/test/$(target)/**.cpp" = cppSource,

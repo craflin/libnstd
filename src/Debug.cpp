@@ -82,18 +82,34 @@ int_t Debug::printf(const tchar_t* format, ...)
 bool_t Debug::getSourceLine(void* addr, const tchar_t*& file, int_t& line)
 {
 #ifdef _WIN32
+  typedef BOOL (WINAPI *PSymInitialize)(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess);
+  typedef BOOL (WINAPI *PSymGetLineFromAddr64)(HANDLE hProcess, DWORD64 qwAddr, PDWORD pdwDisplacement, PIMAGEHLP_LINE64 Line64);
+  static PSymInitialize pSymInitialize = 0;
+  static PSymGetLineFromAddr64 pSymGetLineFromAddr64 = 0;
   static bool initialized = false;
   HANDLE hProcess = GetCurrentProcess();
   if(!initialized)
   {
-    if(!SymInitialize(hProcess, NULL, TRUE))
-      return false;
     initialized = true;
+    HMODULE hModule = LoadLibrary("Dbghelp.dll");
+    if(!hModule)
+      return false;
+    pSymInitialize = (PSymInitialize)GetProcAddress(hModule, "SymInitialize");
+    pSymGetLineFromAddr64 = (PSymGetLineFromAddr64)GetProcAddress(hModule, "SymGetLineFromAddr64");
+    if(!pSymInitialize || !pSymGetLineFromAddr64)
+      return false;
+    if(!pSymInitialize(hProcess, NULL, TRUE))
+    {
+      pSymGetLineFromAddr64 = 0;
+      return false;
+    }
   }
+  if(!pSymGetLineFromAddr64)
+    return false;
   IMAGEHLP_LINE64 ihLine;
   ihLine.SizeOfStruct = sizeof(IMAGEHLP_LINE64);
   DWORD displacement;
-  if(!SymGetLineFromAddr64(hProcess, (DWORD64)addr, &displacement, &ihLine))
+  if(!pSymGetLineFromAddr64(hProcess, (DWORD64)addr, &displacement, &ihLine))
     return false;
 #ifdef UNICODE
   static wchar_t fileName[MAX_PATH];
