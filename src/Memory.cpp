@@ -61,6 +61,7 @@ public:
 
 public:
   static inline void_t* alloc(size_t minSize, size_t& rsize, void* returnAddr);
+  static inline void_t* alloc(size_t minSize, void* returnAddr);
   static inline void_t free(void_t* buffer);
 
 private:
@@ -134,7 +135,7 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
 #ifdef _WIN32
   ASSERT(Memory::Private::processHeap);
 #endif
-  size_t minAllocSize = minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  size_t minAllocSize = (((minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter))) >> 8) + 1) << 8;
   Memory::Private::PageHeader* header;
 #ifdef _WIN32
   header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
@@ -169,6 +170,58 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
   header->checkValue = Memory::Private::headerCheckValue;
   footer->checkValue = Memory::Private::footerCheckValue;
   rsize = allocSize - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+#ifndef NDEBUG
+#ifdef _WIN32
+  EnterCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_lock(&Private::mutex) == 0);
+#endif
+  if((header->next = Private::first))
+    header->next->previous = &header->next;
+  header->previous = &Private::first;
+  Private::first = header;
+#ifdef _WIN32
+  LeaveCriticalSection(&Private::criticalSection);
+#else
+  VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
+#endif
+#endif
+  return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
+}
+
+void_t* Memory::Private::alloc(size_t minSize, void* returnAddr)
+{
+#ifdef _WIN32
+  ASSERT(Memory::Private::processHeap);
+#endif
+  size_t minAllocSize = minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  Memory::Private::PageHeader* header;
+#ifdef _WIN32
+  header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
+#else
+  header = (Memory::Private::PageHeader*)malloc(minAllocSize);
+#endif
+  if(!header) // out of memory?
+  {
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
+    do // wait and try again...
+    {
+#ifdef _WIN32
+      Sleep(5000);
+      header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
+#else
+      sleep(5);
+      header = (Memory::Private::PageHeader*)malloc(minAllocSize);
+#endif
+    } while(!header);
+  }
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + minAllocSize - sizeof(Memory::Private::PageFooter));
+  header->size = minAllocSize;
+#ifndef NDEBUG
+  header->returnAddr = returnAddr;
+#endif
+  header->checkValue = Memory::Private::headerCheckValue;
+  footer->checkValue = Memory::Private::footerCheckValue;
 #ifndef NDEBUG
 #ifdef _WIN32
   EnterCriticalSection(&Private::criticalSection);
@@ -294,8 +347,7 @@ void_t* Memory::alloc(size_t size)
 #else
   void* returnAddr = 0;
 #endif
-  size_t allocatedSize;
-  return Private::alloc(size, allocatedSize, returnAddr);
+  return Private::alloc(size, returnAddr);
 }
 
 size_t Memory::size(void_t* buffer)
@@ -331,8 +383,7 @@ void_t* operator new(size_t size)
 #else
   void* returnAddr = 0;
 #endif
-  size_t allocatedSize;
-  return Memory::Private::alloc(size, allocatedSize, returnAddr);
+  return Memory::Private::alloc(size, returnAddr);
 }
 
 void_t* operator new [](size_t size)
@@ -346,8 +397,7 @@ void_t* operator new [](size_t size)
 #else
   void* returnAddr = 0;
 #endif
-  size_t allocatedSize;
-  return Memory::Private::alloc(size, allocatedSize, returnAddr);
+  return Memory::Private::alloc(size, returnAddr);
 }
 
 void_t operator delete(void_t* buffer)
