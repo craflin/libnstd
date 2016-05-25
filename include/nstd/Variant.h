@@ -34,7 +34,6 @@ public:
     }
     else switch(other.data2->type)
     {
-      case nullType:
       case boolType:
         _data2.type = boolType;
         _data2.ref = 0;
@@ -65,7 +64,6 @@ public:
 #endif
       default:
         data2 = &nullData;
-        break;
         break;
     }
   }
@@ -160,7 +158,6 @@ public:
 #endif
       default:
         data2 = &nullData;
-        break;
         break;
     }
     return *this;

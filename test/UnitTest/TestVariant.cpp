@@ -26,4 +26,11 @@ void_t testVariant()
     ASSERT(var.toMap().find(_T("dasd"))->toString() == _T("yes"));
   }
 
+  // test copy construction of null variant
+  {
+    Variant null;
+    ASSERT(null.isNull());
+    Variant copy(null);
+    ASSERT(copy.isNull());
+  }
 }
