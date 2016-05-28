@@ -53,7 +53,11 @@ public:
   bool_t tryWait();
 
 private:
+#ifdef _WIN32
   void_t* handle;
+#else
+  int64_t data[4]; // sizeof(sem_t)
+#endif
 
   Semaphore(const Semaphore&);
   Semaphore& operator=(const Semaphore&);

@@ -21,8 +21,8 @@ Semaphore::Semaphore(uint_t value)
 #ifdef _WIN32
   VERIFY(handle = CreateSemaphore(NULL, value, LONG_MAX, NULL));
 #else
-  ASSERT(sizeof(handle) >= sizeof(sem_t));
-  VERIFY(sem_init((sem_t*)&handle, 0, value) != -1);
+  ASSERT(sizeof(data) >= sizeof(sem_t));
+  VERIFY(sem_init((sem_t*)data, 0, value) != -1);
 #endif
 }
 
@@ -31,7 +31,7 @@ Semaphore::~Semaphore()
 #ifdef _WIN32
   VERIFY(CloseHandle(handle));
 #else
-  VERIFY(sem_destroy((sem_t*)&handle) != -1);
+  VERIFY(sem_destroy((sem_t*)data) != -1);
 #endif
 }
 
@@ -40,7 +40,7 @@ void_t Semaphore::signal()
 #ifdef _WIN32
   VERIFY(ReleaseSemaphore((HANDLE)handle, 1, 0));
 #else
-  VERIFY(sem_post((sem_t*)&handle) != -1);
+  VERIFY(sem_post((sem_t*)data) != -1);
 #endif
 }
 
@@ -49,7 +49,7 @@ bool_t Semaphore::wait()
 #ifdef _WIN32
   return WaitForSingleObject((HANDLE)handle, INFINITE) == WAIT_OBJECT_0;
 #else
-  return sem_wait((sem_t*)&handle) != -1;
+  return sem_wait((sem_t*)data) != -1;
 #endif
 }
 
@@ -65,7 +65,7 @@ bool_t Semaphore::wait(int64_t timeout)
   ts.tv_nsec %= 1000000000;
   for(;;)
   {
-    if(sem_timedwait((sem_t*)&handle, &ts) == -1)
+    if(sem_timedwait((sem_t*)data, &ts) == -1)
     {
       if(errno == EINTR)
         continue;
@@ -79,7 +79,7 @@ no_sem_timedwait:
   // TODO: this sucks, find a better way to do something like this:
   for(int i = 0; i < timeout; i += 10)
   {
-    if(sem_trywait((sem_t*)&handle) != -1)
+    if(sem_trywait((sem_t*)data) != -1)
       return true;
     usleep(10 * 1000);
   }
@@ -92,6 +92,7 @@ bool_t Semaphore::tryWait()
 #ifdef _WIN32
   return WaitForSingleObject((HANDLE)handle, 0) == WAIT_OBJECT_0;
 #else
-  return sem_trywait((sem_t*)&handle) != -1;
+  return sem_trywait((sem_t*)data) != -1;
 #endif
 }
+
