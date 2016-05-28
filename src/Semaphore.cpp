@@ -21,7 +21,7 @@ Semaphore::Semaphore(uint_t value)
 #ifdef _WIN32
   VERIFY(handle = CreateSemaphore(NULL, value, LONG_MAX, NULL));
 #else
-  ASSERT(sizeof(sem_t) >= sizeof(handle));
+  ASSERT(sizeof(handle) >= sizeof(sem_t));
   VERIFY(sem_init((sem_t*)&handle, 0, value) != -1);
 #endif
 }

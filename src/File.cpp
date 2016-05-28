@@ -15,7 +15,7 @@
 File::File()
 {
 #ifdef _WIN32
-  ASSERT(sizeof(void*) >= sizeof(HANDLE));
+  ASSERT(sizeof(fp) >= sizeof(HANDLE));
   fp = INVALID_HANDLE_VALUE;
 #else
   fp = 0;
