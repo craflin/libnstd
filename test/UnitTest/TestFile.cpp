@@ -3,6 +3,9 @@
 #include <nstd/File.h>
 #include <nstd/Time.h>
 
+#include <nstd/Error.h>
+
+
 void_t testFile()
 {
   // test open and close
@@ -103,6 +106,21 @@ void_t testFile()
     }
   }
   ASSERT(File::unlink(_T("testfile.file.test")));
+
+  // test rename function
+  {
+      File::unlink(_T("testfile.file.test2"));
+      File file;
+      ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+      file.close();
+      ASSERT(File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
+      ASSERT(!File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
+      ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
+      file.close();
+      ASSERT(!File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
+      ASSERT(File::rename(_T("testfile.file.test"), _T("testfile.file.test2"), false));
+      File::unlink(_T("testfile.file.test2"));
+  }
 
   // test file name functions
   {
