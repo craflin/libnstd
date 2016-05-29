@@ -114,11 +114,13 @@ void_t testFile()
       ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
       file.close();
       ASSERT(File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
+      ASSERT(!File::exists(_T("testfile.file.test")));
       ASSERT(!File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
       ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
       file.close();
       ASSERT(!File::rename(_T("testfile.file.test"), _T("testfile.file.test2")));
       ASSERT(File::rename(_T("testfile.file.test"), _T("testfile.file.test2"), false));
+      ASSERT(!File::exists(_T("testfile.file.test")));
       File::unlink(_T("testfile.file.test2"));
   }
 

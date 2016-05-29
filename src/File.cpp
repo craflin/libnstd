@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
+#include <cstdio>
 #endif
 
 #include <nstd/File.h>
@@ -200,7 +201,7 @@ bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
     int fd = ::open(to, O_CREAT | O_EXCL | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if(fd == -1)
       return false;
-    if(rename(from, to) != 0)
+    if(::rename(from, to) != 0)
     {
       int err = errno;
       ::close(fd);
@@ -211,7 +212,7 @@ bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
     return true;
   }
   else
-    return rename(from, to) == 0;
+    return ::rename(from, to) == 0;
 #endif
 }
 
