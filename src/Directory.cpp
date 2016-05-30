@@ -350,6 +350,8 @@ bool_t Directory::unlink(const String& dir, bool recursive)
 #else
   if(::rmdir(dir) == 0)
     return true;
+  if(!recursive || errno == ENOTEMPTY)
+    return false;
   DIR* dp = opendir(dir);
   if(!dp)
     return false;
