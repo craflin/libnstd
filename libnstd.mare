@@ -9,6 +9,10 @@ libnstd = cppStaticLibrary + {
       "$(mareDir)/src/Socket/*.cpp" = cppSource,
       "$(mareDir)/include/nstd/Socket/*.h"
     }
+    if enableXML {
+      "$(mareDir)/src/XML/*.cpp" = cppSource,
+      "$(mareDir)/include/nstd/XML/*.h"
+    }
   }
   if tool == "vcxproj" {
     defines += { "_CRT_SECURE_NO_WARNINGS" }
