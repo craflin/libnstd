@@ -73,6 +73,55 @@ int_t String::printf(const tchar_t* format, ...)
   }
 }
 
+String String::fromPrintf(const char_t* format, ...)
+{
+  String s(200);
+
+  int_t result;
+  va_list ap;
+  va_start(ap, format);
+
+  {
+#ifdef _UNICODE
+    result = _vsnwprintf((wchar_t*)s.data->str, s.data->capacity, format, ap);
+#else
+    result = vsnprintf((char_t*)s.data->str, s.data->capacity, format, ap);
+#endif
+    if(result >= 0 && (size_t)result < s.data->capacity)
+    {
+      s.data->len = result;
+      va_end(ap);
+      return s;
+    }
+  }
+
+  // buffer was too small: compute size, reserve buffer, print again
+  {
+#ifdef _MSC_VER
+#ifdef _UNICODE
+    result = _vscwprintf(format, ap);
+#else
+    result = _vscprintf(format, ap);
+#endif
+#else
+    result = vsnprintf(0, 0, format, ap);
+#endif
+    ASSERT(result >= 0);
+    if(result < 0)
+      return String();
+    s.detach(0, result);
+#ifdef _UNICODE
+    result = _vsnwprintf((wchar_t*)s.data->str, result + 1, format, ap);
+#else
+    result = vsnprintf((char_t*)s.data->str, result + 1, format, ap);
+#endif
+    ASSERT(result >= 0);
+    s.data->len = result;
+    va_end(ap);
+    return s;
+  }
+}
+
 #if defined(_MSC_VER) && _MSC_VER <= 1600
 #ifdef _UNICODE
 static int vswscanf(const wchar_t* s, const wchar_t* fmt, va_list ap)
