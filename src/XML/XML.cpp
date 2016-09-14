@@ -3,6 +3,8 @@
 #include <nstd/File.h>
 #include <nstd/XML/XML.h>
 
+XML::Variant::NullData XML::Variant::nullData;
+
 class XML::Parser::Private
 {
 public:
@@ -104,7 +106,7 @@ bool_t XML::Parser::Private::readToken()
       if(*end != *pos.pos)
         return syntaxError(pos, "New line in string"), false;
       token.pos = pos;
-      token.value = unescapeString(String(pos.pos + 1, end - pos.pos - 2));
+      token.value = unescapeString(String(pos.pos + 1, end - pos.pos - 1));
       token.type = Token::stringType;
       pos.pos = end + 1;
       return true;
@@ -296,13 +298,15 @@ bool_t XML::Parser::Private::parseElement(Element& element)
         Variant& variant = element.content.append(Variant());
         if(!parseElement(variant.toElement()))
           return false;
+        continue;
       }
       else
         this->pos = pos;
     }
-    Variant& variant = element.content.append(Variant());
-    if(!parseText(variant.toString()))
+    String string;
+    if(!parseText(string))
       return false;
+    element.content.append(string);
   }
   if(!readToken())
     return false;
@@ -412,6 +416,7 @@ String XML::Element::toString() const
     result.append("/>");
   else
   {
+    result.append('>');
     for(List<Variant>::Iterator i = content.begin(), end = content.end(); i != end; ++i)
     {
       const Variant& variant = *i;

@@ -112,7 +112,7 @@ public:
       if(data->type != elementType)
       {
         clear();
-        data = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+        data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Element));
         Element* element = (Element*)(data + 1);
         new (element) Element;
         data->type = elementType;
@@ -121,7 +121,7 @@ public:
       }
       else if(data->ref > 1)
       {
-        Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(List< Variant>));
+        Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(Element));
         Element* element = (Element*)(data + 1);
         new (element) Element(*(const Element*)(data + 1));
         clear();

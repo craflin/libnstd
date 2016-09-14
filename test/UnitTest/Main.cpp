@@ -35,6 +35,7 @@ void_t testString();
 void_t testMemory();
 void_t testVariant();
 void_t testFile();
+void_t testXML();
 
 void_t testConsolePrintf()
 {
@@ -753,6 +754,7 @@ int_t main(int_t argc, char_t* argv[])
   testMultiMap();
   testError();
   testVariant();
+  testXML();
 
   Console::printf(_T("%s\n"), _T("done"));
 
