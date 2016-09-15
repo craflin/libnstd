@@ -106,7 +106,9 @@ bool_t XML::Parser::Private::readToken()
       if(*end != *pos.pos)
         return syntaxError(pos, "New line in string"), false;
       token.pos = pos;
-      token.value = unescapeString(String(pos.pos + 1, end - pos.pos - 1));
+      String escapedValue;
+      escapedValue.attach(pos.pos + 1, end - pos.pos - 1);
+      token.value = unescapeString(escapedValue);
       token.type = Token::stringType;
       pos.pos = end + 1;
       return true;
@@ -215,14 +217,97 @@ void_t XML::Parser::Private::syntaxError(const Position& pos, const String& erro
 
 String XML::Parser::Private::unescapeString(const String& str)
 {
-  // todo
-  return str;
+  String result(str.length());
+  char_t* destStart = result;
+  char_t* dest = destStart;
+  for(const char_t* i = str, * end = i + str.length(); i < end;)
+    if(*i == '&')
+    {
+      ++i;
+      const char_t* end = String::find(i, ';');
+      if(end)
+      {
+        String str;
+        str.attach(i, end - i);
+        if(str == "apos")
+          *(dest++) = '\'';
+        else if(str == "quot")
+          *(dest++) = '"';
+        else if(str == "amp")
+          *(dest++) = '&';
+        else if(str == "lt")
+          *(dest++) = '<';
+        else if(str == "gt")
+          *(dest++) = '>';
+        else
+        {
+          *(dest++) = *(i++);
+          continue;
+        }
+        i = end + 1;
+      }
+      else
+        *(dest++) = *(i++);
+    }
+    else
+      *(dest++) = *(i++);
+  result.resize(dest - destStart);
+  return result;
 }
 
 String XML::Element::Private::escapeString(const String& str)
 {
-  // todo
-  return str;
+  String result(str.length() + 200);
+  char_t* destStart = result;
+  char_t* dest = destStart;
+  for(const char_t* i = str, * end = i + str.length(); i < end; ++i)
+    switch(*i)
+    {
+    case '\'':
+      result.resize(dest - destStart);
+      result.reserve(result.length() + 5 + (end - i));
+      destStart = result;
+      dest = destStart + result.length();
+      Memory::copy(dest, "&apos;", 6);
+      dest += 6;
+      break;
+    case '"':
+      result.resize(dest - destStart);
+      result.reserve(result.length() + 5 + (end - i));
+      destStart = result;
+      dest = destStart + result.length();
+      Memory::copy(dest, "&quot;", 6);
+      dest += 6;
+      break;
+    case '&':
+      result.resize(dest - destStart);
+      result.reserve(result.length() + 4 + (end - i));
+      destStart = result;
+      dest = destStart + result.length();
+      Memory::copy(dest, "&amp;", 5);
+      dest += 5;
+      break;
+    case '<':
+      result.resize(dest - destStart);
+      result.reserve(result.length() + 3 + (end - i));
+      destStart = result;
+      dest = destStart + result.length();
+      Memory::copy(dest, "&lt;", 4);
+      dest += 4;
+      break;
+    case '>':
+      result.resize(dest - destStart);
+      result.reserve(result.length() + 3 + (end - i));
+      destStart = result;
+      dest = destStart + result.length();
+      Memory::copy(dest, "&gt;", 4);
+      dest += 4;
+      break;
+    default:
+      *(dest++) = *i;
+    }
+  result.resize(dest - destStart);
+  return result;
 }
 
 bool_t XML::Parser::Private::parse(const String& data, Element& element)
@@ -349,7 +434,11 @@ bool_t XML::Parser::Private::parseText(String& text)
     default:
       pos.pos = end;
       pos.line = line;
-      text = String(start, end - start);
+      {
+        String escapedText;
+        escapedText.attach(start, end - start);
+        text = unescapeString(escapedText);
+      }
       return true;
     }
   }
@@ -426,7 +515,7 @@ String XML::Element::toString() const
         result.append(variant.toElement().toString());
         break;
       case Variant::textType:
-        result.append(variant.toString());
+        result.append(Private::escapeString(variant.toString()));
         break;
       default: ;
       }
