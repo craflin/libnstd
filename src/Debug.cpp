@@ -91,7 +91,7 @@ bool_t Debug::getSourceLine(void* addr, const tchar_t*& file, int_t& line)
   if(!initialized)
   {
     initialized = true;
-    HMODULE hModule = LoadLibrary("Dbghelp.dll");
+    HMODULE hModule = LoadLibrary(_T("Dbghelp.dll"));
     if(!hModule)
       return false;
     pSymInitialize = (PSymInitialize)GetProcAddress(hModule, "SymInitialize");
