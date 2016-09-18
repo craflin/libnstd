@@ -196,4 +196,7 @@ public:
   static bool_t load(const String& file, Element& element);
   static bool_t save(const Element& element, const String& file);
   static String toString(const Element& element);
+
+private:
+  class Private;
 };
