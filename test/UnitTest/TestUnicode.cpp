@@ -4,12 +4,18 @@
 
 void_t testUnicode()
 {
-  if (sizeof(tchar_t) != 1)
-    return;
-  uint32_t ch = 0x5d8;
-  String encoded = Unicode::toString(ch);
-  ASSERT(Unicode::length(*(const tchar_t*)encoded) > 1);
-  ASSERT(Unicode::isValid(encoded));
-  ASSERT(!Unicode::isValid(String()));
-  ASSERT(Unicode::fromString(encoded) == ch);
+  String str;
+  ASSERT(!Unicode::append(0x110000ULL, str));
+  for(uint32_t i = 0; i < 0x110000ULL; i += 100)
+  {
+#ifdef _UNICODE
+    if(i >= 0xD800 && i <= 0xDFFF)
+      continue;
+#endif
+    str.clear();
+    ASSERT(Unicode::append(i, str));
+    ASSERT(Unicode::isValid(str));
+    uint32_t xxx = Unicode::fromString(str);
+    ASSERT(Unicode::fromString(str) == i);
+  }
 }
