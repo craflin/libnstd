@@ -415,7 +415,7 @@ public:
   static String fromDouble(double value);
   static String fromCString(const tchar_t* str) {return String(str, length(str));}
   static String fromCString(const tchar_t* str, size_t len) {return String(str, len);}
-  static String fromPrintf(const char_t* format, ...);
+  static String fromPrintf(const tchar_t* format, ...);
 
   static bool startsWith(const tchar_t* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
 

@@ -73,7 +73,7 @@ int_t String::printf(const tchar_t* format, ...)
   }
 }
 
-String String::fromPrintf(const char_t* format, ...)
+String String::fromPrintf(const tchar_t* format, ...)
 {
   String s(200);
 
