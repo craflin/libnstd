@@ -299,7 +299,7 @@ void_t Memory::dump()
     String key;
     if(success)
 #ifdef _WIN32
-      key.printf("%s(%d)", file, line);
+      key.printf(_T("%s(%d)"), file, line);
 #else
       key.printf("%s", file);
 #endif
@@ -318,7 +318,7 @@ void_t Memory::dump()
   for(HashMap<String, size_t>::Iterator i = allocatedMemory.begin(), end = allocatedMemory.end(); i != end; ++i)
     sortedAllocatedMemory.insert(*i, i.key());
   for(MultiMap<size_t, String>::Iterator i = sortedAllocatedMemory.begin(), end = sortedAllocatedMemory.end(); i != end; ++i)
-    Debug::printf("%s: %llu bytes\n", (const tchar_t*)*i, (uint64_t)i.key());
+    Debug::printf(_T("%s: %llu bytes\n"), (const tchar_t*)*i, (uint64_t)i.key());
 }
 #endif
 
