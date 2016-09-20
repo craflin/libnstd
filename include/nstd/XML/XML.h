@@ -169,9 +169,6 @@ public:
     }
 
     String toString() const;
-
-  private:
-    class Private;
   };
 
   class Parser
@@ -184,6 +181,7 @@ public:
     int_t getErrorColumn() const;
     String getErrorString() const;
 
+    bool_t parse(const tchar_t* data, Element& element);
     bool_t parse(const String& data, Element& element);
 
   private:
@@ -192,9 +190,12 @@ public:
   };
 
 public:
+  static bool_t parse(const tchar_t* data, Element& element);
   static bool_t parse(const String& data, Element& element);
+
   static bool_t load(const String& file, Element& element);
   static bool_t save(const Element& element, const String& file);
+
   static String toString(const Element& element);
 
 private:
