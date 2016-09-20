@@ -106,10 +106,12 @@ void_t testString()
 
   // test external buffer attaching
   tchar_t buf[100];
-  Memory::fill(buf, _T('a'), 8);
+  for(tchar_t* i = buf; i < buf + 8; ++i)
+    *i = _T('a');
   String bufWrapper;
   bufWrapper.attach(buf, 4);
   ASSERT(bufWrapper == String(buf, 4));
+  ASSERT(bufWrapper == String(_T("aaaa")));
 
   // test detach
   {
