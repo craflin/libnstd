@@ -13,6 +13,10 @@ libnstd = cppStaticLibrary + {
       "$(mareDir)/src/XML/*.cpp" = cppSource,
       "$(mareDir)/include/nstd/XML/*.h"
     }
+    if enableJSON {
+      "$(mareDir)/src/JSON/*.cpp" = cppSource,
+      "$(mareDir)/include/nstd/JSON/*.h"
+    }
   }
   if tool == "vcxproj" {
     defines += { "_CRT_SECURE_NO_WARNINGS" }

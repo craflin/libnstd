@@ -36,6 +36,7 @@ void_t testMemory();
 void_t testVariant();
 void_t testFile();
 void_t testXML();
+void_t testJSON();
 
 void_t testConsolePrintf()
 {
@@ -755,6 +756,7 @@ int_t main(int_t argc, char_t* argv[])
   testError();
   testVariant();
   testXML();
+  testJSON();
 
   Console::printf(_T("%s\n"), _T("done"));
 
