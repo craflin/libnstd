@@ -184,6 +184,8 @@ public:
     bool_t parse(const tchar_t* data, Element& element);
     bool_t parse(const String& data, Element& element);
 
+    bool_t load(const String& file, Element& element);
+
   private:
     class Private;
     Private* p;

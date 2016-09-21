@@ -46,6 +46,8 @@ public:
   String errorString;
 
 public:
+  Private() : errorLine(0), errorColumn(0) {}
+
   bool_t parse(const tchar_t* data, Element& element);
 
   bool_t parseElement(Element& element);
@@ -426,6 +428,17 @@ int_t XML::Parser::getErrorColumn() const {return p->errorColumn;}
 String XML::Parser::getErrorString() const {return p->errorString;}
 
 bool_t XML::Parser::parse(const String& data, Element& element) {return p->parse(data, element);}
+
+bool_t XML::Parser::load(const String& filePath, Element& element)
+{
+  File file;
+  if(!file.open(filePath))
+    return p->errorString = Error::getErrorString(), false;
+  String data;
+  if(!file.readAll(data))
+    return p->errorString = Error::getErrorString(), false;
+  return p->parse(data, element);
+}
 
 bool_t XML::parse(const tchar_t* data, Element& element)
 {
