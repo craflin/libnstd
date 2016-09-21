@@ -2,7 +2,7 @@
 #include <nstd/Buffer.h>
 #include <nstd/Unicode.h>
 #include <nstd/Error.h>
-#include <nstd/JSON/JSON.h>
+#include <nstd/Document/JSON.h>
 
 class JSON::Private
 {

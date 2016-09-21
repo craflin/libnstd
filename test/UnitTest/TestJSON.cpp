@@ -1,6 +1,6 @@
 
 #include <nstd/Debug.h>
-#include <nstd/JSON/JSON.h>
+#include <nstd/Document/JSON.h>
 
 void_t testJSON()
 {

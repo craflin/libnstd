@@ -9,13 +9,9 @@ libnstd = cppStaticLibrary + {
       "$(mareDir)/src/Socket/*.cpp" = cppSource,
       "$(mareDir)/include/nstd/Socket/*.h"
     }
-    if enableXML {
-      "$(mareDir)/src/XML/*.cpp" = cppSource,
-      "$(mareDir)/include/nstd/XML/*.h"
-    }
-    if enableJSON {
-      "$(mareDir)/src/JSON/*.cpp" = cppSource,
-      "$(mareDir)/include/nstd/JSON/*.h"
+    if enableDocument {
+      "$(mareDir)/src/Document/*.cpp" = cppSource,
+      "$(mareDir)/include/nstd/Document/*.h"
     }
   }
   if tool == "vcxproj" {
