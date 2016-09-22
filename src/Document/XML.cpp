@@ -13,6 +13,7 @@ public:
   public:
     int_t line;
     const tchar_t* pos;
+    const tchar_t* lineStart;
   };
 
   class Token
@@ -38,7 +39,6 @@ public:
 
 public:
   Token token;
-  const tchar_t* start;
   Position pos;
 
   int_t errorLine;
@@ -112,7 +112,7 @@ bool_t XML::Private::readToken()
         return syntaxError(pos, _T("New line in string")), false;
       String escapedValue;
       escapedValue.attach(pos.pos + 1, end - pos.pos - 1);
-      token.value = XML::Private::unescapeString(escapedValue);
+      token.value = unescapeString(escapedValue);
       token.type = Token::stringType;
       pos.pos = end + 1;
       return true;
@@ -149,45 +149,46 @@ void_t XML::Private::skipSpace()
       if(*(++pos.pos) == '\n')
         ++pos.pos;
       ++pos.line;
+      pos.lineStart = pos.pos;
       continue;
     case '\n':
       ++pos.line;
       ++pos.pos;
+      pos.lineStart = pos.pos;
       continue;
     case '<':
       if(String::compare(pos.pos + 1, _T("!--")) == 0)
       {
-        const tchar_t* end = pos.pos + 4;
+        pos.pos += 4;
         for(;;)
         {
-          int_t line = pos.line;
-          const tchar_t* newEnd = String::findOneOf(end, _T("-\n\r"));
-          if(!newEnd)
+          const tchar_t* end = String::findOneOf(pos.pos, _T("-\n\r"));
+          if(!end)
           {
-            pos.pos = end + String::length(end);
-            pos.line = line;
+            pos.pos = pos.pos + String::length(pos.pos);
             return;
           }
-          end = newEnd;
-          switch(*newEnd)
+          pos.pos = end;
+          switch(*pos.pos)
           {
           case '\r':
-            if(*(++end) == '\n')
-              ++end;
-            ++line;
+            if(*(++pos.pos) == '\n')
+              ++pos.pos;
+            ++pos.line;
+            pos.lineStart = pos.pos;
             continue;
           case '\n':
-            ++line;
-            ++end;
+            ++pos.line;
+            ++pos.pos;
+            pos.lineStart = pos.pos;
             continue;
           default:
-            if(String::compare(end + 1, _T("->")) == 0)
+            if(String::compare(pos.pos + 1, _T("->")) == 0)
             {
               pos.pos = end + 3;
-              pos.line = line;
               break;
             }
-            ++end;
+            ++pos.pos;
             continue;
           }
           break;
@@ -204,16 +205,8 @@ void_t XML::Private::skipSpace()
 
 void_t XML::Private::syntaxError(const Position& pos, const String& error)
 {
-  int column = 1;
-  for(const tchar_t* p = pos.pos; p > start;)
-  {
-    --p;
-    if(*p == '\n' || *p == '\r')
-      break;
-    ++column;
-  }
   errorLine = pos.line;
-  errorColumn = column;
+  errorColumn = (pos.pos - pos.lineStart) + 1;
   errorString = error;
 }
 
@@ -288,9 +281,8 @@ String XML::Private::escapeString(const String& str)
 
 bool_t XML::Private::parse(const tchar_t* data, Element& element)
 {
-  start = data;
   pos.line = 1;
-  pos.pos = start;
+  pos.pos = pos.lineStart = data;
 
   skipSpace();
   if(*pos.pos == '<' && pos.pos[1] == '?')
@@ -319,6 +311,8 @@ bool_t XML::Private::parse(const tchar_t* data, Element& element)
 
 bool_t XML::Private::parseElement(Element& element)
 {
+  element.line = token.pos.line;
+  element.column = (token.pos.pos - token.pos.lineStart) + 1;
   if(!readToken())
     return false;
   if(token.type != Token::nameType)
@@ -385,35 +379,33 @@ bool_t XML::Private::parseElement(Element& element)
 bool_t XML::Private::parseText(String& text)
 {
   const tchar_t* start = pos.pos;
-  int_t line = pos.line;
-  const tchar_t* end = pos.pos;
   for(;;)
   {
-    const tchar_t* newEnd = String::findOneOf(end, _T("<\r\n"));
-    if(!newEnd)
+    const tchar_t* end = String::findOneOf(pos.pos, _T("<\r\n"));
+    if(!end)
     {
-      pos.pos = end + String::length(end);
+      pos.pos = pos.pos + String::length(pos.pos);
       return syntaxError(pos, _T("Unexpected end of file")), false;
     }
-    end = newEnd;
-    switch(*end)
+    pos.pos = end;
+    switch(*pos.pos)
     {
     case '\r':
-      if(*(++end) == '\n')
-        ++end;
-      ++line;
+      if(*(++pos.pos) == '\n')
+        ++pos.pos;
+      ++pos.line;
+      pos.lineStart = pos.pos;
       continue;
     case '\n':
-      ++line;
-      ++end;
+      ++pos.line;
+      ++pos.pos;
+      pos.lineStart = pos.pos;
       continue;
     default:
-      pos.pos = end;
-      pos.line = line;
       {
         String escapedText;
-        escapedText.attach(start, end - start);
-        text = XML::Private::unescapeString(escapedText);
+        escapedText.attach(start, pos.pos - start);
+        text = unescapeString(escapedText);
       }
       return true;
     }

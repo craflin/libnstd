@@ -156,6 +156,8 @@ public:
   class Element
   {
   public:
+    int_t line;
+    int_t column;
     String type;
     HashMap<String, String> attributes;
     List<Variant> content;
