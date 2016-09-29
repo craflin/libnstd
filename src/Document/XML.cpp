@@ -157,7 +157,7 @@ void_t XML::Private::skipSpace()
       pos.lineStart = pos.pos;
       continue;
     case '<':
-      if(String::compare(pos.pos + 1, _T("!--")) == 0)
+      if(String::compare(pos.pos + 1, _T("!--"), 3) == 0)
       {
         pos.pos += 4;
         for(;;)
@@ -183,7 +183,7 @@ void_t XML::Private::skipSpace()
             pos.lineStart = pos.pos;
             continue;
           default:
-            if(String::compare(pos.pos + 1, _T("->")) == 0)
+            if(String::compare(pos.pos + 1, _T("->"), 2) == 0)
             {
               pos.pos = end + 3;
               break;
