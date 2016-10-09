@@ -114,7 +114,7 @@ public:
   void_t detach() {detach(data->len, data->len);}
   bool_t isEmpty() const {return data->len == 0;}
   void_t resize(size_t length) {detach(length, length);}
-  void_t reserve(size_t size) {detach(data->len, size < data->len ? data->len : size);}
+  void_t reserve(size_t size) {detach(data->len, size < data->len ? data->len : size);} // todo: optimize this method, use it in append methods
 
   String& prepend(const String& str)
   {
