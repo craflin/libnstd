@@ -95,6 +95,8 @@ public:
 
   static bool_t isExecutable(const String& file);
 
+  static bool_t readAll(const String& file, String& data);
+
 private:
   void_t* fp;
 

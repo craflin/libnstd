@@ -539,3 +539,11 @@ bool_t File::isExecutable(const String& file)
   return (buf.st_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0;
 #endif
 }
+
+bool_t File::readAll(const String& path, String& data)
+{
+  File file;
+  if(!file.open(path))
+    return false;
+  return file.readAll(data);
+}
