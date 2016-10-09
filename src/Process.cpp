@@ -555,19 +555,31 @@ ssize_t Process::read(void_t* buffer, size_t len)
   while(len > (size_t)INT_MAX)
   {
     if(!ReadFile(hStdOutRead, buffer, INT_MAX, &i, NULL))
+    {
+      if(GetLastError() == ERROR_BROKEN_PIPE)
+        return (byte_t*)buffer - bufferStart;
       return -1;
+    }
     buffer = (byte_t*)buffer + i;
     if(i != INT_MAX)
       return (byte_t*)buffer - bufferStart;
     len -= INT_MAX;
   }
   if(!ReadFile(hStdOutRead, buffer, (DWORD)len, &i, NULL))
+  {
+    if(GetLastError() == ERROR_BROKEN_PIPE)
+      return (byte_t*)buffer - bufferStart;
     return -1;
+  }
   buffer = (byte_t*)buffer + i;
   return (byte_t*)buffer - bufferStart;
 #else
   if(!ReadFile(hStdOutRead, buffer, len, &i, NULL))
+  {
+    if(GetLastError() == ERROR_BROKEN_PIPE)
+      return 0;
     return -1;
+  }
   return i;
 #endif
 #else
@@ -600,14 +612,22 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
   while(length > (size_t)INT_MAX)
   {
     if(!ReadFile(readHandle, buffer, INT_MAX, &i, NULL))
+    {
+      if(GetLastError() == ERROR_BROKEN_PIPE)
+        return (byte_t*)buffer - bufferStart;
       return -1;
+    }
     buffer = (byte_t*)buffer + i;
     if(i != INT_MAX)
       return (byte_t*)buffer - bufferStart;
     length -= INT_MAX;
   }
   if(!ReadFile(readHandle, buffer, (DWORD)length, &i, NULL))
+  {
+    if(GetLastError() == ERROR_BROKEN_PIPE)
+      return (byte_t*)buffer - bufferStart;
     return -1;
+  }
   buffer = (byte_t*)buffer + i;
   return (byte_t*)buffer - bufferStart;
 #else
