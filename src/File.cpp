@@ -391,16 +391,17 @@ String File::simplifyPath(const String& path)
   String result(path.length());
   const tchar_t* data = path;
   const tchar_t* start = data;
+  const tchar_t* startEnd = start + path.length();
   const tchar_t* end;
   const tchar_t* chunck;
   size_t chunckLen;
   bool_t startsWithSlash = *data == _T('/') || *data == _T('\\');
   for(;;)
   {
-    while(*start && (*start == _T('/') || *start == _T('\\')))
+    while(start < startEnd && (*start == _T('/') || *start == _T('\\')))
       ++start;
     end = start;
-    while(*end && *end != _T('/') && *end != _T('\\'))
+    while(end < startEnd && *end != _T('/') && *end != _T('\\'))
       ++end;
 
     if(end == start)
@@ -434,7 +435,7 @@ String File::simplifyPath(const String& path)
     result.append(chunck, chunckLen);
 
   cont:
-    if(!*end)
+    if(end >= startEnd)
       break;
     start = end + 1;
   }
