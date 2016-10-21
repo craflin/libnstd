@@ -209,7 +209,7 @@ public:
   {
     const tchar_t* s1 = data->str, * s2 = other.data->str;
     for(; *s1 && *s1 == *s2; ++s1,++s2);
-    return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
+    return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
   }
 
   int_t compare(const String& other, size_t len) const
@@ -219,7 +219,25 @@ public:
       if(s1 >= end1)
         return 0;
       if(!*s1 || *s1 != *s2)
-        return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
+        return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+    }
+  }
+
+  int_t compareIgnoreCase(const String& other) const
+  {
+    const tchar_t* s1 = data->str, * s2 = other.data->str;
+    for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
+    return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+  }
+
+  int_t compareIgnoreCase(const String& other, size_t len) const
+  {
+    for(const tchar_t* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
+    {
+      if(s1 >= end1)
+        return 0;
+      if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
+        return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
     }
   }
 
@@ -376,7 +394,7 @@ public:
   static int_t compare(const tchar_t* s1, const tchar_t* s2)
   {
     for(; *s1 && *s1 == *s2; ++s1,++s2);
-    return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
+    return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
   }
 
   static int_t compare(const tchar_t* s1, const tchar_t* s2, size_t len)
@@ -386,7 +404,24 @@ public:
       if(s1 >= end1)
         return 0;
       if(!*s1 || *s1 != *s2)
-        return (int_t)*(const tchar_t*)s1 - *(const tchar_t*)s2;
+        return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+    }
+  }
+
+  static int_t compareIgnoreCase(const tchar_t* s1, const tchar_t* s2)
+  {
+    for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
+    return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+  }
+
+  static int_t compareIgnoreCase(const tchar_t* s1, const tchar_t* s2, size_t len)
+  {
+    for(const tchar_t* end1 = s1 + len;; ++s1, ++s2)
+    {
+      if(s1 >= end1)
+        return 0;
+      if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
+        return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
     }
   }
 

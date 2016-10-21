@@ -49,11 +49,13 @@ typedef int ssize_t;
 
 #ifdef _UNICODE
 typedef wchar_t tchar_t;
+typedef unsigned short utchar_t;
 #ifndef _T
 #define  _T(text) L ## text
 #endif
 #else
-typedef char_t tchar_t;
+typedef char tchar_t;
+typedef unsigned char utchar_t;
 #ifndef _T
 #define  _T(text) text
 #endif
