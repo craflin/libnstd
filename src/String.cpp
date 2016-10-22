@@ -246,23 +246,23 @@ bool String::isSpace(tchar c) {return iswspace(c) != 0;}
 #endif
 
 #ifdef _UNICODE
-bool String::isAlnum(tchar c) { return iswalnum(c) != 0; };
+bool String::isAlphanumeric(tchar c) { return iswalnum(c) != 0; };
 bool String::isAlpha(tchar c) { return iswalpha(c) != 0; };
 bool String::isDigit(tchar c) { return iswdigit(c) != 0; };
-bool String::isLower(tchar c) { return iswlower(c) != 0; };
+bool String::isLowerCase(tchar c) { return iswlower(c) != 0; };
 bool String::isPrint(tchar c) { return iswprint(c) != 0; };
 bool String::isPunct(tchar c) { return iswpunct(c) != 0; };
-bool String::isUpper(tchar c) { return iswupper(c) != 0; };
-bool String::isXDigit(tchar c) { return iswxdigit(c) != 0; };
+bool String::isUpperCase(tchar c) { return iswupper(c) != 0; };
+bool String::isHexDigit(tchar c) { return iswxdigit(c) != 0; };
 #else
-bool String::isAlnum(tchar c) { return isalnum((uchar&)c) != 0; };
+bool String::isAlphanumeric(tchar c) { return isalnum((uchar&)c) != 0; };
 bool String::isAlpha(tchar c) {return isalpha((uchar&)c) != 0;};
 bool String::isDigit(tchar c) { return isdigit((uchar&)c) != 0; };
-bool String::isLower(tchar c) { return islower((uchar&)c) != 0; };
+bool String::isLowerCase(tchar c) { return islower((uchar&)c) != 0; };
 bool String::isPrint(tchar c) { return isprint((uchar&)c) != 0; };
 bool String::isPunct(tchar c) { return ispunct((uchar&)c) != 0; };
-bool String::isUpper(tchar c) { return isupper((uchar&)c) != 0; };
-bool String::isXDigit(tchar c) { return isxdigit((uchar&)c) != 0; };
+bool String::isUpperCase(tchar c) { return isupper((uchar&)c) != 0; };
+bool String::isHexDigit(tchar c) { return isxdigit((uchar&)c) != 0; };
 #endif
 
 const tchar* String::find(const tchar* in, const tchar* str) {return _tcsstr(in, str);}

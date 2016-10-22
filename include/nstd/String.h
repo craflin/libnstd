@@ -208,37 +208,39 @@ public:
   int compare(const String& other) const
   {
     const tchar* s1 = data->str, * s2 = other.data->str;
-    for(; *s1 && *s1 == *s2; ++s1,++s2);
+    for(; *s1 == *s2; ++s1, ++s2)
+      if(!*s1)
+        return 0;
     return (int)*(const utchar*)s1 - *(const utchar*)s2;
+
   }
 
   int compare(const String& other, usize len) const
   {
-    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
-    {
-      if(s1 >= end1)
-        return 0;
+    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
       if(!*s1 || *s1 != *s2)
         return (int)*(const utchar*)s1 - *(const utchar*)s2;
-    }
+    return 0;
   }
 
   int compareIgnoreCase(const String& other) const
   {
     const tchar* s1 = data->str, * s2 = other.data->str;
-    for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
-    return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
+    tchar c1, c2;
+    for(; (c1 = toLowerCase(*s1)) == (c2 = toLowerCase(*s2)); ++s1, ++s2)
+      if(!*s1)
+        return 0;
+    return (int)(const utchar&)c1 - (const utchar&)c2;
+
   }
 
   int compareIgnoreCase(const String& other, usize len) const
   {
-    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
-    {
-      if(s1 >= end1)
-        return 0;
-      if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
-        return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
-    }
+    tchar c1, c2;
+    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
+      if(!*s1 || (c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)))
+        return (int)(const utchar&)c1 - (const utchar&)c2;
+    return 0;
   }
 
   const tchar* find(tchar c) const
@@ -382,47 +384,47 @@ public:
   static bool isSpace(tchar c) { return (c >= 9 && c <= 13) || c == 32; }
 #endif
 
-  static bool isAlnum(tchar c);
+  static bool isAlphanumeric(tchar c);
   static bool isAlpha(tchar c);
   static bool isDigit(tchar c);
-  static bool isLower(tchar c);
+  static bool isLowerCase(tchar c);
   static bool isPrint(tchar c);
   static bool isPunct(tchar c);
-  static bool isUpper(tchar c);
-  static bool isXDigit(tchar c);
+  static bool isUpperCase(tchar c);
+  static bool isHexDigit(tchar c);
 
   static int compare(const tchar* s1, const tchar* s2)
   {
-    for(; *s1 && *s1 == *s2; ++s1,++s2);
+    for(; *s1 == *s2; ++s1, ++s2)
+      if(!*s1)
+        return 0;
     return (int)*(const utchar*)s1 - *(const utchar*)s2;
   }
 
   static int compare(const tchar* s1, const tchar* s2, usize len)
   {
-    for(const tchar* end1 = s1 + len;; ++s1, ++s2)
-    {
-      if(s1 >= end1)
-        return 0;
+    for(const tchar* end1 = s1 + len; s1 < end1; ++s1, ++s2)
       if(!*s1 || *s1 != *s2)
         return (int)*(const utchar*)s1 - *(const utchar*)s2;
-    }
+    return 0;
   }
 
   static int compareIgnoreCase(const tchar* s1, const tchar* s2)
   {
-    for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
-    return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
+    tchar c1, c2;
+    for(; (c1 = toLowerCase(*s1)) == (c2 = toLowerCase(*s2)); ++s1, ++s2)
+      if(!*s1)
+        return 0;
+    return (int)(const utchar&)c1 - (const utchar&)c2;
   }
 
   static int compareIgnoreCase(const tchar* s1, const tchar* s2, usize len)
   {
-    for(const tchar* end1 = s1 + len;; ++s1, ++s2)
-    {
-      if(s1 >= end1)
-        return 0;
-      if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
-        return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
-    }
+    tchar c1, c2;
+    for(const tchar* end1 = s1 + len; s1 < end1; ++s1, ++s2)
+      if(!*s1 || (c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)))
+        return (int)(const utchar&)c1 - (const utchar&)c2;
+    return 0;
   }
 
   static usize length(const tchar* s)

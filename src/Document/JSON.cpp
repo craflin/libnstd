@@ -124,7 +124,7 @@ bool JSON::Private::readToken()
                 ++pos.pos;
                 String k(4);
                 for(int i = 0; i < 4; ++i)
-                  if(String::isXDigit(*pos.pos))
+                  if(String::isHexDigit(*pos.pos))
                   {
                     k.append(*pos.pos);
                     ++pos.pos;
@@ -141,7 +141,7 @@ bool JSON::Private::readToken()
                   pos.pos += 2;
                   k.clear();
                   for(int i = 0; i < 4; ++i)
-                    if(String::isXDigit(*pos.pos))
+                    if(String::isHexDigit(*pos.pos))
                     {
                       k.append(*pos.pos);
                       ++pos.pos;
