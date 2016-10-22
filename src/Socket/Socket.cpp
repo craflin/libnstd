@@ -78,7 +78,7 @@ Socket::~Socket()
     ::CLOSE(s);
 }
 
-bool_t Socket::open()
+bool Socket::open()
 {
   if(s != INVALID_SOCKET)
     close();
@@ -93,7 +93,7 @@ bool_t Socket::open()
   return true;
 }
 
-void_t Socket::close()
+void Socket::close()
 {
   if(s != INVALID_SOCKET)
   {
@@ -102,19 +102,19 @@ void_t Socket::close()
   }
 }
 
-bool_t Socket::isOpen() const
+bool Socket::isOpen() const
 {
   return s != INVALID_SOCKET;
 }
 
-void_t Socket::swap(Socket& other)
+void Socket::swap(Socket& other)
 {
   SOCKET tmp = s;
   s = other.s;
   other.s = tmp;
 }
 
-bool_t Socket::pair(Socket& other)
+bool Socket::pair(Socket& other)
 {
   if(s != INVALID_SOCKET)
     close();
@@ -209,7 +209,7 @@ closeServ:
 #endif
 }
 
-bool_t Socket::accept(Socket& to, uint32_t& ip, uint16_t& port)
+bool Socket::accept(Socket& to, uint32& ip, uint16& port)
 {
   if(to.s != INVALID_SOCKET)
     to.close();
@@ -228,7 +228,7 @@ bool_t Socket::accept(Socket& to, uint32_t& ip, uint16_t& port)
   return true;
 }
 
-bool_t Socket::setNonBlocking()
+bool Socket::setNonBlocking()
 {
 #ifdef _WIN32
   u_long val = 1;
@@ -240,7 +240,7 @@ bool_t Socket::setNonBlocking()
   return true;
 }
 
-bool_t Socket::setNoDelay()
+bool Socket::setNoDelay()
 {
   int val = 1;
   if(setsockopt(s, IPPROTO_TCP, TCP_NODELAY, (char*)&val, sizeof(val)) != 0)
@@ -248,21 +248,21 @@ bool_t Socket::setNoDelay()
   return true;
 }
 
-bool_t Socket::setSendBufferSize(int_t size)
+bool Socket::setSendBufferSize(int size)
 {
   if(setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&size, sizeof(size)) != 0)
     return false;
   return true;
 }
 
-bool_t Socket::setReceiveBufferSize(int_t size)
+bool Socket::setReceiveBufferSize(int size)
 {
   if(setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&size, sizeof(size)) != 0)
     return false;
   return true;
 }
 
-bool_t Socket::setKeepAlive()
+bool Socket::setKeepAlive()
 {
   int val = 1;
   if(setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, (char*)&val, sizeof(val)) != 0)
@@ -270,7 +270,7 @@ bool_t Socket::setKeepAlive()
   return true;
 }
 
-bool_t Socket::setReuseAddress()
+bool Socket::setReuseAddress()
 {
   int val = 1;
   if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&val, sizeof(val)) != 0)
@@ -278,7 +278,7 @@ bool_t Socket::setReuseAddress()
   return true;
 }
 
-bool_t Socket::bind(unsigned int ip, unsigned short port)
+bool Socket::bind(unsigned int ip, unsigned short port)
 {
   struct sockaddr_in sin;
   memset(&sin, 0, sizeof(sin));
@@ -294,14 +294,14 @@ bool_t Socket::bind(unsigned int ip, unsigned short port)
   return true;
 }
 
-bool_t Socket::listen()
+bool Socket::listen()
 {
   if(::listen(s, SOMAXCONN) < 0)
     return false;
   return true;
 }
 
-bool_t Socket::connect(unsigned int ip, unsigned short port)
+bool Socket::connect(unsigned int ip, unsigned short port)
 {
   struct sockaddr_in sin;
 
@@ -323,7 +323,7 @@ bool_t Socket::connect(unsigned int ip, unsigned short port)
   return true;
 }
 
-int_t Socket::getAndResetErrorStatus()
+int Socket::getAndResetErrorStatus()
 {
   if(s == INVALID_SOCKET)
   {
@@ -337,7 +337,7 @@ int_t Socket::getAndResetErrorStatus()
   return optVal;
 }
 
-bool_t Socket::getSockName(uint32_t& ip, uint16_t& port)
+bool Socket::getSockName(uint32& ip, uint16& port)
 {
   sockaddr_in addr;
   socklen_t len = sizeof(addr);
@@ -348,7 +348,7 @@ bool_t Socket::getSockName(uint32_t& ip, uint16_t& port)
   return true;
 }
 
-bool_t Socket::getPeerName(uint32_t& ip, uint16_t& port)
+bool Socket::getPeerName(uint32& ip, uint16& port)
 {
   sockaddr_in addr;
   socklen_t len = sizeof(addr);
@@ -359,9 +359,9 @@ bool_t Socket::getPeerName(uint32_t& ip, uint16_t& port)
   return true;
 }
 
-ssize_t Socket::send(const byte_t* data, size_t size)
+ssize Socket::send(const byte* data, usize size)
 {
-  ssize_t r = ::send(s, (const char*)data, size, MSG_NOSIGNAL);
+  ssize r = ::send(s, (const char*)data, size, MSG_NOSIGNAL);
   if(r == SOCKET_ERROR)
   {
     if(ERRNO == EWOULDBLOCK 
@@ -377,9 +377,9 @@ ssize_t Socket::send(const byte_t* data, size_t size)
   return r;
 }
 
-ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
+ssize Socket::recv(byte* data, usize maxSize, usize minSize)
 {
-  ssize_t r = ::recv(s, (char*)data, maxSize, 0);
+  ssize r = ::recv(s, (char*)data, maxSize, 0);
   switch(r)
   {
   case SOCKET_ERROR:
@@ -397,9 +397,9 @@ ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
   default:
     break;
   }
-  if((size_t)r >= minSize)
+  if((usize)r >= minSize)
     return r;
-  size_t received = (size_t)r;
+  usize received = (usize)r;
   for(;;)
   {
     r = ::recv(s, (char*)data + received, maxSize - received, 0);
@@ -427,17 +427,17 @@ ssize_t Socket::recv(byte_t* data, size_t maxSize, size_t minSize)
   }
 }
 
-void_t Socket::setLastError(int_t error)
+void Socket::setLastError(int error)
 {
   SET_ERRNO(error);
 }
 
-int_t Socket::getLastError()
+int Socket::getLastError()
 {
   return ERRNO;
 }
 
-String Socket::getErrorString(int_t error)
+String Socket::getErrorString(int error)
 {
 #ifdef _WIN32
   TCHAR errorMessage[256];
@@ -460,19 +460,19 @@ String Socket::getErrorString(int_t error)
 #endif
 }
 
-uint32_t Socket::inetAddr(const String& addr, uint16_t* port)
+uint32 Socket::inetAddr(const String& addr, uint16* port)
 {
-  const tchar_t* portStr = addr.find(':');
+  const tchar* portStr = addr.find(':');
   if(portStr)
   {
     if(port)
-      *port = (uint16_t)String::toUInt(portStr + 1);
+      *port = (uint16)String::toUInt(portStr + 1);
 #ifdef UNICODE
     in_addr inaddr;
     LPCWSTR end; 
     return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
 #else
-    return ntohl(inet_addr((const tchar_t*)addr.substr(0, (portStr - (const tchar_t*)addr) / sizeof(tchar_t))));
+    return ntohl(inet_addr((const tchar*)addr.substr(0, (portStr - (const tchar*)addr) / sizeof(tchar))));
 #endif
   }
 #ifdef UNICODE
@@ -480,11 +480,11 @@ uint32_t Socket::inetAddr(const String& addr, uint16_t* port)
   LPCWSTR end; 
   return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
 #else
-  return ntohl(inet_addr((const tchar_t*)addr));
+  return ntohl(inet_addr((const tchar*)addr));
 #endif
 }
 
-String Socket::inetNtoA(uint32_t ip)
+String Socket::inetNtoA(uint32 ip)
 {
   in_addr in;
   in.s_addr = htonl(ip);
@@ -507,13 +507,13 @@ public:
     Socket* socket;
     SOCKET s;
     WSAEVENT event;
-    uint_t events;
+    uint events;
   };
   Array<WSAEVENT> events;
   HashMap<Socket*, SocketInfo> sockets;
   HashMap<WSAEVENT, SocketInfo*> eventToSocket;
 
-  static long mapEvents(uint_t events)
+  static long mapEvents(uint events)
   {
     long networkEvents = 0;
     if(events & readFlag)
@@ -530,16 +530,16 @@ public:
   struct SocketInfo
   {
     Socket* socket;
-    size_t index;
-    uint_t events;
+    usize index;
+    uint events;
   };
 
   Array<pollfd> pollfds;
   HashMap<Socket*, SocketInfo> sockets;
   HashMap<SOCKET, SocketInfo*> fdToSocket;
-  HashMap<Socket*, uint_t> selectedSockets;
+  HashMap<Socket*, uint> selectedSockets;
 
-  static short mapEvents(uint_t events)
+  static short mapEvents(uint events)
   {
     short pollEvents = 0;
     if(events & (readFlag | acceptFlag))
@@ -555,7 +555,7 @@ Socket::Poll::Poll() : p(new Private) {}
 
 Socket::Poll::~Poll() {delete p;}
 
-void_t Socket::Poll::set(Socket& socket, uint_t events)
+void Socket::Poll::set(Socket& socket, uint events)
 {
   HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
 #ifdef _WIN32
@@ -612,7 +612,7 @@ void_t Socket::Poll::set(Socket& socket, uint_t events)
 #endif
 }
 
-void_t Socket::Poll::remove(Socket& socket)
+void Socket::Poll::remove(Socket& socket)
 {
   HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
   if(it == p->sockets.end())
@@ -627,7 +627,7 @@ void_t Socket::Poll::remove(Socket& socket)
   p->sockets.remove(it);
   p->eventToSocket.remove(event);
 #else
-  size_t index = sockInfo.index;
+  usize index = sockInfo.index;
   pollfd& pfd = p->pollfds[index];
   p->fdToSocket.remove(pfd.fd);
   p->pollfds.remove(index);
@@ -642,7 +642,7 @@ void_t Socket::Poll::remove(Socket& socket)
 #endif
 }
 
-bool_t Socket::Poll::poll(Event& event, int64_t timeout)
+bool Socket::Poll::poll(Event& event, int64 timeout)
 {
 #ifdef _WIN32
   DWORD count = (DWORD)p->events.size();
@@ -655,7 +655,7 @@ bool_t Socket::Poll::poll(Event& event, int64_t timeout)
     Private::SocketInfo* sockInfo = *it;
     WSANETWORKEVENTS selectedEvents = {};
     VERIFY(WSAEnumNetworkEvents(sockInfo->s, wsaEvent, &selectedEvents) != SOCKET_ERROR);
-    uint32_t revents = selectedEvents.lNetworkEvents;
+    uint32 revents = selectedEvents.lNetworkEvents;
 
     event.flags = 0;
     if(revents & (FD_READ | FD_CLOSE | FD_ACCEPT))
@@ -685,7 +685,7 @@ bool_t Socket::Poll::poll(Event& event, int64_t timeout)
           HashMap<SOCKET, Private::SocketInfo*>::Iterator it = p->fdToSocket.find(i->fd);
           ASSERT(it != p->fdToSocket.end());
           Private::SocketInfo* sockInfo = *it;
-          uint_t events = 0;
+          uint events = 0;
           int revents = i->revents;
 
           if(revents & (POLLIN | POLLRDHUP | POLLHUP))
@@ -710,7 +710,7 @@ bool_t Socket::Poll::poll(Event& event, int64_t timeout)
     }
   }
 
-  HashMap<Socket*, uint_t>::Iterator it = p->selectedSockets.begin();
+  HashMap<Socket*, uint>::Iterator it = p->selectedSockets.begin();
   event.socket = it.key();
   event.flags = *it;
   p->selectedSockets.remove(it);

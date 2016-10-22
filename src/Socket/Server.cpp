@@ -28,7 +28,7 @@ struct Server::Handle
 
   Type type;
   State state;
-  void_t* userData;
+  void* userData;
 };
 
 class Server::Private
@@ -53,22 +53,22 @@ public:
 
   struct Timer : public Handle
   {
-    int64_t executionTime;
-    int64_t interval;
+    int64 executionTime;
+    int64 interval;
   };
 
 private:
   Pool<Listener> listeners;
   Pool<Client> clients;
   Pool<Timer> timers;
-  MultiMap<int64_t, Timer*> queuedTimers;
+  MultiMap<int64, Timer*> queuedTimers;
   Socket::Poll sockets;
   List<Handle*> closingHandles;
 
-  bool_t keepAlive;
-  bool_t noDelay;
-  int_t sendBufferSize;
-  int_t receiveBufferSize;
+  bool keepAlive;
+  bool noDelay;
+  int sendBufferSize;
+  int receiveBufferSize;
 
 public:
   Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0)
@@ -76,7 +76,7 @@ public:
     queuedTimers.insert(0, 0); // add default timeout timer
   }
 
-  Handle* listen(uint32_t addr, uint16_t port, void_t* userData)
+  Handle* listen(uint32 addr, uint16 port, void* userData)
   {
     Socket socket;
     if(!socket.open() ||
@@ -94,12 +94,12 @@ public:
     return &listener;
   }
 
-  Handle* accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port)
+  Handle* accept(Handle& handle, void* userData, uint32* addr, uint16* port)
   {
     Listener& listener = (Listener&)handle;
     Socket socket;
-    uint32_t addr2;
-    uint16_t port2;
+    uint32 addr2;
+    uint16 port2;
     if(!listener.socket.accept(socket, *(addr ? addr : &addr2), *(port ? port : &port2)) ||
       !socket.setNonBlocking() ||
       (keepAlive && !socket.setKeepAlive()) ||
@@ -117,7 +117,7 @@ public:
     return &client;
   }
 
-  Handle* connect(uint32_t addr, uint16_t port, void_t* userData)
+  Handle* connect(uint32 addr, uint16 port, void* userData)
   {
     Socket socket;
     if(!socket.open() ||
@@ -134,7 +134,7 @@ public:
     return &client;
   }
 
-  Handle* pair(Socket& otherSocket, void_t* userData)
+  Handle* pair(Socket& otherSocket, void* userData)
   {
     Socket socket;
     if(!socket.pair(otherSocket) ||
@@ -157,9 +157,9 @@ public:
     return &client;
   }
 
-  Handle* createTimer(int64_t interval, void_t* userData)
+  Handle* createTimer(int64 interval, void* userData)
   {
-    int64_t executionTime = Time::ticks() + interval;
+    int64 executionTime = Time::ticks() + interval;
     Timer& timer = timers.append();
     timer.type = Handle::timerType;
     timer.state = Handle::connectedState;
@@ -170,7 +170,7 @@ public:
     return &timer;
   }
 
-  bool_t write(Handle& handle, const byte_t* data, size_t size, size_t* postponed)
+  bool write(Handle& handle, const byte* data, usize size, usize* postponed)
   {
     if(handle.type != Handle::clientType)
       return false;
@@ -179,7 +179,7 @@ public:
       return false;
     if(client.sendBuffer.isEmpty())
     {
-      ssize_t sent = client.socket.send(data, size);
+      ssize sent = client.socket.send(data, size);
       switch(sent)
       {
       case -1:
@@ -196,7 +196,7 @@ public:
       default:
         break;
       }
-      if((size_t)sent >= size)
+      if((usize)sent >= size)
       {
         if(postponed)
           *postponed = 0;
@@ -212,14 +212,14 @@ public:
     return true;
   }
 
-  bool_t read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size)
+  bool read(Handle& handle, byte* buffer, usize maxSize, usize& size)
   {
     if(handle.type != Handle::clientType)
       return false;
     Client& client = (Client&)handle;
     if(client.state != Client::connectedState && client.state != Client::suspendedState)
       return false;
-    ssize_t received = client.socket.recv(buffer, maxSize);
+    ssize received = client.socket.recv(buffer, maxSize);
     switch(received)
     {
     case -1:
@@ -233,11 +233,11 @@ public:
     default:
       break;
     }
-    size = (size_t)received;
+    size = (usize)received;
     return true;
   }
 
-  void_t close(Handle& handle)
+  void close(Handle& handle)
   {
     closingHandles.remove(&handle);
     switch(handle.type)
@@ -253,7 +253,7 @@ public:
       {
         Timer& timer = (Timer&)handle;
         if(timer.state == Handle::connectedState)
-          for(MultiMap<int64_t, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
+          for(MultiMap<int64, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
           {
             if(*i == &timer)
             {
@@ -276,7 +276,7 @@ public:
     }
   }
 
-  bool_t poll(Event& event)
+  bool poll(Event& event)
   {
     while(!closingHandles.isEmpty())
     {
@@ -312,8 +312,8 @@ public:
 
     for(Socket::Poll::Event pollEvent;;)
     {
-      int64_t now = Time::ticks();
-      int64_t timeout = queuedTimers.begin().key() - now;
+      int64 now = Time::ticks();
+      int64 timeout = queuedTimers.begin().key() - now;
       for(; timeout <= 0; timeout = queuedTimers.begin().key() - now)
       {
         Timer* timer = queuedTimers.front();
@@ -348,7 +348,7 @@ public:
         Client& client = (Client&)*event.handle;
         if(!client.sendBuffer.isEmpty())
         {
-          ssize_t sent = client.socket.send(client.sendBuffer, client.sendBuffer.size());
+          ssize sent = client.socket.send(client.sendBuffer, client.sendBuffer.size());
           switch(sent)
           {
           case -1:
@@ -364,7 +364,7 @@ public:
           default:
             break;
           }
-          client.sendBuffer.removeFront((size_t)sent);
+          client.sendBuffer.removeFront((usize)sent);
         }
         if(client.sendBuffer.isEmpty())
         {
@@ -387,10 +387,10 @@ public:
       {
         Client& client = *(Client*)event.handle;
         Socket& socket = client.socket;
-        int_t error = socket.getAndResetErrorStatus();
+        int error = socket.getAndResetErrorStatus();
         if(error)
         {
-          Error::setLastError((uint_t)error);
+          Error::setLastError((uint)error);
           event.type = Event::failType;
           client.state = Client::closedState;
           sockets.remove(client.socket);
@@ -419,7 +419,7 @@ public:
     return false;
   }
 
-  void_t suspend(Handle& handle)
+  void suspend(Handle& handle)
   {
     if(handle.type != Handle::clientType)
       return;
@@ -431,7 +431,7 @@ public:
     client.state = Client::suspendedState;
   }
 
-  void_t resume(Handle& handle)
+  void resume(Handle& handle)
   {
     if(handle.type != Handle::clientType)
       return;
@@ -443,29 +443,29 @@ public:
     client.state = Client::connectedState;
   }
 
-  void_t setKeepAlive(bool_t enable) {keepAlive = enable;}
-  void_t setNoDelay(bool_t enable) {noDelay = enable;}
-  void_t setSendBufferSize(int_t size) {sendBufferSize = size;}
-  void_t setReceiveBufferSize(int_t size) {receiveBufferSize = size;}
+  void setKeepAlive(bool enable) {keepAlive = enable;}
+  void setNoDelay(bool enable) {noDelay = enable;}
+  void setSendBufferSize(int size) {sendBufferSize = size;}
+  void setReceiveBufferSize(int size) {receiveBufferSize = size;}
 };
 
 Server::Server() : p(new Private) {}
 Server::~Server() {delete p;}
-Server::Handle* Server::listen(uint16_t port, void_t* userData) {return p->listen(Socket::anyAddr, port, userData);}
-Server::Handle* Server::listen(uint32_t addr, uint16_t port, void_t* userData) {return p->listen(addr, port, userData);}
-Server::Handle* Server::connect(uint32_t addr, uint16_t port, void_t* userData) {return p->connect(addr, port, userData);}
-Server::Handle* Server::pair(Socket& socket, void_t* userData) {return p->pair(socket, userData);}
-Server::Handle* Server::createTimer(int64_t interval, void_t* userData) {return p->createTimer(interval, userData);}
-Server::Handle* Server::accept(Handle& handle, void_t* userData, uint32_t* addr, uint16_t* port) {return p->accept(handle, userData, addr, port);}
-void_t Server::setUserData(Handle& handle, void_t* userData) {handle.userData = userData;}
-void_t* Server::getUserData(Handle& handle) {return handle.userData;}
-bool_t Server::write(Handle& handle, const byte_t* data, size_t size, size_t* postponed) {return p->write(handle, data, size, postponed);}
-bool_t Server::read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size) {return p->read(handle, buffer, maxSize, size);}
-void_t Server::close(Handle& handle) {return p->close(handle);}
-bool_t Server::poll(Event& event) {return p->poll(event);}
-void_t Server::suspend(Handle& handle) {return p->suspend(handle);}
-void_t Server::resume(Handle& handle) {return p->resume(handle);}
-void_t Server::setKeepAlive(bool_t enable) {return p->setKeepAlive(enable);}
-void_t Server::setNoDelay(bool_t enable) {return p->setNoDelay(enable);}
-void_t Server::setSendBufferSize(int_t size) {return p->setSendBufferSize(size);}
-void_t Server::setReceiveBufferSize(int_t size) {return p->setReceiveBufferSize(size);}
+Server::Handle* Server::listen(uint16 port, void* userData) {return p->listen(Socket::anyAddr, port, userData);}
+Server::Handle* Server::listen(uint32 addr, uint16 port, void* userData) {return p->listen(addr, port, userData);}
+Server::Handle* Server::connect(uint32 addr, uint16 port, void* userData) {return p->connect(addr, port, userData);}
+Server::Handle* Server::pair(Socket& socket, void* userData) {return p->pair(socket, userData);}
+Server::Handle* Server::createTimer(int64 interval, void* userData) {return p->createTimer(interval, userData);}
+Server::Handle* Server::accept(Handle& handle, void* userData, uint32* addr, uint16* port) {return p->accept(handle, userData, addr, port);}
+void Server::setUserData(Handle& handle, void* userData) {handle.userData = userData;}
+void* Server::getUserData(Handle& handle) {return handle.userData;}
+bool Server::write(Handle& handle, const byte* data, usize size, usize* postponed) {return p->write(handle, data, size, postponed);}
+bool Server::read(Handle& handle, byte* buffer, usize maxSize, usize& size) {return p->read(handle, buffer, maxSize, size);}
+void Server::close(Handle& handle) {return p->close(handle);}
+bool Server::poll(Event& event) {return p->poll(event);}
+void Server::suspend(Handle& handle) {return p->suspend(handle);}
+void Server::resume(Handle& handle) {return p->resume(handle);}
+void Server::setKeepAlive(bool enable) {return p->setKeepAlive(enable);}
+void Server::setNoDelay(bool enable) {return p->setNoDelay(enable);}
+void Server::setSendBufferSize(int size) {return p->setSendBufferSize(size);}
+void Server::setReceiveBufferSize(int size) {return p->setReceiveBufferSize(size);}

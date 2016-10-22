@@ -16,11 +16,11 @@ public:
   static Mutex mutex;
   static String lineFormat;
   static String timeFormat;
-  static int_t level;
+  static int level;
 
-  static void_t vlogf(int_t level, const tchar_t* format, va_list& vl)
+  static void vlogf(int level, const tchar* format, va_list& vl)
   {
-    int64_t time = Time::time();
+    int64 time = Time::time();
     String lineFormat;
     String timeFormat;
     _Log::mutex.lock();
@@ -30,15 +30,15 @@ public:
 
     // get message
     String data(200);
-    int_t result;
+    int result;
     {
-      size_t capacity = data.capacity();
+      usize capacity = data.capacity();
 #ifdef _UNICODE
       result = _vsnwprintf((wchar_t*)data, capacity, format, vl);
 #else
-      result = vsnprintf((char_t*)data, capacity, format, vl);
+      result = vsnprintf((char*)data, capacity, format, vl);
 #endif
-      if(result >= 0 && result < (int_t)capacity)
+      if(result >= 0 && result < (int)capacity)
         data.resize(result);
       else // buffer was too small: compute size, reserve buffer, print again
       {
@@ -58,7 +58,7 @@ public:
       #ifdef _UNICODE
           result = _vsnwprintf((wchar_t*)data, result + 1, format, vl);
       #else
-          result = vsnprintf((char_t*)data, result + 1, format, vl);
+          result = vsnprintf((char*)data, result + 1, format, vl);
       #endif
           ASSERT(result >= 0);
           if(result >= 0)
@@ -69,7 +69,7 @@ public:
 
     // build line
     String line(data.length() + 200);
-    for(const tchar_t* p = lineFormat; *p; ++p)
+    for(const tchar* p = lineFormat; *p; ++p)
     {
       if(*p == _T('%'))
       {
@@ -123,9 +123,9 @@ public:
 Mutex _Log::mutex;
 String _Log::lineFormat(_T("[%t] %L: %m"));
 String _Log::timeFormat(_T("%H:%M:%S"));
-int_t _Log::level = Log::info;
+int _Log::level = Log::info;
 
-void_t Log::setFormat(const String& lineFormat, const String& timeFormat)
+void Log::setFormat(const String& lineFormat, const String& timeFormat)
 {
   _Log::mutex.lock();
   _Log::lineFormat = lineFormat;
@@ -133,12 +133,12 @@ void_t Log::setFormat(const String& lineFormat, const String& timeFormat)
   _Log::mutex.unlock();
 }
 
-void_t Log::setLevel(int_t level)
+void Log::setLevel(int level)
 {
   _Log::level = level;
 }
 
-void_t Log::logf(int_t level, const tchar_t* format, ...)
+void Log::logf(int level, const tchar* format, ...)
 {
   if(level < _Log::level)
     return;
@@ -148,7 +148,7 @@ void_t Log::logf(int_t level, const tchar_t* format, ...)
   va_end(vl);
 }
 
-void_t Log::infof(const tchar_t* format, ...)
+void Log::infof(const tchar* format, ...)
 {
   if(Log::info < _Log::level)
     return;
@@ -158,7 +158,7 @@ void_t Log::infof(const tchar_t* format, ...)
   va_end(vl);
 }
 
-void_t Log::warningf(const tchar_t* format, ...)
+void Log::warningf(const tchar* format, ...)
 {
   if(Log::warning < _Log::level)
     return;
@@ -168,7 +168,7 @@ void_t Log::warningf(const tchar_t* format, ...)
   va_end(vl);
 }
 
-void_t Log::errorf(const tchar_t* format, ...)
+void Log::errorf(const tchar* format, ...)
 {
   if(Log::error < _Log::level)
     return;

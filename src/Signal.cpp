@@ -31,7 +31,7 @@ Signal::~Signal()
 #endif
 }
 
-void_t Signal::set()
+void Signal::set()
 {
 #ifdef _WIN32
   VERIFY(SetEvent(handle));
@@ -43,7 +43,7 @@ void_t Signal::set()
 #endif
 }
 
-void_t Signal::reset()
+void Signal::reset()
 {
 #ifdef _WIN32
   VERIFY(ResetEvent(handle));
@@ -54,7 +54,7 @@ void_t Signal::reset()
 #endif
 }
 
-bool_t Signal::wait()
+bool Signal::wait()
 {
 #ifdef _WIN32
   return WaitForSingleObject(handle, INFINITE) == WAIT_OBJECT_0;
@@ -72,7 +72,7 @@ bool_t Signal::wait()
 #endif
 }
 
-bool_t Signal::wait(int64_t timeout)
+bool Signal::wait(int64 timeout)
 {
 #ifdef _WIN32
   return WaitForSingleObject(handle, (DWORD)timeout) == WAIT_OBJECT_0;

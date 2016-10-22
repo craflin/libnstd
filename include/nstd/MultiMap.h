@@ -64,10 +64,10 @@ public:
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
 
-  size_t size() const {return _size;}
-  bool_t isEmpty() const {return !root;}
+  usize size() const {return _size;}
+  bool isEmpty() const {return !root;}
 
-  void_t clear()
+  void clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
@@ -100,14 +100,14 @@ public:
     return _end;
   }
 
-  bool_t contains(const T& key) const {return find(key) != _end;}
+  bool contains(const T& key) const {return find(key) != _end;}
 
-  size_t count(const T& key)
+  usize count(const T& key)
   {
     Iterator it = find(key);
     if(it == _end)
       return 0;
-    size_t count = 1;
+    usize count = 1;
     for(Item* item = it.item->next; item && item->key == key; item = item->next)
       ++count;
     return count;
@@ -148,21 +148,21 @@ public:
   //void checkTree(Item* item, Item* parent)
   //{
   //  ASSERT(item->parent == parent);
-  //  size_t height = item->height;
-  //  ssize_t slope = item->slope;
+  //  usize height = item->height;
+  //  ssize slope = item->slope;
   //  if(item->left)
   //    checkTree(item->left, item);
   //  if(item->right)
   //    checkTree(item->right, item);
-  //  size_t leftHeight = item->left ? item->left->height : 0;
-  //  size_t rightHeight = item->right ? item->right->height : 0;
+  //  usize leftHeight = item->left ? item->left->height : 0;
+  //  usize rightHeight = item->right ? item->right->height : 0;
   //  ASSERT(height == (leftHeight > rightHeight ? leftHeight : rightHeight) + 1);
   //  ASSERT(slope == leftHeight - rightHeight);
   //  ASSERT(slope <= 1);
   //  ASSERT(slope >= -1);
   //}
 
-  void_t remove(const T& key)
+  void remove(const T& key)
   {
     Iterator it = find(key);
     if(it != _end)
@@ -286,7 +286,7 @@ public:
   rebalParent:
     do
     {
-      size_t oldHeight = parent->height;
+      usize oldHeight = parent->height;
       parent->updateHeightAndSlope();
       parent = rebal(parent);
       if(oldHeight == parent->height)
@@ -302,7 +302,7 @@ public:
   rebalParentUpwards:
     while(parent)
     {
-      size_t oldHeight = parent->height;
+      usize oldHeight = parent->height;
       parent->updateHeightAndSlope();
       parent = rebal(parent);
       if(oldHeight == parent->height)
@@ -330,8 +330,8 @@ private:
     Item* parent;
     Item* left;
     Item* right;
-    size_t height;
-    ssize_t slope;
+    usize height;
+    ssize slope;
     Item* next;
     Item* prev;
     
@@ -339,11 +339,11 @@ private:
     
     Item(Item* parent, const T& key, const V& value) : key(key), value(value), parent(parent), left(0), right(0), height(1), slope(0) {}
     
-    void_t updateHeightAndSlope()
+    void updateHeightAndSlope()
     {
       ASSERT(!parent || this == parent->left || this == parent->right);
-      size_t leftHeight = left ? left->height : 0;
-      size_t rightHeight = right ? right->height : 0;
+      usize leftHeight = left ? left->height : 0;
+      usize rightHeight = right ? right->height : 0;
       slope = leftHeight - rightHeight;
       height = (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
     }
@@ -357,7 +357,7 @@ private:
   Iterator _end;
   Iterator _begin;
   Item* root;
-  size_t _size;
+  usize _size;
   Item endItem;
   Item* freeItem;
   ItemBlock* blocks;
@@ -378,11 +378,11 @@ private:
       }
       else
       {
-        size_t allocatedSize;
+        usize allocatedSize;
         ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
         itemBlock->next = blocks;
         blocks = itemBlock;
-        item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
+        item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
 
         for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
         {
@@ -415,7 +415,7 @@ private:
         insertPos->prev = item;
 
         // neu:
-        size_t oldHeight;
+        usize oldHeight;
         do
         {
           oldHeight = parent->height;
@@ -470,7 +470,7 @@ private:
     return item;
   }
   
-  static void_t rotr(Item*& cell)
+  static void rotr(Item*& cell)
   {
     Item* oldTop = cell;
     Item* result = oldTop->left;
@@ -485,7 +485,7 @@ private:
     result->updateHeightAndSlope();
   }
   
-  static void_t rotl(Item*& cell)
+  static void rotl(Item*& cell)
   {
     Item* oldTop = cell;
     Item* result = oldTop->right;
@@ -500,7 +500,7 @@ private:
     result->updateHeightAndSlope();
   }
   
-  static void_t shiftr(Item*& cell)
+  static void shiftr(Item*& cell)
   {
     Item* oldTop = cell;
     if(oldTop->left->slope == -1)
@@ -508,7 +508,7 @@ private:
     rotr(cell);
   }
 
-  static void_t shiftl(Item*& cell)
+  static void shiftl(Item*& cell)
   {
     Item* oldTop = cell;
     if(oldTop->right->slope == 1)

@@ -3,7 +3,7 @@
 #include <nstd/Semaphore.h>
 #include <nstd/Time.h>
 
-void_t testSempahore()
+void testSempahore()
 {
   Semaphore sem(3);
   sem.signal();
@@ -12,8 +12,8 @@ void_t testSempahore()
   ASSERT(sem.wait());
   ASSERT(sem.wait());
   ASSERT(!sem.tryWait());
-  int64_t start = Time::ticks();
+  int64 start = Time::ticks();
   ASSERT(!sem.wait(300));
-  int64_t waitTime = Time::ticks() - start;
+  int64 waitTime = Time::ticks() - start;
   ASSERT(waitTime > 200);
 }

@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Mutex.h>
 
-void_t testMutex()
+void testMutex()
 {
   // test recursion
   {

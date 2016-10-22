@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Pool.h>
 
-void_t testPool()
+void testPool()
 {
   struct TestObject
   {

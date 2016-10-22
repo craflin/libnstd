@@ -7,7 +7,7 @@ public:
   int a;
 };
 
-int_t main(int_t argc, char_t* argv[])
+int main(int argc, char* argv[])
 {
   new A; // leak #1
   A* b = new A; // no leak

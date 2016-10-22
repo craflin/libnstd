@@ -22,7 +22,7 @@ public:
 #else
   static pthread_mutex_t mutex;
 #endif
-  static Map<uint32_t, String> userErrorStrings;
+  static Map<uint32, String> userErrorStrings;
   static class Framework
   {
   public:
@@ -52,10 +52,10 @@ CRITICAL_SECTION Error::Private::cs;
 #else
 pthread_mutex_t Error::Private::mutex;
 #endif
-Map<uint32_t, String> Error::Private::userErrorStrings;
+Map<uint32, String> Error::Private::userErrorStrings;
 Error::Private::Framework Error::Private::framework;
 
-void_t Error::setLastError(uint_t error)
+void Error::setLastError(uint error)
 {
 #ifdef _WIN32
   SetLastError((DWORD)error);
@@ -64,16 +64,16 @@ void_t Error::setLastError(uint_t error)
 #endif
 }
 
-uint_t Error::getLastError()
+uint Error::getLastError()
 {
 #ifdef _WIN32
-  return (uint_t)GetLastError();
+  return (uint)GetLastError();
 #else
   return errno;
 #endif
 }
 
-String Error::getErrorString(uint_t error)
+String Error::getErrorString(uint error)
 {
   if(error == 0x10000)
   {
@@ -85,11 +85,11 @@ String Error::getErrorString(uint_t error)
 #endif
 
 #ifdef _WIN32
-    uint32_t threadId = (uint32_t)GetCurrentThreadId();
+    uint32 threadId = (uint32)GetCurrentThreadId();
 #else
-    uint32_t threadId = (uint32_t)syscall(__NR_gettid);
+    uint32 threadId = (uint32)syscall(__NR_gettid);
 #endif
-    Map<uint32_t, String>::Iterator it = Private::userErrorStrings.find(threadId);
+    Map<uint32, String>::Iterator it = Private::userErrorStrings.find(threadId);
     if(it != Private::userErrorStrings.end())
       errorStr = *it;
 #ifdef _WIN32
@@ -121,7 +121,7 @@ String Error::getErrorString(uint_t error)
 #endif
 }
 
-void_t Error::setErrorString(const String& error)
+void Error::setErrorString(const String& error)
 {
 #ifdef _WIN32
   EnterCriticalSection(&Private::cs);
@@ -130,13 +130,13 @@ void_t Error::setErrorString(const String& error)
 #endif
 
 #ifdef _WIN32
-  uint32_t threadId = (uint32_t)GetCurrentThreadId();
+  uint32 threadId = (uint32)GetCurrentThreadId();
 #else
-  uint32_t threadId = (uint32_t)syscall(__NR_gettid);
+  uint32 threadId = (uint32)syscall(__NR_gettid);
 #endif
 
   String* threadErrorMsg = 0;
-  for(Map<uint32_t, String>::Iterator i = Private::userErrorStrings.begin(), end = Private::userErrorStrings.end(), next; i != end; i = next)
+  for(Map<uint32, String>::Iterator i = Private::userErrorStrings.begin(), end = Private::userErrorStrings.end(), next; i != end; i = next)
   {
     next = i;
     ++next;

@@ -33,7 +33,7 @@ Monitor::~Monitor()
 #endif
 }
 
-bool_t Monitor::tryLock()
+bool Monitor::tryLock()
 {
 #ifdef _WIN32
   return TryEnterCriticalSection((CRITICAL_SECTION*)mdata) == TRUE;
@@ -42,7 +42,7 @@ bool_t Monitor::tryLock()
 #endif
 }
 
-void_t Monitor::lock()
+void Monitor::lock()
 {
 #ifdef _WIN32
   EnterCriticalSection((CRITICAL_SECTION*)mdata);
@@ -51,7 +51,7 @@ void_t Monitor::lock()
 #endif
 }
 
-bool_t Monitor::wait()
+bool Monitor::wait()
 {
 #ifdef _WIN32
   for(;;)
@@ -77,7 +77,7 @@ bool_t Monitor::wait()
 #endif
 }
 
-bool_t Monitor::wait(int64_t timeout)
+bool Monitor::wait(int64 timeout)
 {
 #ifdef _WIN32
   for(;;)
@@ -109,7 +109,7 @@ bool_t Monitor::wait(int64_t timeout)
 #endif
 }
 
-void_t Monitor::unlock()
+void Monitor::unlock()
 {
 #ifdef _WIN32
   LeaveCriticalSection((CRITICAL_SECTION*)mdata);
@@ -118,7 +118,7 @@ void_t Monitor::unlock()
 #endif
 }
 
-void_t Monitor::set()
+void Monitor::set()
 {
 #ifdef _WIN32
   EnterCriticalSection((CRITICAL_SECTION*)mdata);

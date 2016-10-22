@@ -9,22 +9,22 @@ public:
   Mutex();
   ~Mutex();
 
-  void_t lock();
-  bool_t tryLock();
-  void_t unlock();
+  void lock();
+  bool tryLock();
+  void unlock();
 
 private:
 #ifdef _WIN32
   #ifdef _AMD64
-  byte_t data[40]; // sizeof(CRITICAL_SECTION)
+  byte data[40]; // sizeof(CRITICAL_SECTION)
   #else
-  byte_t data[24]; // sizeof(CRITICAL_SECTION)
+  byte data[24]; // sizeof(CRITICAL_SECTION)
   #endif
 #else
   #ifdef _AMD64
-  int64_t data[5]; // sizeof(pthread_mutex_t)
+  int64 data[5]; // sizeof(pthread_mutex_t)
   #else
-  int64_t data[3]; // sizeof(pthread_mutex_t)
+  int64 data[3]; // sizeof(pthread_mutex_t)
   #endif
 #endif
 

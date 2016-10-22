@@ -18,7 +18,7 @@ public:
   * Construct a new semaphore object.
   * @param value The initial value of the semaphore counter.
   */
-  Semaphore(uint_t value = 0);
+  Semaphore(uint value = 0);
 
   /** Destructor. */
   ~Semaphore();
@@ -26,7 +26,7 @@ public:
   /**
   * Increment the semaphore counter.
   */
-  void_t signal();
+  void signal();
 
   /**
   * Decrement the semaphore counter. The method returns immediately if the
@@ -34,7 +34,7 @@ public:
   * calling thread until another thread increases the semaphore counter.
   * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool_t wait();
+  bool wait();
 
   /**
   * Decrement the semaphore counter. The method returns immediately if the
@@ -44,19 +44,19 @@ public:
   * @param timeout The maximum time to wait. (in ms).
   * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool_t wait(int64_t timeout);
+  bool wait(int64 timeout);
 
   /**
   * Try to decrement the semaphore counter. This method returns immediately.
   * @return Whether the semaphore counter was successfully decremented or not.
   */
-  bool_t tryWait();
+  bool tryWait();
 
 private:
 #ifdef _WIN32
-  void_t* handle;
+  void* handle;
 #else
-  int64_t data[4]; // sizeof(sem_t)
+  int64 data[4]; // sizeof(sem_t)
 #endif
 
   Semaphore(const Semaphore&);

@@ -3,14 +3,14 @@
 #include <nstd/Thread.h>
 #include <nstd/Atomic.h>
 
-void_t testThread()
+void testThread()
 {
   Thread thread;
   Thread thread2;
   Thread thread3;
   struct ThreadData
   {
-    static uint_t proc(void_t* args)
+    static uint proc(void* args)
     {
       ThreadData& threadData = *(ThreadData*)args;
 
@@ -22,8 +22,8 @@ void_t testThread()
       }
       return 42;
     }
-    uint_t intParam;
-    volatile uint_t counter;
+    uint intParam;
+    volatile uint counter;
   } threadData;
   threadData.intParam = 123;
   threadData.counter = 0;

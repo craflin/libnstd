@@ -2,7 +2,7 @@
 #include <nstd/HashMap.h>
 #include <cstdlib>
 
-void_t testHashMapNStd(int iterations)
+void testHashMapNStd(int iterations)
 {
   srand(100);
   HashMap<int, int> testMap(1000);

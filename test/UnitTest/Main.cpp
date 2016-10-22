@@ -18,49 +18,49 @@
 
 #include <cstdlib>
 
-void_t testProcess();
-void_t testMonitor();
-void_t testSignal();
-void_t testUnicode();
-void_t testBuffer();
-void_t testThread();
-void_t testSempahore();
-void_t testDirectory();
-void_t testMutex();
-void_t testPool();
-void_t testServer();
-void_t testMultiMap();
-void_t testError();
-void_t testString();
-void_t testMemory();
-void_t testVariant();
-void_t testFile();
-void_t testXML();
-void_t testJSON();
+void testProcess();
+void testMonitor();
+void testSignal();
+void testUnicode();
+void testBuffer();
+void testThread();
+void testSempahore();
+void testDirectory();
+void testMutex();
+void testPool();
+void testServer();
+void testMultiMap();
+void testError();
+void testString();
+void testMemory();
+void testVariant();
+void testFile();
+void testXML();
+void testJSON();
 
-void_t testConsolePrintf()
+void testConsolePrintf()
 {
   Console::printf(_T("%s\n"), _T("Hello world"));
   size_t bufferSize;
-  char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
+  char* buffer = (char*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
   Console::printf(_T("%hs%hs\n"), buffer, buffer);
 }
 
-void_t testDebugPrintf()
+void testDebugPrintf()
 {
   Debug::printf(_T("%s\n"), _T("Hello world"));
   size_t bufferSize;
-  char_t* buffer = (char_t*)Memory::alloc(5000 * 4, bufferSize);
+  char* buffer = (char*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
   Debug::printf(_T("%hs%hs\n"), buffer, buffer);
 }
 
-void_t testAtomic()
+void testAtomic()
 {
   volatile size_t size = 0;
   ASSERT(Atomic::increment(size) == 1);
@@ -69,28 +69,28 @@ void_t testAtomic()
   ASSERT(Atomic::decrement(size) == 2);
   ASSERT(Atomic::decrement(size) == 1);
   ASSERT(Atomic::decrement(size) == 0);
-  volatile int32_t int32 = 0;
+  volatile int32 int32 = 0;
   ASSERT(Atomic::increment(int32) == 1);
   ASSERT(Atomic::decrement(int32) == 0);
   ASSERT(Atomic::decrement(int32) == -1);
-  volatile uint32_t uint32 = 0xfffffff0;
+  volatile uint32 uint32 = 0xfffffff0;
   ASSERT(Atomic::increment(uint32) == 0xfffffff1);
   ASSERT(Atomic::decrement(uint32) == 0xfffffff0);
 #ifndef _ARM
-  volatile int64_t int64 = 0;
+  volatile int64 int64 = 0;
   ASSERT(Atomic::increment(int64) == 1);
   ASSERT(Atomic::decrement(int64) == 0);
   ASSERT(Atomic::decrement(int64) == -1);
-  volatile uint64_t uint64 =  (0xffffffffULL << 32) | 0xfffffff0ULL;
+  volatile uint64 uint64 =  (0xffffffffULL << 32) | 0xfffffff0ULL;
   ASSERT(Atomic::increment(uint64) == ((0xffffffffULL << 32) | 0xfffffff1ULL));
   ASSERT(Atomic::decrement(uint64) == ((0xffffffffULL << 32) | 0xfffffff0ULL));
 #endif
 }
 
-void_t testHashSet()
+void testHashSet()
 {
-  HashSet<int_t> mySet;
-  HashSet<int_t> emptySet;
+  HashSet<int> mySet;
+  HashSet<int> emptySet;
   mySet.swap(emptySet);
   ASSERT(mySet.isEmpty());
   ASSERT(mySet.begin() == mySet.end());
@@ -99,7 +99,7 @@ void_t testHashSet()
   mySet.append(2);
   mySet.append(3);
   ASSERT(mySet.begin() != mySet.end());
-  HashSet<int_t>::Iterator it = mySet.begin();
+  HashSet<int>::Iterator it = mySet.begin();
   ASSERT(*it == 1);
   ASSERT(*(++it) == 2);
   ASSERT(*(++it) == 3);
@@ -123,7 +123,7 @@ void_t testHashSet()
     mySet.append((rand() % 30) + 10);
   for(int i = 0; i < 300; ++i)
     mySet.remove((rand() % 30) + 10);
-  for(HashSet<int_t>::Iterator it = mySet.begin(), end = mySet.end(), next; it != end; it = next)
+  for(HashSet<int>::Iterator it = mySet.begin(), end = mySet.end(), next; it != end; it = next)
   {
     next = it; ++next;
     if(*it >= 10)
@@ -164,11 +164,11 @@ void_t testHashSet()
 
 struct TestHashSetDestructor
 {
-  int_t num;
-  //int_t* destructions;
+  int num;
+  //int* destructions;
 
   TestHashSetDestructor() : num(0) {}
-  TestHashSetDestructor(int_t num) : num(num) {}
+  TestHashSetDestructor(int num) : num(num) {}
   ~TestHashSetDestructor()
   {
     ++destructions;
@@ -176,12 +176,12 @@ struct TestHashSetDestructor
 
   operator size_t() const {return num;}
 
-  static int_t destructions;
+  static int destructions;
 };
 
-int_t TestHashSetDestructor::destructions = 0;
+int TestHashSetDestructor::destructions = 0;
 
-void_t testHashSetDestructor()
+void testHashSetDestructor()
 {
   {
     HashSet<TestHashSetDestructor> mySet;
@@ -194,7 +194,7 @@ void_t testHashSetDestructor()
   ASSERT(TestHashSetDestructor::destructions == 8);
 }
 
-void_t testHashSetString()
+void testHashSetString()
 {
   // test append
   HashSet<String> mySet;
@@ -228,7 +228,7 @@ void_t testHashSetString()
   ASSERT(mySet3.back() == _T("string3"));
 }
 
-void_t testList()
+void testList()
 {
   // test list append
   List<String> myList;
@@ -306,27 +306,27 @@ void_t testList()
   ASSERT(myList.back() == _T("2"));
 }
 
-void_t testListSort()
+void testListSort()
 {
-  List<int_t> myList;
-  for(int_t i = 0; i < 100; ++i)
+  List<int> myList;
+  for(int i = 0; i < 100; ++i)
     myList.append(rand() % 90);
   myList.sort();
-  int_t current = 0;
-  for(List<int_t>::Iterator i = myList.begin(), end = myList.end(); i != end; ++i)
+  int current = 0;
+  for(List<int>::Iterator i = myList.begin(), end = myList.end(); i != end; ++i)
   {
     ASSERT(*i >= current);
     current = *i;
   }
 }
 
-void_t testListStringSort()
+void testListStringSort()
 {
   List<String> myList;
   String str;
-  for(int_t i = 0; i < 100; ++i)
+  for(int i = 0; i < 100; ++i)
   {
-    str.printf(_T("abc%d"), (int_t)(rand() % 90));
+    str.printf(_T("abc%d"), (int)(rand() % 90));
     myList.append(str);
   }
   myList.sort();
@@ -338,11 +338,11 @@ void_t testListStringSort()
   }
 }
 
-void_t testHashMap()
+void testHashMap()
 {
   // test append
-  HashMap<int_t, int_t> myMap;
-  HashMap<int_t, int_t> emptyMap;
+  HashMap<int, int> myMap;
+  HashMap<int, int> emptyMap;
   myMap.swap(emptyMap);
   ASSERT(myMap.isEmpty());
   myMap.append(123, 123);
@@ -357,10 +357,10 @@ void_t testHashMap()
   ASSERT(myMap.isEmpty());
 }
 
-void_t testHashMapString()
+void testHashMapString()
 {
   // test append
-  HashMap<String, int_t> myMap;
+  HashMap<String, int> myMap;
   ASSERT(myMap.isEmpty());
   myMap.append(_T("string1"), 120);
   myMap.append(_T("string1"), 121);
@@ -376,20 +376,20 @@ void_t testHashMapString()
   ASSERT(myMap.find(_T("dsadasa")) == myMap.end());
 
   // test list copy constructor
-  HashMap<String, int_t> myMap2(myMap);
+  HashMap<String, int> myMap2(myMap);
   ASSERT(myMap2.size() == 3);
   ASSERT(*myMap2.begin() == 121);
   ASSERT(myMap2.begin().key() == _T("string1"));
-  ASSERT(*(++HashMap<String, int_t>::Iterator(myMap2.begin())) == 122);
+  ASSERT(*(++HashMap<String, int>::Iterator(myMap2.begin())) == 122);
   ASSERT(myMap2.back() == 123);
 
   // test list copy operator
-  HashMap<String, int_t> myMap3;
+  HashMap<String, int> myMap3;
   myMap3 = myMap;
   ASSERT(myMap3.size() == 3);
   ASSERT(*myMap3.begin() == 121);
   ASSERT(myMap3.begin().key() == _T("string1"));
-  ASSERT(*(++HashMap<String, int_t>::Iterator(myMap3.begin())) == 122);
+  ASSERT(*(++HashMap<String, int>::Iterator(myMap3.begin())) == 122);
   ASSERT(myMap3.back() == 123);
 
   // test clear
@@ -424,10 +424,10 @@ void_t testHashMapString()
   ASSERT(myMap.back() == 2);
 }
 
-void_t testNewDelete()
+void testNewDelete()
 {
-  static uint_t constructorCalls = 0;
-  static uint_t destructorCalls = 0;
+  static uint constructorCalls = 0;
+  static uint destructorCalls = 0;
   class MyClass
   {
   public:
@@ -453,7 +453,7 @@ void_t testNewDelete()
   ASSERT(destructorCalls == 24);
 }
 
-void_t testArray()
+void testArray()
 {
   // test append
   Array<int> myArray;
@@ -474,7 +474,7 @@ void_t testArray()
 }
 
 
-void_t testArrayString()
+void testArrayString()
 {
   // test insert
   Array<String> myArray;
@@ -508,13 +508,13 @@ void_t testArrayString()
 
   // test iterator
   String str;
-  for(int_t i = 0; i < 500; ++i)
+  for(int i = 0; i < 500; ++i)
   {
     str.printf(_T("test%d"), i);
     myArray.append(str);
   }
   ASSERT(myArray.size() == 500);
-  int_t count = 0;
+  int count = 0;
   for(Array<String>::Iterator i = myArray.begin(), end = myArray.end(); i != end; ++i)
   {
     str.printf(_T("test%d"), count);
@@ -538,7 +538,7 @@ void_t testArrayString()
 
   // test resize
   myArray.clear();
-  for (int_t i = 0; i < 100; ++i)
+  for (int i = 0; i < 100; ++i)
     myArray.append(_T("test"));
   ASSERT(myArray.size() == 100);
   myArray.resize(110, _T("dasda"));
@@ -570,7 +570,7 @@ void_t testArrayString()
   ASSERT(myArray.back() == _T("2"));
 }
 
-void_t testTime()
+void testTime()
 {
   String test = Time::toString(123 * 1000, _T("%Y-%m-%d %H:%M:%S"), true);
   ASSERT(test == _T("1970-01-01 00:02:03"));
@@ -586,7 +586,7 @@ void_t testTime()
     ASSERT(time.sec == 3);
   }
 
-  int64_t now = Time::time();
+  int64 now = Time::time();
   Time time(now);
   ASSERT(time.toTimestamp() == now);
   Time time2(time);
@@ -605,23 +605,23 @@ void_t testTime()
   ASSERT(timeUtc2.toTimestamp() == now);
 }
 
-void_t testMap()
+void testMap()
 {
-  Map<String, int32_t> map;
+  Map<String, int32> map;
   ASSERT(map.isEmpty());
   ASSERT(map.size() == 0);
   ASSERT(map.begin() == map.end());
   map.insert(_T("000"), 0);
   ASSERT(map.begin() != map.end());
-  Map<String, int32_t>::Iterator begin = map.begin();
+  Map<String, int32>::Iterator begin = map.begin();
   ASSERT(++begin == map.end());
-  for(int_t i = 1; i < 90; ++i)
+  for(int i = 1; i < 90; ++i)
   {
     String item;
     item.printf(_T("%03d"), i);
     map.insert(item, i);
   }
-  for(int_t i = 90; i < 100; ++i)
+  for(int i = 90; i < 100; ++i)
   {
     String item;
     item.printf(_T("%03d"), i);
@@ -629,50 +629,50 @@ void_t testMap()
   }
   ASSERT(!map.isEmpty());
   ASSERT(map.size() == 100);
-  int_t i = 0;
-  for(Map<String, int32_t>::Iterator j = map.begin(), end = map.end(); j != end; ++j, ++i)
+  int i = 0;
+  for(Map<String, int32>::Iterator j = map.begin(), end = map.end(); j != end; ++j, ++i)
   {
     String item;
     item.printf(_T("%03d"), i);
     ASSERT(j.key() == item);
     ASSERT(*j == i);
   }
-  for(int_t i = 0; i < 100; i += 10)
+  for(int i = 0; i < 100; i += 10)
   {
     String item;
     item.printf(_T("%03d"), i);
     map.insert(item, i);
   }
-  for(int_t i = 4; i < 20; i += 10)
+  for(int i = 4; i < 20; i += 10)
   {
     String item2;
     item2.printf(_T("%03d"), 99 - i);
-    Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
+    Map<String, int32>::Iterator testInsertPos = map.find(item2);
     String item;
     item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
-  for(int_t i = 3; i < 100; i += 10)
+  for(int i = 3; i < 100; i += 10)
   {
     String item2;
     item2.printf(_T("%03d"), i);
-    Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
+    Map<String, int32>::Iterator testInsertPos = map.find(item2);
     String item;
     item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
-  for(int_t i = 6; i < 100; i += 10)
+  for(int i = 6; i < 100; i += 10)
   {
     String item2;
     item2.printf(_T("%03d"), i - 5);
-    Map<String, int32_t>::Iterator testInsertPos = map.find(item2);
+    Map<String, int32>::Iterator testInsertPos = map.find(item2);
     String item;
     item.printf(_T("%03d"), i);
     map.insert(testInsertPos, item, i);
   }
   String lastKey = map.begin().key();
-  int_t lastValue = *map.begin();
-  for(Map<String, int32_t>::Iterator k = ++Map<String, int32_t>::Iterator(map.begin()), end = map.end(); k != end; ++k)
+  int lastValue = *map.begin();
+  for(Map<String, int32>::Iterator k = ++Map<String, int32>::Iterator(map.begin()), end = map.end(); k != end; ++k)
   {
     ASSERT(k.key() > lastKey);
     ASSERT(*k > lastValue);
@@ -681,22 +681,22 @@ void_t testMap()
   }
   map.remove(_T("042"));
   {
-    Map<int32_t, int32_t> map;
-    for(int_t i = 0; i < 10000; ++i)
+    Map<int32, int32> map;
+    for(int i = 0; i < 10000; ++i)
     {
-      Map<int32_t, int32_t>::Iterator testInsertPos = map.find(rand() % 100);
+      Map<int32, int32>::Iterator testInsertPos = map.find(rand() % 100);
       map.insert(testInsertPos, i % 100, 123);
     }
-    int_t lastKey = map.begin().key();
-    for(Map<int32_t, int32_t>::Iterator k = ++Map<int32_t, int32_t>::Iterator(map.begin()), end = map.end(); k != end; ++k)
+    int lastKey = map.begin().key();
+    for(Map<int32, int32>::Iterator k = ++Map<int32, int32>::Iterator(map.begin()), end = map.end(); k != end; ++k)
     {
       ASSERT(k.key() > lastKey);
       lastKey = k.key();
     }
     int item;
-    for(int_t i = 0; i < 5000; ++i)
+    for(int i = 0; i < 5000; ++i)
     {
-      Map<int32_t, int32_t>::Iterator testRmPos = map.find(rand() % 100);
+      Map<int32, int32>::Iterator testRmPos = map.find(rand() % 100);
       if (testRmPos != map.end())
         map.remove(testRmPos);
       item = rand() % 100;
@@ -704,21 +704,21 @@ void_t testMap()
     }
     lastKey = map.begin().key();
     size_t count = 1;
-    for(Map<int32_t, int32_t>::Iterator k = ++Map<int32_t, int32_t>::Iterator(map.begin()), end = map.end(); k != end; ++k)
+    for(Map<int32, int32>::Iterator k = ++Map<int32, int32>::Iterator(map.begin()), end = map.end(); k != end; ++k)
     {
       ASSERT(k.key() > lastKey);
       lastKey = k.key();
       ++count;
     }
     ASSERT(count == map.size());
-    for(Map<int32_t, int32_t>::Iterator i = map.begin(), end = map.end(); i != end; ++i)
+    for(Map<int32, int32>::Iterator i = map.begin(), end = map.end(); i != end; ++i)
     {
       ASSERT(map.find(i.key()) != map.end());
     }
   }
 }
 
-int_t main(int_t argc, char_t* argv[])
+int main(int argc, char* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 

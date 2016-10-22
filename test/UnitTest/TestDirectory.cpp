@@ -4,7 +4,7 @@
 #include <nstd/File.h>
 #include <nstd/List.h>
 
-void_t testDirectory()
+void testDirectory()
 {
   Directory::unlink(_T("testDir"), true);
 
@@ -17,21 +17,21 @@ void_t testDirectory()
     Directory dir;
     ASSERT(dir.open(_T("testDir"), _T("*"), false));
     String path;
-    bool_t isDir;
+    bool isDir;
     ASSERT(!dir.read(path, isDir));
   }
   {
     Directory dir;
     ASSERT(dir.open(_T("testDir"), String(), false));
     String path;
-    bool_t isDir;
+    bool isDir;
     ASSERT(!dir.read(path, isDir));
   }
   {
     Directory dir;
     ASSERT(dir.open(_T("testDir"), _T("a*"), false));
     String path;
-    bool_t isDir;
+    bool isDir;
     ASSERT(!dir.read(path, isDir));
   }
 

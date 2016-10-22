@@ -16,7 +16,7 @@
 #include <nstd/Semaphore.h>
 #include <nstd/Debug.h>
 
-Semaphore::Semaphore(uint_t value)
+Semaphore::Semaphore(uint value)
 {
 #ifdef _WIN32
   VERIFY(handle = CreateSemaphore(NULL, value, LONG_MAX, NULL));
@@ -35,7 +35,7 @@ Semaphore::~Semaphore()
 #endif
 }
 
-void_t Semaphore::signal()
+void Semaphore::signal()
 {
 #ifdef _WIN32
   VERIFY(ReleaseSemaphore((HANDLE)handle, 1, 0));
@@ -44,7 +44,7 @@ void_t Semaphore::signal()
 #endif
 }
 
-bool_t Semaphore::wait()
+bool Semaphore::wait()
 {
 #ifdef _WIN32
   return WaitForSingleObject((HANDLE)handle, INFINITE) == WAIT_OBJECT_0;
@@ -53,7 +53,7 @@ bool_t Semaphore::wait()
 #endif
 }
 
-bool_t Semaphore::wait(int64_t timeout)
+bool Semaphore::wait(int64 timeout)
 {
 #ifdef _WIN32
   return WaitForSingleObject((HANDLE)handle, (DWORD)timeout) == WAIT_OBJECT_0;
@@ -87,7 +87,7 @@ no_sem_timedwait:
 #endif
 }
 
-bool_t Semaphore::tryWait()
+bool Semaphore::tryWait()
 {
 #ifdef _WIN32
   return WaitForSingleObject((HANDLE)handle, 0) == WAIT_OBJECT_0;

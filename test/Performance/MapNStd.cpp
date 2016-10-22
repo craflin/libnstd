@@ -2,7 +2,7 @@
 #include <nstd/Map.h>
 #include <cstdlib>
 
-void_t testMapNStd(int iterations)
+void testMapNStd(int iterations)
 {
   srand(100);
   Map<int, int> testMap;

@@ -15,33 +15,33 @@
 #include <nstd/Debug.h>
 #include <nstd/Memory.h>
 
-int_t Debug::print(const tchar_t* str)
+int Debug::print(const tchar* str)
 {
 #ifdef _MSC_VER
   OutputDebugString(str);
 #ifdef _UNICODE
-  return (int_t)wcslen(str);
+  return (int)wcslen(str);
 #else
-  return (int_t)strlen(str);
+  return (int)strlen(str);
 #endif
 #else
   return fputs(str, stderr);
 #endif
 }
 
-int_t Debug::printf(const tchar_t* format, ...)
+int Debug::printf(const tchar* format, ...)
 {
 #ifdef _MSC_VER
   va_list ap;
   va_start(ap, format);
   {
-    tchar_t buffer[4096];
+    tchar buffer[4096];
 #if _UNICODE
-    int_t result = _vsnwprintf(buffer, sizeof(buffer), format, ap);
+    int result = _vsnwprintf(buffer, sizeof(buffer), format, ap);
 #else
-    int_t result = vsnprintf(buffer, sizeof(buffer), format, ap);
+    int result = vsnprintf(buffer, sizeof(buffer), format, ap);
 #endif
-    if(result >= 0 && result < (int_t)sizeof(buffer))
+    if(result >= 0 && result < (int)sizeof(buffer))
     {
       OutputDebugString(buffer);
       va_end(ap);
@@ -51,14 +51,14 @@ int_t Debug::printf(const tchar_t* format, ...)
 
   // buffer was too small
   {
-    int_t result;
+    int result;
 #ifdef _UNICODE
     result = _vscwprintf(format, ap);
 #else
     result = _vscprintf(format, ap);
 #endif
-    size_t maxCount = result + 1;
-    tchar_t* buffer = (tchar_t*)Memory::alloc(maxCount * sizeof(tchar_t));
+    usize maxCount = result + 1;
+    tchar* buffer = (tchar*)Memory::alloc(maxCount * sizeof(tchar));
 #ifdef _UNICODE
     result = _vsnwprintf(buffer, maxCount, format, ap);
 #else
@@ -72,14 +72,14 @@ int_t Debug::printf(const tchar_t* format, ...)
 #else
   va_list ap;
   va_start(ap, format);
-  int_t result = vfprintf(stderr, format, ap);
+  int result = vfprintf(stderr, format, ap);
   va_end(ap);
   return result;
 #endif
 }
 
 #ifndef NDEBUG
-bool_t Debug::getSourceLine(void* addr, const tchar_t*& file, int_t& line)
+bool Debug::getSourceLine(void* addr, const tchar*& file, int& line)
 {
 #ifdef _WIN32
   typedef BOOL (WINAPI *PSymInitialize)(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess);

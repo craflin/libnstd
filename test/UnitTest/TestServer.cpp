@@ -4,7 +4,7 @@
 #include <nstd/Socket/Server.h>
 #include <nstd/Socket/Socket.h>
 
-void_t testServer()
+void testServer()
 {
   // test timer
   {
@@ -41,8 +41,8 @@ void_t testServer()
   // test listen, connect, read, write and close
   {
     Server server;
-    byte_t testData[100];
-    byte_t receiveBuffer[231];
+    byte testData[100];
+    byte receiveBuffer[231];
     Server::Handle* client1;
     Server::Handle* client2;
     ASSERT(server.listen(7266, 0));
@@ -86,7 +86,7 @@ void_t testServer()
         {
           ASSERT(event.handle == client2);
           ASSERT(event.userData == &client2);
-          size_t size;
+          usize size;
           ASSERT(server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
           ASSERT(size == sizeof(testData));
           ASSERT(server.write(*client2, testData, sizeof(testData)));
@@ -96,7 +96,7 @@ void_t testServer()
         {
           ASSERT(event.handle == client1);
           ASSERT(event.userData == &client1);
-          size_t size;
+          usize size;
           ASSERT(server.read(*client1, receiveBuffer, sizeof(receiveBuffer), size));
           ASSERT(size == sizeof(testData));
           server.close(*client1);
@@ -106,7 +106,7 @@ void_t testServer()
         {
           ASSERT(event.handle == client2);
           ASSERT(event.userData == &client2);
-          size_t size;
+          usize size;
           ASSERT(!server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
           state = closing2;
         }

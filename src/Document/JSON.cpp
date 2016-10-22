@@ -10,50 +10,50 @@ public:
   class Position
   {
   public:
-    int_t line;
-    const tchar_t* pos;
+    int line;
+    const tchar* pos;
   };
 
   class Token
   {
   public:
-    tchar_t token;
+    tchar token;
     Variant value;
     Position pos;
   };
 
 public:
   Token token;
-  const tchar_t* start;
+  const tchar* start;
   Position pos;
 
-  int_t errorLine;
-  int_t errorColumn;
+  int errorLine;
+  int errorColumn;
   String errorString;
 
 public:
-  bool_t parse(const tchar_t* data, Variant& result);
+  bool parse(const tchar* data, Variant& result);
 
-  bool_t parseObject(Variant& result);
-  bool_t parseValue(Variant& result);
-  bool_t parseArray(Variant& result);
+  bool parseObject(Variant& result);
+  bool parseValue(Variant& result);
+  bool parseArray(Variant& result);
 
-  bool_t readToken();
+  bool readToken();
 
-  void_t skipSpace();
+  void skipSpace();
 
-  void_t syntaxError(const Position& pos, const String& error);
+  void syntaxError(const Position& pos, const String& error);
 
 public:
-  static void_t appendEscapedString(const String& str, String& result);
-  static void_t appendVariant(const Variant& data, const String& indentation, String& result);
+  static void appendEscapedString(const String& str, String& result);
+  static void appendVariant(const Variant& data, const String& indentation, String& result);
 };
 
 class JSON::Parser::Private : public JSON::Private
 {
 };
 
-bool_t JSON::Private::readToken()
+bool JSON::Private::readToken()
 {
   skipSpace();
   token.token = *pos.pos;
@@ -131,7 +131,7 @@ bool_t JSON::Private::readToken()
                   }
                   else
                     return syntaxError(pos, _T("Expected hexadecimal digit")), false;
-                uint_t w1;
+                uint w1;
                 if(k.scanf(_T("%x"), &w1) == 1)
                   return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
                 if((w1 & 0xF800ULL) == 0xD800ULL && (w1 & 0xFC00ULL) == 0xD800ULL)
@@ -148,12 +148,12 @@ bool_t JSON::Private::readToken()
                     }
                     else
                       return syntaxError(pos, _T("Expected hexadecimal digit")), false;
-                  uint_t w2;
+                  uint w2;
                   if(k.scanf(_T("%x"), &w2) == 1)
                     return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
                   if((w2 & 0xFC00UL) != 0xDC00UL)
                     return pos.pos -= 6,syntaxError(pos, _T("Expected UTF-8 surrogate pair")), false;
-                  Unicode::append((w2 & 0x3FFULL | ((uint32_t)(w1 & 0x3FFULL) << 10)) + 0x10000UL, value);
+                  Unicode::append((w2 & 0x3FFULL | ((uint32)(w1 & 0x3FFULL) << 10)) + 0x10000UL, value);
                 }
                 else
                   Unicode::append(w1, value);
@@ -241,9 +241,9 @@ bool_t JSON::Private::readToken()
       }
       else
       {
-        int64_t result = n.toInt64();
-        int_t resultInt = (int_t)result;
-        if((int64_t)resultInt == result)
+        int64 result = n.toInt64();
+        int resultInt = (int)result;
+        if((int64)resultInt == result)
           token.value = resultInt;
         else
           token.value = result;
@@ -255,9 +255,9 @@ bool_t JSON::Private::readToken()
 }
 
 
-void_t JSON::Private::skipSpace()
+void JSON::Private::skipSpace()
 {
-  for(tchar_t c;;)
+  for(tchar c;;)
     switch((c = *pos.pos))
     {
     case '\r':
@@ -277,10 +277,10 @@ void_t JSON::Private::skipSpace()
     }
 }
 
-void_t JSON::Private::syntaxError(const Position& pos, const String& error)
+void JSON::Private::syntaxError(const Position& pos, const String& error)
 {
   int column = 1;
-  for(const tchar_t* p = pos.pos; p > start;)
+  for(const tchar* p = pos.pos; p > start;)
   {
     --p;
     if(*p == '\n' || *p == '\r')
@@ -292,7 +292,7 @@ void_t JSON::Private::syntaxError(const Position& pos, const String& error)
   errorString = error;
 }
 
-bool_t JSON::Private::parseObject(Variant& result)
+bool JSON::Private::parseObject(Variant& result)
 {
   if(token.token != '{')
     return syntaxError(pos, _T("Expected '{'")), false;
@@ -325,7 +325,7 @@ bool_t JSON::Private::parseObject(Variant& result)
   return true;
 }
 
-bool_t JSON::Private::parseArray(Variant& result)
+bool JSON::Private::parseArray(Variant& result)
 {
   if(token.token != '[')
     return syntaxError(pos, _T("Expected '['")), false;
@@ -348,7 +348,7 @@ bool_t JSON::Private::parseArray(Variant& result)
   return true;
 }
 
-bool_t JSON::Private::parseValue(Variant& result)
+bool JSON::Private::parseValue(Variant& result)
 {
   switch(token.token)
   {
@@ -372,14 +372,14 @@ bool_t JSON::Private::parseValue(Variant& result)
 }
 
 
-void_t JSON::Private::appendEscapedString(const String& str, String& result)
+void JSON::Private::appendEscapedString(const String& str, String& result)
 {
   size_t strLen = str.length();
   result.reserve(result.length() + 2 + strLen * 2);
   result += '"';
-  for(const tchar_t* start = str, * p = start;;)
+  for(const tchar* start = str, * p = start;;)
   {
-    const tchar_t* e = String::findOneOf(p, _T("\"\\"));
+    const tchar* e = String::findOneOf(p, _T("\"\\"));
     if(!e)
     {
       result.append(p, strLen - (p - start));
@@ -401,7 +401,7 @@ void_t JSON::Private::appendEscapedString(const String& str, String& result)
   result += '"';
 }
 
-void_t JSON::Private::appendVariant(const Variant& data, const String& indentation, String& result)
+void JSON::Private::appendVariant(const Variant& data, const String& indentation, String& result)
 {
   switch(data.getType())
   {
@@ -470,7 +470,7 @@ void_t JSON::Private::appendVariant(const Variant& data, const String& indentati
   }
 }
 
-bool_t JSON::Private::parse(const tchar_t* data, Variant& result)
+bool JSON::Private::parse(const tchar* data, Variant& result)
 {
   start = data;
   pos.line = 1;
@@ -483,18 +483,18 @@ bool_t JSON::Private::parse(const tchar_t* data, Variant& result)
   return true;
 }
 
-bool_t JSON::parse(const tchar_t* data, Variant& result)
+bool JSON::parse(const tchar* data, Variant& result)
 {
   Private parser;
   if(parser.parse(data, result))
     return true;
-  Error::setErrorString(String::fromPrintf(_T("Syntax error at line %d, column %d: %s"), parser.errorLine, parser.errorColumn, (const tchar_t*)parser.errorString));
+  Error::setErrorString(String::fromPrintf(_T("Syntax error at line %d, column %d: %s"), parser.errorLine, parser.errorColumn, (const tchar*)parser.errorString));
   return false;
 }
 
-bool_t JSON::parse(const String& data, Variant& result)
+bool JSON::parse(const String& data, Variant& result)
 {
-  return parse((const tchar_t*)data, result);
+  return parse((const tchar*)data, result);
 }
 
 String JSON::toString(const Variant& data)
@@ -507,8 +507,8 @@ String JSON::toString(const Variant& data)
 
 JSON::Parser::Parser() : p(new Private) {}
 JSON::Parser::~Parser() {delete p;}
-int_t JSON::Parser::getErrorLine() const {return p->errorLine;}
-int_t JSON::Parser::getErrorColumn() const {return p->errorColumn;}
+int JSON::Parser::getErrorLine() const {return p->errorLine;}
+int JSON::Parser::getErrorColumn() const {return p->errorColumn;}
 String JSON::Parser::getErrorString() const {return p->errorString;}
-bool_t JSON::Parser::parse(const tchar_t* data, Variant& result) {return p->parse(data, result);}
-bool_t JSON::Parser::parse(const String& data, Variant& result) {return p->parse(data, result);}
+bool JSON::Parser::parse(const tchar* data, Variant& result) {return p->parse(data, result);}
+bool JSON::Parser::parse(const String& data, Variant& result) {return p->parse(data, result);}

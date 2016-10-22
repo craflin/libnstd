@@ -11,63 +11,58 @@
 #define _UNICODE
 #endif
 
-typedef bool bool_t;
-typedef void void_t;
+typedef signed char int8;
+typedef short int16;
+typedef int int32;
 
-typedef signed char int8_t;
-typedef short int16_t;
-typedef int int32_t;
+typedef unsigned char uint8;
+typedef unsigned short uint16;
+typedef unsigned int uint32;
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-
-typedef unsigned char byte_t;
-typedef char char_t;
-typedef unsigned char uchar_t;
-typedef int int_t;
-typedef unsigned int uint_t;
+typedef unsigned char byte;
+typedef unsigned char uchar;
+typedef unsigned int uint;
 
 #ifdef _AMD64
 #ifdef _WIN32
-typedef long long int int64_t;
-typedef unsigned long long int uint64_t;
-typedef unsigned long long int size_t;
-typedef long long int ssize_t;
+typedef long long int int64;
+typedef unsigned long long int uint64;
+typedef unsigned long long int usize;
+typedef long long int ssize;
 #else
-typedef long int int64_t;
-typedef unsigned long int uint64_t;
-typedef unsigned long int size_t;
-typedef long int ssize_t;
+typedef long int int64;
+typedef unsigned long int uint64;
+typedef unsigned long int usize;
+typedef long int ssize;
 #endif
 #else
-typedef long long int int64_t;
-typedef unsigned long long int uint64_t;
-typedef unsigned int size_t;
-typedef int ssize_t;
+typedef long long int int64;
+typedef unsigned long long int uint64;
+typedef unsigned int usize;
+typedef int ssize;
 #endif
 
 #ifdef _UNICODE
-typedef wchar_t tchar_t;
-typedef unsigned short utchar_t;
+typedef wchar_t tchar;
+typedef unsigned short utchar;
 #ifndef _T
 #define  _T(text) L ## text
 #endif
 #else
-typedef char tchar_t;
-typedef unsigned char utchar_t;
+typedef char tchar;
+typedef unsigned char utchar;
 #ifndef _T
 #define  _T(text) text
 #endif
 #endif
 
-void_t* operator new(size_t size);
-void_t* operator new [](size_t size);
-void_t operator delete(void_t* buffer);
-void_t operator delete[](void_t* buffer);
+void* operator new(usize size);
+void* operator new [](usize size);
+void operator delete(void* buffer);
+void operator delete[](void* buffer);
 
-inline void_t* operator new(size_t, void_t* buffer) {return buffer;}
-inline void_t operator delete(void_t* p, void_t*) {}
+inline void* operator new(usize, void* buffer) {return buffer;}
+inline void operator delete(void* p, void*) {}
 
 #ifdef _UNICODE
 #define __WFILE__T(x) _T(x)

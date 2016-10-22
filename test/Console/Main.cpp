@@ -6,10 +6,10 @@
 #include <nstd/Signal.h>
 #include <nstd/Log.h>
 
-uint_t threadProc(void_t* param)
+uint threadProc(void* param)
 {
   Signal* termSignal = (Signal*)param;
-  int_t counter = 0;
+  int counter = 0;
   while(!termSignal->wait(1000))
   {
     if(counter % 5 == 0)
@@ -21,7 +21,7 @@ uint_t threadProc(void_t* param)
   return 0;
 }
 
-int_t main(int_t argc, tchar_t* argv[])
+int main(int argc, tchar* argv[])
 {
   String password(_T("root"));
   String user(_T("root"));
@@ -33,7 +33,7 @@ int_t main(int_t argc, tchar_t* argv[])
         {_T('h'), _T("help"), Process::optionFlag},
     };
     Process::Arguments arguments(argc, argv, options);
-    int_t character;
+    int character;
     String argument;
     while(arguments.read(character, argument))
       switch(character)
@@ -48,10 +48,10 @@ int_t main(int_t argc, tchar_t* argv[])
         address = argument;
         break;
       case '?':
-        Console::errorf(_T("Unknown option: %s.\n"), (const tchar_t*)argument);
+        Console::errorf(_T("Unknown option: %s.\n"), (const tchar*)argument);
         return 1;
       case ':':
-        Console::errorf(_T("Option %s required an argument.\n"), (const tchar_t*)argument);
+        Console::errorf(_T("Option %s required an argument.\n"), (const tchar*)argument);
         return 1;
       default:
         Console::errorf(_T("Usage: %s [-u <user>] [-p <password>] [<address>]\n"), argv[0]);
@@ -60,7 +60,7 @@ int_t main(int_t argc, tchar_t* argv[])
   }
 
   Console::printf(_T("user=%s, password=%s, address=%s\n"),
-    (const tchar_t*)user, (const tchar_t*)password, (const tchar_t*)address);
+    (const tchar*)user, (const tchar*)password, (const tchar*)address);
 
   Console::printf(_T("Hello World!\n"));
 
@@ -75,7 +75,7 @@ int_t main(int_t argc, tchar_t* argv[])
   for(;;)
   {
     String result = prompt.getLine(_T("test> "));
-    Console::printf(_T("input: %s\n"), (const tchar_t*)result);
+    Console::printf(_T("input: %s\n"), (const tchar*)result);
     if(result == _T("exit"))
       break;
   }

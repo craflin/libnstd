@@ -68,12 +68,12 @@ public:
     }
   }
 
-  Variant(bool_t val) : data(&_data) {_data.type = boolType; _data.ref = 0; _data.data.boolData = val;}
+  Variant(bool val) : data(&_data) {_data.type = boolType; _data.ref = 0; _data.data.boolData = val;}
   Variant(double val) : data(&_data) {_data.type = doubleType; _data.ref = 0; _data.data.doubleData = val;}
-  Variant(int_t val) : data(&_data) {_data.type = intType; _data.ref = 0; _data.data.intData = val;}
-  Variant(uint_t val) : data(&_data) {_data.type = uintType; _data.ref = 0; _data.data.uintData = val;}
-  Variant(int64_t val) : data(&_data) {_data.type = int64Type; _data.ref = 0; _data.data.int64Data = val;}
-  Variant(uint64_t val) : data(&_data) {_data.type = uint64Type; _data.ref = 0; _data.data.uint64Data = val;}
+  Variant(int val) : data(&_data) {_data.type = intType; _data.ref = 0; _data.data.intData = val;}
+  Variant(uint val) : data(&_data) {_data.type = uintType; _data.ref = 0; _data.data.uintData = val;}
+  Variant(int64 val) : data(&_data) {_data.type = int64Type; _data.ref = 0; _data.data.int64Data = val;}
+  Variant(uint64 val) : data(&_data) {_data.type = uint64Type; _data.ref = 0; _data.data.uint64Data = val;}
 
   Variant(const HashMap<String, Variant>& val)
   {
@@ -102,7 +102,7 @@ public:
     data->ref = 1;
   }
 
-  void_t clear()
+  void clear()
   {
     if(data->ref && Atomic::decrement(data->ref) == 0)
     {
@@ -165,9 +165,9 @@ public:
 
   Type getType() const {return data->type;}
 
-  bool_t isNull() const {return data->type == nullType;}
+  bool isNull() const {return data->type == nullType;}
 
-  bool_t toBool() const
+  bool toBool() const
   {
     switch(data->type)
     {
@@ -187,7 +187,7 @@ public:
     }
   }
 
-  Variant& operator=(bool_t other)
+  Variant& operator=(bool other)
   {
     if(data->type != boolType)
     {
@@ -229,23 +229,23 @@ public:
     return *this;
   }
 
-  int_t toInt() const
+  int toInt() const
   {
     switch(data->type)
     {
     case boolType: return data->data.boolData ? 1 : 0;
-    case doubleType: return (int_t)data->data.doubleData;
+    case doubleType: return (int)data->data.doubleData;
     case intType: return data->data.intData;
-    case uintType: return (int_t)data->data.uintData;
-    case int64Type: return (int_t)data->data.int64Data;
-    case uint64Type: return (int_t)data->data.uint64Data;
+    case uintType: return (int)data->data.uintData;
+    case int64Type: return (int)data->data.int64Data;
+    case uint64Type: return (int)data->data.uint64Data;
     case stringType: return ((const String*)(data + 1))->toInt();
     default:
       return 0;
     }
   }
 
-  Variant& operator=(int_t other)
+  Variant& operator=(int other)
   {
     if(data->type != intType)
     {
@@ -258,23 +258,23 @@ public:
     return *this;
   }
 
-  int_t toUInt() const
+  int toUInt() const
   {
     switch(data->type)
     {
     case boolType: return data->data.boolData ? 1 : 0;
-    case doubleType: return (uint_t)data->data.doubleData;
-    case intType: return (uint_t)data->data.intData;
+    case doubleType: return (uint)data->data.doubleData;
+    case intType: return (uint)data->data.intData;
     case uintType: return data->data.uintData;
-    case int64Type: return (uint_t)data->data.int64Data;
-    case uint64Type: return (uint_t)data->data.uint64Data;
+    case int64Type: return (uint)data->data.int64Data;
+    case uint64Type: return (uint)data->data.uint64Data;
     case stringType: return ((const String*)(data + 1))->toUInt();
     default:
       return 0;
     }
   }
 
-  Variant& operator=(uint_t other)
+  Variant& operator=(uint other)
   {
     if(data->type != uintType)
     {
@@ -287,23 +287,23 @@ public:
     return *this;
   }
 
-  int64_t toInt64() const
+  int64 toInt64() const
   {
     switch(data->type)
     {
     case boolType: return data->data.boolData ? 1 : 0;
-    case doubleType: return (int64_t)data->data.doubleData;
-    case intType: return (int64_t)data->data.intData;
-    case uintType: return (int64_t)data->data.uintData;
+    case doubleType: return (int64)data->data.doubleData;
+    case intType: return (int64)data->data.intData;
+    case uintType: return (int64)data->data.uintData;
     case int64Type: return data->data.int64Data;
-    case uint64Type: return (int64_t)data->data.uint64Data;
+    case uint64Type: return (int64)data->data.uint64Data;
     case stringType: return ((const String*)(data + 1))->toInt64();
     default:
       return 0;
     }
   }
 
-  Variant& operator=(int64_t other)
+  Variant& operator=(int64 other)
   {
     if(data->type != int64Type)
     {
@@ -316,15 +316,15 @@ public:
     return *this;
   }
 
-  uint64_t toUInt64() const
+  uint64 toUInt64() const
   {
     switch(data->type)
     {
     case boolType: return data->data.boolData ? 1 : 0;
-    case doubleType: return (uint64_t)data->data.doubleData;
-    case intType: return (uint64_t)data->data.intData;
-    case uintType: return (uint64_t)data->data.uintData;
-    case int64Type: return (uint64_t)data->data.int64Data;
+    case doubleType: return (uint64)data->data.doubleData;
+    case intType: return (uint64)data->data.intData;
+    case uintType: return (uint64)data->data.uintData;
+    case int64Type: return (uint64)data->data.int64Data;
     case uint64Type: return data->data.uint64Data;
     case stringType: return ((const String*)(data + 1))->toUInt64();
     default:
@@ -332,7 +332,7 @@ public:
     }
   }
 
-  Variant& operator=(uint64_t other)
+  Variant& operator=(uint64 other)
   {
     if(data->type != uint64Type)
     {
@@ -479,7 +479,7 @@ public:
     return *this;
   }
 
-  void_t swap(Variant& other)
+  void swap(Variant& other)
   {
     Variant tmp = other;
     other = *this;
@@ -492,14 +492,14 @@ private:
     Type type;
     union data
     {
-      int_t intData;
-      uint_t uintData;
+      int intData;
+      uint uintData;
       double doubleData;
-      bool_t boolData;
-      int64_t int64Data;
-      uint64_t uint64Data;
+      bool boolData;
+      int64 int64Data;
+      uint64 uint64Data;
     } data;
-    volatile size_t ref;
+    volatile usize ref;
   };
 
   static struct NullData : public Data

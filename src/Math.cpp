@@ -4,8 +4,8 @@
 
 #include <nstd/Math.h>
 
-uint32_t Math::random() {return rand();}
-uint32_t Math::random(uint32_t seed) {return srand(seed), rand();}
+uint Math::random() {return rand();}
+uint Math::random(uint seed) {return srand(seed), rand();}
 double Math::floor(double v) {return std::floor(v);}
 float Math::floor(float v) {return std::floor(v);}
 double Math::ceil(double v) {return std::ceil(v);}

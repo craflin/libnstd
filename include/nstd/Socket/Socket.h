@@ -16,38 +16,38 @@ public:
   Socket();
   ~Socket();
 
-  bool_t open();
-  void_t close();
-  bool_t isOpen() const;
+  bool open();
+  void close();
+  bool isOpen() const;
 
-  void_t swap(Socket& other);
+  void swap(Socket& other);
 
-  bool_t pair(Socket& other);
-  bool_t accept(Socket& to, uint32_t& ip, uint16_t& port);
-  bool_t bind(uint32_t ip, uint16_t port);
-  bool_t listen();
-  bool_t connect(uint32_t ip, uint16_t port);
+  bool pair(Socket& other);
+  bool accept(Socket& to, uint32& ip, uint16& port);
+  bool bind(uint32 ip, uint16 port);
+  bool listen();
+  bool connect(uint32 ip, uint16 port);
 
-  ssize_t send(const byte_t* data, size_t size);
-  ssize_t recv(byte_t* data, size_t maxSize, size_t minSize = 0);
+  ssize send(const byte* data, usize size);
+  ssize recv(byte* data, usize maxSize, usize minSize = 0);
 
-  bool_t setKeepAlive();
-  bool_t setReuseAddress();
-  bool_t setNonBlocking();
-  bool_t setNoDelay();
-  bool_t setSendBufferSize(int_t size);
-  bool_t setReceiveBufferSize(int_t size);
+  bool setKeepAlive();
+  bool setReuseAddress();
+  bool setNonBlocking();
+  bool setNoDelay();
+  bool setSendBufferSize(int size);
+  bool setReceiveBufferSize(int size);
 
-  int_t getAndResetErrorStatus();
+  int getAndResetErrorStatus();
 
-  bool_t getSockName(uint32_t& ip, uint16_t& port);
-  bool_t getPeerName(uint32_t& ip, uint16_t& port);
+  bool getSockName(uint32& ip, uint16& port);
+  bool getPeerName(uint32& ip, uint16& port);
 
-  static void_t setLastError(int_t error);
-  static int_t getLastError();
-  static String getErrorString(int_t error = getLastError());
-  static uint32_t inetAddr(const String& addr, uint16_t* port = 0);
-  static String inetNtoA(uint32_t ip);
+  static void setLastError(int error);
+  static int getLastError();
+  static String getErrorString(int error = getLastError());
+  static uint32 inetAddr(const String& addr, uint16* port = 0);
+  static String inetNtoA(uint32 ip);
 
 public:
   class Poll
@@ -63,7 +63,7 @@ public:
 
     struct Event
     {
-      uint_t flags;
+      uint flags;
       Socket* socket;
     };
 
@@ -71,10 +71,10 @@ public:
     Poll();
     ~Poll();
 
-    void_t set(Socket& socket, uint_t flags);
-    void_t remove(Socket& socket);
+    void set(Socket& socket, uint flags);
+    void remove(Socket& socket);
 
-    bool_t poll(Event& event, int64_t timeout);
+    bool poll(Event& event, int64 timeout);
 
   private:
     class Private;
@@ -84,12 +84,12 @@ public:
 private:
 #ifdef _WIN32
 #ifdef _AMD64
-  uint64_t s;
+  uint64 s;
 #else
-  uint_t s;
+  uint s;
 #endif
 #else
-  int_t s;
+  int s;
 #endif
 
 private:

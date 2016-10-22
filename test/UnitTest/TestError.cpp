@@ -3,7 +3,7 @@
 #include <nstd/Error.h>
 #include <nstd/File.h>
 
-void_t testError()
+void testError()
 {
   // test system error code
   {

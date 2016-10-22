@@ -25,16 +25,16 @@ Thread::~Thread()
     join();
 }
 
-bool_t Thread::start(uint_t (*proc)(void_t*), void_t* param)
+bool Thread::start(uint (*proc)(void*), void* param)
 {
   if(thread)
     return false;
 #ifdef _WIN32
   //DWORD threadId;
-  ASSERT(sizeof(unsigned long) == sizeof(uint_t));
+  ASSERT(sizeof(unsigned long) == sizeof(uint));
 
 #ifndef __CYGWIN__
-  thread = (void_t*)CreateThread(0, 0, (unsigned long (__stdcall*)(void*)) proc, param, 0, /*&threadId*/0);
+  thread = (void*)CreateThread(0, 0, (unsigned long (__stdcall*)(void*)) proc, param, 0, /*&threadId*/0);
   if(!thread)
     return false;
 #else
@@ -43,14 +43,14 @@ bool_t Thread::start(uint_t (*proc)(void_t*), void_t* param)
     static DWORD WINAPI ThreadProc(LPVOID lpParameter)
     {
       ThreadData& data = *(ThreadData*)lpParameter;
-      uint_t (*proc)(void_t*) = data.proc;
-      void_t* param = data.param;
+      uint (*proc)(void*) = data.proc;
+      void* param = data.param;
       VERIFY(SetEvent(data.hevent));
       // return proc(param); // this does not set the exit code
       ExitThread(proc(param));
     }
-    uint_t (*proc)(void_t*);
-    void_t* param;
+    uint (*proc)(void*);
+    void* param;
     HANDLE hevent;
   } data;
   
@@ -59,7 +59,7 @@ bool_t Thread::start(uint_t (*proc)(void_t*), void_t* param)
   data.hevent = CreateEvent(NULL, FALSE, FALSE, NULL);
   if(data.hevent == NULL)
     return false;
-  thread = (void_t*)CreateThread(0, 0, ThreadData::ThreadProc, &data, 0, /*&threadId*/0);
+  thread = (void*)CreateThread(0, 0, ThreadData::ThreadProc, &data, 0, /*&threadId*/0);
   if(!thread)
   {
     VERIFY(CloseHandle(data.hevent));
@@ -74,12 +74,12 @@ bool_t Thread::start(uint_t (*proc)(void_t*), void_t* param)
   pthread_t thread;
   if(pthread_create(&thread, 0, (void* (*) (void *)) proc, param) != 0)
     return false;
-  this->thread = (void_t*)thread;
+  this->thread = (void*)thread;
   return true;
 #endif
 }
 
-uint_t Thread::join()
+uint Thread::join()
 {
   if(!thread)
     return 0;
@@ -95,11 +95,11 @@ uint_t Thread::join()
   void* retval;
   VERIFY(pthread_join((pthread_t)thread, &retval) == 0);
   thread = 0;
-  return (uint_t)(intptr_t)retval;
+  return (uint)(intptr_t)retval;
 #endif
 }
 
-void_t Thread::yield()
+void Thread::yield()
 {
 #ifdef _WIN32
   SwitchToThread();
@@ -108,7 +108,7 @@ void_t Thread::yield()
 #endif
 }
 
-void_t Thread::sleep(int64_t milliseconds)
+void Thread::sleep(int64 milliseconds)
 {
 #ifdef _WIN32
   Sleep((DWORD)milliseconds);
@@ -117,11 +117,11 @@ void_t Thread::sleep(int64_t milliseconds)
 #endif
 }
 
-uint32_t Thread::getCurrentThreadId()
+uint32 Thread::getCurrentThreadId()
 {
 #ifdef _WIN32
-  return (uint32_t)GetCurrentThreadId();
+  return (uint32)GetCurrentThreadId();
 #else
-  return (uint32_t)syscall(__NR_gettid);
+  return (uint32)syscall(__NR_gettid);
 #endif
 }

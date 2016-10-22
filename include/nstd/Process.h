@@ -16,13 +16,13 @@ public:
   *                 to the executable. Further words in \c command are arguments for the process.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
-  uint32_t start(const String& command);
+  uint32 start(const String& command);
 
   /**
   * Get id of the process.
   * @return The process id or \c 0 if a process was not started.
   */
-  uint32_t getProcessId() const {return pid;}
+  uint32 getProcessId() const {return pid;}
 
   /**
   * Return the running state of the process.
@@ -35,13 +35,13 @@ public:
   * @param[out] exitCode The exit code of the process.
   * @return Whether the process terminated properly.
   */
-  bool_t join(uint32_t& exitCode);
+  bool join(uint32& exitCode);
 
   /**
   * Kill and join the process. The method send a hard KILL signal to the process and waits for it to terminate.
   * @return Whether the process terminated properly.
   */
-  bool_t kill();
+  bool kill();
 
   enum Stream
   {
@@ -50,24 +50,24 @@ public:
     stdinStream = 0x04,
   };
 
-  bool_t open(const String& command, uint_t streams = stdoutStream);
+  bool open(const String& command, uint streams = stdoutStream);
 
-  ssize_t read(void_t* buffer, size_t length);
-  ssize_t read(void_t* buffer, size_t length, uint_t& streams);
-  ssize_t write(const void_t* buffer, size_t length);
+  ssize read(void* buffer, usize length);
+  ssize read(void* buffer, usize length, uint& streams);
+  ssize write(const void* buffer, usize length);
 
-  static uint32_t getCurrentProcessId();
+  static uint32 getCurrentProcessId();
 
-  static void_t exit(uint32_t exitCode);
+  static void exit(uint32 exitCode);
 
   static String getEnvironmentVariable(const String& name);
-  static bool_t setEnvironmentVariable(const String& name, const String& value);
+  static bool setEnvironmentVariable(const String& name, const String& value);
 
-  static Process* wait(Process** processes, size_t count);
-  static void_t interrupt();
+  static Process* wait(Process** processes, usize count);
+  static void interrupt();
 
 #ifndef _WIN32
-  static bool_t daemonize(const String& logFile = "/dev/null");
+  static bool daemonize(const String& logFile = "/dev/null");
 #endif
 
 public:
@@ -80,43 +80,43 @@ public:
 
   struct Option
   {
-    int_t character;
-    const tchar_t* name;
-    uint32_t flags;
+    int character;
+    const tchar* name;
+    uint32 flags;
   };
 
   class Arguments
   {
   public:
-    template<size_t N> Arguments(int_t argc, tchar_t* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(_T("")), inOpt(false), skipOpt(false) {++this->argv;}
+    template<usize N> Arguments(int argc, tchar* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(_T("")), inOpt(false), skipOpt(false) {++this->argv;}
 
-    bool_t read(int_t& character, String& argument);
+    bool read(int& character, String& argument);
 
   private:
-    tchar_t** argv;
-    tchar_t** argvEnd;
+    tchar** argv;
+    tchar** argvEnd;
     const Option* options;
     const Option* optionsEnd;
-    const tchar_t* arg;
-    bool_t inOpt;
-    bool_t skipOpt;
+    const tchar* arg;
+    bool inOpt;
+    bool skipOpt;
 
   private:
-    bool_t nextChar();
+    bool nextChar();
   };
 
 private:
 #ifdef _WIN32
-  void_t* hProcess;
-  void_t* hStdOutRead;
-  void_t* hStdErrRead;
-  void_t* hStdInWrite;
+  void* hProcess;
+  void* hStdOutRead;
+  void* hStdErrRead;
+  void* hStdInWrite;
 #else
-  int_t fdStdOutRead;
-  int_t fdStdErrRead;
-  int_t fdStdInWrite;
+  int fdStdOutRead;
+  int fdStdErrRead;
+  int fdStdInWrite;
 #endif
-  uint32_t pid;
+  uint32 pid;
 
   Process(const Process&);
   Process& operator=(const Process&);

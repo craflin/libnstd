@@ -23,23 +23,23 @@ public:
 
   struct Time
   {
-    int64_t writeTime;
-    int64_t accessTime;
-    int64_t creationTime;
+    int64 writeTime;
+    int64 accessTime;
+    int64 creationTime;
   };
 
   File();
   ~File();
 
-  bool_t open(const String& file, uint_t flags = readFlag);
-  void_t close();
-  bool_t isOpen() const;
+  bool open(const String& file, uint flags = readFlag);
+  void close();
+  bool isOpen() const;
 
   /**
   * Get size of the file.
   * @return The size of the file in bytes. In case of an error -1 is returned.
   */
-  int64_t size();
+  int64 size();
 
   /**
   * Read a data block from the file at the current read position.
@@ -51,18 +51,18 @@ public:
   * @return The amount of bytes that was read. This could be equal 0 or less than \c length when the end of the
   *         file was reached. In case of an error -1 is returned.
   */
-  ssize_t read(void_t* buffer, size_t length);
+  ssize read(void* buffer, usize length);
 
   /**
   * Read all data from current read position till the end of the file.
   * @param  [out] data  The data.
   * @return Whether the data was successfully read.
   */
-  bool_t readAll(String& data);
+  bool readAll(String& data);
 
-  ssize_t write(const void_t* buffer, size_t length);
+  ssize write(const void* buffer, usize length);
 
-  bool_t write(const String& data);
+  bool write(const String& data);
 
   /**
   * Move the read or write offset position within the file.
@@ -70,9 +70,9 @@ public:
   * @param  [in] start  The position from where to start the move operation.
   * @return The position in the file relative to the beginning of the file after the seek operation.
   */
-  int64_t seek(int64_t offset, Position start = setPosition);
+  int64 seek(int64 offset, Position start = setPosition);
 
-  bool_t flush();
+  bool flush();
 
   static String dirname(const String& file); // TODO: rename getDirname()?
   static String basename(const String& file, const String& extension = String()); // TODO: rename getBasename()?
@@ -84,21 +84,21 @@ public:
   static String extension(const String& file); // TODO: rename getExtension()?
 
   static String simplifyPath(const String& path);
-  static bool_t isAbsolutePath(const String& path);
+  static bool isAbsolutePath(const String& path);
   static String getRelativePath(const String& from, const String& to);
 
-  static bool_t time(const String& file, Time& time);
+  static bool time(const String& file, Time& time);
 
-  static bool_t exists(const String& file);
-  static bool_t unlink(const String& file);
-  static bool_t rename(const String& from, const String& to, bool_t failIfExists = true);
+  static bool exists(const String& file);
+  static bool unlink(const String& file);
+  static bool rename(const String& from, const String& to, bool failIfExists = true);
 
-  static bool_t isExecutable(const String& file);
+  static bool isExecutable(const String& file);
 
-  static bool_t readAll(const String& file, String& data);
+  static bool readAll(const String& file, String& data);
 
 private:
-  void_t* fp;
+  void* fp;
 
   File(const File&);
   File& operator=(const File&);

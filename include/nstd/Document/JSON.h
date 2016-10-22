@@ -12,12 +12,12 @@ public:
     Parser();
     ~Parser();
 
-    int_t getErrorLine() const;
-    int_t getErrorColumn() const;
+    int getErrorLine() const;
+    int getErrorColumn() const;
     String getErrorString() const;
 
-    bool_t parse(const tchar_t* data, Variant& result);
-    bool_t parse(const String& data, Variant& result);
+    bool parse(const tchar* data, Variant& result);
+    bool parse(const String& data, Variant& result);
 
   private:
     class Private;
@@ -25,8 +25,8 @@ public:
   };
 
 public:
-  static bool_t parse(const tchar_t* data, Variant& result);
-  static bool_t parse(const String& data, Variant& result);
+  static bool parse(const tchar* data, Variant& result);
+  static bool parse(const String& data, Variant& result);
 
   static String toString(const Variant& data);
 

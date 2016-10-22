@@ -6,7 +6,7 @@
 class Unicode
 {
 public:
-  static String toString(uint32_t ch)
+  static String toString(uint32 ch)
   {
 #ifdef _UNICODE
     String result(2);
@@ -17,21 +17,21 @@ public:
     return result;
   }
 
-  static String toString(const uint32_t* data, size_t size)
+  static String toString(const uint32* data, size_t size)
   {
       String result(size + 200);
       append(data, size, result);
       return result;
   }
 
-  static bool_t append(uint32_t ch, String& str)
+  static bool append(uint32 ch, String& str)
   {
 #ifdef _UNICODE
     if((ch & ~(0x10000UL - 1)) == 0) // ch < 0x10000
     {
       if((ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
       {
-        str.append((tchar_t)ch);
+        str.append((tchar)ch);
         return true;
       }
       return false;
@@ -39,14 +39,14 @@ public:
     if(ch < 0x110000UL)
     {
       ch -= 0x10000UL;
-      str.append((tchar_t)((ch >> 10) | 0xD800UL));
+      str.append((tchar)((ch >> 10) | 0xD800UL));
       str.append((ch & 0x3ffULL) | 0xDC00UL);
       return true;
     }
 #else
     if((ch & ~(0x80UL - 1)) == 0) // ch < 0x80
     {
-      str.append((char_t)ch);
+      str.append((char)ch);
       return true;
     }
     if((ch & ~(0x800UL - 1)) == 0) // ch < 0x800
@@ -74,15 +74,15 @@ public:
     return false;
   }
 
-  static bool_t append(const uint32_t* data, size_t size, String& str)
+  static bool append(const uint32* data, size_t size, String& str)
   {
     bool result = true;
-    for(const uint32_t* end = data + size; data < end; ++data)
+    for(const uint32* end = data + size; data < end; ++data)
       result &= append(*data, str);
     return result;
   }
 
-  static size_t length(tchar_t ch)
+  static size_t length(tchar ch)
   {
 #ifdef _UNICODE
     if((ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
@@ -102,7 +102,7 @@ public:
     return 0;
   }
 
-  static uint32_t fromString(const tchar_t* ch, size_t len)
+  static uint32 fromString(const tchar* ch, size_t len)
   {
     if(len == 0)
       return 0;
@@ -113,35 +113,35 @@ public:
     {
      if(len < 2)
        return 0;
-      return (ch[1] & 0x3FFULL | ((uint32_t)(*ch & 0x3FFULL) << 10)) + 0x10000UL;
+      return (ch[1] & 0x3FFULL | ((uint32)(*ch & 0x3FFULL) << 10)) + 0x10000UL;
     }
     else
       return *(const uint16_t*)ch;
 #else
-    if((*(const uchar_t*)ch & 0x80) == 0) // ch < 0x80
-      return *(const uchar_t*)ch;
+    if((*(const uchar*)ch & 0x80) == 0) // ch < 0x80
+      return *(const uchar*)ch;
     size_t reqLen = length(*ch);
     if(len < reqLen)
       return 0;
-    static const uint32_t utf8Offsets[] = {0UL, 0UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL};
-    uint32_t result = 0;
+    static const uint32 utf8Offsets[] = {0UL, 0UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL};
+    uint32 result = 0;
     switch(reqLen)
     {
-      case 4: result = (uint32_t)*(const uchar_t*)ch++ << 6;
-      case 3: result += (uint32_t)*(const uchar_t*)ch++; result <<= 6;
-      case 2: result += (uint32_t)*(const uchar_t*)ch++; result <<= 6;
-      default: result += *(const uchar_t*)ch;
+      case 4: result = (uint32)*(const uchar*)ch++ << 6;
+      case 3: result += (uint32)*(const uchar*)ch++; result <<= 6;
+      case 2: result += (uint32)*(const uchar*)ch++; result <<= 6;
+      default: result += *(const uchar*)ch;
     }
     result -= utf8Offsets[reqLen];
     return result;
 #endif
   }
   
-  static uint32_t fromString(const String& str) {return fromString(str, str.length());}
+  static uint32 fromString(const String& str) {return fromString(str, str.length());}
 
-  static bool_t isValid(const tchar_t* ch, size_t len)
+  static bool isValid(const tchar* ch, size_t len)
   {
-      for(const tchar_t* end = ch + len; ch < end;)
+      for(const tchar* end = ch + len; ch < end;)
       {
 #ifdef _UNICODE
         if((*ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
@@ -165,11 +165,11 @@ public:
         switch(minLen)
         {
         case 4:
-          if(((((const uchar_t*)ch)[1] | ((uint32_t)((const uchar_t*)ch)[2] << 8) | ((uint32_t)((const uchar_t*)ch)[3] << 16)) & 0xc0c0c0UL) != 0x808080UL)
+          if(((((const uchar*)ch)[1] | ((uint32)((const uchar*)ch)[2] << 8) | ((uint32)((const uchar*)ch)[3] << 16)) & 0xc0c0c0UL) != 0x808080UL)
             return false;
           break;
         case 3:
-          if(((((const uchar_t*)ch)[1] | ((uint32_t)((const uchar_t*)ch)[2] << 8)) & 0xc0c0UL) != 0x8080UL)
+          if(((((const uchar*)ch)[1] | ((uint32)((const uchar*)ch)[2] << 8)) & 0xc0c0UL) != 0x8080UL)
             return false;
           break;
         case 2:
@@ -188,5 +188,5 @@ public:
     return true;
   }
   
-  static bool_t isValid(const String& str) {return isValid(str, str.length());}
+  static bool isValid(const String& str) {return isValid(str, str.length());}
 };

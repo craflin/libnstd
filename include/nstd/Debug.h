@@ -6,11 +6,11 @@
 class Debug
 {
 public:
-  static int_t print(const tchar_t* str);
-  static int_t printf(const tchar_t* format, ...);
+  static int print(const tchar* str);
+  static int printf(const tchar* format, ...);
 
 #ifndef NDEBUG
-  static bool_t getSourceLine(void* addr, const tchar_t*& file, int_t& line);
+  static bool getSourceLine(void* addr, const tchar*& file, int& line);
 #endif
 };
 
@@ -27,15 +27,15 @@ __attribute__((gnu_inline, always_inline)) static void __inline__ TRAP(void) {__
 
 #ifdef NDEBUG
 #undef TRAP
-#define TRAP() ((void_t)0)
-#define ASSERT(exp) ((void_t)1)
-#define VERIFY(exp) ((void_t)(exp))
+#define TRAP() ((void)0)
+#define ASSERT(exp) ((void)1)
+#define VERIFY(exp) ((void)(exp))
 #else
 #ifdef _MSC_VER
-#define ASSERT(exp) ((void_t)(!(exp) && Debug::printf(_T("%s(%u): assertion failed: %s\n"), __TFILE__, __LINE__, _T(#exp)) && (TRAP(), 1)))
-#define VERIFY(exp) ((void_t)(!(exp) && Debug::printf(_T("%s(%u): verification failed: %s\n"), __TFILE__, __LINE__, _T(#exp)) && (TRAP(), 1)))
+#define ASSERT(exp) ((void)(!(exp) && Debug::printf(_T("%s(%u): assertion failed: %s\n"), __TFILE__, __LINE__, _T(#exp)) && (TRAP(), 1)))
+#define VERIFY(exp) ((void)(!(exp) && Debug::printf(_T("%s(%u): verification failed: %s\n"), __TFILE__, __LINE__, _T(#exp)) && (TRAP(), 1)))
 #else
-#define ASSERT(exp) ((void_t)(!(exp) && Debug::printf(_T("%s:%u: assertion failed: %s\n"), __TFILE__, __LINE__, #exp) && (TRAP(), 1)))
-#define VERIFY(exp) ((void_t)(!(exp) && Debug::printf(_T("%s:%u: verification failed: %s\n"), __TFILE__, __LINE__, #exp) && (TRAP(), 1)))
+#define ASSERT(exp) ((void)(!(exp) && Debug::printf(_T("%s:%u: assertion failed: %s\n"), __TFILE__, __LINE__, #exp) && (TRAP(), 1)))
+#define VERIFY(exp) ((void)(!(exp) && Debug::printf(_T("%s:%u: verification failed: %s\n"), __TFILE__, __LINE__, #exp) && (TRAP(), 1)))
 #endif
 #endif

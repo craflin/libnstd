@@ -14,7 +14,7 @@ class Time::Private
 {
 #ifdef _WIN32
 public:
-  static int64_t perfFreq;
+  static int64 perfFreq;
   static class Framework
   {
   public:
@@ -36,10 +36,10 @@ Time::Private::Framework Time::Private::framework;
 #else
 Time::Private::Framework Time::Private::framework __attribute__ ((init_priority (101)));
 #endif
-int64_t Time::Private::perfFreq;
+int64 Time::Private::perfFreq;
 #endif
 
-Time::Time(bool_t utc) : utc(utc)
+Time::Time(bool utc) : utc(utc)
 {
   time_t now;
   ::time(&now);
@@ -60,7 +60,7 @@ Time::Time(bool_t utc) : utc(utc)
   dst = !!tm->tm_isdst;
 }
 
-Time::Time(int64_t time, bool_t utc) : utc(utc)
+Time::Time(int64 time, bool utc) : utc(utc)
 {
   time_t now = (time_t)(time / 1000LL);
 #ifdef _WIN32
@@ -92,7 +92,7 @@ Time::Time(const Time& other) :
   dst(other.dst),
   utc(other.utc) {}
 
-int64_t Time::toTimestamp()
+int64 Time::toTimestamp()
 {
   tm tm;
   tm.tm_sec = sec;
@@ -118,7 +118,7 @@ Time& Time::toUtc()
 {
   if(!utc)
   {
-    int64_t timestamp = toTimestamp();
+    int64 timestamp = toTimestamp();
     *this = Time(timestamp, true);
   }
   return *this;
@@ -128,13 +128,13 @@ Time& Time::toLocal()
 {
   if(utc)
   {
-    int64_t timestamp = toTimestamp();
+    int64 timestamp = toTimestamp();
     *this = Time(timestamp, false);
   }
   return *this;
 }
 
-bool_t Time::operator==(const Time& other) const
+bool Time::operator==(const Time& other) const
 {
   return sec == other.sec &&
     min == other.min &&
@@ -148,7 +148,7 @@ bool_t Time::operator==(const Time& other) const
     utc == other.utc;
 }
 
-bool_t Time::operator!=(const Time& other) const
+bool Time::operator!=(const Time& other) const
 {
   return sec != other.sec ||
     min != other.min ||
@@ -162,23 +162,23 @@ bool_t Time::operator!=(const Time& other) const
     utc != other.utc;
 }
 
-int64_t Time::time()
+int64 Time::time()
 {
   return ::time(0) * 1000LL;
 }
 
-int64_t Time::ticks()
+int64 Time::ticks()
 {
 #ifdef _WIN32
   return GetTickCount();
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (int64_t)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
+  return (int64)ts.tv_sec * 1000 + ts.tv_nsec / 1000000;
 #endif
 }
 
-int64_t Time::microTicks()
+int64 Time::microTicks()
 {
 #ifdef _WIN32
   LARGE_INTEGER li;
@@ -187,11 +187,11 @@ int64_t Time::microTicks()
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
-  return (int64_t)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
+  return (int64)ts.tv_sec * 1000000 + ts.tv_nsec / 1000;
 #endif
 }
 
-String Time::toString(const tchar_t* format)
+String Time::toString(const tchar* format)
 {
   if(!*format)
     return String();
@@ -207,8 +207,8 @@ String Time::toString(const tchar_t* format)
   tm.tm_isdst = dst;
 
   String result(256);
-  tchar_t* buffer;
-  size_t len;
+  tchar* buffer;
+  usize len;
   for(;;)
   {
     buffer = result;
@@ -225,7 +225,7 @@ String Time::toString(const tchar_t* format)
   return result;
 }
 
-String Time::toString(int64_t time, const tchar_t* format, bool_t utc)
+String Time::toString(int64 time, const tchar* format, bool utc)
 {
   if(!*format)
     return String();
@@ -234,8 +234,8 @@ String Time::toString(int64_t time, const tchar_t* format, bool_t utc)
   String result(256);
   if(!tms)
     return result;
-  tchar_t* buffer;
-  size_t len;
+  tchar* buffer;
+  usize len;
   for(;;)
   {
     buffer = result;

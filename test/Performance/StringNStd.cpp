@@ -2,10 +2,10 @@
 #include <nstd/String.h>
 #include <cstdlib>
 
-void_t testStringNStd(int iterations)
+void testStringNStd(int iterations)
 {
   srand(100);
-  size_t val = 0;
+  usize val = 0;
   String blah[] = {
     _T("12345678 12345678 12345678 12345678 12345678 12345678 12345678 12345678 12345678"),
     _T("12345688 12345688 12345688 12345688 12345688 12345688 12345688 12345688 12345688"),

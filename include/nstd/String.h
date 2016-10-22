@@ -11,7 +11,7 @@ class String
 public:
   String() : data(&emptyData) {}
 
-  template<size_t N> String(const tchar_t(&str)[N]) : data(&_data)
+  template<usize N> String(const tchar(&str)[N]) : data(&_data)
   {
     _data.ref = 0;
     _data.str = str;
@@ -29,36 +29,36 @@ public:
       data = &emptyData;
     else
     {
-      size_t capacity;
-      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
-      data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-      Memory::copy((tchar_t*)data->str, other.data->str, (other.data->len + 1) * sizeof(tchar_t));
+      usize capacity;
+      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
+      data->str = (tchar*)((byte*)data + sizeof(Data));
+      Memory::copy((tchar*)data->str, other.data->str, (other.data->len + 1) * sizeof(tchar));
       data->len = other.data->len;
       data->ref = 1;
-      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
     }
   }
 
-  String(const tchar_t* str, size_t length)
+  String(const tchar* str, usize length)
   {
-    size_t capacity;
-    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
-    data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-    Memory::copy((tchar_t*)data->str, str, length * sizeof(tchar_t));
+    usize capacity;
+    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    data->str = (tchar*)((byte*)data + sizeof(Data));
+    Memory::copy((tchar*)data->str, str, length * sizeof(tchar));
     data->len = length;
-    ((tchar_t*)data->str)[length] = _T('\0');
+    ((tchar*)data->str)[length] = _T('\0');
     data->ref = 1;
-    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
   }
 
-  explicit String(size_t capacity)
+  explicit String(usize capacity)
   {
-    data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
-    data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-    *((tchar_t*)data->str) = _T('\0');
+    data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    data->str = (tchar*)((byte*)data + sizeof(Data));
+    *((tchar*)data->str) = _T('\0');
     data->len = 0;
     data->ref = 1;
-    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
   }
 
   ~String()
@@ -67,30 +67,30 @@ public:
       Memory::free(data);
   }
 
-  operator const tchar_t*() const {return data->str;}
-  operator const tchar_t*() {return data->str;}
+  operator const tchar*() const {return data->str;}
+  operator const tchar*() {return data->str;}
 
-  operator tchar_t*()
+  operator tchar*()
   {
     detach(data->len, data->len);
-    return (tchar_t*)data->str;
+    return (tchar*)data->str;
   }
   
-  size_t length() const {return data->len;}
+  usize length() const {return data->len;}
 
-  size_t capacity() const
+  usize capacity() const
   {
     if(data->ref == 1)
       return data->capacity;
     return 0;
   }
 
-  void_t clear()
+  void clear()
   {
     if(data->ref == 1)
     {
       data->len = 0;
-      *(tchar_t*)data->str = _T('\0');
+      *(tchar*)data->str = _T('\0');
     }
     else
     {
@@ -101,7 +101,7 @@ public:
     }
   }
 
-  void_t attach(const tchar_t* str, size_t length)
+  void attach(const tchar* str, usize length)
   {
     if(data->ref && Atomic::decrement(data->ref) == 0)
         Memory::free(data);
@@ -111,58 +111,58 @@ public:
     _data.len = length;
   }
 
-  void_t detach() {detach(data->len, data->len);}
-  bool_t isEmpty() const {return data->len == 0;}
-  void_t resize(size_t length) {detach(length, length);}
-  void_t reserve(size_t size) {detach(data->len, size < data->len ? data->len : size);} // todo: optimize this method, use it in append methods
+  void detach() {detach(data->len, data->len);}
+  bool isEmpty() const {return data->len == 0;}
+  void resize(usize length) {detach(length, length);}
+  void reserve(usize size) {detach(data->len, size < data->len ? data->len : size);} // todo: optimize this method, use it in append methods
 
   String& prepend(const String& str)
   {
     String copy(*this);
-    size_t newLen = str.data->len + copy.data->len;
+    usize newLen = str.data->len + copy.data->len;
     detach(0, newLen);
-    Memory::copy((tchar_t*)data->str, str.data->str, str.data->len * sizeof(tchar_t));
-    Memory::copy((tchar_t*)data->str + str.data->len, copy.data->str, (copy.data->len + 1) * sizeof(tchar_t));
+    Memory::copy((tchar*)data->str, str.data->str, str.data->len * sizeof(tchar));
+    Memory::copy((tchar*)data->str + str.data->len, copy.data->str, (copy.data->len + 1) * sizeof(tchar));
     data->len = newLen;
     return *this;
   }
 
-  String& prepend(const tchar_t* str, size_t len)
+  String& prepend(const tchar* str, usize len)
   {
     String copy(*this);
-    size_t newLen = len + copy.data->len;
+    usize newLen = len + copy.data->len;
     detach(0, newLen);
-    Memory::copy((tchar_t*)data->str, str, len * sizeof(tchar_t));
-    Memory::copy((tchar_t*)data->str + len, copy.data->str, (copy.data->len + 1) * sizeof(tchar_t));
+    Memory::copy((tchar*)data->str, str, len * sizeof(tchar));
+    Memory::copy((tchar*)data->str + len, copy.data->str, (copy.data->len + 1) * sizeof(tchar));
     data->len = newLen;
     return *this;
   }
 
   String& append(const String& str)
   {
-    size_t newLen = data->len + str.data->len;
+    usize newLen = data->len + str.data->len;
     detach(data->len, newLen);
-    Memory::copy((tchar_t*)data->str + data->len, str.data->str, (str.data->len + 1) * sizeof(tchar_t));
+    Memory::copy((tchar*)data->str + data->len, str.data->str, (str.data->len + 1) * sizeof(tchar));
     data->len = newLen;
     return *this;
   }
 
-  String& append(const tchar_t* str, size_t len)
+  String& append(const tchar* str, usize len)
   {
-    size_t newLen = data->len + len;
+    usize newLen = data->len + len;
     detach(data->len, newLen);
-    Memory::copy((tchar_t*)data->str + data->len, str, len * sizeof(tchar_t));
-    ((tchar_t*)data->str)[newLen] = _T('\0');
+    Memory::copy((tchar*)data->str + data->len, str, len * sizeof(tchar));
+    ((tchar*)data->str)[newLen] = _T('\0');
     data->len = newLen;
     return *this;
   }
 
-  String& append(const tchar_t c)
+  String& append(const tchar c)
   {
-    size_t newLen = data->len + 1;
+    usize newLen = data->len + 1;
     detach(data->len, newLen);
-    ((tchar_t*)data->str)[data->len] = c;
-    ((tchar_t*)data->str)[newLen] = _T('\0');
+    ((tchar*)data->str)[data->len] = c;
+    ((tchar*)data->str)[newLen] = _T('\0');
     data->len = newLen;
     return *this;
   }
@@ -181,94 +181,94 @@ public:
     {
       if(data->ref && Atomic::decrement(data->ref) == 0)
         Memory::free(data);
-      size_t capacity;
-      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
-      data->str = (tchar_t*)((byte_t*)data + sizeof(Data));
-      Memory::copy((tchar_t*)data->str, otherData->str, (otherData->len + 1) * sizeof(tchar_t));
+      usize capacity;
+      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
+      data->str = (tchar*)((byte*)data + sizeof(Data));
+      Memory::copy((tchar*)data->str, otherData->str, (otherData->len + 1) * sizeof(tchar));
       data->len = otherData->len;
       data->ref = 1;
-      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
     }
     return *this;
   }
 
   String& operator+=(const String& other) {return append(other);}
-  String& operator+=(tchar_t c) { return append(c); }
+  String& operator+=(tchar c) { return append(c); }
   String operator+(const String& other) const {return String(*this).append(other);}
-  template<size_t N> String operator+(const tchar_t(&str)[N]) const {return String(*this).append(String(str));}
-  bool operator==(const String& other) const {return data->len == other.data->len && Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) == 0;}
-  template<size_t N> bool operator==(const tchar_t (&str)[N]) const {return data->len == N - 1 && Memory::compare(data->str, str, (N - 1) * sizeof(tchar_t)) == 0;}
-  bool operator!=(const String& other) const {return data->len != other.data->len || Memory::compare(data->str, other.data->str, data->len * sizeof(tchar_t)) != 0;}
-  template<size_t N> bool operator!=(const tchar_t (&str)[N]) const {return data->len != N - 1 || Memory::compare(data->str, str, (N - 1) * sizeof(tchar_t)) != 0;}
-  bool_t operator>(const String& other) const {return compare(other) > 0;}
-  bool_t operator>=(const String& other) const {return compare(other) >= 0;}
-  bool_t operator<(const String& other) const {return compare(other) < 0;}
-  bool_t operator<=(const String& other) const {return compare(other) <= 0;}
+  template<usize N> String operator+(const tchar(&str)[N]) const {return String(*this).append(String(str));}
+  bool operator==(const String& other) const {return data->len == other.data->len && Memory::compare(data->str, other.data->str, data->len * sizeof(tchar)) == 0;}
+  template<usize N> bool operator==(const tchar (&str)[N]) const {return data->len == N - 1 && Memory::compare(data->str, str, (N - 1) * sizeof(tchar)) == 0;}
+  bool operator!=(const String& other) const {return data->len != other.data->len || Memory::compare(data->str, other.data->str, data->len * sizeof(tchar)) != 0;}
+  template<usize N> bool operator!=(const tchar (&str)[N]) const {return data->len != N - 1 || Memory::compare(data->str, str, (N - 1) * sizeof(tchar)) != 0;}
+  bool operator>(const String& other) const {return compare(other) > 0;}
+  bool operator>=(const String& other) const {return compare(other) >= 0;}
+  bool operator<(const String& other) const {return compare(other) < 0;}
+  bool operator<=(const String& other) const {return compare(other) <= 0;}
 
-  int_t compare(const String& other) const
+  int compare(const String& other) const
   {
-    const tchar_t* s1 = data->str, * s2 = other.data->str;
+    const tchar* s1 = data->str, * s2 = other.data->str;
     for(; *s1 && *s1 == *s2; ++s1,++s2);
-    return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+    return (int)*(const utchar*)s1 - *(const utchar*)s2;
   }
 
-  int_t compare(const String& other, size_t len) const
+  int compare(const String& other, usize len) const
   {
-    for(const tchar_t* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
+    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
     {
       if(s1 >= end1)
         return 0;
       if(!*s1 || *s1 != *s2)
-        return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+        return (int)*(const utchar*)s1 - *(const utchar*)s2;
     }
   }
 
-  int_t compareIgnoreCase(const String& other) const
+  int compareIgnoreCase(const String& other) const
   {
-    const tchar_t* s1 = data->str, * s2 = other.data->str;
+    const tchar* s1 = data->str, * s2 = other.data->str;
     for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
-    return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+    return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
   }
 
-  int_t compareIgnoreCase(const String& other, size_t len) const
+  int compareIgnoreCase(const String& other, usize len) const
   {
-    for(const tchar_t* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
+    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len;; ++s1, ++s2)
     {
       if(s1 >= end1)
         return 0;
       if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
-        return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+        return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
     }
   }
 
-  const tchar_t* find(tchar_t c) const
+  const tchar* find(tchar c) const
   {
-    for(const tchar_t* s = data->str; *s; ++s)
+    for(const tchar* s = data->str; *s; ++s)
       if(*s == c)
         return s;
     return 0;
   }
 
-  const tchar_t* findLast(tchar_t c) const
+  const tchar* findLast(tchar c) const
   {
-    for(const tchar_t * start = data->str, * p = data->str + data->len - 1; p >= start; --p)
+    for(const tchar * start = data->str, * p = data->str + data->len - 1; p >= start; --p)
       if(*p == c)
         return p;
     return 0;
   }
 
-  const tchar_t* find(tchar_t c, size_t start) const;
-  const tchar_t* find(const tchar_t* str) const;
-  const tchar_t* find(const tchar_t* str, size_t start) const;
-  const tchar_t* findOneOf(const tchar_t* chars) const;
-  const tchar_t* findOneOf(const tchar_t* chars, size_t start) const;
-  const tchar_t* findLast(const tchar_t* str) const;
-  const tchar_t* findLastOf(const tchar_t* chars) const;
+  const tchar* find(tchar c, usize start) const;
+  const tchar* find(const tchar* str) const;
+  const tchar* find(const tchar* str, usize start) const;
+  const tchar* findOneOf(const tchar* chars) const;
+  const tchar* findOneOf(const tchar* chars, usize start) const;
+  const tchar* findLast(const tchar* str) const;
+  const tchar* findLastOf(const tchar* chars) const;
 
-  String& replace(tchar_t needle, tchar_t replacement)
+  String& replace(tchar needle, tchar replacement)
   {
     detach(data->len, data->len);
-    for (tchar_t* str = (tchar_t*)data->str; *str; ++str)
+    for (tchar* str = (tchar*)data->str; *str; ++str)
       if(*str == needle)
         *str = replacement;
     return *this;
@@ -279,21 +279,21 @@ public:
   bool startsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str, str.data->str, str.data->len) == 0;}
   bool endsWith(const String& str) const {return data->len >= str.data->len && Memory::compare(data->str + data->len - str.data->len, str.data->str, str.data->len) == 0;}
 
-  String substr(ssize_t start, ssize_t length = -1) const
+  String substr(ssize start, ssize length = -1) const
   {
     if(start < 0)
     {
-      start = (ssize_t)data->len + start;
+      start = (ssize)data->len + start;
       if(start < 0)
         start = 0;
     }
-    else if((size_t)start > data->len)
+    else if((usize)start > data->len)
       start = data->len;
 
-    size_t end;
+    usize end;
     if(length >= 0)
     {
-      end = (size_t)start + (size_t)length;
+      end = (usize)start + (usize)length;
       if(end > data->len)
         end = data->len;
     }
@@ -310,8 +310,8 @@ public:
   String& toLowerCase()
   {
     detach(data->len, data->len);
-    for (char_t* str = (char_t*)data->str; *str; ++str)
-      *str = lowerCaseMap[*(uchar_t*)str];
+    for (char* str = (char*)data->str; *str; ++str)
+      *str = lowerCaseMap[*(uchar*)str];
     return *this;
   }
 #endif
@@ -322,40 +322,40 @@ public:
   String& toUpperCase()
   {
     detach(data->len, data->len);
-    for (char_t* str = (char_t*)data->str; *str; ++str)
-      *str = upperCaseMap[*(uchar_t*)str];
+    for (char* str = (char*)data->str; *str; ++str)
+      *str = upperCaseMap[*(uchar*)str];
     return *this;
   }
 #endif
 
-  int_t printf(const tchar_t* format, ...);
-  int_t scanf(const tchar_t* format, ...) const;
+  int printf(const tchar* format, ...);
+  int scanf(const tchar* format, ...) const;
 
-  int_t toInt() const;
-  uint_t toUInt() const;
-  int64_t toInt64() const;
-  uint64_t toUInt64() const;
+  int toInt() const;
+  uint toUInt() const;
+  int64 toInt64() const;
+  uint64 toUInt64() const;
   double toDouble() const;
 
-  String token(tchar_t separator, size_t& start) const;
-  String token(const tchar_t* separators, size_t& start) const;
+  String token(tchar separator, usize& start) const;
+  String token(const tchar* separators, usize& start) const;
 
-  size_t split(List<String>& tokens, const tchar_t* separators, bool_t skipEmpty = true) const;
-  String& join(const List<String>& tokens, tchar_t separator);
+  usize split(List<String>& tokens, const tchar* separators, bool skipEmpty = true) const;
+  String& join(const List<String>& tokens, tchar separator);
 
   /**
   * Compute a hash code for this string.
   * @return The hash code
   */
 #if __cplusplus >= 201103L
-  explicit operator size_t() const
+  explicit operator usize() const
 #else
-  operator size_t() const
+  operator usize() const
 #endif
   {
-    size_t len;
-    size_t hashCode = (len = data->len);
-    const tchar_t* str = data->str;
+    usize len;
+    usize hashCode = (len = data->len);
+    const tchar* str = data->str;
     hashCode *= 16807;
     hashCode ^= str[0];
     hashCode *= 16807;
@@ -366,74 +366,74 @@ public:
   }
 
 public:
-  static int_t toInt(const tchar_t* s);
-  static uint_t toUInt(const tchar_t* s);
-  static int64_t toInt64(const tchar_t* s);
-  static uint64_t toUInt64(const tchar_t* s);
-  static double toDouble(const tchar_t* s);
+  static int toInt(const tchar* s);
+  static uint toUInt(const tchar* s);
+  static int64 toInt64(const tchar* s);
+  static uint64 toUInt64(const tchar* s);
+  static double toDouble(const tchar* s);
 
 #ifdef _UNICODE
-  static tchar_t toLowerCase(tchar_t c);
-  static tchar_t toUpperCase(tchar_t c);
-  static bool_t isSpace(tchar_t c);
+  static tchar toLowerCase(tchar c);
+  static tchar toUpperCase(tchar c);
+  static bool isSpace(tchar c);
 #else
-  static char_t toLowerCase(char_t c) { return lowerCaseMap[(uchar_t&)c]; }
-  static char_t toUpperCase(char_t c) { return upperCaseMap[(uchar_t&)c]; }
-  static bool_t isSpace(char_t c) { return (c >= 9 && c <= 13) || c == 32; }
+  static char toLowerCase(tchar c) { return lowerCaseMap[(uchar&)c]; }
+  static char toUpperCase(tchar c) { return upperCaseMap[(uchar&)c]; }
+  static bool isSpace(tchar c) { return (c >= 9 && c <= 13) || c == 32; }
 #endif
 
-  static bool_t isAlnum(tchar_t c);
-  static bool_t isAlpha(tchar_t c);
-  static bool_t isDigit(tchar_t c);
-  static bool_t isLower(tchar_t c);
-  static bool_t isPrint(tchar_t c);
-  static bool_t isPunct(tchar_t c);
-  static bool_t isUpper(tchar_t c);
-  static bool_t isXDigit(tchar_t c);
+  static bool isAlnum(tchar c);
+  static bool isAlpha(tchar c);
+  static bool isDigit(tchar c);
+  static bool isLower(tchar c);
+  static bool isPrint(tchar c);
+  static bool isPunct(tchar c);
+  static bool isUpper(tchar c);
+  static bool isXDigit(tchar c);
 
-  static int_t compare(const tchar_t* s1, const tchar_t* s2)
+  static int compare(const tchar* s1, const tchar* s2)
   {
     for(; *s1 && *s1 == *s2; ++s1,++s2);
-    return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+    return (int)*(const utchar*)s1 - *(const utchar*)s2;
   }
 
-  static int_t compare(const tchar_t* s1, const tchar_t* s2, size_t len)
+  static int compare(const tchar* s1, const tchar* s2, usize len)
   {
-    for(const tchar_t* end1 = s1 + len;; ++s1, ++s2)
+    for(const tchar* end1 = s1 + len;; ++s1, ++s2)
     {
       if(s1 >= end1)
         return 0;
       if(!*s1 || *s1 != *s2)
-        return (int_t)*(const utchar_t*)s1 - *(const utchar_t*)s2;
+        return (int)*(const utchar*)s1 - *(const utchar*)s2;
     }
   }
 
-  static int_t compareIgnoreCase(const tchar_t* s1, const tchar_t* s2)
+  static int compareIgnoreCase(const tchar* s1, const tchar* s2)
   {
     for(; *s1 && toLowerCase(*s1) == toLowerCase(*s2); ++s1,++s2);
-    return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+    return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
   }
 
-  static int_t compareIgnoreCase(const tchar_t* s1, const tchar_t* s2, size_t len)
+  static int compareIgnoreCase(const tchar* s1, const tchar* s2, usize len)
   {
-    for(const tchar_t* end1 = s1 + len;; ++s1, ++s2)
+    for(const tchar* end1 = s1 + len;; ++s1, ++s2)
     {
       if(s1 >= end1)
         return 0;
       if(!*s1 || toLowerCase(*s1) != toLowerCase(*s2))
-        return (int_t)(utchar_t)toLowerCase(*s1) - (utchar_t)toLowerCase(*s2);
+        return (int)(utchar)toLowerCase(*s1) - (utchar)toLowerCase(*s2);
     }
   }
 
-  static size_t length(const tchar_t* s)
+  static usize length(const tchar* s)
   {
-    const tchar_t* start = s;
+    const tchar* start = s;
     while (*s)
       ++s;
-    return (size_t)(s - start);
+    return (usize)(s - start);
   }
 
-  static const tchar_t* find(const tchar_t* in, tchar_t c)
+  static const tchar* find(const tchar* in, tchar c)
   {
     for(; *in; ++in)
       if(*in == c)
@@ -441,44 +441,44 @@ public:
     return 0;
   }
 
-  static const tchar_t* findLast(const tchar_t* in, tchar_t c)
+  static const tchar* findLast(const tchar* in, tchar c)
   {
-    const tchar_t* last = 0;
+    const tchar* last = 0;
     for(; *in; ++in)
       if(*in == c)
         last = in;
     return last;
   }
 
-  static const tchar_t* find(const tchar_t* in, const tchar_t* str);
-  static const tchar_t* findOneOf(const tchar_t* in, const tchar_t* chars);
-  static const tchar_t* findLast(const tchar_t* in, const tchar_t* str);
-  static const tchar_t* findLastOf(const tchar_t* in, const tchar_t* chars);
+  static const tchar* find(const tchar* in, const tchar* str);
+  static const tchar* findOneOf(const tchar* in, const tchar* chars);
+  static const tchar* findLast(const tchar* in, const tchar* str);
+  static const tchar* findLastOf(const tchar* in, const tchar* chars);
 
-  static String fromInt(int_t value);
-  static String fromUInt(uint_t value);
-  static String fromInt64(int64_t value);
-  static String fromUInt64(uint64_t value);
+  static String fromInt(int value);
+  static String fromUInt(uint value);
+  static String fromInt64(int64 value);
+  static String fromUInt64(uint64 value);
   static String fromDouble(double value);
-  static String fromCString(const tchar_t* str) {return String(str, length(str));}
-  static String fromCString(const tchar_t* str, size_t len) {return String(str, len);}
-  static String fromPrintf(const tchar_t* format, ...);
+  static String fromCString(const tchar* str) {return String(str, length(str));}
+  static String fromCString(const tchar* str, usize len) {return String(str, len);}
+  static String fromPrintf(const tchar* format, ...);
 
-  static bool startsWith(const tchar_t* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
+  static bool startsWith(const tchar* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
 
 private:
   struct Data
   {
-    const tchar_t* str;
-    size_t len;
-    size_t capacity;
-    volatile size_t ref;
+    const tchar* str;
+    usize len;
+    usize capacity;
+    volatile usize ref;
   };
 
   Data* data;
   Data _data;
 
-  void_t detach(size_t copyLength, size_t minCapacity)
+  void detach(usize copyLength, usize minCapacity)
   {
 #ifdef ASSERT
     ASSERT(copyLength <= minCapacity);
@@ -486,23 +486,23 @@ private:
     if(data->ref == 1 && minCapacity <= data->capacity)
     {
       data->len = copyLength;
-      ((tchar_t*)data->str)[copyLength] = _T('\0');
+      ((tchar*)data->str)[copyLength] = _T('\0');
       return;
     }
 
-    size_t capacity;
-    Data* newData = (Data*)Memory::alloc((minCapacity + 1) * sizeof(tchar_t) + sizeof(Data), capacity);
-    newData->str = (tchar_t*)((byte_t*)newData + sizeof(Data));
+    usize capacity;
+    Data* newData = (Data*)Memory::alloc((minCapacity + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    newData->str = (tchar*)((byte*)newData + sizeof(Data));
     if(data->len > 0)
     {
-      Memory::copy((tchar_t*)newData->str, data->str, (data->len < copyLength ? data->len : copyLength) * sizeof(tchar_t));
-      ((tchar_t*)newData->str)[copyLength] = _T('\0');
+      Memory::copy((tchar*)newData->str, data->str, (data->len < copyLength ? data->len : copyLength) * sizeof(tchar));
+      ((tchar*)newData->str)[copyLength] = _T('\0');
     }
     else
-      *(tchar_t*)newData->str = _T('\0');
+      *(tchar*)newData->str = _T('\0');
     newData->len = copyLength;
     newData->ref = 1;
-    newData->capacity = (capacity - sizeof(Data)) / sizeof(tchar_t) - 1;
+    newData->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
 
     if(data->ref && Atomic::decrement(data->ref) == 0)
       Memory::free(data);
@@ -514,14 +514,14 @@ private:
   {
     EmptyData()
     {
-      str = (const tchar_t*)&len;
+      str = (const tchar*)&len;
       ref = 0;
       len = 0;
     }
   } emptyData;
 
 #ifndef _UNICODE
-  static tchar_t lowerCaseMap[0x101];
-  static tchar_t upperCaseMap[0x101];
+  static tchar lowerCaseMap[0x101];
+  static tchar upperCaseMap[0x101];
 #endif
 };

@@ -29,23 +29,23 @@ class Memory::Private
 public:
     struct PageHeader
     {
-      size_t size;
+      usize size;
       void* returnAddr;
 #ifndef NDEBUG
       PageHeader* next;
       PageHeader** previous;
 #endif
-      uint64_t checkValue;
+      uint64 checkValue;
     };
 
     struct PageFooter 
     {
-      uint64_t checkValue;
+      uint64 checkValue;
     };
 
-    static const uint64_t headerCheckValue = 0x1235543212355432LL;
-    static const uint64_t headerCheckValueUsed = 0x1235543212355433LL;
-    static const uint64_t footerCheckValue = 0x1235543212355432LL;
+    static const uint64 headerCheckValue = 0x1235543212355432LL;
+    static const uint64 headerCheckValueUsed = 0x1235543212355433LL;
+    static const uint64 footerCheckValue = 0x1235543212355432LL;
 
 #ifdef _WIN32
     static HANDLE processHeap;
@@ -60,9 +60,9 @@ public:
 #endif
 
 public:
-  static inline void_t* alloc(size_t minSize, size_t& rsize, void* returnAddr);
-  static inline void_t* alloc(size_t minSize, void* returnAddr);
-  static inline void_t free(void_t* buffer);
+  static inline void* alloc(usize minSize, usize& rsize, void* returnAddr);
+  static inline void* alloc(usize minSize, void* returnAddr);
+  static inline void free(void* buffer);
 
 private:
     static Private memory;
@@ -89,8 +89,8 @@ private:
     {
       for(PageHeader* i = first; i; i = i->next)
       {
-        const tchar_t* file;
-        int_t line;
+        const tchar* file;
+        int line;
         if(!Debug::getSourceLine(i->returnAddr, file, line))
           Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
         else
@@ -130,12 +130,12 @@ pthread_mutex_t Memory::Private::mutex;
 Memory::Private::PageHeader* Memory::Private::first = 0;
 #endif
 
-void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
+void* Memory::Private::alloc(usize minSize, usize& rsize, void* returnAddr)
 {
 #ifdef _WIN32
   ASSERT(Memory::Private::processHeap);
 #endif
-  size_t minAllocSize = (((minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter))) >> 8) + 1) << 8;
+  usize minAllocSize = (((minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter))) >> 8) + 1) << 8;
   Memory::Private::PageHeader* header;
 #ifdef _WIN32
   header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
@@ -144,7 +144,7 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
 #endif
   if(!header) // out of memory?
   {
-    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64)minAllocSize); TRAP();
     do // wait and try again...
     {
 #ifdef _WIN32
@@ -156,13 +156,13 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
 #endif
     } while(!header);
   }
-  size_t allocSize;
+  usize allocSize;
 #ifdef _WIN32
   allocSize = HeapSize(Memory::Private::processHeap, 0, header);
 #else
   allocSize = malloc_usable_size(header);
 #endif
-  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + allocSize - sizeof(Memory::Private::PageFooter));
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8*)header + allocSize - sizeof(Memory::Private::PageFooter));
   header->size = allocSize;
 #ifndef NDEBUG
   header->returnAddr = returnAddr;
@@ -186,15 +186,15 @@ void_t* Memory::Private::alloc(size_t minSize, size_t& rsize, void* returnAddr)
   VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
 #endif
 #endif
-  return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
+  return (void*)((uint8*)header + sizeof(Memory::Private::PageHeader));
 }
 
-void_t* Memory::Private::alloc(size_t minSize, void* returnAddr)
+void* Memory::Private::alloc(usize minSize, void* returnAddr)
 {
 #ifdef _WIN32
   ASSERT(Memory::Private::processHeap);
 #endif
-  size_t minAllocSize = minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
+  usize minAllocSize = minSize + (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
   Memory::Private::PageHeader* header;
 #ifdef _WIN32
   header = (Memory::Private::PageHeader*)HeapAlloc(Memory::Private::processHeap, 0, minAllocSize);
@@ -203,7 +203,7 @@ void_t* Memory::Private::alloc(size_t minSize, void* returnAddr)
 #endif
   if(!header) // out of memory?
   {
-    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64_t)minAllocSize); TRAP();
+    Debug::printf(_T("Memory::alloc: error: Could not allocate %llu bytes.\n"), (uint64)minAllocSize); TRAP();
     do // wait and try again...
     {
 #ifdef _WIN32
@@ -215,7 +215,7 @@ void_t* Memory::Private::alloc(size_t minSize, void* returnAddr)
 #endif
     } while(!header);
   }
-  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + minAllocSize - sizeof(Memory::Private::PageFooter));
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8*)header + minAllocSize - sizeof(Memory::Private::PageFooter));
   header->size = minAllocSize;
 #ifndef NDEBUG
   header->returnAddr = returnAddr;
@@ -238,13 +238,13 @@ void_t* Memory::Private::alloc(size_t minSize, void* returnAddr)
   VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
 #endif
 #endif
-  return (void_t*)((uint8_t*)header + sizeof(Memory::Private::PageHeader));
+  return (void*)((uint8*)header + sizeof(Memory::Private::PageHeader));
 }
 
-void_t Memory::Private::free(void_t* buffer)
+void Memory::Private::free(void* buffer)
 {
   if(!buffer) return;
-  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8*)buffer - sizeof(Memory::Private::PageHeader));
   if(header->checkValue != Memory::Private::headerCheckValue)
   {
     if(header->checkValue == Memory::Private::headerCheckValueUsed)
@@ -255,7 +255,7 @@ void_t Memory::Private::free(void_t* buffer)
     Debug::print(_T("Memory::free: error: The passed buffer is invalid or corrupted.\n")); TRAP();
     return;
   }
-  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8_t*)header + header->size - sizeof(Memory::Private::PageFooter));
+  Memory::Private::PageFooter* footer = (Memory::Private::PageFooter*)((uint8*)header + header->size - sizeof(Memory::Private::PageFooter));
   if(footer->checkValue != Memory::Private::footerCheckValue)
   {
     Debug::print(_T("Memory::free: error: The passed buffer is corrupted.\n")); TRAP(); // buffer overrun?
@@ -283,9 +283,9 @@ void_t Memory::Private::free(void_t* buffer)
 }
 
 #ifndef NDEBUG
-void_t Memory::dump()
+void Memory::dump()
 {
-  HashMap<String, size_t> allocatedMemory;
+  HashMap<String, usize> allocatedMemory;
 #ifdef _WIN32
   EnterCriticalSection(&Private::criticalSection);
 #else
@@ -293,8 +293,8 @@ void_t Memory::dump()
 #endif
   for(Private::PageHeader* i = Private::first; i; i = i->next)
   {
-    const tchar_t* file;
-    int_t line;
+    const tchar* file;
+    int line;
     bool success = Debug::getSourceLine(i->returnAddr, file, line);
     String key;
     if(success)
@@ -303,7 +303,7 @@ void_t Memory::dump()
 #else
       key.printf("%s", file);
 #endif
-    HashMap<String, size_t>::Iterator it = allocatedMemory.find(key);
+    HashMap<String, usize>::Iterator it = allocatedMemory.find(key);
     if(it == allocatedMemory.end())
       allocatedMemory.append(key, i->size);
     else
@@ -314,15 +314,15 @@ void_t Memory::dump()
 #else
   VERIFY(pthread_mutex_unlock(&Private::mutex) == 0);
 #endif
-  MultiMap<size_t, String> sortedAllocatedMemory;
-  for(HashMap<String, size_t>::Iterator i = allocatedMemory.begin(), end = allocatedMemory.end(); i != end; ++i)
+  MultiMap<usize, String> sortedAllocatedMemory;
+  for(HashMap<String, usize>::Iterator i = allocatedMemory.begin(), end = allocatedMemory.end(); i != end; ++i)
     sortedAllocatedMemory.insert(*i, i.key());
-  for(MultiMap<size_t, String>::Iterator i = sortedAllocatedMemory.begin(), end = sortedAllocatedMemory.end(); i != end; ++i)
-    Debug::printf(_T("%s: %llu bytes\n"), (const tchar_t*)*i, (uint64_t)i.key());
+  for(MultiMap<usize, String>::Iterator i = sortedAllocatedMemory.begin(), end = sortedAllocatedMemory.end(); i != end; ++i)
+    Debug::printf(_T("%s: %llu bytes\n"), (const tchar*)*i, (uint64)i.key());
 }
 #endif
 
-void_t* Memory::alloc(size_t minSize, size_t& rsize)
+void* Memory::alloc(usize minSize, usize& rsize)
 {
 #ifndef NDEBUG
 #ifdef _MSC_VER
@@ -336,7 +336,7 @@ void_t* Memory::alloc(size_t minSize, size_t& rsize)
   return Private::alloc(minSize, rsize, returnAddr);
 }
 
-void_t* Memory::alloc(size_t size)
+void* Memory::alloc(usize size)
 {
 #ifndef NDEBUG
 #ifdef _MSC_VER
@@ -350,10 +350,10 @@ void_t* Memory::alloc(size_t size)
   return Private::alloc(size, returnAddr);
 }
 
-size_t Memory::size(void_t* buffer)
+usize Memory::size(void* buffer)
 {
   if(!buffer) return 0;
-  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8_t*)buffer - sizeof(Memory::Private::PageHeader));
+  Memory::Private::PageHeader* header = (Memory::Private::PageHeader*)((uint8*)buffer - sizeof(Memory::Private::PageHeader));
   if(header->checkValue != Memory::Private::headerCheckValue)
   {
     if(header->checkValue == Memory::Private::headerCheckValueUsed)
@@ -367,12 +367,12 @@ size_t Memory::size(void_t* buffer)
   return header->size - (sizeof(Memory::Private::PageHeader) + sizeof(Memory::Private::PageFooter));
 }
 
-void_t Memory::free(void_t* buffer)
+void Memory::free(void* buffer)
 {
   Private::free(buffer);
 }
 
-void_t* operator new(size_t size)
+void* operator new(usize size)
 {
 #ifndef NDEBUG
 #ifdef _MSC_VER
@@ -386,7 +386,7 @@ void_t* operator new(size_t size)
   return Memory::Private::alloc(size, returnAddr);
 }
 
-void_t* operator new [](size_t size)
+void* operator new [](usize size)
 {
 #ifndef NDEBUG
 #ifdef _MSC_VER
@@ -400,17 +400,17 @@ void_t* operator new [](size_t size)
   return Memory::Private::alloc(size, returnAddr);
 }
 
-void_t operator delete(void_t* buffer)
+void operator delete(void* buffer)
 {
   Memory::Private::free(buffer);
 }
 
-void_t operator delete[](void_t* buffer)
+void operator delete[](void* buffer)
 {
   Memory::Private::free(buffer);
 }
 
-void_t Memory::copy(void_t* dest, const void_t* src, size_t length)
+void Memory::copy(void* dest, const void* src, usize length)
 {
 #ifdef _WIN32
   CopyMemory(dest, src, length);
@@ -419,7 +419,7 @@ void_t Memory::copy(void_t* dest, const void_t* src, size_t length)
 #endif
 }
 
-void_t Memory::move(void_t* dest, const void_t* src, size_t length)
+void Memory::move(void* dest, const void* src, usize length)
 {
 #ifdef _WIN32
   MoveMemory(dest, src, length);
@@ -428,7 +428,7 @@ void_t Memory::move(void_t* dest, const void_t* src, size_t length)
 #endif
 }
 
-void_t Memory::fill(void_t* buffer, byte_t value, size_t size)
+void Memory::fill(void* buffer, byte value, usize size)
 {
 #ifdef _WIN32
   FillMemory(buffer, size, value);
@@ -437,7 +437,7 @@ void_t Memory::fill(void_t* buffer, byte_t value, size_t size)
 #endif
 }
 
-void_t Memory::zero(void_t* buffer, size_t size)
+void Memory::zero(void* buffer, usize size)
 {
 #ifdef _WIN32
   ZeroMemory(buffer, size);
@@ -446,7 +446,7 @@ void_t Memory::zero(void_t* buffer, size_t size)
 #endif
 }
 
-int_t Memory::compare(const void_t* ptr1, const void_t* ptr2, size_t count)
+int Memory::compare(const void* ptr1, const void* ptr2, usize count)
 {
   return memcmp(ptr1, ptr2, count);
 }

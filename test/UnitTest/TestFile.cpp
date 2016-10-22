@@ -6,7 +6,7 @@
 #include <nstd/Error.h>
 
 
-void_t testFile()
+void testFile()
 {
   // test open and close
   File::unlink(_T("testfile.file.test"));
@@ -26,7 +26,7 @@ void_t testFile()
   {
     File::Time time;
     ASSERT(File::time(_T("testfile.file.test"), time));
-    int64_t now = Time::time();
+    int64 now = Time::time();
     //ASSERT(time.accessTime <= now + 1000 && time.accessTime > now - 10000);
     ASSERT(time.writeTime <= now + 1000 && time.writeTime > now - 10000);
     //ASSERT(time.creationTime <= now + 1000 && time.creationTime > now - 10000);
@@ -37,8 +37,8 @@ void_t testFile()
   ASSERT(!File::exists(_T("dkasdlakshkalal.nonexisting.file")));
 
   // test file write
-  char_t buffer[266];
-  char_t buffer2[300];
+  char buffer[266];
+  char buffer2[300];
   {
     File file;
     ASSERT(file.open(_T("testfile.file.test"), File::writeFlag));
@@ -54,11 +54,11 @@ void_t testFile()
     File file;
     ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
     ASSERT(file.size() == sizeof(buffer) + sizeof(buffer2));
-    char_t readBuffer[500];
+    char readBuffer[500];
     ASSERT(file.read(readBuffer, sizeof(readBuffer)) == sizeof(readBuffer));
     ASSERT(Memory::compare(readBuffer, buffer, sizeof(buffer)) == 0);
     ASSERT(Memory::compare(readBuffer + sizeof(buffer), buffer2, sizeof(readBuffer) - sizeof(buffer)) == 0);
-    char_t readBuffer2[166];
+    char readBuffer2[166];
     ASSERT(file.read(readBuffer2, sizeof(readBuffer2)) == sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer));
     ASSERT(Memory::compare(readBuffer2, buffer2 + sizeof(buffer2) - (sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)), sizeof(buffer) + sizeof(buffer2) - sizeof(readBuffer)) == 0);
     file.close();
@@ -71,9 +71,9 @@ void_t testFile()
     ASSERT(file.size() == sizeof(buffer) + sizeof(buffer2));
     String data;
     ASSERT(file.readAll(data));
-    ASSERT(data.length() * sizeof(tchar_t) == sizeof(buffer) + sizeof(buffer2));
-    ASSERT(Memory::compare((const tchar_t*)data, buffer, sizeof(buffer)) == 0);
-    ASSERT(Memory::compare((const byte_t*)(const tchar_t*)data + sizeof(buffer), buffer2, sizeof(buffer2)) == 0);
+    ASSERT(data.length() * sizeof(tchar) == sizeof(buffer) + sizeof(buffer2));
+    ASSERT(Memory::compare((const tchar*)data, buffer, sizeof(buffer)) == 0);
+    ASSERT(Memory::compare((const byte*)(const tchar*)data + sizeof(buffer), buffer2, sizeof(buffer2)) == 0);
   }
 
   // test unlink
@@ -82,8 +82,8 @@ void_t testFile()
 
   // test append mode
   {
-    char_t buf1[10];
-    char_t buf2[20];
+    char buf1[10];
+    char buf2[20];
     Memory::fill(buf1, 1, sizeof(buf1));
     Memory::fill(buf2, 1, sizeof(buf2));
     {
@@ -99,7 +99,7 @@ void_t testFile()
     {
       File file;
       ASSERT(file.open(_T("testfile.file.test"), File::readFlag));
-      char_t result[50];
+      char result[50];
       ASSERT(file.read(result, sizeof(result)) == sizeof(buf1) + sizeof(buf2));
       ASSERT(Memory::compare(result, buf1, sizeof(buf1)) == 0);
       ASSERT(Memory::compare(result + sizeof(buf1), buf2, sizeof(buf2)) == 0);

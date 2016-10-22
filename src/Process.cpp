@@ -40,7 +40,7 @@ Process::Process() : pid(0)
 
 Process::~Process()
 {
-  uint32_t exitCode;
+  uint32 exitCode;
   join(exitCode);
 }
 
@@ -53,7 +53,7 @@ bool Process::isRunning() const
 #endif
 }
 
-uint32_t Process::start(const String& commandLine)
+uint32 Process::start(const String& commandLine)
 {
 #ifdef _WIN32
   if(hProcess != INVALID_HANDLE_VALUE)
@@ -71,7 +71,7 @@ uint32_t Process::start(const String& commandLine)
 
   String args(commandLine);
 
-  if(!CreateProcess(NULL, (tchar_t*)args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+  if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
     return 0;
 
   CloseHandle(pi.hThread);
@@ -93,7 +93,7 @@ uint32_t Process::start(const String& commandLine)
   List<String> command;
   {
     String arg;
-    for(const tchar_t* p = commandLine; *p;)
+    for(const tchar* p = commandLine; *p;)
       switch(*p)
       {
       case _T('"'):
@@ -155,7 +155,7 @@ uint32_t Process::start(const String& commandLine)
 #endif
 }
 
-bool_t Process::kill()
+bool Process::kill()
 {
 #ifdef _WIN32
   if(hProcess == INVALID_HANDLE_VALUE)
@@ -215,7 +215,7 @@ bool_t Process::kill()
 #endif
 }
 
-bool_t Process::join(uint32_t& exitCode)
+bool Process::join(uint32& exitCode)
 {
 #ifdef _WIN32
   if(hProcess == INVALID_HANDLE_VALUE)
@@ -235,7 +235,7 @@ bool_t Process::join(uint32_t& exitCode)
   }
   CloseHandle((HANDLE)hProcess);
   hProcess = INVALID_HANDLE_VALUE;
-  exitCode = (uint32_t)dwExitCode;
+  exitCode = (uint32)dwExitCode;
   if(hStdOutRead != INVALID_HANDLE_VALUE)
   {
     CloseHandle(hStdOutRead);
@@ -283,16 +283,16 @@ bool_t Process::join(uint32_t& exitCode)
 #endif
 }
 
-uint32_t Process::getCurrentProcessId()
+uint32 Process::getCurrentProcessId()
 {
 #ifdef _WIN32
-  return (uint32_t)GetCurrentProcessId();
+  return (uint32)GetCurrentProcessId();
 #else
-  return (uint32_t)getpid();
+  return (uint32)getpid();
 #endif
 }
 
-void_t Process::exit(uint32_t exitCode)
+void Process::exit(uint32 exitCode)
 {
 #ifdef _WIN32
   ExitProcess(exitCode);
@@ -301,7 +301,7 @@ void_t Process::exit(uint32_t exitCode)
 #endif
 }
 
-bool_t Process::open(const String& commandLine, uint_t streams)
+bool Process::open(const String& commandLine, uint streams)
 {
 #ifdef _WIN32
   if(hProcess != INVALID_HANDLE_VALUE)
@@ -355,7 +355,7 @@ bool_t Process::open(const String& commandLine, uint_t streams)
   {
     String args(commandLine);
 
-    if(!CreateProcess(NULL, (tchar_t*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+    if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
       goto error;
   }
 
@@ -408,7 +408,7 @@ error:
   List<String> command;
   {
     String arg;
-    for(const tchar_t* p = commandLine; *p;)
+    for(const tchar* p = commandLine; *p;)
       switch(*p)
       {
       case _T('"'):
@@ -546,33 +546,33 @@ error:
 #endif
 }
 
-ssize_t Process::read(void_t* buffer, size_t len)
+ssize Process::read(void* buffer, usize len)
 {
 #ifdef _WIN32
   DWORD i;
 #ifdef _AMD64
-  byte_t* bufferStart = (byte_t*)buffer;
-  while(len > (size_t)INT_MAX)
+  byte* bufferStart = (byte*)buffer;
+  while(len > (usize)INT_MAX)
   {
     if(!ReadFile(hStdOutRead, buffer, INT_MAX, &i, NULL))
     {
       if(GetLastError() == ERROR_BROKEN_PIPE)
-        return (byte_t*)buffer - bufferStart;
+        return (byte*)buffer - bufferStart;
       return -1;
     }
-    buffer = (byte_t*)buffer + i;
+    buffer = (byte*)buffer + i;
     if(i != INT_MAX)
-      return (byte_t*)buffer - bufferStart;
+      return (byte*)buffer - bufferStart;
     len -= INT_MAX;
   }
   if(!ReadFile(hStdOutRead, buffer, (DWORD)len, &i, NULL))
   {
     if(GetLastError() == ERROR_BROKEN_PIPE)
-      return (byte_t*)buffer - bufferStart;
+      return (byte*)buffer - bufferStart;
     return -1;
   }
-  buffer = (byte_t*)buffer + i;
-  return (byte_t*)buffer - bufferStart;
+  buffer = (byte*)buffer + i;
+  return (byte*)buffer - bufferStart;
 #else
   if(!ReadFile(hStdOutRead, buffer, len, &i, NULL))
   {
@@ -587,7 +587,7 @@ ssize_t Process::read(void_t* buffer, size_t len)
 #endif
 }
 
-ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
+ssize Process::read(void* buffer, usize length, uint& streams)
 {
 #ifdef _WIN32
   HANDLE handles[2];
@@ -608,28 +608,28 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
   streams = readHandle == hStdOutRead ? stdoutStream : stderrStream;
   DWORD i;
 #ifdef _AMD64
-  byte_t* bufferStart = (byte_t*)buffer;
-  while(length > (size_t)INT_MAX)
+  byte* bufferStart = (byte*)buffer;
+  while(length > (usize)INT_MAX)
   {
     if(!ReadFile(readHandle, buffer, INT_MAX, &i, NULL))
     {
       if(GetLastError() == ERROR_BROKEN_PIPE)
-        return (byte_t*)buffer - bufferStart;
+        return (byte*)buffer - bufferStart;
       return -1;
     }
-    buffer = (byte_t*)buffer + i;
+    buffer = (byte*)buffer + i;
     if(i != INT_MAX)
-      return (byte_t*)buffer - bufferStart;
+      return (byte*)buffer - bufferStart;
     length -= INT_MAX;
   }
   if(!ReadFile(readHandle, buffer, (DWORD)length, &i, NULL))
   {
     if(GetLastError() == ERROR_BROKEN_PIPE)
-      return (byte_t*)buffer - bufferStart;
+      return (byte*)buffer - bufferStart;
     return -1;
   }
-  buffer = (byte_t*)buffer + i;
-  return (byte_t*)buffer - bufferStart;
+  buffer = (byte*)buffer + i;
+  return (byte*)buffer - bufferStart;
 #else
   if(!ReadFile(readHandle, buffer, length, &i, NULL))
     return -1;
@@ -678,25 +678,25 @@ ssize_t Process::read(void_t* buffer, size_t length, uint_t& streams)
 #endif
 }
 
-ssize_t Process::write(const void_t* buffer, size_t len)
+ssize Process::write(const void* buffer, usize len)
 {
 #ifdef _WIN32
   DWORD i;
 #ifdef _AMD64
-  const byte_t* bufferStart = (const byte_t*)buffer;
-  while(len > (size_t)INT_MAX)
+  const byte* bufferStart = (const byte*)buffer;
+  while(len > (usize)INT_MAX)
   {
     if(!WriteFile(hStdInWrite, buffer, INT_MAX, &i, NULL))
       return -1;
-    buffer = (const byte_t*)buffer + i;
+    buffer = (const byte*)buffer + i;
     if(i != INT_MAX)
-      return (const byte_t*)buffer - bufferStart;
+      return (const byte*)buffer - bufferStart;
     len -= INT_MAX;
   }
   if(!WriteFile(hStdInWrite, buffer, (DWORD)len, &i, NULL))
     return -1;
-  buffer = (const byte_t*)buffer + i;
-  return (const byte_t*)buffer - bufferStart;
+  buffer = (const byte*)buffer + i;
+  return (const byte*)buffer - bufferStart;
 #else
   if(!WriteFile(hStdInWrite, buffer, len, &i, NULL))
     return -1;
@@ -715,7 +715,7 @@ String Process::getEnvironmentVariable(const String& name)
   for(;;)
   {
     buffer.resize(bufferSize);
-    DWORD dw = GetEnvironmentVariable((const tchar_t*)name, (tchar_t*)buffer, bufferSize);
+    DWORD dw = GetEnvironmentVariable((const tchar*)name, (tchar*)buffer, bufferSize);
     if(dw == bufferSize)
     {
       bufferSize <<= 1;
@@ -727,25 +727,25 @@ String Process::getEnvironmentVariable(const String& name)
     return buffer;
   }
 #else
-  const tchar_t* var = getenv((const tchar_t*)name);
+  const tchar* var = getenv((const tchar*)name);
   if(!var)
     return String();
   return String(var, String::length(var));
 #endif
 }
 
-bool_t Process::setEnvironmentVariable(const String& name, const String& value)
+bool Process::setEnvironmentVariable(const String& name, const String& value)
 {
 #ifdef _MSC_VER
-  return SetEnvironmentVariable((const tchar_t*)name, value.isEmpty() ? 0 : (const tchar_t*)value) == TRUE;
+  return SetEnvironmentVariable((const tchar*)name, value.isEmpty() ? 0 : (const tchar*)value) == TRUE;
 #else
   if(value.isEmpty())
-    return unsetenv((const tchar_t*)name);
-  return setenv((const tchar_t*)name, (const tchar_t*)value, 1) == 0;
+    return unsetenv((const tchar*)name);
+  return setenv((const tchar*)name, (const tchar*)value, 1) == 0;
 #endif
 }
 
-bool_t Process::Arguments::nextChar()
+bool Process::Arguments::nextChar()
 {
   if(*arg)
   {
@@ -761,7 +761,7 @@ bool_t Process::Arguments::nextChar()
   return false;
 }
 
-bool_t Process::Arguments::read(int_t& character, String& argument)
+bool Process::Arguments::read(int& character, String& argument)
 {
   if(!nextChar())
     return false;
@@ -781,19 +781,19 @@ bool_t Process::Arguments::read(int_t& character, String& argument)
         }
         else
         {
-          const tchar_t* end = String::find(arg, _T('='));
-          size_t argLen = end ? end - arg : String::length(arg);
+          const tchar* end = String::find(arg, _T('='));
+          usize argLen = end ? end - arg : String::length(arg);
           for(const Option* opt = options; opt < optionsEnd; ++opt)
             if(opt->name && String::compare(opt->name, arg, argLen) == 0 && !opt->name[argLen])
             {
-              const tchar_t* argName = arg;
+              const tchar* argName = arg;
               character = opt->character;
               arg += end ? argLen + 1 : argLen;
               if(opt->flags & Process::argumentFlag)
               {
                 if(end || (!(opt->flags & Process::optionalFlag) && nextChar()))
                 {
-                  size_t len = String::length(arg);
+                  usize len = String::length(arg);
                   argument.attach(arg, len);
                   arg += len;
                   return true;
@@ -844,12 +844,12 @@ bool_t Process::Arguments::read(int_t& character, String& argument)
             { // missing argument
               argument.clear();
               argument.append('-');
-              argument.append((char_t)character);
+              argument.append((char)character);
               character = ':';
               return true;
             }
           }
-          size_t len = String::length(arg);
+          usize len = String::length(arg);
           argument.attach(arg, len);
           arg += len;
           return true;
@@ -861,21 +861,21 @@ bool_t Process::Arguments::read(int_t& character, String& argument)
     // unknown option
     argument.clear();
     argument.append('-');
-    argument.append((char_t)character);
+    argument.append((char)character);
     character = '?';
     return true;
   }
 
   // non option argument
   character = '\0';
-  size_t len = String::length(arg);
+  usize len = String::length(arg);
   argument.attach(arg, len);
   arg += len;
   return true;
 }
 
 #ifndef _WIN32
-bool_t Process::daemonize(const String& logFile)
+bool Process::daemonize(const String& logFile)
 {
   int fd = ::open(logFile, O_CREAT | O_WRONLY |  O_CLOEXEC, S_IRUSR | S_IWUSR);
   if(fd == -1)
@@ -919,8 +919,8 @@ static class ProcessFramework
 public:
   static pthread_mutex_t mutex;
   static pthread_cond_t condition;
-  static int_t signaled;
-  static int_t waitState;
+  static int signaled;
+  static int waitState;
   ProcessFramework()
   {
     VERIFY(pthread_mutex_init(&mutex, 0) == 0);
@@ -934,11 +934,11 @@ public:
 } processFramework;
 pthread_mutex_t ProcessFramework::mutex;
 pthread_cond_t ProcessFramework::condition;
-int_t ProcessFramework::signaled = 0;
-int_t ProcessFramework::waitState = 0;
+int ProcessFramework::signaled = 0;
+int ProcessFramework::waitState = 0;
 #endif
 
-Process* Process::wait(Process** processes, size_t count)
+Process* Process::wait(Process** processes, usize count)
 {
 #ifdef _WIN32
   EnterCriticalSection(&ProcessFramework::criticalSection);
@@ -963,7 +963,7 @@ Process* Process::wait(Process** processes, size_t count)
       break;
   }
   DWORD dw = WaitForMultipleObjects((DWORD)(h - handles), handles, FALSE, INFINITE);
-  ssize_t pIndex;
+  ssize pIndex;
   if(dw <= WAIT_OBJECT_0 || (pIndex = dw - (WAIT_OBJECT_0 + 1)) >= p - processMap)
     return 0;
   return processMap[pIndex];
@@ -1030,7 +1030,7 @@ Process* Process::wait(Process** processes, size_t count)
 #endif
 }
 
-void_t Process::interrupt()
+void Process::interrupt()
 {
 #ifdef _WIN32
   EnterCriticalSection(&ProcessFramework::criticalSection);

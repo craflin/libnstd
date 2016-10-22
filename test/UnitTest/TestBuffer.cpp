@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Buffer.h>
 
-void_t testBuffer()
+void testBuffer()
 {
   Buffer buffer1;
   Buffer buffer2;
@@ -10,7 +10,7 @@ void_t testBuffer()
   ASSERT(buffer1 == buffer2);
   buffer1 = buffer2;
   ASSERT(buffer1 == buffer2);
-  buffer3.assign((byte_t*)"123", 3);
+  buffer3.assign((byte*)"123", 3);
   buffer3 = buffer2;
   ASSERT(buffer3 == buffer2);
 }

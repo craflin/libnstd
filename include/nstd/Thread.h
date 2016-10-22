@@ -9,23 +9,23 @@ public:
   Thread();
   ~Thread();
 
-  bool_t start(uint_t (*proc)(void_t*), void_t* param);
+  bool start(uint (*proc)(void*), void* param);
 
-  uint_t join();
+  uint join();
 
-  static void_t yield();
-  static void_t sleep(int64_t milliseconds);
+  static void yield();
+  static void sleep(int64 milliseconds);
 
   /**
   * Get the id of the calling thread.
   *
   * @return The thread id.
   */
-  static uint32_t getCurrentThreadId();
+  static uint32 getCurrentThreadId();
 
 private:
-  void_t* thread;
-  //uint_t threadId;
+  void* thread;
+  //uint threadId;
 
   Thread(const Thread&);
   Thread& operator=(const Thread&);

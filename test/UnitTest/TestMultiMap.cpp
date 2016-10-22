@@ -2,9 +2,9 @@
 #include <nstd/Debug.h>
 #include <nstd/MultiMap.h>
 
-void_t testMultiMap()
+void testMultiMap()
 {
-  MultiMap<int_t, bool_t> map;
+  MultiMap<int, bool> map;
   map.insert(1, false);
   map.insert(2, false);
   map.insert(2, false);

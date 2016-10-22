@@ -76,13 +76,13 @@ public:
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
 
-  size_t size() const {return _size;}
-  bool_t isEmpty() const {return endItem.prev == 0;}
+  usize size() const {return _size;}
+  bool isEmpty() const {return endItem.prev == 0;}
 
   T& prepend(const T& value) {return insert(_begin, value).item->value;}
   T& append(const T& value) {return insert(_end, value).item->value;}
 
-  void_t clear()
+  void clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
@@ -95,11 +95,11 @@ public:
     _size = 0;
   }
 
-  void_t swap(List& other)
+  void swap(List& other)
   {
     Item* tmpFirst = _begin.item;
     Item* tmpLast = endItem.prev;
-    size_t tmpSize = _size;
+    usize tmpSize = _size;
     Item* tmpFreeItem = freeItem;
     ItemBlock* tmpBlocks = blocks;
 
@@ -144,11 +144,11 @@ public:
     }
     else
     {
-      size_t allocatedSize;
+      usize allocatedSize;
       ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
       itemBlock->next = blocks;
       blocks = itemBlock;
-      item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
+      item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
 
       for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
@@ -192,7 +192,7 @@ public:
     return item->next;
   }
 
-  void_t remove(const T& value)
+  void remove(const T& value)
   {
     Iterator it = find(value);
     if(it != _end)
@@ -214,19 +214,19 @@ public:
   /**
   * Sort the list elements.
   */
-  void_t sort()
+  void sort()
   {
     if(endItem.prev == 0 || _begin.item == endItem.prev)
       return;
     struct QuickSort
     {
-      inline static void_t swap(Item* a, Item* b)
+      inline static void swap(Item* a, Item* b)
       {
         T tmp = a->value;
         a->value = b->value;
         b->value = tmp;
       }
-      inline static void_t sort(Item* left, Item* right)
+      inline static void sort(Item* left, Item* right)
       {
         Item* ptr0, * ptr1, * ptr2;
         ptr0 = ptr1 = ptr2 = left;
@@ -271,7 +271,7 @@ private:
 
   Iterator _end;
   Iterator _begin;
-  size_t _size;
+  usize _size;
   Item endItem;
   Item* freeItem;
   ItemBlock* blocks;

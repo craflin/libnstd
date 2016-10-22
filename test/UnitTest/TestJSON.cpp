@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Document/JSON.h>
 
-void_t testJSON()
+void testJSON()
 {
   JSON::Parser parser;
   Variant data;

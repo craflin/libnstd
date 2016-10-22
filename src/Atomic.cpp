@@ -5,32 +5,32 @@
 
 #include <Windows.h>
 
-int64_t Atomic::increment(volatile int64_t& var)
+int64 Atomic::increment(volatile int64& var)
 {
   return InterlockedIncrement64((__int64 volatile *)&var);
 }
 
-uint64_t Atomic::increment(volatile uint64_t& var)
+uint64 Atomic::increment(volatile uint64& var)
 {
-  return (uint64_t)InterlockedIncrement64((__int64 volatile *)&var);
+  return (uint64)InterlockedIncrement64((__int64 volatile *)&var);
 }
 
-int64_t Atomic::decrement(volatile int64_t& var)
+int64 Atomic::decrement(volatile int64& var)
 {
   return InterlockedDecrement64((__int64 volatile *)&var);
 }
 
-uint64_t Atomic::decrement(volatile uint64_t& var)
+uint64 Atomic::decrement(volatile uint64& var)
 {
-  return (uint64_t)InterlockedDecrement64((__int64 volatile *)&var);
+  return (uint64)InterlockedDecrement64((__int64 volatile *)&var);
 }
 
-int64_t Atomic::compareAndSwap(int64_t volatile& var, int64_t oldVal, int64_t newVal)
+int64 Atomic::compareAndSwap(int64 volatile& var, int64 oldVal, int64 newVal)
 {
-  return (uint64_t)InterlockedCompareExchange((unsigned __int64 volatile*)&var, (unsigned __int64)newVal, (unsigned __int64)oldVal);
+  return (uint64)InterlockedCompareExchange((unsigned __int64 volatile*)&var, (unsigned __int64)newVal, (unsigned __int64)oldVal);
 }
 
-uint64_t Atomic::compareAndSwap(uint64_t volatile& var, uint64_t oldVal, uint64_t newVal)
+uint64 Atomic::compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal)
 {
   return InterlockedCompareExchange(&var, newVal, oldVal);
 }

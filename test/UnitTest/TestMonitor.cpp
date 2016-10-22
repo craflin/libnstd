@@ -4,7 +4,7 @@
 #include <nstd/Thread.h>
 #include <nstd/Monitor.h>
 
-void_t testMonitor()
+void testMonitor()
 {
   // test wait with timeout - running into a timeout
   {
@@ -17,7 +17,7 @@ void_t testMonitor()
   // test wait with timeout - not running into a timeout
   struct SetMonitorProcData
   {
-    static uint_t threadProc(void_t* param)
+    static uint threadProc(void* param)
     {
       SetMonitorProcData* data = (SetMonitorProcData*)param;
       data->setSignal.wait();

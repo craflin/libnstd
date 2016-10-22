@@ -54,7 +54,7 @@ Directory::~Directory()
 #endif
 }
 
-bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirsOnly)
+bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly)
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
@@ -92,7 +92,7 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
   searchStr.reserve(dirpath.length() + 1 + pattern.length());
   if(!dirpath.isEmpty())
     searchStr.append(_T('/'));
-  size_t searchStrLen = searchStr.length();
+  usize searchStrLen = searchStr.length();
   searchStr.append(searchPat);
 
   findFile = FindFirstFileEx(searchStr,
@@ -132,12 +132,12 @@ bool_t Directory::open(const String& dirpath, const String& pattern, bool_t dirs
   this->dirpath = dirpath;
   this->pattern = pattern;
 
-  dp = opendir(dirpath.isEmpty() ? "." : (const char_t*)dirpath);
+  dp = opendir(dirpath.isEmpty() ? "." : (const char*)dirpath);
   return dp != 0;
 #endif
 }
 
-void_t Directory::close()
+void Directory::close()
 {
 #ifdef _WIN32
   if(findFile != INVALID_HANDLE_VALUE)
@@ -154,7 +154,7 @@ void_t Directory::close()
 #endif
 }
 
-bool_t Directory::read(String& name, bool_t& isDir)
+bool Directory::read(String& name, bool& isDir)
 {
 #ifdef _WIN32
   if(!findFile)
@@ -177,7 +177,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
     isDir = (((LPWIN32_FIND_DATA)ffd)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
     if(dirsOnly && !isDir)
       continue;
-    const tchar_t* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
+    const tchar* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
     if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
       continue;
 
@@ -185,8 +185,8 @@ bool_t Directory::read(String& name, bool_t& isDir)
     {
       struct PatternMatcher
       {
-        static bool szWildMatch7(const tchar_t* pat, const tchar_t* str) {
-            const tchar_t* s, * p;
+        static bool szWildMatch7(const tchar* pat, const tchar* str) {
+            const tchar* s, * p;
             bool star = false;
 
         loopStart:
@@ -219,7 +219,7 @@ bool_t Directory::read(String& name, bool_t& isDir)
         continue;
     }
 
-    name = String(str, (uint_t)_tcslen(str));
+    name = String(str, (uint)_tcslen(str));
     return true;
   }
 #else
@@ -229,14 +229,14 @@ bool_t Directory::read(String& name, bool_t& isDir)
     return false;
   }
 
-  const char_t* pattern = this->pattern;
+  const char* pattern = this->pattern;
   errno = 0;
   for(;;)
   {
     struct dirent* dent = readdir((DIR*)dp);
     if(!dent)
       break;
-    const char_t* const str = dent->d_name;
+    const char* const str = dent->d_name;
     if(!*pattern || fnmatch(pattern, str, 0) == 0)
     {
       isDir = dent->d_type == DT_DIR;
@@ -264,14 +264,14 @@ bool_t Directory::read(String& name, bool_t& isDir)
 #endif
 }
 
-bool_t Directory::exists(const String& dir)
+bool Directory::exists(const String& dir)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
   HANDLE hFind = FindFirstFile(dir, &wfd);
   if(hFind == INVALID_HANDLE_VALUE)
     return false;
-  bool_t isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+  bool isDir = (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
   FindClose(hFind);
   return isDir;
 #else
@@ -282,7 +282,7 @@ bool_t Directory::exists(const String& dir)
 #endif
 }
 
-bool_t Directory::create(const String& dir)
+bool Directory::create(const String& dir)
 {
   String parent = File::dirname(dir);
   if(parent != _T(".") && !Directory::exists(parent))
@@ -303,7 +303,7 @@ bool_t Directory::create(const String& dir)
   return true;
 }
 
-bool_t Directory::unlink(const String& dir, bool recursive)
+bool Directory::unlink(const String& dir, bool recursive)
 {
 #ifdef _WIN32
   if(RemoveDirectory(dir))
@@ -323,8 +323,8 @@ bool_t Directory::unlink(const String& dir, bool recursive)
   String prefix = dir + _T("/");
   do
   {
-    bool_t isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
-    const tchar_t* str = ffd.cFileName;
+    bool isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+    const tchar* str = ffd.cFileName;
     if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
       continue;
     if(isDir)
@@ -369,8 +369,8 @@ bool_t Directory::unlink(const String& dir, bool recursive)
       errno = lastErrno;
       return false;
     }
-    const char_t* const str = dent->d_name;
-    bool_t isDir = dent->d_type == DT_DIR;
+    const char* const str = dent->d_name;
+    bool isDir = dent->d_type == DT_DIR;
     if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
       continue;
     if(isDir)
@@ -396,7 +396,7 @@ bool_t Directory::unlink(const String& dir, bool recursive)
 #endif
 }
 
-bool_t Directory::purge(const String& path, bool recursive)
+bool Directory::purge(const String& path, bool recursive)
 {
   if(!unlink(path, recursive))
     return false;
@@ -411,7 +411,7 @@ bool_t Directory::purge(const String& path, bool recursive)
   return true;
 }
 
-bool_t Directory::change(const String& dir)
+bool Directory::change(const String& dir)
 {
 #ifdef _WIN32
   return SetCurrentDirectory(dir) != FALSE;
@@ -425,14 +425,14 @@ String Directory::getCurrent()
 #ifdef _WIN32
   String result;
   result.resize(MAX_PATH);
-  DWORD len = GetCurrentDirectory(MAX_PATH + 1, (tchar_t*)result);
+  DWORD len = GetCurrentDirectory(MAX_PATH + 1, (tchar*)result);
   if(len <= MAX_PATH)
   {
     result.resize(len);
     return result;
   }
   result.resize(len);
-  DWORD len2 = GetCurrentDirectory(len + 1, (tchar_t*)result);
+  DWORD len2 = GetCurrentDirectory(len + 1, (tchar*)result);
   if(len2 <= MAX_PATH)
   {
     result.resize(len2);

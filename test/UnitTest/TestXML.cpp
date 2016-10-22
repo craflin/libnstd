@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Document/XML.h>
 
-void_t testXML()
+void testXML()
 {
   XML::Parser parser;
   XML::Element element;

@@ -54,7 +54,7 @@ public:
       data->ref = 1;
     }
 
-    void_t clear()
+    void clear()
     {
       if(data->ref && Atomic::decrement(data->ref) == 0)
       {
@@ -70,9 +70,9 @@ public:
     }
 
     Type getType() const {return data->type;}
-    bool_t isNull() const {return data->type == nullType;}
+    bool isNull() const {return data->type == nullType;}
 
-    bool_t isText() const {return data->type == textType;}
+    bool isText() const {return data->type == textType;}
 
     String toString() const
     {
@@ -97,7 +97,7 @@ public:
       return *this;
     }
 
-    bool_t isElement() const {return data->type == elementType;}
+    bool isElement() const {return data->type == elementType;}
 
     const Element& toElement() const
     {
@@ -156,14 +156,14 @@ public:
   class Element
   {
   public:
-    int_t line;
-    int_t column;
+    int line;
+    int column;
     String type;
     HashMap<String, String> attributes;
     List<Variant> content;
 
   public:
-    void_t clear()
+    void clear()
     {
       type.clear();
       attributes.clear();
@@ -179,14 +179,14 @@ public:
     Parser();
     ~Parser();
 
-    int_t getErrorLine() const;
-    int_t getErrorColumn() const;
+    int getErrorLine() const;
+    int getErrorColumn() const;
     String getErrorString() const;
 
-    bool_t parse(const tchar_t* data, Element& element);
-    bool_t parse(const String& data, Element& element);
+    bool parse(const tchar* data, Element& element);
+    bool parse(const String& data, Element& element);
 
-    bool_t load(const String& file, Element& element);
+    bool load(const String& file, Element& element);
 
   private:
     class Private;
@@ -194,11 +194,11 @@ public:
   };
 
 public:
-  static bool_t parse(const tchar_t* data, Element& element);
-  static bool_t parse(const String& data, Element& element);
+  static bool parse(const tchar* data, Element& element);
+  static bool parse(const String& data, Element& element);
 
-  static bool_t load(const String& file, Element& element);
-  static bool_t save(const Element& element, const String& file);
+  static bool load(const String& file, Element& element);
+  static bool save(const Element& element, const String& file);
 
   static String toString(const Element& element);
 

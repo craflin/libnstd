@@ -24,7 +24,7 @@ class Atomic
 {
 public:
 
-  static inline int32_t increment(volatile int32_t& var)
+  static inline int32 increment(volatile int32& var)
   {
 #ifdef _MSC_VER
     return _InterlockedIncrement((long volatile *)&var);
@@ -43,8 +43,8 @@ public:
 #else
     return __sync_add_and_fetch(&var, 1); // untested
     /*
-    int_t result;
-    int_t* pValInt = (int_t*)&var;
+    int result;
+    int* pValInt = (int*)&var;
 
     asm volatile( 
         "lock; xaddl %%eax, %2;"
@@ -57,7 +57,7 @@ public:
 #endif
   }
 
-  static inline uint32_t increment(volatile uint32_t& var)
+  static inline uint32 increment(volatile uint32& var)
   {
 #ifdef _MSC_VER
     return _InterlockedIncrement((long volatile *)&var);
@@ -67,9 +67,9 @@ public:
   }
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static int64_t increment(volatile int64_t& var);
+  static int64 increment(volatile int64& var);
 #else
-  static inline int64_t increment(volatile int64_t& var)
+  static inline int64 increment(volatile int64& var)
   {
 #ifdef _MSC_VER
     return _InterlockedIncrement64((__int64 volatile *)&var);
@@ -80,9 +80,9 @@ public:
 #endif
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static uint64_t increment(volatile uint64_t& var);
+  static uint64 increment(volatile uint64& var);
 #else
-  static inline uint64_t increment(volatile uint64_t& var)
+  static inline uint64 increment(volatile uint64& var)
   {
 #ifdef _MSC_VER
     return _InterlockedIncrement64((__int64 volatile *)&var);
@@ -93,7 +93,7 @@ public:
 #endif
 
 
-  static inline int32_t decrement(volatile int32_t& var)
+  static inline int32 decrement(volatile int32& var)
   {
 #ifdef _MSC_VER
     return _InterlockedDecrement((long volatile *)&var);
@@ -114,7 +114,7 @@ public:
 #endif
   }
 
-  static inline uint32_t decrement(volatile uint32_t& var)
+  static inline uint32 decrement(volatile uint32& var)
   {
 #ifdef _MSC_VER
     return _InterlockedDecrement((long volatile *)&var);
@@ -124,9 +124,9 @@ public:
   }
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static int64_t decrement(volatile int64_t& var);
+  static int64 decrement(volatile int64& var);
 #else
-  static inline int64_t decrement(volatile int64_t& var)
+  static inline int64 decrement(volatile int64& var)
   {
 #ifdef _MSC_VER
     return _InterlockedDecrement64((__int64 volatile *)&var);
@@ -137,9 +137,9 @@ public:
 #endif
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static uint64_t decrement(volatile uint64_t& var);
+  static uint64 decrement(volatile uint64& var);
 #else
-  static inline uint64_t decrement(volatile uint64_t& var)
+  static inline uint64 decrement(volatile uint64& var)
   {
 #ifdef _MSC_VER
     return _InterlockedDecrement64((__int64 volatile *)&var);
@@ -149,28 +149,28 @@ public:
   }
 #endif
 
-  static inline int32_t compareAndSwap(int32_t volatile& var, int32_t oldVal, int32_t newVal)
+  static inline int32 compareAndSwap(int32 volatile& var, int32 oldVal, int32 newVal)
   {
 #ifdef _MSC_VER
-    return (int32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
+    return (int32)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
 #else
     return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 
-  static inline uint32_t compareAndSwap(uint32_t volatile& var, uint32_t oldVal, uint32_t newVal)
+  static inline uint32 compareAndSwap(uint32 volatile& var, uint32 oldVal, uint32 newVal)
   {
 #ifdef _MSC_VER
-    return (uint32_t)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
+    return (uint32)_InterlockedCompareExchange((long volatile*)&var, (long)newVal, (long)oldVal);
 #else
     return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
   }
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static int64_t compareAndSwap(int64_t volatile& var, int64_t oldVal, int64_t newVal);
+  static int64 compareAndSwap(int64 volatile& var, int64 oldVal, int64 newVal);
 #else
-  static inline int64_t compareAndSwap(int64_t volatile& var, int64_t oldVal, int64_t newVal)
+  static inline int64 compareAndSwap(int64 volatile& var, int64 oldVal, int64 newVal)
   {
 #ifdef _MSC_VER
     return _InterlockedCompareExchange64((volatile __int64*)&var, newVal, oldVal);
@@ -181,12 +181,12 @@ public:
 #endif
 
 #if defined(_MSC_VER) && !defined(_M_AMD64)
-  static uint64_t compareAndSwap(uint64_t volatile& var, uint64_t oldVal, uint64_t newVal);
+  static uint64 compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal);
 #else
-  static inline uint64_t compareAndSwap(uint64_t volatile& var, uint64_t oldVal, uint64_t newVal)
+  static inline uint64 compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal)
   {
 #ifdef _MSC_VER
-    return (uint64_t)_InterlockedCompareExchange64((volatile __int64*)&var, (__int64)newVal, (__int64)oldVal);
+    return (uint64)_InterlockedCompareExchange64((volatile __int64*)&var, (__int64)newVal, (__int64)oldVal);
 #else
     return __sync_val_compare_and_swap(&var, oldVal, newVal);
 #endif
@@ -221,43 +221,43 @@ public:
 #endif
   }
 
-  static inline int32_t swap(int32_t volatile& var,  int32_t val)
+  static inline int32 swap(int32 volatile& var,  int32 val)
   {
 #ifdef _MSC_VER
-    return (int32_t)_InterlockedExchange((long volatile*)&var, (long)val);
+    return (int32)_InterlockedExchange((long volatile*)&var, (long)val);
 #else
     return __sync_lock_test_and_set(&var, val);
 #endif
   }
 
-  static inline uint32_t swap(uint32_t volatile& var,  uint32_t val)
+  static inline uint32 swap(uint32 volatile& var,  uint32 val)
   {
 #ifdef _MSC_VER
-    return (uint32_t)_InterlockedExchange((long volatile*)&var, (long)val);
+    return (uint32)_InterlockedExchange((long volatile*)&var, (long)val);
 #else
     return __sync_lock_test_and_set(&var, val);
 #endif
   }
 
-  // todo: swap(int64_t ...
-  // todo: swap(uint64_t ...
+  // todo: swap(int64 ...
+  // todo: swap(uint64 ...
   // todo: swap(void* ...
 
-  static inline int32_t testAndSet(int32_t volatile& var)
+  static inline int32 testAndSet(int32 volatile& var)
   {
 #ifdef _MSC_VER
-    return (int32_t)_InterlockedExchange((long volatile*)&var, 1);
+    return (int32)_InterlockedExchange((long volatile*)&var, 1);
 #else
     return __sync_lock_test_and_set(&var, 1);
 #endif
   }
 
-  // todo: testAndSet uint32_t int64_t ...
+  // todo: testAndSet uint32 int64 ...
 
-  static inline int32_t fetchAndAdd(int32_t volatile& var, int32_t val)
+  static inline int32 fetchAndAdd(int32 volatile& var, int32 val)
   {
 #ifdef _MSC_VER
-    return (int32_t)_InterlockedAdd((long volatile*)&var, (long)val);
+    return (int32)_InterlockedAdd((long volatile*)&var, (long)val);
 #else
     return __sync_fetch_and_add(&var, val);
     //unsigned int result;
@@ -268,10 +268,10 @@ public:
 #endif
   }
 
-  static inline uint32_t fetchAndAdd(uint32_t volatile& var, uint32_t val)
+  static inline uint32 fetchAndAdd(uint32 volatile& var, uint32 val)
   {
 #ifdef _MSC_VER
-    return (uint32_t)_InterlockedAdd((long volatile*)&var, (long)val);
+    return (uint32)_InterlockedAdd((long volatile*)&var, (long)val);
 #else
     return __sync_fetch_and_add(&var, val);
     //unsigned int result;

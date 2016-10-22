@@ -28,7 +28,7 @@ File::~File()
   close();
 }
 
-bool_t File::open(const String& file, uint_t flags)
+bool File::open(const String& file, uint flags)
 {
 #ifdef _WIN32
   if(fp != INVALID_HANDLE_VALUE)
@@ -106,7 +106,7 @@ bool_t File::open(const String& file, uint_t flags)
   else
     oflags = O_RDONLY; // do not create if not exists, read mode
 
-  fp = (void_t*)(intptr_t)::open(file, oflags | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+  fp = (void*)(intptr_t)::open(file, oflags | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
   if((int_t)(intptr_t)fp == -1)
   {
     fp = 0;
@@ -128,7 +128,7 @@ bool_t File::open(const String& file, uint_t flags)
   return true;
 }
 
-void_t File::close()
+void File::close()
 {
 #ifdef _WIN32
   if(fp != INVALID_HANDLE_VALUE)
@@ -145,7 +145,7 @@ void_t File::close()
 #endif
 }
 
-bool_t File::isOpen() const
+bool File::isOpen() const
 {
 #ifdef _WIN32
   return fp != INVALID_HANDLE_VALUE;
@@ -154,7 +154,7 @@ bool_t File::isOpen() const
 #endif
 }
 
-int64_t File::size()
+int64 File::size()
 {
 #ifdef _WIN32
   LARGE_INTEGER fs;
@@ -179,7 +179,7 @@ int64_t File::size()
 #endif
 }
 
-bool_t File::unlink(const String& file)
+bool File::unlink(const String& file)
 {
 #ifdef _WIN32
   if(!DeleteFile(file))
@@ -191,7 +191,7 @@ bool_t File::unlink(const String& file)
   return true;
 }
 
-bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
+bool File::rename(const String& from, const String& to, bool failIfExists)
 {
 #ifdef _WIN32
   return MoveFileEx(from, to, MOVEFILE_COPY_ALLOWED | (failIfExists ? 0 : MOVEFILE_REPLACE_EXISTING)) == TRUE;
@@ -216,25 +216,25 @@ bool_t File::rename(const String& from, const String& to, bool_t failIfExists)
 #endif
 }
 
-ssize_t File::read(void_t* buffer, size_t len)
+ssize File::read(void* buffer, usize len)
 {
 #ifdef _WIN32
 #ifdef _AMD64
-  byte_t* bufferStart = (byte_t*)buffer;
+  byte* bufferStart = (byte*)buffer;
   DWORD i;
-  while(len > (size_t)INT_MAX)
+  while(len > (usize)INT_MAX)
   {
     if(!ReadFile((HANDLE)fp, buffer, INT_MAX, &i, NULL))
       return -1;
-    buffer = (byte_t*)buffer + i;
+    buffer = (byte*)buffer + i;
     if(i != INT_MAX)
-      return (byte_t*)buffer - bufferStart;
+      return (byte*)buffer - bufferStart;
     len -= INT_MAX;
   }
   if(!ReadFile((HANDLE)fp, buffer, (DWORD)len, &i, NULL))
     return -1;
-  buffer = (byte_t*)buffer + i;
-  return (byte_t*)buffer - bufferStart;
+  buffer = (byte*)buffer + i;
+  return (byte*)buffer - bufferStart;
 #else
   DWORD i;
   if(!ReadFile((HANDLE)fp, buffer, len, &i, NULL))
@@ -246,41 +246,41 @@ ssize_t File::read(void_t* buffer, size_t len)
 #endif
 }
 
-bool_t File::readAll(String& data)
+bool File::readAll(String& data)
 {
-  int64_t fileSize = size();
+  int64 fileSize = size();
   if(fileSize < 0)
     return false;
-  data.resize((size_t)fileSize / sizeof(tchar_t));
-  ssize_t dataCount = read((tchar_t*)data, data.length() * sizeof(tchar_t));
+  data.resize((usize)fileSize / sizeof(tchar));
+  ssize dataCount = read((tchar*)data, data.length() * sizeof(tchar));
   if(dataCount < 0)
   {
     data.clear();
     return false;
   }
-  data.resize(dataCount / sizeof(tchar_t));
+  data.resize(dataCount / sizeof(tchar));
   return true;
 }
 
-ssize_t File::write(const void_t* buffer, size_t len)
+ssize File::write(const void* buffer, usize len)
 {
 #ifdef _WIN32
 #ifdef _AMD64
-  const byte_t* bufferStart = (const byte_t*)buffer;
+  const byte* bufferStart = (const byte*)buffer;
   DWORD i;
-  while(len > (size_t)INT_MAX)
+  while(len > (usize)INT_MAX)
   {
     if(!WriteFile((HANDLE)fp, buffer, INT_MAX, &i, NULL))
       return -1;
-    buffer = (const byte_t*)buffer + i;
+    buffer = (const byte*)buffer + i;
     if(i != INT_MAX)
-      return (const byte_t*)buffer - bufferStart;
+      return (const byte*)buffer - bufferStart;
     len -= INT_MAX;
   }
   if(!WriteFile((HANDLE)fp, buffer, (DWORD)len, &i, NULL))
     return -1;
-  buffer = (const byte_t*)buffer + i;
-  return (const byte_t*)buffer - bufferStart;
+  buffer = (const byte*)buffer + i;
+  return (const byte*)buffer - bufferStart;
 #else
   DWORD i;
   if(!WriteFile((HANDLE)fp, buffer, len, &i, NULL))
@@ -292,13 +292,13 @@ ssize_t File::write(const void_t* buffer, size_t len)
 #endif
 }
 
-bool_t File::write(const String& data)
+bool File::write(const String& data)
 {
-  size_t size = data.length() * sizeof(tchar_t);
-  return write((const byte_t*)(const tchar_t*)data, size) == (ssize_t)size;
+  usize size = data.length() * sizeof(tchar);
+  return write((const byte*)(const tchar*)data, size) == (ssize)size;
 }
 
-int64_t File::seek(int64_t offset, Position start)
+int64 File::seek(int64 offset, Position start)
 {
 #ifdef _WIN32
   DWORD moveMethod[3] = {FILE_BEGIN, FILE_CURRENT, FILE_END};
@@ -318,7 +318,7 @@ int64_t File::seek(int64_t offset, Position start)
 #endif
 }
 
-bool_t File::flush()
+bool File::flush()
 {
 #ifdef _WIN32
   return FlushFileBuffers((HANDLE)fp) != FALSE;
@@ -329,20 +329,20 @@ bool_t File::flush()
 
 String File::dirname(const String& file)
 {
-  const tchar_t* start = file;
-  const tchar_t* pos = &start[file.length() - 1];
+  const tchar* start = file;
+  const tchar* pos = &start[file.length() - 1];
   for(; pos >= start; --pos)
     if(*pos == _T('\\') || *pos == _T('/'))
-      return file.substr(0, (int_t)(pos - start));
+      return file.substr(0, pos - start);
   return String(_T("."));
 }
 
 String File::basename(const String& file, const String& extension)
 {
-  const tchar_t* start = file;
-  size_t fileLen = file.length();
-  const tchar_t* pos = &start[fileLen - 1];
-  const tchar_t* result;
+  const tchar* start = file;
+  usize fileLen = file.length();
+  const tchar* pos = &start[fileLen - 1];
+  const tchar* result;
   for(; pos >= start; --pos)
     if(*pos == _T('\\') || *pos == _T('/'))
     {
@@ -351,22 +351,22 @@ String File::basename(const String& file, const String& extension)
     }
   result = start;
 removeExtension:
-  size_t resultLen = fileLen - (size_t)(result - start);
-  size_t extensionLen = extension.length();
+  usize resultLen = fileLen - (usize)(result - start);
+  usize extensionLen = extension.length();
   if(extensionLen)
   {
-    const tchar_t* extensionPtr = extension;
+    const tchar* extensionPtr = extension;
     if(*extensionPtr == _T('.'))
     {
       if(resultLen >= extensionLen)
-        if(String::compare((const tchar_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+        if(String::compare((const tchar*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLen);
     }
     else
     {
-      size_t extensionLenPlus1 = extensionLen + 1;
+      usize extensionLenPlus1 = extensionLen + 1;
       if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == _T('.'))
-        if(String::compare((const tchar_t*)result + resultLen - extensionLen, extensionPtr) == 0)
+        if(String::compare((const tchar*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLenPlus1);
     }
   }
@@ -375,12 +375,12 @@ removeExtension:
 
 String File::extension(const String& file)
 {
-  const tchar_t* start = file;
-  size_t fileLen = file.length();
-  const tchar_t* pos = &start[fileLen - 1];
+  const tchar* start = file;
+  usize fileLen = file.length();
+  const tchar* pos = &start[fileLen - 1];
   for(; pos >= start; --pos)
     if(*pos == _T('.'))
-      return String(pos + 1, fileLen - ((size_t)(pos - start) + 1));
+      return String(pos + 1, fileLen - ((usize)(pos - start) + 1));
     else if(*pos == _T('\\') || *pos == _T('/'))
       return String();
   return String();
@@ -389,13 +389,13 @@ String File::extension(const String& file)
 String File::simplifyPath(const String& path)
 {
   String result(path.length());
-  const tchar_t* data = path;
-  const tchar_t* start = data;
-  const tchar_t* startEnd = start + path.length();
-  const tchar_t* end;
-  const tchar_t* chunck;
-  size_t chunckLen;
-  bool_t startsWithSlash = *data == _T('/') || *data == _T('\\');
+  const tchar* data = path;
+  const tchar* start = data;
+  const tchar* startEnd = start + path.length();
+  const tchar* end;
+  const tchar* chunck;
+  usize chunckLen;
+  bool startsWithSlash = *data == _T('/') || *data == _T('\\');
   for(;;)
   {
     while(start < startEnd && (*start == _T('/') || *start == _T('\\')))
@@ -408,11 +408,11 @@ String File::simplifyPath(const String& path)
       break;
 
     chunck = start;
-    chunckLen = (size_t)(end - start);
+    chunckLen = (usize)(end - start);
     if(chunckLen == 2 && *chunck == _T('.') && chunck[1] == _T('.') && !result.isEmpty())
     {
-      const tchar_t* data = result;
-      const tchar_t* pos = data + result.length() - 1;
+      const tchar* data = result;
+      const tchar* pos = data + result.length() - 1;
       for(;; --pos)
         if(pos < data || *pos == _T('/') || *pos == _T('\\'))
         {
@@ -421,7 +421,7 @@ String File::simplifyPath(const String& path)
             if(pos < data)
               result.resize(0);
             else
-              result.resize((size_t)(pos - data));
+              result.resize((usize)(pos - data));
             goto cont;
           }
           break;
@@ -442,9 +442,9 @@ String File::simplifyPath(const String& path)
   return result;
 }
 
-bool_t File::isAbsolutePath(const String& path)
+bool File::isAbsolutePath(const String& path)
 {
-  const tchar_t* data = path;
+  const tchar* data = path;
   return *data == _T('/') || *data == _T('\\') || (path.length() > 2 && data[1] == _T(':') && (data[2] == _T('/') || data[2] == _T('\\')));
 }
 
@@ -455,19 +455,19 @@ String File::getRelativePath(const String& from, const String& to)
   if(simFrom == simTo)
     return String(_T("."));
   simFrom.append(_T('/'));
-  if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
-    return String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length());
+  if(String::compare((const tchar*)simTo, (const tchar*)simFrom, simFrom.length()) == 0)
+    return String((const tchar*)simTo + simFrom.length(), simTo.length() - simFrom.length());
   String result(_T("../"));
   while(simFrom.length() > 0)
   {
     simFrom.resize(simFrom.length() - 1);
-    const tchar_t* newEnd = simFrom.findLast(_T('/'));
+    const tchar* newEnd = simFrom.findLast(_T('/'));
     if(!newEnd)
       break;
-    simFrom.resize((newEnd - (const tchar_t*)simFrom) + 1);
-    if(String::compare((const tchar_t*)simTo, (const tchar_t*)simFrom, simFrom.length()) == 0)
+    simFrom.resize((newEnd - (const tchar*)simFrom) + 1);
+    if(String::compare((const tchar*)simTo, (const tchar*)simFrom, simFrom.length()) == 0)
     {
-      result.append(String((const tchar_t*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
+      result.append(String((const tchar*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
       return result;
     }
     result.append(_T("../"));
@@ -475,7 +475,7 @@ String File::getRelativePath(const String& from, const String& to)
   return String();
 }
 
-bool_t File::time(const String& file, File::Time& time)
+bool File::time(const String& file, File::Time& time)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
@@ -505,7 +505,7 @@ bool_t File::time(const String& file, File::Time& time)
 #endif
 }
 
-bool_t File::exists(const String& file)
+bool File::exists(const String& file)
 {
 #ifdef _WIN32
   WIN32_FIND_DATA wfd;
@@ -528,7 +528,7 @@ bool_t File::exists(const String& file)
 #endif
 }
 
-bool_t File::isExecutable(const String& file)
+bool File::isExecutable(const String& file)
 {
 #ifdef _WIN32
   String extension = File::extension(file).toLowerCase();
@@ -541,7 +541,7 @@ bool_t File::isExecutable(const String& file)
 #endif
 }
 
-bool_t File::readAll(const String& path, String& data)
+bool File::readAll(const String& path, String& data)
 {
   File file;
   if(!file.open(path))

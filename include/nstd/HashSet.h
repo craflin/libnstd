@@ -43,11 +43,11 @@ public:
       append(i->key);
   }
 
-  explicit HashSet(size_t capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
+  explicit HashSet(usize capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
-    this->capacity |= (size_t)!capacity;
+    this->capacity |= (usize)!capacity;
   }
 
   ~HashSet()
@@ -80,19 +80,19 @@ public:
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
 
-  size_t size() const {return _size;}
-  bool_t isEmpty() const {return endItem.prev == 0;}
+  usize size() const {return _size;}
+  bool isEmpty() const {return endItem.prev == 0;}
 
-  void_t prepend(const T& key) {insert(_begin, key);}
-  void_t append(const T& key) {insert(_end, key);}
+  void prepend(const T& key) {insert(_begin, key);}
+  void append(const T& key) {insert(_end, key);}
 
-  void_t append(const HashSet& other)
+  void append(const HashSet& other)
   {
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
       insert(_end, i->key);
   }
 
-  void_t clear()
+  void clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
@@ -106,12 +106,12 @@ public:
     _size = 0;
   }
 
-  void_t swap(HashSet& other)
+  void swap(HashSet& other)
   {
     Item* tmpFirst = _begin.item;
     Item* tmpLast = endItem.prev;
-    size_t tmpSize = _size;
-    size_t tmpCapacity = capacity;
+    usize tmpSize = _size;
+    usize tmpCapacity = capacity;
     Item** tmpData = data;
     Item* tmpFreeItem = freeItem;
     ItemBlock* tmpBlocks = blocks;
@@ -146,7 +146,7 @@ public:
   Iterator find(const T& key) const
   {
     if(!data) return _end;
-    size_t hashCode = (size_t)key;
+    usize hashCode = (usize)key;
     Item* item = data[hashCode % capacity];
     while(item)
     {
@@ -156,7 +156,7 @@ public:
     return _end;
   }
 
-  bool_t contains(const T& key) const {return find(key) != _end;}
+  bool contains(const T& key) const {return find(key) != _end;}
 
   Iterator insert(const Iterator& position, const T& key)
   {
@@ -165,7 +165,7 @@ public:
 
     if (!data)
     {
-      size_t size;
+      usize size;
       data = (Item**)Memory::alloc(sizeof(Item*)* capacity, size);
       capacity = size / sizeof(Item*);
       Memory::zero(data, sizeof(Item*)* capacity);
@@ -179,11 +179,11 @@ public:
     }
     else
     {
-      size_t allocatedSize;
+      usize allocatedSize;
       ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock)+sizeof(Item), allocatedSize);
       itemBlock->next = blocks;
       blocks = itemBlock;
-      item = (Item*)((char_t*)itemBlock + sizeof(ItemBlock));
+      item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
 
       for (Item* i = item + 1, *end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
@@ -192,7 +192,7 @@ public:
       }
     }
 
-    size_t hashCode = (size_t)key;
+    usize hashCode = (usize)key;
 #ifdef VERIFY
     VERIFY(new(item)Item(key) == item);
 #else
@@ -237,14 +237,14 @@ public:
     return item->next;
   }
 
-  void_t remove(const T& key)
+  void remove(const T& key)
   {
     Iterator it = find(key);
     if(it != _end)
       remove(it);
   }
 
-  void_t remove(const HashSet& other)
+  void remove(const HashSet& other)
   {
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
       remove(i->key);
@@ -270,8 +270,8 @@ private:
 
   Iterator _end;
   Iterator _begin;
-  size_t _size;
-  size_t capacity;
+  usize _size;
+  usize capacity;
   Item** data;
   Item endItem;
   Item* freeItem;

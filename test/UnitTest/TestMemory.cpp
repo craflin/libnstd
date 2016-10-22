@@ -4,12 +4,12 @@
 
 #include <cstring>
 
-void_t testMemory()
+void testMemory()
 {
   // test alloc small
   {
-    size_t size;
-    void_t* buffer = Memory::alloc(123, size);
+    usize size;
+    void* buffer = Memory::alloc(123, size);
     ASSERT(buffer);
     ASSERT(size >= 123);
     ASSERT(Memory::size(buffer) == size);
@@ -17,7 +17,7 @@ void_t testMemory()
     buffer = Memory::alloc(123, size);
     ASSERT(size >= 123);
   
-    char_t testBuffer[100];
+    char testBuffer[100];
     memset(testBuffer, 'a', sizeof(testBuffer));
     Memory::fill(buffer, 'b', size);
     ASSERT(Memory::compare(buffer, testBuffer, sizeof(testBuffer)) != 0);
@@ -31,8 +31,8 @@ void_t testMemory()
 
   // test alloc large
   {
-    size_t size;
-    void_t* buffer = Memory::alloc(50000 * 5, size);
+    usize size;
+    void* buffer = Memory::alloc(50000 * 5, size);
     ASSERT(buffer);
     ASSERT(size >= 50000 * 5);
     Memory::free(buffer);

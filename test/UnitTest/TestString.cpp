@@ -4,7 +4,7 @@
 
 #include <cctype>
 
-void_t testString()
+void testString()
 {
   // test constructors
   String empty;
@@ -48,7 +48,7 @@ void_t testString()
   ASSERT(copyOfHello.isEmpty());
 
   // test printf
-  empty.printf(_T("%s %s"), (const tchar_t*)hello, _T("world"));
+  empty.printf(_T("%s %s"), (const tchar*)hello, _T("world"));
   ASSERT(empty == _T("hello world"));
   ASSERT(empty != _T("hello worl2"));
   ASSERT(empty != _T("hello worl2a"));
@@ -61,9 +61,9 @@ void_t testString()
     ASSERT(String::toLowerCase((wchar_t)i) == (wchar_t)towlower(i));
     ASSERT(String::isSpace((wchar_t)i) == !!iswspace(i));
 #else
-    ASSERT(String::toUpperCase((char_t)i) == (char_t)toupper((uchar_t&)i));
-    ASSERT(String::toLowerCase((char_t)i) == (char_t)tolower((uchar_t&)i));
-    ASSERT(String::isSpace((char_t)i) == !!isspace((uchar_t&)i));
+    ASSERT(String::toUpperCase((char)i) == (char)toupper((uchar&)i));
+    ASSERT(String::toLowerCase((char)i) == (char)tolower((uchar&)i));
+    ASSERT(String::isSpace((char)i) == !!isspace((uchar&)i));
 #endif
   }
 
@@ -101,12 +101,12 @@ void_t testString()
     }
   };
   String aa = LazyCopyTest::test1(); // so, this is equal to "String aa(_T("test"))"?
-  const tchar_t* caa = aa;
-  ASSERT(caa != (tchar_t*)aa);
+  const tchar* caa = aa;
+  ASSERT(caa != (tchar*)aa);
 
   // test external buffer attaching
-  tchar_t buf[100];
-  for(tchar_t* i = buf; i < buf + 8; ++i)
+  tchar buf[100];
+  for(tchar* i = buf; i < buf + 8; ++i)
     *i = _T('a');
   String bufWrapper;
   bufWrapper.attach(buf, 4);
@@ -115,8 +115,8 @@ void_t testString()
 
   // test detach
   {
-    tchar_t buf[100];
-    for(size_t i = 0; i < 8; ++i)
+    tchar buf[100];
+    for(usize i = 0; i < 8; ++i)
       buf[i] = _T('a');
     String bufWrapper;
     buf[8] = _T('\0');

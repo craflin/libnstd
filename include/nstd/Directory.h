@@ -26,12 +26,12 @@ public:
   * @param  [in] dirsOnly   Whether the search should ignore files and should only return directories.
   * @return \c true when the directory was successfully opened. If directory could not be opened, Error::getLastError() can be used for further information on the error.
   */
-  bool_t open(const String& dirPath, const String& pattern = String(), bool_t dirsOnly = false);
+  bool open(const String& dirPath, const String& pattern = String(), bool dirsOnly = false);
 
   /**
   * Close the opened directory.
   */
-  void_t close();
+  void close();
 
   /**
   * Search for the next matching entry in the opened directory.
@@ -39,21 +39,21 @@ public:
   * @param  [out] isDir   Whether the entry is a directory.
   * @return \c true when a matching entry was found. \c false indicates that there are no more matching entries or that another error occurred. Error::getLastError() can be used for further information on the error.
   */
-  bool_t read(String& name, bool_t& isDir);
+  bool read(String& name, bool& isDir);
 
   /**
   * Check if directory exists.
   * @param  [in] dirPath  The directory.
   * @return \c true if it exists.
   */
-  static bool_t exists(const String& dirPath);
+  static bool exists(const String& dirPath);
 
   /**
   * Create a directory. The parent directories in the path are created if they do not exist.
   * @ param [in] dirPath  The path of the directory to be created.
   * @return \c true if the directory was created successfully.
   */
-  static bool_t create(const String& dirPath);
+  static bool create(const String& dirPath);
 
   /**
   * Remove a directory from the file system. If \c recursive is not set to \c true, the function will fail if the directory is not empty.
@@ -61,7 +61,7 @@ public:
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
   * @return \c true when the directory was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error.
   */
-  static bool_t unlink(const String& dirPath, bool recursive = false);
+  static bool unlink(const String& dirPath, bool recursive = false);
 
   /**
   * Remove a directory including its parents. If \c recursive is not set to \c true, the function will fail if the directory is not empty. Parent directories are removed if they would remain empty.
@@ -69,7 +69,7 @@ public:
   * @param  [in] recursive  Whether the directory should be removed removed recursively.
   * @return \c true when the directories was successfully deleted. If directory was not successfully deleted, Error::getLastError() can be used for further information on the error. Parent directories may still exist even when this function returned \c true.
   */
-  static bool_t purge(const String& dirPath, bool recursive = false);
+  static bool purge(const String& dirPath, bool recursive = false);
 
   /**
   * Change current working directory.
@@ -77,7 +77,7 @@ public:
   * @param  [in] dirPath  The directory to change to. This can be an absolute or relative path.
   * @return \c true if the working directory was changed successfully. If it could not be changed, Error::getLastError() can be used for further information on the error.
   */
-  static bool_t change(const String& dirPath);
+  static bool change(const String& dirPath);
 
   /**
   * Get current working directory.
@@ -86,19 +86,19 @@ public:
   static String getCurrent();
 
 private:
-  bool_t dirsOnly;
+  bool dirsOnly;
 #ifdef _WIN32
-  void_t* findFile; /**< Win32 FindFirstFile HANDLE */
+  void* findFile; /**< Win32 FindFirstFile HANDLE */
 #ifdef _UNICODE
-  char_t ffd[592]; /**< Buffer for WIN32_FIND_DATA */
+  char ffd[592]; /**< Buffer for WIN32_FIND_DATA */
 #else
-  char_t ffd[320]; /**< Buffer for WIN32_FIND_DATA */
+  char ffd[320]; /**< Buffer for WIN32_FIND_DATA */
 #endif
-  bool_t bufferedEntry; /**< Whether there is a buffered search result in ffd. */
+  bool bufferedEntry; /**< Whether there is a buffered search result in ffd. */
   String dirpath; /**< The path to the directory to be searched. */
   String pattern; /**< A search pattern (e.g. "*.inf") */
 #else
-  void_t* dp; /**< Directory descriptor. */
+  void* dp; /**< Directory descriptor. */
   String dirpath; /**< The path to the directory to be searched. */
   String pattern; /**< A search pattern (e.g. "*.inf"). */
 #endif

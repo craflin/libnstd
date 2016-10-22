@@ -3,7 +3,7 @@
 #include <nstd/Signal.h>
 #include <nstd/Thread.h>
 
-void_t testSignal()
+void testSignal()
 {
   // test wait with timeout - running into a timeout
   {
@@ -14,7 +14,7 @@ void_t testSignal()
   // test wait with timeout - not running into a timeout
   struct SetSignalProcData
   {
-    static uint_t threadProc(void_t* param)
+    static uint threadProc(void* param)
     {
       SetSignalProcData* data = (SetSignalProcData*)param;
       data->setSignal.wait();

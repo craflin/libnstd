@@ -24,37 +24,37 @@ public:
     };
     Type type;
     Handle* handle;
-    void_t* userData;
+    void* userData;
   };
 
 public:
   Server();
   ~Server();
 
-  Handle* listen(uint16_t port, void_t* userData);
-  Handle* listen(uint32_t addr, uint16_t port, void_t* userData);
-  Handle* connect(uint32_t addr, uint16_t port, void_t* userData);
-  Handle* pair(Socket& socket, void_t* userData);
-  Handle* createTimer(int64_t interval, void_t* userData);
-  Handle* accept(Handle& handle, void_t* userData, uint32_t* addr = 0, uint16_t* port = 0);
+  Handle* listen(uint16 port, void* userData);
+  Handle* listen(uint32 addr, uint16 port, void* userData);
+  Handle* connect(uint32 addr, uint16 port, void* userData);
+  Handle* pair(Socket& socket, void* userData);
+  Handle* createTimer(int64 interval, void* userData);
+  Handle* accept(Handle& handle, void* userData, uint32* addr = 0, uint16* port = 0);
 
-  void_t setUserData(Handle& handle, void_t* userData);
-  void_t* getUserData(Handle& handle);
+  void setUserData(Handle& handle, void* userData);
+  void* getUserData(Handle& handle);
 
-  bool_t write(Handle& handle, const byte_t* data, size_t size, size_t* postponed = 0);
-  bool_t read(Handle& handle, byte_t* buffer, size_t maxSize, size_t& size);
+  bool write(Handle& handle, const byte* data, usize size, usize* postponed = 0);
+  bool read(Handle& handle, byte* buffer, usize maxSize, usize& size);
 
-  void_t close(Handle& handle);
+  void close(Handle& handle);
 
-  bool_t poll(Event& event);
+  bool poll(Event& event);
 
-  void_t suspend(Handle& handle);
-  void_t resume(Handle& handle);
+  void suspend(Handle& handle);
+  void resume(Handle& handle);
 
-  void_t setKeepAlive(bool_t enable = true);
-  void_t setNoDelay(bool_t enable = true);
-  void_t setSendBufferSize(int_t size);
-  void_t setReceiveBufferSize(int_t size);
+  void setKeepAlive(bool enable = true);
+  void setNoDelay(bool enable = true);
+  void setSendBufferSize(int size);
+  void setReceiveBufferSize(int size);
 
 private:
   Server(const Server&);

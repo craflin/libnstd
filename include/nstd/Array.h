@@ -29,7 +29,7 @@ public:
 
   Array() : _capacity(0) {}
 
-  explicit Array(size_t capacity) : _capacity(capacity) {}
+  explicit Array(usize capacity) : _capacity(capacity) {}
 
   Array(const Array& other) : _capacity(0)
   {
@@ -81,14 +81,14 @@ public:
 
   operator T*() {return _begin.item;}
 
-  size_t size() const {return _end.item - _begin.item;}
-  bool_t isEmpty() const {return _begin.item == _end.item;}
+  usize size() const {return _end.item - _begin.item;}
+  bool isEmpty() const {return _begin.item == _end.item;}
 
-  void_t reserve(size_t size)
+  void reserve(usize size)
   {
     if(size > _capacity || (!_begin.item && size > 0))
     {
-      size_t bsize;
+      usize bsize;
       if (size > _capacity)
         _capacity = size;
       T* newData = (T*)Memory::alloc(sizeof(T) * _capacity, bsize);
@@ -109,9 +109,9 @@ public:
     }
   }
 
-  void resize(size_t size, const T& value = T())
+  void resize(usize size, const T& value = T())
   {
-    size_t _size = _end.item - _begin.item;
+    usize _size = _end.item - _begin.item;
     if (size < _size)
     {
       T* newEnd = _begin.item + size;
@@ -135,9 +135,9 @@ public:
     }
   }
 
-  size_t capacity() const {return _capacity;}
+  usize capacity() const {return _capacity;}
 
-  void_t clear()
+  void clear()
   {
     if(_begin.item)
     {
@@ -147,11 +147,11 @@ public:
     }
   }
 
-  void_t swap(Array& other)
+  void swap(Array& other)
   {
     T* tmpFirst = _begin.item;
     T* tmpEnd = _end.item;
-    size_t tmpCapacity = _capacity;
+    usize tmpCapacity = _capacity;
 
     _begin.item = other._begin.item;
     _end.item = other._end.item;
@@ -164,7 +164,7 @@ public:
 
   T& append(const T& value)
   {
-    size_t size = _end.item - _begin.item;
+    usize size = _end.item - _begin.item;
     reserve(size + 1);
     T* item = _end.item;
 #ifdef VERIFY
@@ -176,10 +176,10 @@ public:
     return *item;
   }
 
-  void_t append(const Array& values)
+  void append(const Array& values)
   {
-    size_t size = _end.item - _begin.item;
-    size_t valuesSize = values.size();
+    usize size = _end.item - _begin.item;
+    usize valuesSize = values.size();
     reserve(size + valuesSize);
     T* item = _end.item;
     for(T* end = item + valuesSize, *src = values._begin.item; item < end; ++item, ++src)
@@ -193,9 +193,9 @@ public:
     _end.item = item;
   }
 
-  void_t append(const T* values, size_t size)
+  void append(const T* values, usize size)
   {
-    size_t oldSize = _end.item - _begin.item;
+    usize oldSize = _end.item - _begin.item;
     reserve(oldSize + size);
     T* item = _end.item;
     for(T* end = item + size; item < end; ++item, ++values)
@@ -209,9 +209,9 @@ public:
     _end.item = item;
   }
 
-  void_t remove(size_t index)
+  void remove(usize index)
   {
-    size_t size = _end.item - _begin.item;
+    usize size = _end.item - _begin.item;
     if(index < size)
     {
       T* pos = _begin.item + index;
@@ -247,6 +247,6 @@ public:
 private:
   Iterator _begin;
   Iterator _end;
-  size_t _capacity;
+  usize _capacity;
 };
 

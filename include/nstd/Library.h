@@ -9,12 +9,12 @@ public:
   Library();
   ~Library();
 
-  bool_t load(const String& name);
+  bool load(const String& name);
 
-  void_t* findSymbol(const String& name);
+  void* findSymbol(const String& name);
 
 private:
-  void_t* library;
+  void* library;
 
   Library(const Library&);
   Library& operator=(const Library&);

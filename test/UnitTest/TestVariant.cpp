@@ -2,7 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Variant.h>
 
-void_t testVariant()
+void testVariant()
 {
   // test default constructor
   {

@@ -31,7 +31,7 @@ Mutex::~Mutex()
 #endif
 }
 
-void_t Mutex::lock()
+void Mutex::lock()
 {
 #ifdef _WIN32
   EnterCriticalSection(&(CRITICAL_SECTION&)data);
@@ -40,7 +40,7 @@ void_t Mutex::lock()
 #endif
 }
 
-bool_t Mutex::tryLock()
+bool Mutex::tryLock()
 {
 #ifdef _WIN32
   return TryEnterCriticalSection(&(CRITICAL_SECTION&)data) == TRUE;
@@ -49,7 +49,7 @@ bool_t Mutex::tryLock()
 #endif
 }
 
-void_t Mutex::unlock()
+void Mutex::unlock()
 {
 #ifdef _WIN32
   LeaveCriticalSection(&(CRITICAL_SECTION&)data);

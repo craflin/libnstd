@@ -34,7 +34,7 @@
 #include <nstd/Process.h>
 #endif
 
-int_t Console::print(const tchar_t* str)
+int Console::print(const tchar* str)
 {
 #ifdef _MSC_VER
   return _fputts(str, stdout);
@@ -43,20 +43,20 @@ int_t Console::print(const tchar_t* str)
 #endif
 }
 
-int_t Console::printf(const tchar_t* format, ...)
+int Console::printf(const tchar* format, ...)
 {
   va_list ap;
   va_start(ap, format);
 #ifdef _UNICODE
-  int_t result = vwprintf(format, ap);
+  int result = vwprintf(format, ap);
 #else
-  int_t result = vprintf(format, ap);
+  int result = vprintf(format, ap);
 #endif
   va_end(ap);
   return result;
 }
 
-int_t Console::error(const tchar_t* str)
+int Console::error(const tchar* str)
 {
 #ifdef _MSC_VER
   return _fputts(str, stderr);
@@ -65,14 +65,14 @@ int_t Console::error(const tchar_t* str)
 #endif
 }
 
-int_t Console::errorf(const tchar_t* format, ...)
+int Console::errorf(const tchar* format, ...)
 {
   va_list ap;
   va_start(ap, format);
 #ifdef _UNICODE
-  int_t result = vfwprintf(stderr, format, ap);
+  int result = vfwprintf(stderr, format, ap);
 #else
-  int_t result = vfprintf(stderr, format, ap);
+  int result = vfprintf(stderr, format, ap);
 #endif
   va_end(ap);
   return result;
@@ -92,10 +92,10 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
   static volatile unsigned long pipeCount = 0;
   unsigned long pipeId = InterlockedIncrement(&pipeCount);
   name.printf(_T("\\\\.\\pipe\\MyAnon.%08x.%08x"), (unsigned int)GetCurrentProcessId(), (unsigned int)pipeId);
-  HANDLE hRead = CreateNamedPipe((const tchar_t*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
+  HANDLE hRead = CreateNamedPipe((const tchar*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
   if(!hRead)
     return FALSE;
-  HANDLE hWrite = CreateFile((const tchar_t*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
+  HANDLE hWrite = CreateFile((const tchar*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
   if(hWrite == INVALID_HANDLE_VALUE)
   {
     DWORD dwError = GetLastError();
@@ -113,9 +113,9 @@ class Console::Prompt::Private
 {
 public:
 #ifdef _MSC_VER
-  typedef tchar_t conchar_t;
+  typedef tchar conchar;
 #else
-  typedef uint32_t conchar_t;
+  typedef uint32 conchar;
 #endif
 
 #ifndef _MSC_VER
@@ -136,8 +136,8 @@ public:
 #endif
     if(eventFd)
     {
-      uint64_t event = 1;
-      if(write(eventFd, &event, sizeof(uint64_t)) != sizeof(uint64_t))
+      uint64 event = 1;
+      if(write(eventFd, &event, sizeof(uint64)) != sizeof(uint64))
         return;
     }
   }
@@ -179,14 +179,14 @@ public:
     while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
     {
       DWORD written;
-      VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-      ASSERT(written == read / sizeof(tchar_t));
+      VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
+      ASSERT(written == read / sizeof(tchar));
     }
     while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
     {
       DWORD written;
-      VERIFY(WriteFile(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
-      ASSERT(written == read / sizeof(tchar_t));
+      VERIFY(WriteFile(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
+      ASSERT(written == read / sizeof(tchar));
     }
 
     // enable window events
@@ -309,7 +309,7 @@ public:
 #endif
   }
 
-  size_t getScreenWidth()
+  usize getScreenWidth()
   {
 #ifdef _MSC_VER
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -320,24 +320,24 @@ public:
     if(ioctl(originalStdout, TIOCGWINSZ, &ws) == 0)
       if(ws.ws_col)
         return ws.ws_col;
-    size_t x, y;
+    usize x, y;
     getCursorPosition(x, y);
     if(write(originalStdout, "\x1b[999C", 6) != 6)
       return 80;
-    size_t newX, newY;
+    usize newX, newY;
     getCursorPosition(newX, newY);
     if(newX > x)
     {
       String moveCmd;
       moveCmd.printf("\x1b[%dD", (int)(newX - x));
-      if(write(originalStdout, (const char_t*)moveCmd, moveCmd.length()) != (ssize_t)moveCmd.length())
+      if(write(originalStdout, (const char*)moveCmd, moveCmd.length()) != (ssize)moveCmd.length())
         return 80;
     }
     return newX + 1;
 #endif
   }
 
-  void_t getCursorPosition(size_t& x, size_t& y)
+  void getCursorPosition(usize& x, usize& y)
   {
 #ifdef _MSC_VER
     CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -346,7 +346,7 @@ public:
     y = csbi.dwCursorPosition.Y;
 #else
     VERIFY(write(originalStdout, "\x1b[6n", 4) == 4);
-    char_t buffer[64];
+    char buffer[64];
     VERIFY(readNextUnbufferedEscapedSequence(buffer, '[', 'R') > 1);
     int ix, iy;
     VERIFY(sscanf(buffer + 2, "%d;%d", &iy, &ix) == 2);
@@ -355,23 +355,23 @@ public:
 #endif
   }
 
-  void_t moveCursorPosition(size_t from, ssize_t x)
+  void moveCursorPosition(usize from, ssize x)
   {
 #ifdef _MSC_VER
-    size_t to = from + x;
-    size_t oldY = from / stdoutScreenWidth;
-    size_t newY = to / stdoutScreenWidth;
-    size_t newX = to % stdoutScreenWidth;
-    size_t cursorX, cursorY;
+    usize to = from + x;
+    usize oldY = from / stdoutScreenWidth;
+    usize newY = to / stdoutScreenWidth;
+    usize newX = to % stdoutScreenWidth;
+    usize cursorX, cursorY;
     getCursorPosition(cursorX, cursorY);
-    COORD pos = {(SHORT)newX, (SHORT)(cursorY + ((ssize_t)newY - (ssize_t)oldY))};
+    COORD pos = {(SHORT)newX, (SHORT)(cursorY + ((ssize)newY - (ssize)oldY))};
     VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos)); // this resets the caret blink timer
 #else
-    size_t to = from + x;
-    size_t oldY = from / stdoutScreenWidth;
-    size_t oldX = from % stdoutScreenWidth;
-    size_t newY = to / stdoutScreenWidth;
-    size_t newX = to % stdoutScreenWidth;
+    usize to = from + x;
+    usize oldY = from / stdoutScreenWidth;
+    usize oldX = from % stdoutScreenWidth;
+    usize newY = to / stdoutScreenWidth;
+    usize newX = to % stdoutScreenWidth;
     String moveCmd;
     if(newY < oldY)
       moveCmd.printf("\x1b[%dA", (int)(oldY - newY));
@@ -394,43 +394,43 @@ public:
 #endif
   }
 
-  void_t writeConsole(const tchar_t* data, size_t len)
+  void writeConsole(const tchar* data, usize len)
   {
 #ifdef _MSC_VER
     DWORD written;
     VERIFY(WriteConsole(hOriginalStdOut, data, (DWORD)len, &written, NULL));
     ASSERT(written == (DWORD)len);
 #else
-    bufferedOutput.append((const byte_t*)data, len);
+    bufferedOutput.append((const byte*)data, len);
 #endif
   }
 
 #ifndef _MSC_VER
-  void_t flushConsole()
+  void flushConsole()
   {
     if(bufferedOutput.isEmpty())
       return;
-    VERIFY(write(originalStdout, bufferedOutput, bufferedOutput.size()) == (ssize_t)bufferedOutput.size());
+    VERIFY(write(originalStdout, bufferedOutput, bufferedOutput.size()) == (ssize)bufferedOutput.size());
     bufferedOutput.free();
   }
 #endif
 
-  void_t promptWrite(size_t offset = 0, const String& clearStr = String())
+  void promptWrite(usize offset = 0, const String& clearStr = String())
   {
     offset += offset / stdoutScreenWidth * 2;
-    Array<conchar_t> buffer(prompt.size() + input.size() + clearStr.length());
+    Array<conchar> buffer(prompt.size() + input.size() + clearStr.length());
     buffer.append(prompt);
     buffer.append(input);
     ASSERT(clearStr.isEmpty() || clearStr.length() == 1);
     if(!clearStr.isEmpty())
-      buffer.append(*(const tchar_t*)clearStr);
-    Array<conchar_t> wrappedBuffer(buffer.size() + buffer.size() / stdoutScreenWidth * 2 + 2);
-    for(size_t i = 0, len = buffer.size(); i < len; i += stdoutScreenWidth)
+      buffer.append(*(const tchar*)clearStr);
+    Array<conchar> wrappedBuffer(buffer.size() + buffer.size() / stdoutScreenWidth * 2 + 2);
+    for(usize i = 0, len = buffer.size(); i < len; i += stdoutScreenWidth)
     {
-      size_t lineEnd = len - i;
+      usize lineEnd = len - i;
       if(lineEnd > stdoutScreenWidth)
         lineEnd = stdoutScreenWidth;
-      wrappedBuffer.append((const conchar_t*)buffer + i, lineEnd);
+      wrappedBuffer.append((const conchar*)buffer + i, lineEnd);
       if(lineEnd == stdoutScreenWidth)
       {
         wrappedBuffer.append(_T('\r'));
@@ -438,48 +438,48 @@ public:
       }
     }
 #ifdef _MSC_VER
-    writeConsole((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset);
+    writeConsole((const conchar*)wrappedBuffer + offset, wrappedBuffer.size() - offset);
 #else
-    String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32_t) + 10);
+    String dataToWrite((wrappedBuffer.size() - offset) * sizeof(uint32) + 10);
     dataToWrite.append("\x1b[?7l");
-    VERIFY(Unicode::append((const conchar_t*)wrappedBuffer + offset, wrappedBuffer.size() - offset, dataToWrite));
+    VERIFY(Unicode::append((const conchar*)wrappedBuffer + offset, wrappedBuffer.size() - offset, dataToWrite));
     dataToWrite.append("\x1b[?7h");
     writeConsole(dataToWrite, dataToWrite.length());
 #endif
     if(caretPos < input.size() + clearStr.length())
-      moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize_t)(input.size() + clearStr.length() - caretPos));
+      moveCursorPosition(prompt.size() + input.size() + clearStr.length(), -(ssize)(input.size() + clearStr.length() - caretPos));
 #ifdef _MSC_VER
     else // enforce cursor blink timer reset
       moveCursorPosition(prompt.size() + input.size() + clearStr.length(), 0);
 #endif
   }
 
-  void_t promptInsert(conchar_t character)
+  void promptInsert(conchar character)
   {
     if(caretPos != input.size())
     {
-      Array<conchar_t> newInput(input.size() + 1);
+      Array<conchar> newInput(input.size() + 1);
       newInput.append(input,  caretPos);
       newInput.append(character);
-      newInput.append((conchar_t*)input + caretPos, input.size() - caretPos);
+      newInput.append((conchar*)input + caretPos, input.size() - caretPos);
       input.swap(newInput);
     }
     else
       input.append(character);
-    size_t oldCaretPos = caretPos;
+    usize oldCaretPos = caretPos;
     ++caretPos;
     promptWrite(prompt.size() + oldCaretPos);
   }
 
-  void_t promptRemove()
+  void promptRemove()
   {
     if(!input.isEmpty() && caretPos > 0)
     {
       if(caretPos != input.size())
       {
-        Array<conchar_t> newInput(input.size() - 1);
+        Array<conchar> newInput(input.size() - 1);
         newInput.append(input,  caretPos -1);
-        newInput.append((conchar_t*)input + caretPos, input.size() - caretPos);
+        newInput.append((conchar*)input + caretPos, input.size() - caretPos);
         input.swap(newInput);
       }
       else
@@ -489,15 +489,15 @@ public:
     }
   }
 
-  void_t promptRemoveNext()
+  void promptRemoveNext()
   {
     if(caretPos < input.size())
     {
       if(caretPos != input.size() - 1)
       {
-        Array<conchar_t> newInput(input.size() - 1);
+        Array<conchar> newInput(input.size() - 1);
         newInput.append(input,  caretPos);
-        newInput.append((conchar_t*)input + caretPos + 1, input.size() - (caretPos + 1));
+        newInput.append((conchar*)input + caretPos + 1, input.size() - (caretPos + 1));
         input.swap(newInput);
       }
       else
@@ -506,7 +506,7 @@ public:
     }
   }
 
-  void_t promptMoveLeft()
+  void promptMoveLeft()
   {
     if(caretPos > 0)
     {
@@ -515,16 +515,16 @@ public:
     }
   }
 
-  void_t promptMoveHome()
+  void promptMoveHome()
   {
     if(caretPos > 0)
     {
-      moveCursorPosition(prompt.size() + caretPos, -(ssize_t)caretPos);
+      moveCursorPosition(prompt.size() + caretPos, -(ssize)caretPos);
       caretPos = 0;
     }
   }
 
-  void_t promptMoveRight()
+  void promptMoveRight()
   {
     if(caretPos < input.size())
     {
@@ -533,7 +533,7 @@ public:
     }
   }
 
-  void_t promptMoveEnd()
+  void promptMoveEnd()
   {
     if(caretPos < input.size())
     {
@@ -542,7 +542,7 @@ public:
     }
   }
 
-  void_t promptHistoryUp()
+  void promptHistoryUp()
   {
     if(historyPos == history.begin())
       return;
@@ -565,7 +565,7 @@ public:
     promptWrite();
   }
 
-  void_t promptHistoryDown()
+  void promptHistoryDown()
   {
     if(historyPos == history.end())
       return;
@@ -587,15 +587,15 @@ public:
     }
   }
 
-  void_t promptClear()
+  void promptClear()
   {
-    size_t bufferLen = prompt.size() + input.size();
-    size_t additionalLines = bufferLen / stdoutScreenWidth;
+    usize bufferLen = prompt.size() + input.size();
+    usize additionalLines = bufferLen / stdoutScreenWidth;
     if(additionalLines)
     {
-      moveCursorPosition(prompt.size() + caretPos, -(ssize_t)(caretPos + prompt.size()));
+      moveCursorPosition(prompt.size() + caretPos, -(ssize)(caretPos + prompt.size()));
       String clearLine(stdoutScreenWidth + 2);
-      for(size_t i = 0; i < stdoutScreenWidth; ++i)
+      for(usize i = 0; i < stdoutScreenWidth; ++i)
         clearLine.append(_T(' '));
       clearLine.append(_T("\n\r"));
       String clearCmd(bufferLen + additionalLines * 2
@@ -606,15 +606,15 @@ public:
 #ifndef _MSC_VER
       clearCmd.append("\x1b[?7l");
 #endif
-      for(size_t i = 0; i < additionalLines; ++i)
+      for(usize i = 0; i < additionalLines; ++i)
         clearCmd.append(clearLine);
-      for(size_t i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
+      for(usize i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
         clearCmd.append(_T(' '));
 #ifndef _MSC_VER
       clearCmd.append("\x1b[?7h");
 #endif
       writeConsole(clearCmd, clearCmd.length());
-      moveCursorPosition(prompt.size() + input.size(), -(ssize_t)bufferLen);
+      moveCursorPosition(prompt.size() + input.size(), -(ssize)bufferLen);
     }
     else
     {
@@ -627,7 +627,7 @@ public:
       clearCmd.append("\x1b[?7l");
 #endif
       clearCmd.append(_T('\r'));
-      for(size_t i = 0, count = bufferLen; i < count; ++i)
+      for(usize i = 0, count = bufferLen; i < count; ++i)
         clearCmd.append(_T(' '));
       clearCmd.append(_T('\r'));
 #ifndef _MSC_VER
@@ -637,16 +637,16 @@ public:
     }
   }
 
-  void_t saveCursorPosition()
+  void saveCursorPosition()
   {
-    size_t x, y;
+    usize x, y;
     getCursorPosition(x, y);
     stdoutCursorX = x;
     if(stdoutCursorX)
       writeConsole(_T("\r\n"), 2);
   }
 
-  void_t restoreCursorPosition()
+  void restoreCursorPosition()
   {
     if(stdoutCursorX)
     {
@@ -664,7 +664,7 @@ public:
     }
   }
 
-  void_t restoreTerminalMode()
+  void restoreTerminalMode()
   {
 #ifdef _MSC_VER
     VERIFY(SetConsoleMode(hOriginalStdOut, consoleOutputMode));
@@ -673,7 +673,7 @@ public:
 #endif
   }
 
-  void_t enableTerminalRawMode()
+  void enableTerminalRawMode()
   {
 #ifdef _MSC_VER
     VERIFY(SetConsoleMode(hOriginalStdOut, ENABLE_PROCESSED_OUTPUT));
@@ -720,7 +720,7 @@ public:
           INPUT_RECORD records[1];
           DWORD read;
           VERIFY(ReadConsoleInput(hStdIn, records, 1, &read));
-          size_t keyEvents = 0;
+          usize keyEvents = 0;
           for(DWORD i = 0; i < read; ++i)
             switch(records[i].EventType)
             {
@@ -757,8 +757,8 @@ public:
     {
       while(!bufferedInput.isEmpty())
       {
-        char_t buffer[64];
-        size_t len = readChar(buffer);
+        char buffer[64];
+        usize len = readChar(buffer);
         handleInput(buffer, len);
         if(inputComplete)
           break;
@@ -796,13 +796,13 @@ public:
       if(FD_ISSET(STDIN_FILENO, &fdr))
       {
         char buffer[64];
-        size_t len = readChar(buffer);
+        usize len = readChar(buffer);
         handleInput(buffer, len);
       }
       if(FD_ISSET(resizeEventFd, &fdr))
       {
-        uint64_t buffer;
-        if(read(resizeEventFd, &buffer, sizeof(uint64_t)) == sizeof(uint64_t))
+        uint64 buffer;
+        if(read(resizeEventFd, &buffer, sizeof(uint64)) == sizeof(uint64))
           handleResize(getScreenWidth());
       }
     }
@@ -823,30 +823,30 @@ public:
     return result;
   }
 
-  void_t redirectPendingData()
+  void redirectPendingData()
   {
 #ifdef _MSC_VER
     DWORD read;
     while(GetOverlappedResult(hStdOutRead, &outOverlapped, &read, FALSE))
     {
         DWORD written;
-        VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-        ASSERT(written == read / sizeof(tchar_t));
+        VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
+        ASSERT(written == read / sizeof(tchar));
         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
         {
-          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar_t), &written, NULL));
-          ASSERT(written == read / sizeof(tchar_t));
+          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
+          ASSERT(written == read / sizeof(tchar));
         }
     }
     while(GetOverlappedResult(hStdErrRead, &errOverlapped, &read, FALSE))
     {
         DWORD written;
-        VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
-        ASSERT(written == read / sizeof(tchar_t));
+        VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
+        ASSERT(written == read / sizeof(tchar));
         while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
         {
-          VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar_t), &written, NULL));
-          ASSERT(written == read / sizeof(tchar_t));
+          VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
+          ASSERT(written == read / sizeof(tchar));
         }
     }
 #else
@@ -868,14 +868,14 @@ public:
         if(FD_ISSET(stdoutRead, &fdr))
         {
           char buffer[4096];
-          ssize_t i = read(stdoutRead, buffer, sizeof(buffer));
+          ssize i = read(stdoutRead, buffer, sizeof(buffer));
           VERIFY(i != -1);
           VERIFY(write(originalStdout, buffer, i) == i);
         }
         if(FD_ISSET(stderrRead, &fdr))
         {
           char buffer[4096];
-          ssize_t i = read(stderrRead, buffer, sizeof(buffer));
+          ssize i = read(stderrRead, buffer, sizeof(buffer));
           VERIFY(i != -1);
           VERIFY(write(originalStderr, buffer, i) == i);
         }
@@ -886,7 +886,7 @@ public:
 #endif
   }
 
-  void_t handleResize(size_t newWidth)
+  void handleResize(usize newWidth)
   {
     promptClear();
     stdoutScreenWidth = newWidth;
@@ -894,7 +894,7 @@ public:
   }
 
 #ifdef _MSC_VER
-  void_t handleInput(tchar_t ch, WORD virtualKeyCode)
+  void handleInput(tchar ch, WORD virtualKeyCode)
   {
     switch(ch)
     {
@@ -937,7 +937,7 @@ public:
     }
   }
 #else
-  void_t handleInput(char_t* input, size_t len)
+  void handleInput(char* input, usize len)
   {
     if(*input == '\x1b')
     {
@@ -970,7 +970,7 @@ public:
     }
     else
     {
-      uint32_t ch = utf8 ? Unicode::fromString(input, len) : *(uchar_t*)input;
+      uint32 ch = utf8 ? Unicode::fromString(input, len) : *(uchar*)input;
       switch(ch)
       {
       case _T('\t'):
@@ -990,9 +990,9 @@ public:
 #endif
 
 #ifdef _MSC_VER
-  void_t handleOutput(HANDLE hStdRead, HANDLE hOriginalStd, char_t* buffer, size_t bufferSize, OVERLAPPED& overlapped)
+  void handleOutput(HANDLE hStdRead, HANDLE hOriginalStd, char* buffer, usize bufferSize, OVERLAPPED& overlapped)
 #else
-  void_t handleOutput(int fd, int originalFd)
+  void handleOutput(int fd, int originalFd)
 #endif
   {
 #ifdef _MSC_VER
@@ -1010,16 +1010,16 @@ public:
     // add new output
 #ifdef _MSC_VER
     DWORD written;
-    VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
-    ASSERT(written == read / sizeof(tchar_t));
+    VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar), &written, NULL));
+    ASSERT(written == read / sizeof(tchar));
     while(ReadFile(hStdRead, buffer, (DWORD)bufferSize, &read, &overlapped))
     {
-      VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar_t), &written, NULL));
-      ASSERT(written == read / sizeof(tchar_t));
+      VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar), &written, NULL));
+      ASSERT(written == read / sizeof(tchar));
     }
 #else
     char buffer[4096];
-    ssize_t i = read(fd, buffer, sizeof(buffer));
+    ssize i = read(fd, buffer, sizeof(buffer));
     VERIFY(i != -1);
     writeConsole(buffer, i); // todo: write to originalFd and ensure utf8 sequences are valid
     flushConsole();
@@ -1032,40 +1032,40 @@ public:
   }
 
 #ifndef _MSC_VER
-  size_t readChar(char_t* buffer)
+  usize readChar(char* buffer)
   {
     if(utf8)
       return readBufferedUtf8Char(buffer);
     return readBufferedChar(buffer);
   }
 
-  size_t readNextUnbufferedEscapedSequence(char_t* buffer, char_t firstChar, char_t lastChar)
+  usize readNextUnbufferedEscapedSequence(char* buffer, char firstChar, char lastChar)
   {
-    for(char_t ch;;)
+    for(char ch;;)
     {
       VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
       if(ch == '\x1b')
       {
         *buffer = ch;
-        size_t len = 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
-        char_t sequenceType = buffer[len - 1];
+        usize len = 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
+        char sequenceType = buffer[len - 1];
         if(sequenceType != lastChar || buffer[1] != firstChar)
         {
-          bufferedInput.append((byte_t*)buffer, len);
+          bufferedInput.append((byte*)buffer, len);
           continue;
         }
         return len;
       }
       else
-        bufferedInput.append((byte_t*)&ch, 1);
+        bufferedInput.append((byte*)&ch, 1);
     }
   }
 
-  size_t readBufferedUtf8Char(char_t* buffer)
+  usize readBufferedUtf8Char(char* buffer)
   {
     if(bufferedInput.isEmpty())
     {
-      char_t ch;
+      char ch;
       VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
       if(ch == '\x1b')
       {
@@ -1075,23 +1075,23 @@ public:
       *buffer = ch;
       return readUnbufferedUtf8Char(buffer, buffer + 1, Unicode::length(ch));
     }
-    *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+    *buffer = *(const char*)(const byte*)bufferedInput;
     bufferedInput.removeFront(1);
     if(*buffer == '\x1b')
       return 1 + readBufferedEscapedSequence(buffer, buffer + 1);
-    char_t* start = buffer;
-    size_t len = Unicode::length(*(buffer++));
-    while((size_t)(buffer - start) < len)
+    char* start = buffer;
+    usize len = Unicode::length(*(buffer++));
+    while((usize)(buffer - start) < len)
     {
       if(bufferedInput.isEmpty())
         return readUnbufferedUtf8Char(start, buffer, len);
-      *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+      *buffer = *(const char*)(const byte*)bufferedInput;
       bufferedInput.removeFront(1);
       if(*buffer == '\x1b')
       {
-        Buffer incompleteUtf8((const byte_t*)start, buffer - start);
+        Buffer incompleteUtf8((const byte*)start, buffer - start);
         *start = '\x1b';
-        size_t result = 1 + readBufferedEscapedSequence(start, start + 1);
+        usize result = 1 + readBufferedEscapedSequence(start, start + 1);
         bufferedInput.prepend(incompleteUtf8);
         return result;
       }
@@ -1101,9 +1101,9 @@ public:
     return len;
   }
 
-  size_t readUnbufferedUtf8Char(char_t* start,  char_t* buffer, size_t len)
+  usize readUnbufferedUtf8Char(char* start,  char* buffer, usize len)
   {
-    while((size_t)(buffer - start) < len)
+    while((usize)(buffer - start) < len)
     {
       VERIFY(read(STDIN_FILENO, buffer, 1) == 1);
       ++buffer;
@@ -1112,11 +1112,11 @@ public:
     return len;
   }
 
-  size_t readBufferedChar(char_t* buffer)
+  usize readBufferedChar(char* buffer)
   {
     if(bufferedInput.isEmpty())
       return readUnbufferedChar(buffer);
-    *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+    *buffer = *(const char*)(const byte*)bufferedInput;
     bufferedInput.removeFront(1);
     if(*buffer == '\x1b')
       return 1 + readBufferedEscapedSequence(buffer, buffer + 1);
@@ -1124,7 +1124,7 @@ public:
     return 1;
   }
 
-  size_t readUnbufferedChar(char_t* buffer)
+  usize readUnbufferedChar(char* buffer)
   {
     VERIFY(read(STDIN_FILENO, buffer, 1) == 1);
     if(*buffer == '\x1b')
@@ -1133,15 +1133,15 @@ public:
     return 1;
   }
 
-  static bool_t isSeqAttributeChar(char_t ch) {return isdigit(ch) || ch == ';' || ch == '?' || ch == '[';}
+  static bool isSeqAttributeChar(char ch) {return isdigit(ch) || ch == ';' || ch == '?' || ch == '[';}
 
-  size_t readBufferedEscapedSequence(const char_t* seqStart, char_t* buffer)
+  usize readBufferedEscapedSequence(const char* seqStart, char* buffer)
   {
-    for(char_t* start = buffer;;)
+    for(char* start = buffer;;)
     {
       if(bufferedInput.isEmpty())
         return buffer - start + readUnbufferedEscapedSequence(seqStart, buffer);
-      *buffer = *(const char_t*)(const byte_t*)bufferedInput;
+      *buffer = *(const char*)(const byte*)bufferedInput;
       bufferedInput.removeFront(1);
       if(seqStart[1] != '[' || !isSeqAttributeChar(*buffer))
       {
@@ -1153,9 +1153,9 @@ public:
     }
   }
 
-  size_t readUnbufferedEscapedSequence(const char_t* seqStart, char_t* buffer)
+  usize readUnbufferedEscapedSequence(const char* seqStart, char* buffer)
   {
-    for(char_t* start = buffer, ch;;)
+    for(char* start = buffer, ch;;)
     {
       VERIFY(read(STDIN_FILENO, &ch, 1) == 1);
       *(buffer++) = ch;
@@ -1168,7 +1168,7 @@ public:
   }
 #endif
 
-  void_t concharArrayToString(const conchar_t* data, size_t len, String& result)
+  void concharArrayToString(const conchar* data, usize len, String& result)
   {
     result.clear();
 #ifdef _MSC_VER
@@ -1176,32 +1176,32 @@ public:
 #else
     if(utf8)
     {
-      result.reserve(len * sizeof(uint32_t));
+      result.reserve(len * sizeof(uint32));
       Unicode::append(data, len, result);
     }
     else
     {
       result.reserve(len);
-      for(const conchar_t* i = data, * end = data + len; i < end; ++i)
-        result.append((const tchar_t&)*i);
+      for(const conchar* i = data, * end = data + len; i < end; ++i)
+        result.append((const tchar&)*i);
     }
 #endif
   }
 
-  void_t stringToConcharArray(const String& data, Array<conchar_t>& result)
+  void stringToConcharArray(const String& data, Array<conchar>& result)
   {
     result.clear();
     result.reserve(data.length());
 #ifdef _MSC_VER
-    for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
+    for(const tchar* i = data, * end = i + data.length(); i < end; ++i)
       result.append(*i);
 #else
     if(utf8)
     {
-      for(const tchar_t* i = data, * end = i + data.length(); i < end;)
+      for(const tchar* i = data, * end = i + data.length(); i < end;)
       {
-        size_t len = Unicode::length(*i);
-        if(len == 0 || (size_t)(end - i) < len)
+        usize len = Unicode::length(*i);
+        if(len == 0 || (usize)(end - i) < len)
         {
           ++i;
           continue;
@@ -1211,13 +1211,13 @@ public:
       }
     }
     else
-      for(const tchar_t* i = data, * end = i + data.length(); i < end; ++i)
-        result.append((const uchar_t&)*i);
+      for(const tchar* i = data, * end = i + data.length(); i < end; ++i)
+        result.append((const uchar&)*i);
 #endif
   }
 
 private:
-  bool_t valid;
+  bool valid;
 #ifdef _MSC_VER
   HANDLE hStdOutRead;
   HANDLE hStdOutWrite;
@@ -1236,7 +1236,7 @@ private:
   DWORD consoleOutputMode;
   DWORD consoleInputMode;
 #else
-  bool_t utf8;
+  bool utf8;
   static int originalStdout;
   int originalStderr;
   int stdoutRead;
@@ -1244,7 +1244,7 @@ private:
   int stderrRead;
   int stderrWrite;
 
-  static bool_t originalTermiosValid;
+  static bool originalTermiosValid;
   static termios originalTermios;
   termios rawMode;
   termios noEchoMode;
@@ -1257,22 +1257,22 @@ private:
   Buffer bufferedOutput;
 #endif
 
-  size_t stdoutScreenWidth;
-  size_t stdoutCursorX;
+  usize stdoutScreenWidth;
+  usize stdoutCursorX;
 
-  Array<conchar_t> prompt;
-  Array<conchar_t> input;
-  bool_t inputComplete;
-  size_t caretPos;
+  Array<conchar> prompt;
+  Array<conchar> input;
+  bool inputComplete;
+  usize caretPos;
 
   List<String> history;
   List<String>::Iterator historyPos;
-  bool_t historyRemoveLast;
+  bool historyRemoveLast;
 };
 
 #ifndef _MSC_VER
 int Console::Prompt::Private::originalStdout = -1;
-bool_t Console::Prompt::Private::originalTermiosValid = false;
+bool Console::Prompt::Private::originalTermiosValid = false;
 termios Console::Prompt::Private::originalTermios;
 int Console::Prompt::Private::resizeEventFd = 0;
 #ifdef __CYGWIN__
