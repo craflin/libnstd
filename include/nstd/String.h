@@ -465,6 +465,7 @@ public:
   static String fromInt64(int64 value);
   static String fromUInt64(uint64 value);
   static String fromDouble(double value);
+  static String fromBool(bool value) {return value ? String(_T("true")) : String(_T("false"));}
   static String fromCString(const tchar* str) {return String(str, length(str));}
   static String fromCString(const tchar* str, usize len) {return String(str, len);}
   static String fromPrintf(const tchar* format, ...);

@@ -445,18 +445,16 @@ public:
   {
     if(data->type == stringType)
       return *(const String*)(data + 1);
-    String string;
     switch(data->type)
     {
-    case boolType: string = data->data.boolData ? String(_T("true")) : String(_T("false")); break;
-    case doubleType: string.printf(_T("%f"), data->data.doubleData); break;
-    case intType: string.printf(_T("%d"), data->data.intData); break;
-    case uintType: string.printf(_T("%u"), data->data.uintData); break;
-    case int64Type: string.printf(_T("%lld"), data->data.int64Data); break;
-    case uint64Type: string.printf(_T("%llu"), data->data.uint64Data); break;
-    default: break;
+    case boolType: return String::fromBool(data->data.boolData);
+    case doubleType: return String::fromDouble(data->data.doubleData);
+    case intType: return String::fromInt(data->data.intData);
+    case uintType: return String::fromUInt(data->data.uintData);
+    case int64Type: return String::fromInt64(data->data.int64Data);
+    case uint64Type: return String::fromUInt64(data->data.uint64Data);
+    default: return String();
     }
-    return string;
   }
 
   Variant& operator=(const String& other)
