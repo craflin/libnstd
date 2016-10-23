@@ -340,7 +340,7 @@ public:
   int64 toInt64() const;
   uint64 toUInt64() const;
   double toDouble() const;
-  //bool toBool() const {return equalsIgnoreCase(_(T"true")) || *this == _T("1");}
+  bool toBool() const {return equalsIgnoreCase(_T("true")) || *this == _T("1");}
 
   String token(tchar separator, usize& start) const;
   String token(const tchar* separators, usize& start) const;

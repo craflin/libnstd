@@ -177,11 +177,7 @@ public:
     case uintType: return data->data.uintData != 0;
     case int64Type: return data->data.int64Data != 0;
     case uint64Type: return data->data.uint64Data != 0;
-    case stringType:
-      {
-        const String& string = *(const String*)(data + 1);
-        return string == _T("true") || string == _T("1");
-      }
+    case stringType: return ((const String*)(data + 1))->toBool();
     default:
       return false;
     }
