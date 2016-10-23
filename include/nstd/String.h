@@ -231,7 +231,6 @@ public:
       if(!*s1)
         return 0;
     return (int)(const utchar&)c1 - (const utchar&)c2;
-
   }
 
   int compareIgnoreCase(const String& other, usize len) const
@@ -242,6 +241,9 @@ public:
         return (int)(const utchar&)c1 - (const utchar&)c2;
     return 0;
   }
+
+  bool equalsIgnoreCase(const String& other) const {return data->len == other.data->len && compareIgnoreCase(other) == 0;}
+  bool equalsIgnoreCase(const String& other, usize len) const {return compareIgnoreCase(other, len) == 0;}
 
   const tchar* find(tchar c) const
   {
@@ -338,6 +340,7 @@ public:
   int64 toInt64() const;
   uint64 toUInt64() const;
   double toDouble() const;
+  //bool toBool() const {return equalsIgnoreCase(_(T"true")) || *this == _T("1");}
 
   String token(tchar separator, usize& start) const;
   String token(const tchar* separators, usize& start) const;
