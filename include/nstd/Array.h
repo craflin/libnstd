@@ -11,7 +11,9 @@ public:
   public:
     Iterator() : item(0) {}
     const T& operator*() const {return *item;}
+    T& operator*() {return *item;}
     const T* operator->() const {return item;}
+    T* operator->() {return item;}
     const Iterator& operator++() {++item; return *this;}
     const Iterator& operator--() {--item; return *this;}
     Iterator operator++() const {return item + 1;}
@@ -37,7 +39,11 @@ public:
     T* dest = _begin.item;
     for(T* src = other._begin.item, * end = other._end.item; src != end; ++src, ++dest)
     {
+#ifdef VERIFY
       VERIFY(new(dest)T(*src) == dest);
+#else
+      new(dest)T(*src);
+#endif
     }
     _end.item = dest;
   }
@@ -59,7 +65,11 @@ public:
     T* dest = _begin.item;
     for(T* src = other._begin.item, * end = other._end.item; src != end; ++src, ++dest)
     {
+#ifdef VERIFY
       VERIFY(new(dest)T(*src) == dest);
+#else
+      new(dest)T(*src);
+#endif
     }
     _end.item = dest;
     return *this;
