@@ -812,7 +812,9 @@ bool Process::Arguments::read(int& character, String& argument)
 
           // unknown option
           character = '?';
+          argLen += String::length(arg + argLen);
           argument.attach(arg - 2, argLen + 2);
+          arg += argLen;
           return true;
         }
       }
