@@ -374,7 +374,7 @@ bool JSON::Private::parseValue(Variant& result)
 
 void JSON::Private::appendEscapedString(const String& str, String& result)
 {
-  size_t strLen = str.length();
+  usize strLen = str.length();
   result.reserve(result.length() + 2 + strLen * 2);
   result += '"';
   for(const tchar* start = str, * p = start;;)

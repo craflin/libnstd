@@ -41,7 +41,7 @@ void testJSON();
 void testConsolePrintf()
 {
   Console::printf(_T("%s\n"), _T("Hello world"));
-  size_t bufferSize;
+  usize bufferSize;
   char* buffer = (char*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
@@ -52,7 +52,7 @@ void testConsolePrintf()
 void testDebugPrintf()
 {
   Debug::printf(_T("%s\n"), _T("Hello world"));
-  size_t bufferSize;
+  usize bufferSize;
   char* buffer = (char*)Memory::alloc(5000 * 4, bufferSize);
   Memory::fill(buffer, 'a', bufferSize - 1);
   buffer[bufferSize - 2] = 'b';
@@ -62,7 +62,7 @@ void testDebugPrintf()
 
 void testAtomic()
 {
-  volatile size_t size = 0;
+  volatile usize size = 0;
   ASSERT(Atomic::increment(size) == 1);
   ASSERT(Atomic::increment(size) == 2);
   ASSERT(Atomic::increment(size) == 3);
@@ -174,7 +174,7 @@ struct TestHashSetDestructor
     ++destructions;
   }
 
-  operator size_t() const {return num;}
+  operator usize() const {return num;}
 
   static int destructions;
 };
@@ -703,7 +703,7 @@ void testMap()
       map.insert(item, 123);
     }
     lastKey = map.begin().key();
-    size_t count = 1;
+    usize count = 1;
     for(Map<int32, int32>::Iterator k = ++Map<int32, int32>::Iterator(map.begin()), end = map.end(); k != end; ++k)
     {
       ASSERT(k.key() > lastKey);

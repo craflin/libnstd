@@ -17,7 +17,7 @@ public:
     return result;
   }
 
-  static String toString(const uint32* data, size_t size)
+  static String toString(const uint32* data, usize size)
   {
       String result(size + 200);
       append(data, size, result);
@@ -74,7 +74,7 @@ public:
     return false;
   }
 
-  static bool append(const uint32* data, size_t size, String& str)
+  static bool append(const uint32* data, usize size, String& str)
   {
     bool result = true;
     for(const uint32* end = data + size; data < end; ++data)
@@ -82,7 +82,7 @@ public:
     return result;
   }
 
-  static size_t length(tchar ch)
+  static usize length(tchar ch)
   {
 #ifdef _UNICODE
     if((ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
@@ -102,7 +102,7 @@ public:
     return 0;
   }
 
-  static uint32 fromString(const tchar* ch, size_t len)
+  static uint32 fromString(const tchar* ch, usize len)
   {
     if(len == 0)
       return 0;
@@ -120,7 +120,7 @@ public:
 #else
     if((*(const uchar*)ch & 0x80) == 0) // ch < 0x80
       return *(const uchar*)ch;
-    size_t reqLen = length(*ch);
+    usize reqLen = length(*ch);
     if(len < reqLen)
       return 0;
     static const uint32 utf8Offsets[] = {0UL, 0UL, 0x00003080UL, 0x000E2080UL, 0x03C82080UL};
@@ -139,7 +139,7 @@ public:
   
   static uint32 fromString(const String& str) {return fromString(str, str.length());}
 
-  static bool isValid(const tchar* ch, size_t len)
+  static bool isValid(const tchar* ch, usize len)
   {
       for(const tchar* end = ch + len; ch < end;)
       {
@@ -159,7 +159,7 @@ public:
           }
         return false;
 #else
-        size_t minLen = length(*ch);
+        usize minLen = length(*ch);
         if(len < minLen)
           return false;
         switch(minLen)

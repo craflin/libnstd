@@ -137,7 +137,7 @@ public:
     struct Data
     {
       Type type;
-      volatile size_t ref;
+      volatile usize ref;
     };
 
     static struct NullData : public Data
