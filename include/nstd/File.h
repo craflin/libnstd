@@ -86,6 +86,7 @@ public:
   static String simplifyPath(const String& path);
   static bool isAbsolutePath(const String& path);
   static String getRelativePath(const String& from, const String& to);
+  static String getAbsolutePath(const String& path);
 
   static bool time(const String& file, Time& time);
 

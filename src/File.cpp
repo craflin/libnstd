@@ -12,6 +12,7 @@
 
 #include <nstd/File.h>
 #include <nstd/Debug.h>
+#include <nstd/Directory.h>
 
 File::File()
 {
@@ -473,6 +474,17 @@ String File::getRelativePath(const String& from, const String& to)
     result.append(_T("../"));
   }
   return String();
+}
+
+String File::getAbsolutePath(const String& path)
+{
+  if(isAbsolutePath(path))
+    return path;
+  String result = Directory::getCurrent();
+  result.reserve(result.length() + 1 + path.length());
+  result.append('/');
+  result.append(path);
+  return result;
 }
 
 bool File::time(const String& file, File::Time& time)
