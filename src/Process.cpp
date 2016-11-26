@@ -479,7 +479,7 @@ error:
 
       fdStdOutRead = stdoutFds[0];
       fdStdErrRead = stderrFds[0];
-      fdStdInWrite = stderrFds[1];
+      fdStdInWrite = stdinFds[1];
 
       return true;
     }
