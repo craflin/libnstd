@@ -98,6 +98,7 @@ uint32 Process::start(const String& commandLine)
       {
       case _T('"'):
         for(++p; *p;)
+        {
           switch(*p)
           {
           case _T('"'):
@@ -109,9 +110,12 @@ uint32 Process::start(const String& commandLine)
               arg.append(_T('"'));
               p += 2;
             }
-            break;
+            continue;
           default:
             arg.append(*(p++));
+            continue;
+          }
+          break;
         }
         break;
       case _T(' '):
@@ -413,6 +417,7 @@ error:
       {
       case _T('"'):
         for(++p; *p;)
+        {
           switch(*p)
           {
           case _T('"'):
@@ -424,9 +429,12 @@ error:
               arg.append(_T('"'));
               p += 2;
             }
-            break;
+            continue;
           default:
             arg.append(*(p++));
+            continue;
+          }
+          break;
         }
         break;
       case _T(' '):
