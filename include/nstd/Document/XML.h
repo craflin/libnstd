@@ -103,7 +103,7 @@ public:
     {
       if(data->type == elementType)
         return *(const Element*)(data + 1);
-      static const Element element;
+      static const Element element = Element();
       return element;
     }
 

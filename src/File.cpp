@@ -84,7 +84,7 @@ bool File::open(const String& file, uint flags)
     errno = EINVAL;
     return false;
   }
-  int_t oflags;
+  int oflags;
   if((flags & (readFlag | writeFlag)) == (readFlag | writeFlag))
   {
     if(flags & openFlag)
@@ -108,17 +108,17 @@ bool File::open(const String& file, uint flags)
     oflags = O_RDONLY; // do not create if not exists, read mode
 
   fp = (void*)(intptr_t)::open(file, oflags | O_CLOEXEC, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-  if((int_t)(intptr_t)fp == -1)
+  if((int)(intptr_t)fp == -1)
   {
     fp = 0;
     return false;
   }
   if(flags & appendFlag)
   {
-    if(lseek((int_t)(intptr_t)fp, 0, SEEK_END) == -1)
+    if(lseek((int)(intptr_t)fp, 0, SEEK_END) == -1)
     {
       int lastError = errno;
-      ::close((int_t)(intptr_t)fp);
+      ::close((int)(intptr_t)fp);
       fp = 0;
       errno = lastError;
       return false;
@@ -140,7 +140,7 @@ void File::close()
 #else
   if(fp)
   {
-    ::close((int_t)(intptr_t)fp);
+    ::close((int)(intptr_t)fp);
     fp = 0;
   }
 #endif
@@ -164,15 +164,15 @@ int64 File::size()
   return fs.QuadPart;
 #else
   // todo: use lstat?
-  off64_t currentPosition = lseek((int_t)(intptr_t)fp, 0, SEEK_CUR);
+  off64_t currentPosition = lseek((int)(intptr_t)fp, 0, SEEK_CUR);
   if(currentPosition < 0)
     return -1; 
-  off64_t size = lseek((int_t)(intptr_t)fp, 0, SEEK_END);
+  off64_t size = lseek((int)(intptr_t)fp, 0, SEEK_END);
   if(size < 0)
     return -1;
   if(currentPosition != size)
   {
-    currentPosition = lseek((int_t)(intptr_t)fp, currentPosition, SEEK_SET);
+    currentPosition = lseek((int)(intptr_t)fp, currentPosition, SEEK_SET);
     if(currentPosition < 0)
       return -1;
   }
@@ -243,7 +243,7 @@ ssize File::read(void* buffer, usize len)
   return i;
 #endif
 #else
-  return ::read((int_t)(intptr_t)fp, buffer, len);
+  return ::read((int)(intptr_t)fp, buffer, len);
 #endif
 }
 
@@ -289,7 +289,7 @@ ssize File::write(const void* buffer, usize len)
   return i;
 #endif
 #else
-  return ::write((int_t)(intptr_t)fp, buffer, len);
+  return ::write((int)(intptr_t)fp, buffer, len);
 #endif
 }
 
@@ -315,7 +315,7 @@ int64 File::seek(int64 offset, Position start)
 #endif
 #else
   int whence[3] = {SEEK_SET, SEEK_CUR, SEEK_END};
-  return lseek64((int_t)(intptr_t)fp, offset, whence[start]);
+  return lseek64((int)(intptr_t)fp, offset, whence[start]);
 #endif
 }
 
@@ -324,7 +324,7 @@ bool File::flush()
 #ifdef _WIN32
   return FlushFileBuffers((HANDLE)fp) != FALSE;
 #else
-  return fsync((int_t)(intptr_t)fp) == 0;
+  return fsync((int)(intptr_t)fp) == 0;
 #endif
 }
 

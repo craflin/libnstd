@@ -153,7 +153,7 @@ bool JSON::Private::readToken()
                     return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
                   if((w2 & 0xFC00UL) != 0xDC00UL)
                     return pos.pos -= 6,syntaxError(pos, _T("Expected UTF-8 surrogate pair")), false;
-                  Unicode::append((w2 & 0x3FFULL | ((uint32)(w1 & 0x3FFULL) << 10)) + 0x10000UL, value);
+                  Unicode::append(((w2 & 0x3FFULL) | ((uint32)(w1 & 0x3FFULL) << 10)) + 0x10000UL, value);
                 }
                 else
                   Unicode::append(w1, value);
