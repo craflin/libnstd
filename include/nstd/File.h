@@ -93,6 +93,7 @@ public:
   static bool exists(const String& file);
   static bool unlink(const String& file);
   static bool rename(const String& from, const String& to, bool failIfExists = true);
+  static bool copy(const String& src, const String& destination, bool failIfExists = true);
 
   static bool isExecutable(const String& file);
 

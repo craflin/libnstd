@@ -217,6 +217,37 @@ bool File::rename(const String& from, const String& to, bool failIfExists)
 #endif
 }
 
+bool File::copy(const String& src, const String& destination, bool failIfExists)
+{
+#ifdef _WIN32
+  return CopyFile(src, destination, failIfExists) == TRUE;
+#else
+    int fd = ::open(src, O_RDONLY);
+    if(fd == -1)
+      return false;
+    off64_t size = lseek(fd, 0, SEEK_END);
+    if(size < 0)
+      return false;
+    if(lseek(fd, 0, SEEK_SET) < 0)
+      return false;
+    int dest = ::open(desination, failIfExists ? (O_CREAT | O_EXCL | O_CLOEXEC | O_TRUNC) : (O_CREAT | O_CLOEXEC | O_TRUNC), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    if(dest == -1)
+    {
+      ::close(fd);
+      return false;
+    }
+    if(sendfile(dest, fd, 0, size) != size)
+    {
+      ::close(fd);
+      ::close(dest);
+      return false;
+    }
+    ::close(fd);
+    ::close(dest);
+    return true;
+#endif
+}
+
 ssize File::read(void* buffer, usize len)
 {
 #ifdef _WIN32
