@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <cstdio>
+#include <sys/sendfile.h>
 #endif
 
 #include <nstd/File.h>
@@ -230,7 +231,7 @@ bool File::copy(const String& src, const String& destination, bool failIfExists)
       return false;
     if(lseek(fd, 0, SEEK_SET) < 0)
       return false;
-    int dest = ::open(desination, failIfExists ? (O_CREAT | O_EXCL | O_CLOEXEC | O_TRUNC) : (O_CREAT | O_CLOEXEC | O_TRUNC), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+    int dest = ::open(destination, failIfExists ? (O_CREAT | O_EXCL | O_CLOEXEC | O_TRUNC | O_WRONLY) : (O_CREAT | O_CLOEXEC | O_TRUNC | O_WRONLY), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if(dest == -1)
     {
       ::close(fd);
