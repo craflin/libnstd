@@ -1,12 +1,11 @@
 
-#include <nstd/Emitter.h>
-#include <nstd/Receiver.h>
+#include <nstd/Event.h>
 #include <nstd/String.h>
 #include <nstd/Debug.h>
 
-void testReceiver()
+void testEvent()
 {
-  class MyEmitter : public Emitter
+  class MyEmitter : public Event::Source
   {
   public:
     virtual ~MyEmitter() {}
@@ -25,7 +24,7 @@ void testReceiver()
     void mySignal2(String arg, int arg1) {}
   };
 
-  class MyReceiver : public Receiver
+  class MyReceiver : public Event::Listener
   {
   public:
     MyReceiver* check;
@@ -46,12 +45,12 @@ void testReceiver()
     void selfDisconnect(String arg)
     {
       ASSERT(this == check);
-      disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::selfDisconnect);
+      Event::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::selfDisconnect);
     }
     void emitterDelete(String arg)
     {
       ASSERT(this == check);
-      disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::emitterDelete);
+      Event::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::emitterDelete);
       delete emitter;
     }
   };
@@ -62,10 +61,10 @@ void testReceiver()
     MyReceiver receiver;
     receiver.check = &receiver;
 
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Receiver::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     emitter.emitMySignal("test");
     emitter.emitMySignal2("test", 123);
   }
@@ -123,19 +122,19 @@ void testReceiver()
     receiver4.check4 = &receiver4;
     ASSERT((void*)receiver4.check != (void*)receiver4.check4);
 
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot);
     emitter.emitMySignal("test");
     emitter.emitMySignal2("test", 123);
     ASSERT(receiver3.mySlotCalled == 2);
-    Receiver::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
-    Receiver::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
-    Receiver::disconnect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
-    Receiver::disconnect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
+    Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
+    Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
+    Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
+    Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
   }
 
   // test destructor of Receiver
@@ -145,7 +144,7 @@ void testReceiver()
     receiver.check = &receiver;
 
     MyReceiver* receiver2 = new MyReceiver;
-    Receiver::connect(&emitter, &MyEmitter::mySignal, receiver2, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, receiver2, &MyReceiver::mySlot);
     delete receiver2;
 
     emitter.emitMySignal("test2");
@@ -157,7 +156,7 @@ void testReceiver()
     receiver.check = &receiver;
 
     MyEmitter* emitter2 = new MyEmitter;
-    Receiver::connect(emitter2, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::connect(emitter2, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     delete emitter2;
   }
 
@@ -168,8 +167,8 @@ void testReceiver()
     receiver.check = &receiver;
     MyReceiver* receiverSelfDelete = new MyReceiver;
     receiverSelfDelete->check = receiverSelfDelete;
-    Receiver::connect(&emitter, &MyEmitter::mySignal, receiverSelfDelete, &MyReceiver::selfDelete);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, receiverSelfDelete, &MyReceiver::selfDelete);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     emitter.emitMySignal("test2");
     emitter.emitMySignal("test2");
   }
@@ -182,8 +181,8 @@ void testReceiver()
     receiver1.emitter = &emitter;
     MyReceiver receiver2;
     receiver2.check = &receiver2;
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::selfDisconnect);
-    Receiver::connect(&emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::selfDisconnect);
+    Event::connect(&emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
     emitter.emitMySignal("test2");
     emitter.emitMySignal("test2");
   }
@@ -197,16 +196,16 @@ void testReceiver()
     receiver1.emitter = emitter;
     MyReceiver receiver2;
     receiver2.check = &receiver2;
-    Receiver::connect(emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::emitterDelete);
-    Receiver::connect(emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
-    Receiver::connect(&emitter2, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
+    Event::connect(emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::emitterDelete);
+    Event::connect(emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
+    Event::connect(&emitter2, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
     emitter->emitMySignal("test2");
     emitter2.emitMySignal("test2");
   }
 
   // test signal/slot with 8 arguments
   {
-    class MyEmitter8 : public Emitter
+    class MyEmitter8 : public Event::Source
     {
     public:
       virtual ~MyEmitter8() {}
@@ -218,7 +217,7 @@ void testReceiver()
       void mySignal(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8) {}
     };
 
-    class MyReceiver8 : public Receiver
+    class MyReceiver8 : public Event::Listener
     {
     public:
       bool slotCalled;
@@ -229,10 +228,9 @@ void testReceiver()
 
     MyEmitter8 emitter;
     MyReceiver8 receiver;
-    Receiver::connect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
+    Event::connect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
     emitter.emitMySignal();
-    Receiver::disconnect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
+    Event::disconnect(&emitter, &MyEmitter8::mySignal, &receiver, &MyReceiver8::mySlot);
     emitter.emitMySignal();
-
   }
 }
