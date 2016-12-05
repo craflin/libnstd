@@ -18,10 +18,16 @@ void testEvent()
     {
       emit(&MyEmitter::mySignal2, arg0, arg1);
     }
+
+    void emitMySignal3()
+    {
+      emit<MyEmitter, const String&>(&MyEmitter::mySignal3, "test");
+    }
  
   public: // signals
     void mySignal(String arg) {}
     void mySignal2(String arg, int arg1) {}
+    void mySignal3(const String& arg) {}
   };
 
   class MyReceiver : public Event::Listener
@@ -67,6 +73,12 @@ void testEvent()
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     emitter.emitMySignal("test");
     emitter.emitMySignal2("test", 123);
+  }
+
+  // test signal with const String& argument
+  {
+    MyEmitter emitter;
+    emitter.emitMySignal3();
   }
 
   // test slots in derived classes
