@@ -75,6 +75,7 @@ public:
     void remove(Socket& socket);
 
     bool poll(Event& event, int64 timeout);
+    bool interrupt();
 
   private:
     class Private;

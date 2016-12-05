@@ -551,9 +551,27 @@ public:
 #endif
 };
 
-Socket::Poll::Poll() : p(new Private) {}
+Socket::Poll::Poll() : p(new Private)
+{
+#ifdef _WIN32
+  p->events.append(WSACreateEvent());
+#else
+  pollfd& pfd = p->pollfds.append(pollfd());
+  pfd.fd = eventfd(0, EFD_CLOEXEC);
+  pfd.events = POLLIN | POLLRDHUP | POLLHUP;
+  pfd.revents = 0;
+#endif
+}
 
-Socket::Poll::~Poll() {delete p;}
+Socket::Poll::~Poll()
+{
+#ifdef _WIN32
+  WSACloseEvent(p->events[0]);
+#else
+  ::close(p->pollfds[0].fd);
+#endif
+  delete p;
+}
 
 void Socket::Poll::set(Socket& socket, uint events)
 {
@@ -647,7 +665,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
 #ifdef _WIN32
   DWORD count = (DWORD)p->events.size();
   DWORD dw = WSAWaitForMultipleEvents(count, (WSAEVENT*)p->events, FALSE, (DWORD)timeout, FALSE);
-  if(dw >= WSA_WAIT_EVENT_0 && dw < WSA_WAIT_EVENT_0 + count)
+  if(dw >= WSA_WAIT_EVENT_0 + 1 && dw < WSA_WAIT_EVENT_0 + count)
   {
     WSAEVENT wsaEvent = p->events[dw - WSA_WAIT_EVENT_0];
     HashMap<WSAEVENT, Private::SocketInfo*>::Iterator it = p->eventToSocket.find(wsaEvent);
@@ -668,9 +686,11 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
   }
   else
   {
+    if(dw == WSA_WAIT_EVENT_0)
+      WSAResetEvent(p->events[0]);
     event.flags = 0;
     event.socket = 0;
-    return true; // timeout
+    return true; // timeout or interrupt
   }
 #else
   if(p->selectedSockets.isEmpty())
@@ -678,7 +698,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
     int count = ::poll(p->pollfds, p->pollfds.size(), timeout);
     if(count > 0)
     {
-      for(pollfd* i = p->pollfds, * end = i + p->pollfds.size(); i < end; ++i)
+      for(pollfd* i = p->pollfds + 1, * end = i + p->pollfds.size(); i < end; ++i)
       {
         if(i->revents)
         {
@@ -704,9 +724,15 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
 
     if(p->selectedSockets.isEmpty())
     {
+      if(p->pollfds[0].revents)
+      {
+        uint64 val;
+        read(p->pollfds[0].fd, &val, sizeof(val));
+        p->pollfds[0].revents = 0;
+      }
       event.flags = 0;
       event.socket = 0;
-      return true; // timeout
+      return true; // timeout or interrupt
     }
   }
 
@@ -715,5 +741,15 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
   event.flags = *it;
   p->selectedSockets.remove(it);
   return true;
+#endif
+}
+
+bool Socket::Poll::interrupt()
+{
+#ifdef _WIN32
+  return WSASetEvent(p->events[0]) == TRUE;
+#else
+  uint64 val = 1;
+  return write(p->pollfds[0].fd, &val, sizeof(val)) != -1;
 #endif
 }
