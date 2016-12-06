@@ -12,42 +12,51 @@ void testServer()
     int userData;
     Server::Handle* timer = server.createTimer(10, &userData);
     ASSERT(timer);
-    Server::Event event;
-    for(int i = 0; i < 3; ++i)
+    class TimerListener : public Event::Listener
     {
-      ASSERT(server.poll(event));
-      ASSERT(event.type == Server::Event::timerType);
-      ASSERT(event.userData == &userData);
-    }
+    public:
+      TimerListener(void* userData, Server* server) : userData(userData), server(server), activations(0) {}
+      void handleTimerActivated(Server::Handle& handle, void* userData)
+      {
+        ASSERT(userData == this->userData);
+        if(++activations == 3)
+          server->interrupt();
+      }
+      void* userData;
+      Server* server;
+      int activations;
+    } timerListener(&userData, &server);
+    Event::connect(&server, &Server::timerActivated, &timerListener, &TimerListener::handleTimerActivated);
+    ASSERT(server.wait());
+    ASSERT(timerListener.activations == 3);
     server.close(*timer);
   }
 
   // test connect fail
   {
     Server server;
-    ASSERT(server.connect(Socket::loopbackAddr, 7266, 0));
-    for(Server::Event event; server.poll(event);)
+    class ClientListener : public Event::Listener
     {
-      switch(event.type)
+    public:
+      ClientListener(Server* server) : activations(0), server(server) {}
+      void handleClientFailed(Server::Handle& handle, void* userData)
       {
-      case Server::Event::failType:
-        goto done;
-      default:
-        break;
+        ++activations;
+        server->interrupt();
       }
-    } done: ;
+      int activations;
+      Server* server;
+    } clientListener(&server);
+    Event::connect(&server, &Server::clientFailed, &clientListener, &ClientListener::handleClientFailed);
+    ASSERT(server.connect(Socket::loopbackAddr, 7266, 0));
+    ASSERT(server.wait());
+    ASSERT(clientListener.activations == 1);
   }
 
   // test listen, connect, read, write and close
   {
     Server server;
-    byte testData[100];
-    byte receiveBuffer[231];
-    Server::Handle* client1;
-    Server::Handle* client2;
     ASSERT(server.listen(7266, 0));
-    client1 = server.connect(Socket::loopbackAddr, 7266, &client1);
-    ASSERT(client1);
     enum State
     {
       connecting1,
@@ -56,36 +65,39 @@ void testServer()
       sending2,
       closing1,
       closing2,
-    } state = connecting1;
-    for(Server::Event event; server.poll(event);)
+    };
+    class ServerListener : public Event::Listener
     {
-      switch(event.type)
+    public:
+      ServerListener(Server& server) : server(server), state(connecting1) {}
+      void handleClientAccepted(Server::Handle& handle, void* userData)
       {
-      case Server::Event::acceptType:
         ASSERT(state == connecting1 || state == connecting2);
-        client2 = server.accept(*event.handle, &client2);
+        client2 = server.accept(handle, &client2);
         ASSERT(client2);
         if(state == connecting1)
           state = connecting2;
         else
           state = sending1;
-        break;
-      case Server::Event::openType:
+      }
+      void handleClientOpened(Server::Handle& handle, void* userData)
+      {
         ASSERT(state == connecting1 || state == connecting2);
-        ASSERT(event.handle == client1);
-        ASSERT(event.userData == &client1);
+        ASSERT(&handle == client1);
+        ASSERT(userData == &client1);
         ASSERT(server.write(*client1, testData, sizeof(testData)));
         if(state == connecting1)
           state = connecting2;
         else
           state = sending1;
-        break;
-      case Server::Event::readType:
+      }
+      void handleClientRead(Server::Handle& handle, void* userData)
+      {
         ASSERT(state == sending1 || state == sending2 || state == closing1);
         if(state == sending1)
         {
-          ASSERT(event.handle == client2);
-          ASSERT(event.userData == &client2);
+          ASSERT(&handle == client2);
+          ASSERT(userData == &client2);
           usize size;
           ASSERT(server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
           ASSERT(size == sizeof(testData));
@@ -94,8 +106,8 @@ void testServer()
         }
         else if(state == sending2)
         {
-          ASSERT(event.handle == client1);
-          ASSERT(event.userData == &client1);
+          ASSERT(&handle == client1);
+          ASSERT(userData == &client1);
           usize size;
           ASSERT(server.read(*client1, receiveBuffer, sizeof(receiveBuffer), size));
           ASSERT(size == sizeof(testData));
@@ -104,21 +116,33 @@ void testServer()
         }
         else
         {
-          ASSERT(event.handle == client2);
-          ASSERT(event.userData == &client2);
+          ASSERT(&handle == client2);
+          ASSERT(userData == &client2);
           usize size;
           ASSERT(!server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
           state = closing2;
         }
-        break;
-      case Server::Event::closeType:
-        ASSERT(state == closing2);
-        ASSERT(event.handle == client2);
-        ASSERT(event.userData == &client2);
-        goto done2;
-      default:
-        ASSERT(false);
       }
-    } done2:;
+      void handleClientClosed(Server::Handle& handle, void* userData)
+      {
+        ASSERT(state == closing2);
+        ASSERT(&handle == client2);
+        ASSERT(userData == &client2);
+        server.interrupt();
+      }
+      Server& server;
+      State state;
+      byte testData[100];
+      byte receiveBuffer[231];
+      Server::Handle* client1;
+      Server::Handle* client2;
+    } serverListener(server);
+    Event::connect(&server, &Server::clientAccpeted, &serverListener, &ServerListener::handleClientAccepted);
+    Event::connect(&server, &Server::clientOpened, &serverListener, &ServerListener::handleClientOpened);
+    Event::connect(&server, &Server::clientRead, &serverListener, &ServerListener::handleClientRead);
+    Event::connect(&server, &Server::clientClosed, &serverListener, &ServerListener::handleClientClosed);
+    serverListener.client1 = server.connect(Socket::loopbackAddr, 7266, &serverListener.client1);
+    ASSERT(serverListener.client1);
+    ASSERT(server.wait());
   }
 }
