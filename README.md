@@ -41,6 +41,9 @@ as possible. Right now it consists of following headers:
 * Sockets (optional)
     * [Socket.h](include/nstd/Socket/Socket.h): An abstraction layer of native sockets.
     * [Server.h](include/nstd/Socket/Server.h): An asynchronous TCP/IP server multiplexer.
+* Documents (optional)
+    * [JSON.h](include/nstd/Document/JSON.h): A JSON document parser.
+    * [XML.h](include/nstd/Document/XML.h): A basic XML document parser.
 
 Design Principles
 -----------------
