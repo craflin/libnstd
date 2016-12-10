@@ -20,6 +20,7 @@
 #include <errno.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <sys/eventfd.h>
 #include <cstring>
 #endif
 
