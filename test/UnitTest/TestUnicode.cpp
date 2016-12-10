@@ -15,7 +15,6 @@ void testUnicode()
     str.clear();
     ASSERT(Unicode::append(i, str));
     ASSERT(Unicode::isValid(str));
-    uint32 xxx = Unicode::fromString(str);
     ASSERT(Unicode::fromString(str) == i);
   }
 }
