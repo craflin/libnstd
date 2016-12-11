@@ -74,6 +74,8 @@ public:
     void set(Socket& socket, uint flags);
     void remove(Socket& socket);
 
+    void clear();
+
     bool poll(Event& event, int64 timeout);
     bool interrupt();
 

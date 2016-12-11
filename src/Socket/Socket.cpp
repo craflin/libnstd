@@ -574,6 +574,22 @@ Socket::Poll::~Poll()
   delete p;
 }
 
+void Socket::Poll::clear()
+{
+#ifdef _WIN32
+  p->events.resize(1);
+  for(HashMap<Socket*, Private::SocketInfo>::Iterator i = p->sockets.begin(), end = p->sockets.end(); i != end; ++i)
+    WSACloseEvent(i->event);
+  p->sockets.clear();
+  p->eventToSocket.clear();
+#else
+  p->pollfds.resize(1);
+  p->sockets.clear();
+  p->fdToSocket.clear();
+  p->selectedSockets.clear();
+#endif
+}
+
 void Socket::Poll::set(Socket& socket, uint events)
 {
   HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);

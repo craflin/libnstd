@@ -57,6 +57,8 @@ public:
   void setSendBufferSize(int size);
   void setReceiveBufferSize(int size);
 
+  void clear();
+
 private:
   Server(const Server&);
   Server& operator=(const Server&);

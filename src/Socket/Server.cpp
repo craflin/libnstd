@@ -78,6 +78,17 @@ public:
     queuedTimers.insert(0, 0); // add default timeout timer
   }
 
+  void clear()
+  {
+    listeners.clear();
+    clients.clear();
+    timers.clear();
+    queuedTimers.clear();
+    sockets.clear();
+    closingHandles.clear();
+    interrupted = false;
+  }
+
   Handle* listen(uint32 addr, uint16 port, void* userData)
   {
     Socket socket;
@@ -478,3 +489,4 @@ void Server::setKeepAlive(bool enable) {return p->setKeepAlive(enable);}
 void Server::setNoDelay(bool enable) {return p->setNoDelay(enable);}
 void Server::setSendBufferSize(int size) {return p->setSendBufferSize(size);}
 void Server::setReceiveBufferSize(int size) {return p->setReceiveBufferSize(size);}
+void Server::clear() {return p->clear();}
