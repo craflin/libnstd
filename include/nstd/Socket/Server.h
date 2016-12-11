@@ -47,6 +47,7 @@ public:
   void close(Handle& handle);
 
   bool poll(Event& event);
+  bool interrupt();
 
   void suspend(Handle& handle);
   void resume(Handle& handle);

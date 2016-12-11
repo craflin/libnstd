@@ -70,8 +70,10 @@ private:
   int sendBufferSize;
   int receiveBufferSize;
 
+  bool interrupted;
+
 public:
-  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0)
+  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0), interrupted(false)
   {
     queuedTimers.insert(0, 0); // add default timeout timer
   }
@@ -335,7 +337,14 @@ public:
         break;
 
       if(!pollEvent.flags)
+      {
+        if(interrupted)
+        {
+          interrupted = false;
+          return true;
+        }
         continue; // timeout
+      }
       event.handle = ((HandleSocket*)pollEvent.socket)->handle;
       event.userData = event.handle->userData;
       if(pollEvent.flags & Socket::Poll::readFlag)
