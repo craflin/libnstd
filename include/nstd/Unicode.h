@@ -108,7 +108,7 @@ public:
       return 0;
 #ifdef _UNICODE
    if((*ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
-     return *(const uint16_t*)ch;
+     return *(const uint16*)ch;
     if((*ch & 0xFC00ULL) == 0xD800ULL) // ch <= 0xDBFF
     {
      if(len < 2)
@@ -116,7 +116,7 @@ public:
       return (ch[1] & 0x3FFULL | ((uint32)(*ch & 0x3FFULL) << 10)) + 0x10000UL;
     }
     else
-      return *(const uint16_t*)ch;
+      return *(const uint16*)ch;
 #else
     if((*(const uchar*)ch & 0x80) == 0) // ch < 0x80
       return *(const uchar*)ch;
