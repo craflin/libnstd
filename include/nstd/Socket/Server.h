@@ -1,23 +1,31 @@
 
 #pragma once
 
-#include <nstd/Event.h>
+#include <nstd/Base.h>
 
 class Socket;
 
-class Server : public Event::Source
+class Server
 {
 public:
   struct Handle;
 
-public: // events
-  void clientFailed(Handle& handle, void* userData) {}
-  void clientOpened(Handle& handle, void* userData) {}
-  void clientRead(Handle& handle, void* userData) {}
-  void clientWrote(Handle& handle, void* userData) {}
-  void clientClosed(Handle& handle, void* userData) {}
-  void clientAccpeted(Handle& handle, void* userData) {}
-  void timerActivated(Handle& handle, void* userData) {}
+  struct Event
+  {
+    enum Type
+    {
+      failType,
+      openType,
+      readType,
+      writeType,
+      closeType,
+      acceptType,
+      timerType,
+    };
+    Type type;
+    Handle* handle;
+    void* userData;
+  };
 
 public:
   Server();
@@ -38,8 +46,7 @@ public:
 
   void close(Handle& handle);
 
-  bool wait();
-  bool interrupt();
+  bool poll(Event& event);
 
   void suspend(Handle& handle);
   void resume(Handle& handle);

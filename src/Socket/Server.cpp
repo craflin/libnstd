@@ -58,7 +58,6 @@ public:
   };
 
 private:
-  Server& o;
   Pool<Listener> listeners;
   Pool<Client> clients;
   Pool<Timer> timers;
@@ -71,10 +70,8 @@ private:
   int sendBufferSize;
   int receiveBufferSize;
 
-  bool interrupted;
-
 public:
-  Private(Server& o) : o(o), keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0), interrupted(false)
+  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0)
   {
     queuedTimers.insert(0, 0); // add default timeout timer
   }
@@ -279,9 +276,8 @@ public:
     }
   }
 
-  bool wait()
+  bool poll(Event& event)
   {
-  start:
     while(!closingHandles.isEmpty())
     {
       Handle& handle = *closingHandles.front();
@@ -292,10 +288,12 @@ public:
         if(handle.state == Handle::closingState)
         {
           Client& client = (Client&)handle;
+          event.handle = &client;
+          event.userData = client.userData;
+          event.type = Event::closeType;
           client.state = Client::closedState;
           sockets.remove(client.socket);
-          o.emit<Server, Handle&, void*>(&Server::clientClosed, client, client.userData);
-          goto start;
+          return true;
         }
         break;
       case Handle::timerType:
@@ -322,10 +320,12 @@ public:
         queuedTimers.removeFront();
         if(timer) // user timer
         {
+          event.handle = timer;
+          event.userData = timer->userData;
+          event.type = Event::timerType;
           timer->state = Handle::suspendedState;
           closingHandles.append(timer);
-          o.emit<Server, Handle&, void*>(&Server::timerActivated, *timer, timer->userData);
-          goto start;
+          return true;
         }
         else
           queuedTimers.insert(now + 300 * 1000, 0); // keep "default timeout" timer
@@ -335,23 +335,17 @@ public:
         break;
 
       if(!pollEvent.flags)
-      {
-        if(interrupted)
-        {
-          interrupted = false;
-          return true;
-        }
         continue; // timeout
-      }
-      Handle* handle = ((HandleSocket*)pollEvent.socket)->handle;
+      event.handle = ((HandleSocket*)pollEvent.socket)->handle;
+      event.userData = event.handle->userData;
       if(pollEvent.flags & Socket::Poll::readFlag)
       {
-        o.emit<Server, Handle&, void*>(&Server::clientRead, *handle, handle->userData);
-        goto start;
+        event.type = Event::readType;
+        return true;
       }
       else if(pollEvent.flags & Socket::Poll::writeFlag)
       {
-        Client& client = *(Client*)handle;
+        Client& client = (Client&)*event.handle;
         if(!client.sendBuffer.isEmpty())
         {
           ssize sent = client.socket.send(client.sendBuffer, client.sendBuffer.size());
@@ -363,10 +357,10 @@ public:
             // no break
           case 0:
             client.sendBuffer.free();
+            event.type = Event::closeType;
             client.state = Client::closedState;
             sockets.remove(client.socket);
-            o.emit<Server, Handle&, void*>(&Server::clientClosed, *handle, handle->userData);
-            goto start;
+            return true;
           default:
             break;
           }
@@ -375,32 +369,31 @@ public:
         if(client.sendBuffer.isEmpty())
         {
           client.sendBuffer.free();
+          event.type = Event::writeType;
           if(client.state != Client::suspendedState)
             sockets.set(client.socket, Socket::Poll::readFlag);
           else
             sockets.remove(client.socket);
-          o.emit<Server, Handle&, void*>(&Server::clientWrote, *handle, handle->userData);
-          goto start;
+          return true;
         }
         continue;
       }
       else if(pollEvent.flags & Socket::Poll::acceptFlag)
       {
-        o.emit<Server, Handle&, void*>(&Server::clientAccpeted, *handle, handle->userData);
-        goto start;
+        event.type = Event::acceptType;
+        return true;
       }
       else if(pollEvent.flags & Socket::Poll::connectFlag)
       {
-        Client& client = *(Client*)handle;
+        Client& client = *(Client*)event.handle;
         Socket& socket = client.socket;
         int error = socket.getAndResetErrorStatus();
         if(error)
         {
           Error::setLastError((uint)error);
+          event.type = Event::failType;
           client.state = Client::closedState;
           sockets.remove(client.socket);
-          o.emit<Server, Handle&, void*>(&Server::clientFailed, *handle, handle->userData);
-          goto start;
         }
         else
         {
@@ -409,28 +402,21 @@ public:
             (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
             (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
           {
+            event.type = Event::failType;
             client.state = Client::closedState;
             sockets.remove(client.socket);
-            o.emit<Server, Handle&, void*>(&Server::clientFailed, *handle, handle->userData);
-            goto start;
           }
           else
           {
             client.state = Client::connectedState;
+            event.type = Event::openType;
             sockets.set(*pollEvent.socket, Socket::Poll::readFlag);
-            o.emit<Server, Handle&, void*>(&Server::clientOpened, *handle, handle->userData);
-            goto start;
           }
         }
+        return true;
       }
     }
     return false;
-  }
-
-  bool interrupt()
-  {
-    interrupted = true;
-    return sockets.interrupt();
   }
 
   void suspend(Handle& handle)
@@ -463,7 +449,7 @@ public:
   void setReceiveBufferSize(int size) {receiveBufferSize = size;}
 };
 
-Server::Server() : p(new Private(*this)) {}
+Server::Server() : p(new Private) {}
 Server::~Server() {delete p;}
 Server::Handle* Server::listen(uint16 port, void* userData) {return p->listen(Socket::anyAddr, port, userData);}
 Server::Handle* Server::listen(uint32 addr, uint16 port, void* userData) {return p->listen(addr, port, userData);}
@@ -476,8 +462,7 @@ void* Server::getUserData(Handle& handle) {return handle.userData;}
 bool Server::write(Handle& handle, const byte* data, usize size, usize* postponed) {return p->write(handle, data, size, postponed);}
 bool Server::read(Handle& handle, byte* buffer, usize maxSize, usize& size) {return p->read(handle, buffer, maxSize, size);}
 void Server::close(Handle& handle) {return p->close(handle);}
-bool Server::wait() {return p->wait();}
-bool Server::interrupt() {return p->interrupt();}
+bool Server::poll(Event& event) {return p->poll(event);}
 void Server::suspend(Handle& handle) {return p->suspend(handle);}
 void Server::resume(Handle& handle) {return p->resume(handle);}
 void Server::setKeepAlive(bool enable) {return p->setKeepAlive(enable);}
