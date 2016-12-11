@@ -26,21 +26,21 @@ void testString()
   }
 
   // test comparison
-  ASSERT(String("123").compare("123") == 0);
-  ASSERT(String("123").compare("xxx") != 0);
-  ASSERT(String("1234").compare("123", 3) == 0);
-  ASSERT(String("1234").compare("xxx", 3) != 0);
-  ASSERT(String("123").compare("1234", 3) == 0);
-  ASSERT(String("xxx").compare("1234", 3) != 0);
+  ASSERT(String(_T("123")).compare(_T("123")) == 0);
+  ASSERT(String(_T("123")).compare(_T("xxx")) != 0);
+  ASSERT(String(_T("1234")).compare(_T("123"), 3) == 0);
+  ASSERT(String(_T("1234")).compare(_T("xxx"), 3) != 0);
+  ASSERT(String(_T("123")).compare(_T("1234"), 3) == 0);
+  ASSERT(String(_T("xxx")).compare(_T("1234"), 3) != 0);
 
 
   // test ignore case comparison
-  ASSERT(String("abc").compareIgnoreCase("ABC") == 0);
-  ASSERT(String("abc").compareIgnoreCase("xxx") != 0);
-  ASSERT(String("abcd").compareIgnoreCase("ABC", 3) == 0);
-  ASSERT(String("abcd").compareIgnoreCase("xxx", 3) != 0);
-  ASSERT(String("abc").compareIgnoreCase("ABCD", 3) == 0);
-  ASSERT(String("xxx").compareIgnoreCase("ABCD", 3) != 0);
+  ASSERT(String(_T("abc")).compareIgnoreCase(_T("ABC")) == 0);
+  ASSERT(String(_T("abc")).compareIgnoreCase(_T("xxx")) != 0);
+  ASSERT(String(_T("abcd")).compareIgnoreCase(_T("ABC"), 3) == 0);
+  ASSERT(String(_T("abcd")).compareIgnoreCase(_T("xxx"), 3) != 0);
+  ASSERT(String(_T("abc")).compareIgnoreCase(_T("ABCD"), 3) == 0);
+  ASSERT(String(_T("xxx")).compareIgnoreCase(_T("ABCD"), 3) != 0);
 
   // test self assign
   String blupp;

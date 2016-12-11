@@ -21,7 +21,7 @@ void testEvent()
 
     void emitMySignal3()
     {
-      emit<MyEmitter, const String&>(&MyEmitter::mySignal3, "test");
+      emit<MyEmitter, const String&>(&MyEmitter::mySignal3, _T("test"));
     }
  
   public: // signals
@@ -71,8 +71,8 @@ void testEvent()
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    emitter.emitMySignal("test");
-    emitter.emitMySignal2("test", 123);
+    emitter.emitMySignal(_T("test"));
+    emitter.emitMySignal2(_T("test"), 123);
   }
 
   // test signal with const String& argument
@@ -140,8 +140,8 @@ void testEvent()
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot);
-    emitter.emitMySignal("test");
-    emitter.emitMySignal2("test", 123);
+    emitter.emitMySignal(_T("test"));
+    emitter.emitMySignal2(_T("test"), 123);
     ASSERT(receiver3.mySlotCalled == 2);
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
@@ -159,7 +159,7 @@ void testEvent()
     Event::connect(&emitter, &MyEmitter::mySignal, receiver2, &MyReceiver::mySlot);
     delete receiver2;
 
-    emitter.emitMySignal("test2");
+    emitter.emitMySignal(_T("test2"));
   }
 
   // test destructor of Emitter
@@ -181,8 +181,8 @@ void testEvent()
     receiverSelfDelete->check = receiverSelfDelete;
     Event::connect(&emitter, &MyEmitter::mySignal, receiverSelfDelete, &MyReceiver::selfDelete);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    emitter.emitMySignal("test2");
-    emitter.emitMySignal("test2");
+    emitter.emitMySignal(_T("test2"));
+    emitter.emitMySignal(_T("test2"));
   }
 
   // test disconnect of receiver in slot
@@ -195,8 +195,8 @@ void testEvent()
     receiver2.check = &receiver2;
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::selfDisconnect);
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
-    emitter.emitMySignal("test2");
-    emitter.emitMySignal("test2");
+    emitter.emitMySignal(_T("test2"));
+    emitter.emitMySignal(_T("test2"));
   }
 
   // test delete of emitter in slot
@@ -211,8 +211,8 @@ void testEvent()
     Event::connect(emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::emitterDelete);
     Event::connect(emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
     Event::connect(&emitter2, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
-    emitter->emitMySignal("test2");
-    emitter2.emitMySignal("test2");
+    emitter->emitMySignal(_T("test2"));
+    emitter2.emitMySignal(_T("test2"));
   }
 
   // test signal/slot with 8 arguments
