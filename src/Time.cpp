@@ -170,7 +170,7 @@ int64 Time::time()
 int64 Time::ticks()
 {
 #ifdef _WIN32
-  return GetTickCount();
+  return GetTickCount64();
 #else
   struct timespec ts;
   clock_gettime(CLOCK_MONOTONIC, &ts);
