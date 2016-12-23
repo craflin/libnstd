@@ -86,6 +86,17 @@ void testAtomic()
   ASSERT(Atomic::increment(uint64) == ((0xffffffffULL << 32) | 0xfffffff1ULL));
   ASSERT(Atomic::decrement(uint64) == ((0xffffffffULL << 32) | 0xfffffff0ULL));
 #endif
+  
+  size = 0;
+  ASSERT(Atomic::swap(size, 1) == 0);
+  ASSERT(Atomic::swap(size, 2) == 1);
+  int32 = 0;
+  ASSERT(Atomic::swap(int32, 1) == 0);
+  ASSERT(Atomic::swap(int32, -1) == 1);
+  ASSERT(Atomic::swap(int32, 2) == -1);
+  uint32 = 0;
+  ASSERT(Atomic::swap(uint32, 1) == 0);
+  ASSERT(Atomic::swap(uint32, 2) == 1);
 }
 
 void testHashSet()

@@ -221,7 +221,7 @@ public:
 #endif
   }
 
-  static inline int32 swap(int32 volatile& var,  int32 val)
+  static inline int32 swap(int32 volatile& var, int32 val)
   {
 #ifdef _MSC_VER
     return (int32)_InterlockedExchange((long volatile*)&var, (long)val);
@@ -230,7 +230,7 @@ public:
 #endif
   }
 
-  static inline uint32 swap(uint32 volatile& var,  uint32 val)
+  static inline uint32 swap(uint32 volatile& var, uint32 val)
   {
 #ifdef _MSC_VER
     return (uint32)_InterlockedExchange((long volatile*)&var, (long)val);
