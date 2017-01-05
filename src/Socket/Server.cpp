@@ -1,7 +1,7 @@
 
 #include <nstd/Socket/Socket.h>
 #include <nstd/Socket/Server.h>
-#include <nstd/Pool.h>
+#include <nstd/PoolList.h>
 #include <nstd/Error.h>
 #include <nstd/Buffer.h>
 #include <nstd/List.h>
@@ -58,9 +58,9 @@ public:
   };
 
 private:
-  Pool<Listener> listeners;
-  Pool<Client> clients;
-  Pool<Timer> timers;
+  PoolList<Listener> listeners;
+  PoolList<Client> clients;
+  PoolList<Timer> timers;
   MultiMap<int64, Timer*> queuedTimers;
   Socket::Poll sockets;
   List<Handle*> closingHandles;

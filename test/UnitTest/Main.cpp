@@ -27,7 +27,7 @@ void testThread();
 void testSempahore();
 void testDirectory();
 void testMutex();
-void testPool();
+void testPoolList();
 void testServer();
 void testMultiMap();
 void testError();
@@ -763,7 +763,7 @@ int main(int argc, char* argv[])
   testTime();
   testProcess();
   testMap();
-  testPool();
+  testPoolList();
   testMultiMap();
   testError();
   testVariant();

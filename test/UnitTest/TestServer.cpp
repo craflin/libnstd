@@ -1,6 +1,5 @@
 
 #include <nstd/Debug.h>
-#include <nstd/Pool.h>
 #include <nstd/Socket/Server.h>
 #include <nstd/Socket/Socket.h>
 

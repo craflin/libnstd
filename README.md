@@ -21,6 +21,7 @@ as possible. Right now it consists of following headers:
     * [HashSet.h](include/nstd/HashSet.h):  A container for unique elements based on a hash set with fixed table size.
     * [Map.h](include/nstd/Map.h), MultiMap.h: An associative container based on a balanced tree.
     * [Array.h](include/nstd/Array.h): A dynamically growing container based on an array.
+    * [PoolList.h](include/nstd/PoolList.h): An iterable pool for non-copyable objects.
 * Concurrency
     * [Thread.h](include/nstd/Thread.h): Abstraction layer of native multi-threading features.
     * [Atomic.h](include/nstd/Atomic.h): Abstraction layer of atomic functions.

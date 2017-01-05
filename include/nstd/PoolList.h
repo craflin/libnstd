@@ -3,7 +3,7 @@
 
 #include <nstd/Memory.h>
 
-template<typename T> class Pool
+template<typename T> class PoolList
 {
 private:
   struct Item;
@@ -28,16 +28,16 @@ public:
     
     Iterator(Item* item) : item(item) {}
 
-    friend class Pool;
+    friend class PoolList;
   };
 
-  Pool() : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
+  PoolList() : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  Pool(const Pool& other) : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
+  PoolList(const PoolList& other) : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
@@ -45,7 +45,7 @@ public:
       append(i->value);
   }
 
-  ~Pool()
+  ~PoolList()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       i->~Item();
@@ -56,7 +56,7 @@ public:
     }
   }
 
-  Pool& operator=(const Pool& other)
+  PoolList& operator=(const PoolList& other)
   {
     clear();
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
@@ -79,7 +79,7 @@ public:
   T& prepend() {return insert(_begin).item->value;}
   T& append() {return insert(_end).item->value;}
 
-  void append(const Pool& other)
+  void append(const PoolList& other)
   {
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
       insert(_end, i->value);
@@ -98,7 +98,7 @@ public:
     _size = 0;
   }
 
-  void swap(Pool& other)
+  void swap(PoolList& other)
   {
     Item* tmpFirst = _begin.item;
     Item* tmpLast = endItem.prev;

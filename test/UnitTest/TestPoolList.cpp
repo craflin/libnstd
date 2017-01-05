@@ -1,8 +1,8 @@
 
 #include <nstd/Debug.h>
-#include <nstd/Pool.h>
+#include <nstd/PoolList.h>
 
-void testPool()
+void testPoolList()
 {
   struct TestObject
   {
@@ -10,7 +10,7 @@ void testPool()
   };
 
   // test append and remove
-  Pool<TestObject> pool;
+  PoolList<TestObject> pool;
   TestObject& obj = pool.append();
   ASSERT(pool.size() == 1);
   pool.remove(obj);
@@ -29,7 +29,7 @@ void testPool()
   pool.clear();
   pool.append();
   pool.append();
-  Pool<TestObject> pool2;
+  PoolList<TestObject> pool2;
   pool.swap(pool2);
   ASSERT(pool.size() == 0);
   ASSERT(pool2.size() == 2);
