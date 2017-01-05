@@ -12,10 +12,10 @@ public:
   {
   public:
     Iterator() : item(0) {}
-    const T& operator*() const {return item->key;}
-    T& operator*() {return item->key;}
-    const T* operator->() const {return &item->key;}
-    T* operator->() {return &item->key;}
+    const T& operator*() const {return item->value;}
+    T& operator*() {return item->value;}
+    const T* operator->() const {return &item->value;}
+    T* operator->() {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
     Iterator operator++() const {return item->next;}
@@ -42,7 +42,7 @@ public:
     endItem.prev = 0;
     endItem.next = 0;
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      append(i->key);
+      append(i->value);
   }
 
   ~Pool()
@@ -60,15 +60,15 @@ public:
   {
     clear();
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      append(i->key);
+      append(i->value);
     return *this;
   }
 
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
-  const T& front() const {return _begin.item->key;}
-  const T& back() const {return _end.item->prev->key;}
+  const T& front() const {return _begin.item->value;}
+  const T& back() const {return _end.item->prev->value;}
 
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
@@ -76,13 +76,13 @@ public:
   usize size() const {return _size;}
   bool isEmpty() const {return endItem.prev == 0;}
 
-  T& prepend() {return insert(_begin).item->key;}
-  T& append() {return insert(_end).item->key;}
+  T& prepend() {return insert(_begin).item->value;}
+  T& append() {return insert(_end).item->value;}
 
   void append(const Pool& other)
   {
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      insert(_end, i->key);
+      insert(_end, i->value);
   }
 
   void clear()
@@ -132,7 +132,7 @@ public:
   Iterator insert(const Iterator& position)
   {
     Item* item;
-    if (freeItem)
+    if(freeItem)
     {
       item = freeItem;
       freeItem = freeItem->prev;
@@ -140,12 +140,12 @@ public:
     else
     {
       usize allocatedSize;
-      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock)+sizeof(Item), allocatedSize);
+      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
       itemBlock->next = blocks;
       blocks = itemBlock;
       item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
 
-      for (Item* i = item + 1, *end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
         i->prev = freeItem;
         freeItem = i;
@@ -153,13 +153,13 @@ public:
     }
 
 #ifdef VERIFY
-    VERIFY(new(item)Item == item);
+    VERIFY(new(item) Item == item);
 #else
-    new(item)Item;
+    new(item) Item;
 #endif
 
     Item* insertPos = position.item;
-    if ((item->prev = insertPos->prev))
+    if((item->prev = insertPos->prev))
       insertPos->prev->next = item;
     else
       _begin.item = item;
@@ -173,13 +173,13 @@ public:
   Iterator remove(const Iterator& it)
   {
     Item* item = it.item;
-    remove(item->key);
+    remove(item->value);
     return item->next;
   }
 
-  void remove(const T& key)
+  void remove(const T& value)
   {
-    Item* item = (Item*)&key;
+    Item* item = (Item*)&value;
 
     if(!item->prev)
       (_begin.item = item->next)->prev = 0;
@@ -196,11 +196,11 @@ public:
 private:
   struct Item
   {
-    T key;
+    T value;
     Item* prev;
     Item* next;
 
-    Item() : key() {}
+    Item() : value() {}
   };
   struct ItemBlock
   {
