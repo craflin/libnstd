@@ -38,14 +38,6 @@ public:
     endItem.next = 0;
   }
 
-  PoolMap(const PoolMap& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
-  {
-    endItem.prev = 0;
-    endItem.next = 0;
-    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      append(i->key, i->value);
-  }
-
   explicit PoolMap(usize capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
@@ -270,4 +262,7 @@ private:
   Item endItem;
   Item* freeItem;
   ItemBlock* blocks;
+
+  PoolMap(const PoolMap&);
+  PoolMap& operator=(const PoolMap&);
 };

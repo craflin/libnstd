@@ -37,14 +37,6 @@ public:
     endItem.next = 0;
   }
 
-  PoolList(const PoolList& other) : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
-  {
-    endItem.prev = 0;
-    endItem.next = 0;
-    for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      append(i->value);
-  }
-
   ~PoolList()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
@@ -202,4 +194,7 @@ private:
   Item endItem;
   Item* freeItem;
   ItemBlock* blocks;
+
+  PoolList(const PoolList&);
+  PoolList& operator=(const PoolList&);
 };
