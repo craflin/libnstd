@@ -3,7 +3,7 @@
 
 #include <nstd/Memory.h>
 
-template<typename T> class PoolList
+template<typename T, typename V> class PoolMap
 {
 private:
   struct Item;
@@ -12,10 +12,11 @@ public:
   {
   public:
     Iterator() : item(0) {}
-    const T& operator*() const {return item->value;}
-    T& operator*() {return item->value;}
-    const T* operator->() const {return &item->value;}
-    T* operator->() {return &item->value;}
+    const T& key() const {return item->key;}
+    const V& operator*() const {return item->value;}
+    V& operator*() {return item->value;}
+    const V* operator->() const {return &item->value;}
+    V* operator->() {return &item->value;}
     const Iterator& operator++() {item = item->next; return *this;}
     const Iterator& operator--() {item = item->prev; return *this;}
     Iterator operator++() const {return item->next;}
@@ -28,25 +29,34 @@ public:
     
     Iterator(Item* item) : item(item) {}
 
-    friend class PoolList;
+    friend class PoolMap;
   };
 
-  PoolList() : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
+  PoolMap() : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
   }
 
-  PoolList(const PoolList& other) : _end(&endItem), _begin(&endItem), _size(0), freeItem(0), blocks(0)
+  PoolMap(const PoolMap& other) : _end(&endItem), _begin(&endItem), _size(0), capacity(500), data(0), freeItem(0), blocks(0)
   {
     endItem.prev = 0;
     endItem.next = 0;
     for(const Item* i = other._begin.item, * end = &other.endItem; i != end; i = i->next)
-      append(i->value);
+      append(i->key, i->value);
   }
 
-  ~PoolList()
+  explicit PoolMap(usize capacity) : _end(&endItem), _begin(&endItem), _size(0), capacity(capacity), data(0), freeItem(0), blocks(0)
   {
+    endItem.prev = 0;
+    endItem.next = 0;
+    this->capacity |= (usize)!capacity;
+  }
+
+  ~PoolMap()
+  {
+    if(data)
+      Memory::free(data);
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       i->~Item();
     for(ItemBlock* i = blocks, * next; i; i = next)
@@ -59,11 +69,11 @@ public:
   const Iterator& begin() const {return _begin;}
   const Iterator& end() const {return _end;}
 
-  const T& front() const {return _begin.item->value;}
-  const T& back() const {return _end.item->prev->value;}
+  const T& front() const { return _begin.item->value; }
+  const T& back() const { return _end.item->prev->value; }
 
-  T& front() { return _begin.item->value; }
-  T& back() { return _end.item->prev->value; }
+  V& front() { return _begin.item->value; }
+  V& back() { return _end.item->prev->value; }
 
   Iterator removeFront() {return remove(_begin);}
   Iterator removeBack() {return remove(_end.item->prev);}
@@ -71,14 +81,15 @@ public:
   usize size() const {return _size;}
   bool isEmpty() const {return endItem.prev == 0;}
 
-  T& prepend() {return insert(_begin).item->value;}
-  T& append() {return insert(_end).item->value;}
+  V& prepend(const T& key) {return insert(_begin, key).item->value;}
+  V& append(const T& key) {return insert(_end, key).item->value;}
 
   void clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
     {
       i->~Item();
+      *i->cell = 0;
       i->prev = freeItem;
       freeItem = i;
     }
@@ -87,11 +98,13 @@ public:
     _size = 0;
   }
 
-  void swap(PoolList& other)
+  void swap(PoolMap& other)
   {
     Item* tmpFirst = _begin.item;
     Item* tmpLast = endItem.prev;
     usize tmpSize = _size;
+    usize tmpCapacity = capacity;
+    Item** tmpData = data;
     Item* tmpFreeItem = freeItem;
     ItemBlock* tmpBlocks = blocks;
 
@@ -103,6 +116,8 @@ public:
     else
       _begin.item = &endItem;
     _size = other._size;
+    capacity = other.capacity;
+    data = other.data;
     freeItem = other.freeItem;
     blocks = other.blocks;
 
@@ -114,12 +129,41 @@ public:
     else
       other._begin.item = &other.endItem;
     other._size = tmpSize;
+    other.capacity = tmpCapacity;
+    other.data = tmpData;
     other.freeItem = tmpFreeItem;
     other.blocks = tmpBlocks;
   }
 
-  Iterator insert(const Iterator& position)
+  Iterator find(const T& key) const
   {
+    if(!data) return _end;
+    usize hashCode = (usize)key;
+    Item* item = data[hashCode % capacity];
+    while(item)
+    {
+      if(item->key == key) return item;
+      item = item->nextCell;
+    }
+    return _end;
+  }
+
+  bool contains(const T& key) const {return find(key) != _end;}
+
+  Iterator insert(const Iterator& position, const T& key)
+  {
+    Iterator it = find(key);
+    if(it != _end)
+      return it;
+
+    if(!data)
+    {
+      usize size;
+      data = (Item**)Memory::alloc(sizeof(Item*) * capacity, size);
+      capacity = size / sizeof(Item*);
+      Memory::zero(data, sizeof(Item*) * capacity);
+    }
+    
     Item* item;
     if(freeItem)
     {
@@ -141,12 +185,19 @@ public:
       }
     }
 
+    usize hashCode = (usize)key;
 #ifdef VERIFY
-    VERIFY(new(item) Item == item);
+    VERIFY(new(item) Item(key) == item);
 #else
-    new(item) Item;
+    new(item) Item(key);
 #endif
 
+    Item** cell;
+    item->cell = (cell = &data[hashCode % capacity]);
+    if((item->nextCell = *cell))
+      item->nextCell->cell = &item->nextCell;
+    *cell = item;
+    
     Item* insertPos = position.item;
     if((item->prev = insertPos->prev))
       insertPos->prev->next = item;
@@ -166,9 +217,12 @@ public:
     return item->next;
   }
 
-  void remove(const T& value)
+  void remove(const V& value)
   {
     Item* item = (Item*)&value;
+
+    if((*item->cell = item->nextCell))
+      item->nextCell->cell = item->cell;
 
     if(!item->prev)
       (_begin.item = item->next)->prev = 0;
@@ -182,14 +236,26 @@ public:
     freeItem = item;
   }
 
+  void remove(const T& key)
+  {
+    Iterator it = find(key);
+    if(it != _end)
+      remove(it.item->value);
+  }
+  
 private:
   struct Item
   {
-    T value;
+    V value;
+    const T key;
+    Item** cell;
+    Item* nextCell;
     Item* prev;
     Item* next;
 
-    Item() : value() {}
+    Item() : value(), key() {}
+
+    Item(const T& key) : value(), key(key) {}
   };
   struct ItemBlock
   {
@@ -199,6 +265,8 @@ private:
   Iterator _end;
   Iterator _begin;
   usize _size;
+  usize capacity;
+  Item** data;
   Item endItem;
   Item* freeItem;
   ItemBlock* blocks;

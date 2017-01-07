@@ -28,6 +28,7 @@ void testSempahore();
 void testDirectory();
 void testMutex();
 void testPoolList();
+void testPoolMap();
 void testServer();
 void testMultiMap();
 void testError();
@@ -764,6 +765,7 @@ int main(int argc, char* argv[])
   testProcess();
   testMap();
   testPoolList();
+  testPoolMap();
   testMultiMap();
   testError();
   testVariant();
