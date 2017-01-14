@@ -44,6 +44,10 @@ public:
   */
   static int64 ticks();
 
+  /**
+  * Retrieve a high resolution time stamp.
+  * @return The high resolution time stamp (in microseconds).
+  */
   static int64 microTicks();
 
   static String toString(int64 time, const tchar* format, bool utc = false);
