@@ -206,7 +206,7 @@ void XML::Private::skipSpace()
 void XML::Private::syntaxError(const Position& pos, const String& error)
 {
   errorLine = pos.line;
-  errorColumn = (pos.pos - pos.lineStart) + 1;
+  errorColumn = (int)(pos.pos - pos.lineStart) + 1;
   errorString = error;
 }
 
@@ -312,7 +312,7 @@ bool XML::Private::parse(const tchar* data, Element& element)
 bool XML::Private::parseElement(Element& element)
 {
   element.line = token.pos.line;
-  element.column = (token.pos.pos - token.pos.lineStart) + 1;
+  element.column = (int)(token.pos.pos - token.pos.lineStart) + 1;
   if(!readToken())
     return false;
   if(token.type != Token::nameType)
