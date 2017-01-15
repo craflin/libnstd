@@ -362,7 +362,7 @@ bool Socket::getPeerName(uint32& ip, uint16& port)
 
 ssize Socket::send(const byte* data, usize size)
 {
-  ssize r = ::send(s, (const char*)data, size, MSG_NOSIGNAL);
+  ssize r = ::send(s, (const char*)data, (int)size, MSG_NOSIGNAL);
   if(r == SOCKET_ERROR)
   {
     if(ERRNO == EWOULDBLOCK 
@@ -380,7 +380,7 @@ ssize Socket::send(const byte* data, usize size)
 
 ssize Socket::recv(byte* data, usize maxSize, usize minSize)
 {
-  ssize r = ::recv(s, (char*)data, maxSize, 0);
+  ssize r = ::recv(s, (char*)data, (int)maxSize, 0);
   switch(r)
   {
   case SOCKET_ERROR:
@@ -403,7 +403,7 @@ ssize Socket::recv(byte* data, usize maxSize, usize minSize)
   usize received = (usize)r;
   for(;;)
   {
-    r = ::recv(s, (char*)data + received, maxSize - received, 0);
+    r = ::recv(s, (char*)data + received, (int)(maxSize - received), 0);
     switch(r)
     {
     case SOCKET_ERROR:
