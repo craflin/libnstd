@@ -35,4 +35,14 @@ uint64 Atomic::compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal
   return InterlockedCompareExchange(&var, newVal, oldVal);
 }
 
+int64 Atomic::swap(int64 volatile& var, int64 val)
+{
+  return InterlockedExchange64(&var, val);
+}
+
+uint64 Atomic::swap(uint64 volatile& var, uint64 val)
+{
+  return InterlockedExchange64((int64 volatile*)&var, (int64)val);
+}
+
 #endif

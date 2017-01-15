@@ -87,6 +87,11 @@ void testAtomic()
   ASSERT(Atomic::increment(uint64) == ((0xffffffffULL << 32) | 0xfffffff1ULL));
   ASSERT(Atomic::decrement(uint64) == ((0xffffffffULL << 32) | 0xfffffff0ULL));
 #endif
+
+  void* volatile ptr = 0;
+  ASSERT(Atomic::compareAndSwap(ptr, 0, (void*)0xff) == 0);
+  ASSERT(Atomic::compareAndSwap(ptr, (void*)0xff, 0) == (void*)0xff);
+  ASSERT(Atomic::compareAndSwap(ptr, (void*)23, 0) == 0);
   
   size = 0;
   ASSERT(Atomic::swap(size, 1) == 0);
@@ -98,6 +103,12 @@ void testAtomic()
   uint32 = 0;
   ASSERT(Atomic::swap(uint32, 1) == 0);
   ASSERT(Atomic::swap(uint32, 2) == 1);
+  uint64 = 0;
+  ASSERT(Atomic::swap(uint64, 1) == 0);
+  ASSERT(Atomic::swap(uint64, 2) == 1);
+  ptr = 0;
+  ASSERT(Atomic::swap(ptr, (void*)0xffffffff) == 0);
+  ASSERT(Atomic::swap(ptr, (void*)123) == (void*)0xffffffff);
 }
 
 void testHashSet()

@@ -239,9 +239,57 @@ public:
 #endif
   }
 
-  // todo: swap(int64 ...
-  // todo: swap(uint64 ...
-  // todo: swap(void* ...
+#if defined(_MSC_VER) && !defined(_M_AMD64)
+  static int64 swap(int64 volatile& var, int64 val);
+#else
+  static inline int64 swap(int64 volatile& var, int64 val)
+  {
+#ifdef _MSC_VER
+    return (uint32)_InterlockedExchange64((long long volatile*)&var, (long long)val);
+#else
+    return __sync_lock_test_and_set(&var, val);
+#endif
+  }
+#endif
+
+#if defined(_MSC_VER) && !defined(_M_AMD64)
+  static uint64 swap(uint64 volatile& var, uint64 val);
+#else
+  static inline uint64 swap(uint64 volatile& var, uint64 val)
+  {
+#ifdef _MSC_VER
+    return (uint32)_InterlockedExchange64((long long volatile*)&var, (long long)val);
+#else
+    return __sync_lock_test_and_set(&var, val);
+#endif
+  }
+#endif
+
+  static inline void* swap(void* volatile& ptr, void* val)
+  {
+#ifdef _MSC_VER
+#if defined(_M_AMD64)
+    return (void*)_InterlockedExchange64((long long volatile*)&ptr, (long long)val);
+#else
+    return (void*)_InterlockedExchange((long volatile*)&ptr, (long)val);
+#endif
+#else
+    return __sync_lock_test_and_set(&var, val);
+#endif
+  }
+
+  template <class T> static inline void* swap(T* volatile& ptr, T* val)
+  {
+#ifdef _MSC_VER
+#if defined(_M_AMD64)
+    return (void*)_InterlockedExchange64((long long volatile*)&ptr, (long long)val);
+#else
+    return (void*)_InterlockedExchange((long volatile*)&ptr, (long)val);
+#endif
+#else
+    return __sync_lock_test_and_set(&var, val);
+#endif
+  }
 
   static inline int32 testAndSet(int32 volatile& var)
   {
