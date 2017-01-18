@@ -278,16 +278,16 @@ public:
 #endif
   }
 
-  template <class T> static inline void* swap(T* volatile& ptr, T* val)
+  template <class T> static inline T* swap(T* volatile& ptr, T* val)
   {
 #ifdef _MSC_VER
 #if defined(_M_AMD64)
-    return (void*)_InterlockedExchange64((long long volatile*)&ptr, (long long)val);
+    return (T*)_InterlockedExchange64((long long volatile*)&ptr, (long long)val);
 #else
-    return (void*)_InterlockedExchange((long volatile*)&ptr, (long)val);
+    return (T*)_InterlockedExchange((long volatile*)&ptr, (long)val);
 #endif
 #else
-    return __sync_lock_test_and_set(&var, val);
+    return (T*)__sync_lock_test_and_set(&var, val);
 #endif
   }
 
