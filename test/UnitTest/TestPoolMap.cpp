@@ -3,19 +3,19 @@
 #include <nstd/String.h>
 #include <nstd/PoolMap.h>
 
+struct TestObject
+{
+  int a;
+
+  TestObject() {}
+
+private:
+  TestObject(const TestObject&);
+  TestObject& operator=(const TestObject&);
+};
+
 void testPoolMap()
 {
-  struct TestObject
-  {
-    int a;
-
-    TestObject() {}
-
-  private:
-    TestObject(const TestObject&);
-    TestObject& operator=(const TestObject&);
-  };
-
   // test append and remove
   PoolMap<String, TestObject> pool;
   TestObject& obj = pool.append("object1");
