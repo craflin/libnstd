@@ -11,8 +11,8 @@ void testPoolList()
     TestObject() {}
 
   private:
-    TestObject(const TestObject&) {}
-    TestObject& operator=(const TestObject&) {}
+    TestObject(const TestObject&);
+    TestObject& operator=(const TestObject&);
   };
 
   // test append and remove
