@@ -245,7 +245,7 @@ public:
   static inline int64 swap(int64 volatile& var, int64 val)
   {
 #ifdef _MSC_VER
-    return (uint32)_InterlockedExchange64((long long volatile*)&var, (long long)val);
+    return (uint64)_InterlockedExchange64((long long volatile*)&var, (long long)val);
 #else
     return __sync_lock_test_and_set(&var, val);
 #endif
@@ -258,7 +258,7 @@ public:
   static inline uint64 swap(uint64 volatile& var, uint64 val)
   {
 #ifdef _MSC_VER
-    return (uint32)_InterlockedExchange64((long long volatile*)&var, (long long)val);
+    return (uint64)_InterlockedExchange64((long long volatile*)&var, (long long)val);
 #else
     return __sync_lock_test_and_set(&var, val);
 #endif
@@ -274,7 +274,7 @@ public:
     return (void*)_InterlockedExchange((long volatile*)&ptr, (long)val);
 #endif
 #else
-    return __sync_lock_test_and_set(&var, val);
+    return __sync_lock_test_and_set(&ptr, val);
 #endif
   }
 
@@ -287,7 +287,7 @@ public:
     return (T*)_InterlockedExchange((long volatile*)&ptr, (long)val);
 #endif
 #else
-    return (T*)__sync_lock_test_and_set(&var, val);
+    return __sync_lock_test_and_set(&ptr, val);
 #endif
   }
 
