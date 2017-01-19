@@ -2,19 +2,19 @@
 #include <nstd/Debug.h>
 #include <nstd/PoolList.h>
 
+struct TestObject
+{
+  int a;
+
+  TestObject() {}
+
+private:
+  TestObject(const TestObject&);
+  TestObject& operator=(const TestObject&);
+};
+
 void testPoolList()
 {
-  struct TestObject
-  {
-    int a;
-
-    TestObject() {}
-
-  private:
-    TestObject(const TestObject&);
-    TestObject& operator=(const TestObject&);
-  };
-
   // test append and remove
   PoolList<TestObject> pool;
   TestObject& obj = pool.append();
