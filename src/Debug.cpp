@@ -6,7 +6,9 @@
 #endif
 #else
 #ifndef NDEBUG
-#include <dlfcn.h>
+#include <cstdlib>
+#include <execinfo.h>
+#include <nstd/Process.h>
 #endif
 #endif
 #include <cstdio>
@@ -14,6 +16,7 @@
 
 #include <nstd/Debug.h>
 #include <nstd/Memory.h>
+#include <nstd/String.h>
 
 int Debug::print(const tchar* str)
 {
@@ -79,7 +82,7 @@ int Debug::printf(const tchar* format, ...)
 }
 
 #ifndef NDEBUG
-bool Debug::getSourceLine(void* addr, const tchar*& file, int& line)
+bool Debug::getSourceLine(void* addr, String& file, int& line)
 {
 #ifdef _WIN32
   typedef BOOL (WINAPI *PSymInitialize)(HANDLE hProcess, PCSTR UserSearchPath, BOOL fInvadeProcess);
@@ -113,21 +116,57 @@ bool Debug::getSourceLine(void* addr, const tchar*& file, int& line)
     return false;
 #ifdef UNICODE
   static wchar_t fileName[MAX_PATH];
-  mbstowcs(fileName, ihLine.FileName, strlen(ihLine.FileName));
-  file = fileName;
+  size_t len = mbstowcs(fileName, ihLine.FileName, strlen(ihLine.FileName));
+  if(len == -1)
+      return false;
+  file = String(fileName, len);
 #else
-  file = ihLine.FileName;
+  file = String::fromCString(ihLine.FileName);
 #endif
   line = ihLine.LineNumber;
   return true;
 #else
-  return false;
-  //Dl_info dli;
-  //if(dladdr(addr, &dli) == 0)
-  //  return false;
-  //file = dli.dli_sname;
-  //line = 0;
-  //return true;
+  void* addrs[1];
+  addrs[0] = addr;
+  char** addrStrs = backtrace_symbols(addrs, 1);
+  if(!addrStrs)
+      return false;
+  if(!*addrStrs)
+  {
+      free(addrStrs);
+      return false;
+  }
+  String addrStr = String::fromCString(*addrStrs);
+  free(addrStrs);
+  const tchar* addrStart = addrStr.findLast(_T('['));
+  const tchar* addrEnd = addrStr.findLast(_T(']'));
+  if(!addrStart ||!addrEnd || addrEnd < addrStart)
+      return false;
+  ++addrStart;
+  void* relAddr;
+  if(addrStr.substr(addrStart - addrStr, addrEnd - addrStart).scanf("%p", &relAddr) != 1)
+      return false;
+  const tchar* binaryEnd = addrStr.findLast(_T('('));
+  if(!binaryEnd)
+      return false;
+  String bin = addrStr.substr(0, binaryEnd - addrStr);
+  String cmd = String::fromPrintf("addr2line -e \"%s\" %p", (const char*)bin, relAddr);
+  Process process;
+  if(!process.open(cmd))
+      return false;
+  String buf;
+  buf.reserve(1024 * 32);
+  ssize i = process.read((char*)buf, 1024 * 32);
+  if(i < 0)
+    return false;
+  buf.resize(i);
+  const tchar* fileEnd = buf.findLast(':');
+  if(!fileEnd)
+      return false;
+  file = buf.substr(0, fileEnd - buf);
+  if(buf.substr(fileEnd - buf + 1).scanf("%d", &line) != 1)
+      return false;
+  return true;
 #endif
 }
 #endif

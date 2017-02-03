@@ -3,6 +3,8 @@
 
 #include <nstd/Base.h>
 
+class String;
+
 class Debug
 {
 public:
@@ -10,7 +12,7 @@ public:
   static int printf(const tchar* format, ...);
 
 #ifndef NDEBUG
-  static bool getSourceLine(void* addr, const tchar*& file, int& line);
+  static bool getSourceLine(void* addr, String& file, int& line);
 #endif
 };
 

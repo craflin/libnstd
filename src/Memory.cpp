@@ -89,15 +89,15 @@ private:
     {
       for(PageHeader* i = first; i; i = i->next)
       {
-        const tchar* file;
+        String file;
         int line;
         if(!Debug::getSourceLine(i->returnAddr, file, line))
           Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
         else
 #ifdef _MSC_VER
-          Debug::printf(_T("%s(%d): Found memory leak.\n"), file, line);
+          Debug::printf(_T("%s(%d): Found memory leak.\n"), (const tchar*)file, line);
 #else
-          Debug::printf(_T("%s: Found memory leak.\n"), file, line);
+          Debug::printf(_T("%s:%d: Found memory leak.\n"), (const tchar*)file, line);
 #endif
       }
       if(first)
@@ -293,15 +293,15 @@ void Memory::dump()
 #endif
   for(Private::PageHeader* i = Private::first; i; i = i->next)
   {
-    const tchar* file;
+    String file;
     int line;
     bool success = Debug::getSourceLine(i->returnAddr, file, line);
     String key;
     if(success)
 #ifdef _WIN32
-      key.printf(_T("%s(%d)"), file, line);
+      key.printf(_T("%s(%d)"), (const tchar*)file, line);
 #else
-      key.printf("%s", file);
+      key.printf("%s:%d", (const tchar*)file, line);
 #endif
     HashMap<String, usize>::Iterator it = allocatedMemory.find(key);
     if(it == allocatedMemory.end())
