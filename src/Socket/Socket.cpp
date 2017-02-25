@@ -76,8 +76,6 @@ public:
   bool connecting;
   bool listening;
   HANDLE hCompletionPort;
-  //WSABUF readBuf;
-  //WSABUF writeBuf;
 
   Private() : key(0), connecting(false), listening(false), hCompletionPort(0) {}
 #endif
@@ -561,8 +559,6 @@ public:
     Socket* socket;
     HANDLE s;
     uint events;
-    Overlapped readOverlapped;
-    Overlapped writeOverlapped;
   };
 
   struct WorkerMessage
@@ -591,12 +587,19 @@ public:
 
   Overlapped connectOverlapped;
   Overlapped acceptOverlapped;
+  Overlapped readOverlapped;
+  Overlapped writeOverlapped;
+
 
   Private() : nextKey(1), detachedSockInfo(0), hWorkerThread(0), hWorkerThreadEvent(0)
   {
     InitializeCriticalSection(&workerMutex);
+    ZeroMemory(&readOverlapped, sizeof(readOverlapped));
+    ZeroMemory(&writeOverlapped, sizeof(writeOverlapped));
     connectOverlapped.event = connectFlag;
     acceptOverlapped.event = acceptFlag;
+    readOverlapped.event = readFlag;
+    writeOverlapped.event = writeFlag;
   }
 
   ~Private()
@@ -709,10 +712,6 @@ void Socket::Poll::set(Socket& socket, uint events)
     sockInfo->events = 0;
     VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->hCompletionPort, key, 0) == p->hCompletionPort);
     socket.p->key = key;
-    ZeroMemory(&sockInfo->readOverlapped, sizeof(sockInfo->readOverlapped));
-    sockInfo->readOverlapped.event = readFlag;
-    ZeroMemory(&sockInfo->writeOverlapped, sizeof(sockInfo->writeOverlapped));
-    sockInfo->writeOverlapped.event = writeFlag;
   }
   else
   {
@@ -729,13 +728,13 @@ void Socket::Poll::set(Socket& socket, uint events)
     WSABUF buf = {};
     DWORD flags = 0;
     DWORD numberOfBytesRecvd;
-    WSARecv((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &sockInfo->readOverlapped, NULL);
+    WSARecv((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
   }
   if(addedEvents & writeFlag)
   {
     WSABUF buf = {};
     DWORD numberOfBytesRecvd;
-    WSASend((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &sockInfo->writeOverlapped, NULL);
+    WSASend((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
   }
   if(addedEvents & connectFlag)
   {
@@ -989,14 +988,14 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
         WSABUF buf = {};
         DWORD flags = 0;
         DWORD numberOfBytesRecvd;
-        WSARecv((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->detachedSockInfo->readOverlapped, NULL);
+        WSARecv((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
       }
       break;
     case writeFlag:
       {
         WSABUF buf = {};
         DWORD numberOfBytesRecvd;
-        WSASend((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &p->detachedSockInfo->writeOverlapped, NULL);
+        WSASend((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
       }
       break;
     case acceptFlag:
