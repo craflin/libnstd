@@ -101,7 +101,4 @@ private:
 
 private:
   class Private;
-#ifdef _WIN32
-  Private* p;
-#endif
 };

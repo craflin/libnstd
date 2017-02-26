@@ -68,16 +68,6 @@ class Socket::Private
       WSACleanup();
     }
   } winsock;
-
-
-
-public:
-  ULONG_PTR key;
-  bool connecting;
-  bool listening;
-  HANDLE hCompletionPort;
-
-  Private() : key(0), connecting(false), listening(false), hCompletionPort(0) {}
 #endif
 };
 
@@ -85,19 +75,12 @@ public:
 Socket::Private::Winsock Socket::Private::winsock;
 #endif
 
-Socket::Socket() : s(INVALID_SOCKET) 
-#ifdef _WIN32
-, p(0)
-#endif
-{}
+Socket::Socket() : s(INVALID_SOCKET) {}
 
 Socket::~Socket()
 {
   if(s != INVALID_SOCKET)
     ::CLOSE(s);
-#ifdef _WIN32
-  delete p;
-#endif
 }
 
 bool Socket::open()
@@ -123,10 +106,6 @@ void Socket::close()
     ::CLOSE(s);
     s = INVALID_SOCKET;
   }
-#ifdef _WIN32
-  delete p;
-  p = 0;
-#endif
 }
 
 bool Socket::isOpen() const
@@ -137,11 +116,6 @@ bool Socket::isOpen() const
 void Socket::swap(Socket& other)
 {
   SOCKET tmp = s;
-#ifdef _WIN32
-  Private* tmpP = p;
-  p = other.p;
-  other.p = tmpP;
-#endif
   s = other.s;
   other.s = tmp;
 }
@@ -265,15 +239,11 @@ bool Socket::setNonBlocking()
 {
 #ifdef _WIN32
   u_long val = 1;
-  if(ioctlsocket(s, FIONBIO, &val))
+  if(ioctlsocket(s, FIONBIO, &val) != 0)
 #else
-  if(fcntl(s, F_SETFL, O_NONBLOCK))
+  if(fcntl(s, F_SETFL, O_NONBLOCK) != 0)
 #endif
     return false;
-#ifdef _WIN32
-  if(!p)
-    p = new Private;
-#endif
   return true;
 }
 
@@ -335,10 +305,6 @@ bool Socket::listen()
 {
   if(::listen(s, SOMAXCONN) < 0)
     return false;
-#ifdef _WIN32
-  if(p)
-    p->listening = true;
-#endif
   return true;
 }
 
@@ -360,10 +326,6 @@ bool Socket::connect(unsigned int ip, unsigned short port)
       )
       return false;
   }
-#ifdef _WIN32
-  if(p)
-    p->connecting = true;
-#endif
 
   return true;
 }
@@ -557,7 +519,8 @@ public:
   struct SocketInfo
   {
     Socket* socket;
-    HANDLE s;
+    ULONG_PTR key;
+    HANDLE s; // todo: ?? why?? 
     uint events;
   };
 
@@ -574,7 +537,8 @@ public:
     ULONG_PTR key;
   };
 
-  HashMap<ULONG_PTR, SocketInfo> sockets;
+  HashMap<SOCKET, SocketInfo> socketsX; // todo: rename to sockets
+  HashMap<ULONG_PTR, SocketInfo*> keys;
   ULONG_PTR nextKey;
 
   SocketInfo* detachedSockInfo;
@@ -693,31 +657,20 @@ void Socket::Poll::clear()
 void Socket::Poll::set(Socket& socket, uint events)
 {
 #ifdef _WIN32
-  if(!socket.p)
-  {
-    socket.p = new Socket::Private;
-    BOOL listening = FALSE;
-    int optlen = sizeof(listening);
-    if(getsockopt(socket.s,  SOL_SOCKET, SO_ACCEPTCONN, (char*)&listening, &optlen) != SOCKET_ERROR && listening)
-      socket.p->listening = true;
-
-  }
   Private::SocketInfo* sockInfo;
-  if(!socket.p->key)
+  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->socketsX.find(socket.s);
+  if(it == p->socketsX.end()) // this is a new one, lets create a key for it and attach it to the completion port
   {
-    ULONG_PTR key = p->nextKey++;
-    sockInfo = &p->sockets.append(key, Private::SocketInfo());
+    sockInfo = &p->socketsX.append(socket.s, Private::SocketInfo());
+    sockInfo->key = p->nextKey++;
     sockInfo->socket = &socket;
     sockInfo->s = (HANDLE)socket.s;
     sockInfo->events = 0;
-    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->hCompletionPort, key, 0) == p->hCompletionPort);
-    socket.p->key = key;
+    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->hCompletionPort, sockInfo->key, 0) == p->hCompletionPort);
+    p->keys.append(sockInfo->key, sockInfo);
   }
   else
   {
-    HashMap<ULONG_PTR, Private::SocketInfo>::Iterator it = p->sockets.find(socket.p->key);
-    if(it == p->sockets.end())
-      return;
     sockInfo = &*it;
     uint removedEvents = sockInfo->events & ~events;
     // todo
@@ -738,19 +691,13 @@ void Socket::Poll::set(Socket& socket, uint events)
   }
   if(addedEvents & connectFlag)
   {
-    if(socket.p->connecting)
-    {
-      Private::WorkerMessage message = {Private::WorkerMessage::addConnect, socket.s, socket.p->key};
-      p->pushWorkerThreadMessage(message);
-    }
+    Private::WorkerMessage message = {Private::WorkerMessage::addConnect, socket.s, sockInfo->key};
+    p->pushWorkerThreadMessage(message);
   }
   if(addedEvents & acceptFlag)
   {
-    if(socket.p->listening)
-    {
-      Private::WorkerMessage message = {Private::WorkerMessage::addAccept, socket.s, socket.p->key};
-      p->pushWorkerThreadMessage(message);
-    }
+    Private::WorkerMessage message = {Private::WorkerMessage::addAccept, socket.s, sockInfo->key};
+    p->pushWorkerThreadMessage(message);
   }
 
   sockInfo->events = events;
@@ -951,13 +898,13 @@ cleanup:
 
 void Socket::Poll::remove(Socket& socket)
 {
-  if(!socket.p)
-    return;
-  HashMap<ULONG_PTR, Private::SocketInfo>::Iterator it = p->sockets.find(socket.p->key);
-  if(it == p->sockets.end())
+#ifdef _WIN32
+  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->socketsX.find(socket.s);
+  if(it == p->socketsX.end())
     return;
   Private::SocketInfo& sockInfo = *it;
-#ifdef _WIN32
+  p->keys.remove(sockInfo.key);
+  p->socketsX.remove(it);
   // todo
   // todo invalidate detachedSocket
 #else
@@ -1000,7 +947,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       break;
     case acceptFlag:
       {
-        Private::WorkerMessage message = {Private::WorkerMessage::addAccept, (SOCKET)p->detachedSockInfo->s, p->detachedSockInfo->socket->p->key };
+        Private::WorkerMessage message = {Private::WorkerMessage::addAccept, (SOCKET)p->detachedSockInfo->s, p->detachedSockInfo->key };
         p->pushWorkerThreadMessage(message);
       }
       break;
@@ -1022,13 +969,13 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       }
       return false;
     }
-    HashMap<ULONG_PTR, Private::SocketInfo>::Iterator it =  p->sockets.find(completionKey);
-    if(it == p->sockets.end())
+    HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  p->keys.find(completionKey);
+    if(it == p->keys.end())
       continue;
-    Private::SocketInfo& sockInfo = *it;
-    event.socket = sockInfo.socket;
+    Private::SocketInfo* sockInfo = *it;
+    event.socket = sockInfo->socket;
     event.flags = overlapped->event;
-    p->detachedSockInfo = &sockInfo;
+    p->detachedSockInfo = sockInfo;
     p->detachedSocketEvent = overlapped->event;
     return true;
   }
