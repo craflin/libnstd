@@ -553,7 +553,7 @@ public:
   Overlapped acceptOverlapped;
   Overlapped readOverlapped;
   Overlapped writeOverlapped;
-
+  Overlapped interruptOverlapped;
 
   Private() : nextKey(1), detachedSockInfo(0), hWorkerThread(0), hWorkerThreadEvent(0)
   {
@@ -564,6 +564,7 @@ public:
     acceptOverlapped.event = acceptFlag;
     readOverlapped.event = readFlag;
     writeOverlapped.event = writeFlag;
+    interruptOverlapped.event = 0;
   }
 
   ~Private()
@@ -673,7 +674,13 @@ void Socket::Poll::set(Socket& socket, uint events)
   {
     sockInfo = &*it;
     uint removedEvents = sockInfo->events & ~events;
-    // todo
+    if(removedEvents & (connectFlag | acceptFlag))
+    {
+      Private::WorkerMessage message = {Private::WorkerMessage::remove, socket.s, sockInfo->key};
+      p->pushWorkerThreadMessage(message);
+    }
+    if(p->detachedSockInfo == sockInfo && removedEvents & p->detachedSocketEvent)
+      p->detachedSockInfo = 0;
   }
   uint addedEvents = events & ~sockInfo->events;
   if(addedEvents & readFlag)
@@ -903,10 +910,16 @@ void Socket::Poll::remove(Socket& socket)
   if(it == p->socketsX.end())
     return;
   Private::SocketInfo& sockInfo = *it;
+  if(sockInfo.events & (connectFlag | acceptFlag))
+  {
+    Private::WorkerMessage message = {Private::WorkerMessage::remove, socket.s, sockInfo.key};
+    p->pushWorkerThreadMessage(message);
+  }
+  if(p->detachedSockInfo == &sockInfo)
+    p->detachedSockInfo = 0;
   p->keys.remove(sockInfo.key);
   p->socketsX.remove(it);
-  // todo
-  // todo invalidate detachedSocket
+  // todo: detach socket from iocp?
 #else
   usize index = sockInfo.index;
   pollfd& pfd = p->pollfds[index];
@@ -971,8 +984,18 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
     }
     HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  p->keys.find(completionKey);
     if(it == p->keys.end())
+    {
+      if(!overlapped->event)
+      {
+        event.flags = 0;
+        event.socket = 0;
+        return true; // interrupt
+      }
       continue;
+    }
     Private::SocketInfo* sockInfo = *it;
+    if(!(sockInfo->events & overlapped->event))
+      continue;
     event.socket = sockInfo->socket;
     event.flags = overlapped->event;
     p->detachedSockInfo = sockInfo;
@@ -1034,9 +1057,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
 bool Socket::Poll::interrupt()
 {
 #ifdef _WIN32
-  // todo:
-  return false;
-  //return WSASetEvent(p->events[0]) == TRUE;
+  return PostQueuedCompletionStatus(p->hCompletionPort, 0, 0, &p->interruptOverlapped) == TRUE;
 #else
   uint64 val = 1;
   return write(p->pollfds[0].fd, &val, sizeof(val)) != -1;

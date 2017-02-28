@@ -14,6 +14,7 @@ public:
   {
     enum Type
     {
+      interruptType,
       failType,
       openType,
       readType,

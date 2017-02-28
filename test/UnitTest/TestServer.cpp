@@ -119,5 +119,61 @@ void testServer()
         ASSERT(false);
       }
     } done2:;
+    ASSERT(state == closing2);
+  }
+
+  // test listen, connect, connect
+  {
+    Server server;
+    Server::Handle* client1;
+    Server::Handle* client2 = 0;
+    Server::Handle* client3;
+    Server::Handle* client4 = 0;
+    ASSERT(server.listen(7266, 0));
+    client1 = server.connect(Socket::loopbackAddr, 7266, &client1);
+    ASSERT(client1);
+    client3 = server.connect(Socket::loopbackAddr, 7266, &client3);
+    ASSERT(client3);
+    int openCount = 0;
+    for(Server::Event event; server.poll(event);)
+    {
+      switch(event.type)
+      {
+      case Server::Event::acceptType:
+        if(!client2)
+        {
+          client2 = server.accept(*event.handle, &client2);
+          ASSERT(client2);
+        }
+        else
+        {
+          ASSERT(!client4);
+          client4 = server.accept(*event.handle, &client2);
+          ASSERT(client4);
+        }
+        if(client4 && openCount == 2)
+          goto done3;
+        break;
+      case Server::Event::openType:
+        ASSERT(event.handle == client1 || event.handle == client3);
+        ASSERT(event.userData == &client1 || event.userData == &client3);
+        ++openCount;
+        if(client4 && openCount == 2)
+          goto done3;
+        break;
+      default:
+        ASSERT(false);
+      }
+    } done3:;
+    ASSERT(client4 && openCount == 2);
+  }
+
+  // test interrupt
+  {
+    Server server;
+    ASSERT(server.interrupt());
+    Server::Event event;
+    ASSERT(server.poll(event));
+    ASSERT(event.type == Server::Event::interruptType);
   }
 }
