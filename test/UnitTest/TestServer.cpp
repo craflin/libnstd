@@ -2,6 +2,7 @@
 #include <nstd/Debug.h>
 #include <nstd/Socket/Server.h>
 #include <nstd/Socket/Socket.h>
+#include <nstd/Thread.h>
 
 void testServer()
 {
@@ -175,5 +176,71 @@ void testServer()
     Server::Event event;
     ASSERT(server.poll(event));
     ASSERT(event.type == Server::Event::interruptType);
+  }
+
+  // test with client from another thread
+  {
+    Server server;
+    ASSERT(server.listen(7266, 0));
+    Thread thread;
+    struct ThreadProc
+    {
+      byte testData[100];
+      bool sent;
+      static uint threadProc(void* data)
+      {
+        ThreadProc* threadData = (ThreadProc*)data;
+        Socket socket;
+        ASSERT(socket.open());
+        ASSERT(socket.connect(Socket::loopbackAddr, 7266));
+        Thread::sleep(42);
+        threadData->sent = true;
+        ASSERT(socket.send(threadData->testData, sizeof(threadData->testData)) == sizeof(threadData->testData));
+        byte receiveData[100];
+        ASSERT(socket.recv(receiveData, sizeof(receiveData)) == sizeof(receiveData));
+        ASSERT(Memory::compare(&receiveData, &threadData->testData, sizeof(receiveData)) == 0);
+        socket.close();
+        return 32;
+      }
+    } threadData;
+    threadData.sent = false;
+    threadData.testData[0] = 42;
+    thread.start(&ThreadProc::threadProc, &threadData);
+    Server::Handle* client = 0;
+    bool closed = false;
+    bool sent = false;
+    byte receiveBuffer[231];
+    usize size;
+    for(Server::Event event; server.poll(event);)
+    {
+      switch(event.type)
+      {
+      case Server::Event::acceptType:
+        ASSERT(!client);
+        client = server.accept(*event.handle, &client);
+        ASSERT(client);
+        break;
+      case Server::Event::readType:
+        ASSERT(event.handle == client);
+        ASSERT(event.userData == &client);
+        ASSERT(threadData.sent);
+        ASSERT(server.read(*client, receiveBuffer, sizeof(receiveBuffer), size) || sent);
+        if(sent)
+          break;
+        ASSERT(size == sizeof(threadData.testData));
+        ASSERT(server.write(*client, threadData.testData, sizeof(threadData.testData)));
+        sent = true;
+        break;
+      case Server::Event::closeType:
+        closed = true;
+        goto done4;
+      default:
+        ASSERT(false);
+      }
+    } done4:;
+    ASSERT(client);
+    ASSERT(sent);
+    ASSERT(closed);
+    ASSERT(thread.join() == 32);
   }
 }

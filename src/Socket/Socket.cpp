@@ -324,7 +324,10 @@ bool Socket::connect(unsigned int ip, unsigned short port)
       && ERRNO != EWOULDBLOCK
 #endif
       )
+    {
+      int err = ERRNO;
       return false;
+    }
   }
 
   return true;
