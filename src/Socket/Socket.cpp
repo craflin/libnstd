@@ -509,7 +509,7 @@ class Socket::Poll::Private
 {
 public:
 #ifdef _WIN32
-  HANDLE hCompletionPort;
+  HANDLE completionPort;
 
   struct Overlapped : public WSAOVERLAPPED
   {
@@ -537,15 +537,15 @@ public:
     ULONG_PTR key;
   };
 
-  HashMap<SOCKET, SocketInfo> socketsX; // todo: rename to sockets
+  HashMap<SOCKET, SocketInfo> sockets;
   HashMap<ULONG_PTR, SocketInfo*> keys;
   ULONG_PTR nextKey;
 
   SocketInfo* detachedSockInfo;
   uint detachedSocketEvent;
 
-  HANDLE hWorkerThread;
-  HANDLE hWorkerThreadEvent;
+  HANDLE workerThread;
+  HANDLE workerThreadEvent;
   CRITICAL_SECTION workerMutex;
   List<WorkerMessage> workerThreadMessages;
 
@@ -555,7 +555,7 @@ public:
   Overlapped writeOverlapped;
   Overlapped interruptOverlapped;
 
-  Private() : nextKey(1), detachedSockInfo(0), hWorkerThread(0), hWorkerThreadEvent(0)
+  Private() : nextKey(1), detachedSockInfo(0), workerThread(0), workerThreadEvent(0)
   {
     InitializeCriticalSection(&workerMutex);
     ZeroMemory(&readOverlapped, sizeof(readOverlapped));
@@ -569,23 +569,23 @@ public:
 
   ~Private()
   {
-    if(hWorkerThread)
+    if(workerThread)
     {
-      HANDLE hThread = 0;
+      HANDLE thread = 0;
       EnterCriticalSection(&workerMutex);
-      if(hWorkerThread)
+      if(workerThread)
       {
-        hThread = hWorkerThread;
-        hWorkerThread = 0;
+        thread = workerThread;
+        workerThread = 0;
         WorkerMessage workerMessage = {WorkerMessage::quit};
         workerThreadMessages.prepend(workerMessage);
-        SetEvent(hWorkerThreadEvent);
+        SetEvent(workerThreadEvent);
       }
       LeaveCriticalSection(&workerMutex);
-      if(hThread)
+      if(thread)
       {
-        WaitForSingleObject(hThread, INFINITE);
-        CloseHandle(hThread);
+        WaitForSingleObject(thread, INFINITE);
+        CloseHandle(thread);
       }
     }
     DeleteCriticalSection(&workerMutex);
@@ -623,7 +623,7 @@ public:
 Socket::Poll::Poll() : p(new Private)
 {
 #ifdef _WIN32
-  p->hCompletionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
+  p->completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
 #else
   pollfd& pfd = p->pollfds.append(pollfd());
   pfd.fd = eventfd(0, EFD_CLOEXEC);
@@ -635,8 +635,8 @@ Socket::Poll::Poll() : p(new Private)
 Socket::Poll::~Poll()
 {
 #ifdef _WIN32
-  if(p->hCompletionPort)
-    CloseHandle(p->hCompletionPort);
+  if(p->completionPort)
+    CloseHandle(p->completionPort);
 #else
   ::close(p->pollfds[0].fd);
 #endif
@@ -659,15 +659,15 @@ void Socket::Poll::set(Socket& socket, uint events)
 {
 #ifdef _WIN32
   Private::SocketInfo* sockInfo;
-  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->socketsX.find(socket.s);
-  if(it == p->socketsX.end()) // this is a new one, lets create a key for it and attach it to the completion port
+  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->sockets.find(socket.s);
+  if(it == p->sockets.end()) // this is a new one, lets create a key for it and attach it to the completion port
   {
-    sockInfo = &p->socketsX.append(socket.s, Private::SocketInfo());
+    sockInfo = &p->sockets.append(socket.s, Private::SocketInfo());
     sockInfo->key = p->nextKey++;
     sockInfo->socket = &socket;
     sockInfo->s = (HANDLE)socket.s;
     sockInfo->events = 0;
-    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->hCompletionPort, sockInfo->key, 0) == p->hCompletionPort);
+    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->completionPort, sockInfo->key, 0) == p->completionPort);
     p->keys.append(sockInfo->key, sockInfo);
   }
   else
@@ -739,25 +739,25 @@ void Socket::Poll::set(Socket& socket, uint events)
 void Socket::Poll::Private::pushWorkerThreadMessage(const WorkerMessage& message)
 {
   EnterCriticalSection(&workerMutex);
-  if(!hWorkerThread)
+  if(!workerThread)
   {
-    hWorkerThreadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if(!hWorkerThreadEvent)
+    workerThreadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if(!workerThreadEvent)
     {
       LeaveCriticalSection(&workerMutex);
       return;
     }
-    hWorkerThread = CreateThread(0, 0, (unsigned long (__stdcall*)(void*))workerThreadProc, this, 0, 0);
-    if(!hWorkerThread)
+    workerThread = CreateThread(0, 0, (unsigned long (__stdcall*)(void*))workerThreadProc, this, 0, 0);
+    if(!workerThread)
     {
-      CloseHandle(hWorkerThreadEvent);
-      hWorkerThreadEvent = 0;
+      CloseHandle(workerThreadEvent);
+      workerThreadEvent = 0;
       LeaveCriticalSection(&workerMutex);
       return;
     }
   }
   workerThreadMessages.append(message);
-  SetEvent(hWorkerThreadEvent);
+  SetEvent(workerThreadEvent);
   LeaveCriticalSection(&workerMutex);
 }
 
@@ -774,7 +774,7 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
   HashMap<HANDLE, EventData> eventData;
   Map<SOCKET, HANDLE> suspendedEvents;
   DWORD eventCount = 1;
-  events[0] = p->hWorkerThreadEvent;
+  events[0] = p->workerThreadEvent;
 
   for(;;)
   {
@@ -870,7 +870,7 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
         nextEventNum = eventNum + 1;
         events[eventNum] = events[nextEventNum];
       }
-      PostQueuedCompletionStatus(p->hCompletionPort, 0, event.key, event.overlapped);
+      PostQueuedCompletionStatus(p->completionPort, 0, event.key, event.overlapped);
       eventData.remove(it);
 
       if(event.overlapped == &p->connectOverlapped)
@@ -887,12 +887,12 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
   }
 
 cleanup:
-  WSACloseEvent(p->hWorkerThreadEvent);
-  p->hWorkerThreadEvent = 0;
-  if(p->hWorkerThread)
+  WSACloseEvent(p->workerThreadEvent);
+  p->workerThreadEvent = 0;
+  if(p->workerThread)
   {
-    CloseHandle(p->hWorkerThread);
-    p->hWorkerThread = 0;
+    CloseHandle(p->workerThread);
+    p->workerThread = 0;
   }
   LeaveCriticalSection(&p->workerMutex);
   for(DWORD i = 1; i < eventCount; ++i)
@@ -906,8 +906,8 @@ cleanup:
 void Socket::Poll::remove(Socket& socket)
 {
 #ifdef _WIN32
-  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->socketsX.find(socket.s);
-  if(it == p->socketsX.end())
+  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->sockets.find(socket.s);
+  if(it == p->sockets.end())
     return;
   Private::SocketInfo& sockInfo = *it;
   if(sockInfo.events & (connectFlag | acceptFlag))
@@ -918,7 +918,7 @@ void Socket::Poll::remove(Socket& socket)
   if(p->detachedSockInfo == &sockInfo)
     p->detachedSockInfo = 0;
   p->keys.remove(sockInfo.key);
-  p->socketsX.remove(it);
+  p->sockets.remove(it);
   // todo: detach socket from iocp?
 #else
   usize index = sockInfo.index;
@@ -972,7 +972,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
   Private::Overlapped* overlapped;
   for(;;)
   {
-    if(!GetQueuedCompletionStatus(p->hCompletionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
+    if(!GetQueuedCompletionStatus(p->completionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
     {
       if(GetLastError() == WAIT_TIMEOUT)
       {
@@ -1057,7 +1057,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
 bool Socket::Poll::interrupt()
 {
 #ifdef _WIN32
-  return PostQueuedCompletionStatus(p->hCompletionPort, 0, 0, &p->interruptOverlapped) == TRUE;
+  return PostQueuedCompletionStatus(p->completionPort, 0, 0, &p->interruptOverlapped) == TRUE;
 #else
   uint64 val = 1;
   return write(p->pollfds[0].fd, &val, sizeof(val)) != -1;
