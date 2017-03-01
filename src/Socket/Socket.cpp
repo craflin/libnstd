@@ -324,10 +324,7 @@ bool Socket::connect(unsigned int ip, unsigned short port)
       && ERRNO != EWOULDBLOCK
 #endif
       )
-    {
-      int err = ERRNO;
       return false;
-    }
   }
 
   return true;
@@ -739,6 +736,7 @@ void Socket::Poll::set(Socket& socket, uint events)
 #endif
 }
 
+#ifdef _WIN32
 void Socket::Poll::Private::pushWorkerThreadMessage(const WorkerMessage& message)
 {
   EnterCriticalSection(&workerMutex);
@@ -903,8 +901,8 @@ cleanup:
   for(Map<SOCKET, HANDLE>::Iterator i = suspendedEvents.begin(), end = suspendedEvents.end(); i != end; ++i)
     WSACloseEvent(*i);
   return 0;
-
 }
+#endif
 
 void Socket::Poll::remove(Socket& socket)
 {
@@ -924,6 +922,10 @@ void Socket::Poll::remove(Socket& socket)
   p->sockets.remove(it);
   // todo: detach socket from iocp?
 #else
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
+  if(it == p->sockets.end())
+    return;
+  Private::SocketInfo& sockInfo = *it;
   usize index = sockInfo.index;
   pollfd& pfd = p->pollfds[index];
   p->fdToSocket.remove(pfd.fd);
