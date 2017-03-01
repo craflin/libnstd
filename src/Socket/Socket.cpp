@@ -90,7 +90,6 @@ bool Socket::open()
 
 #ifdef _WIN32
   s = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
-  //s = socket(AF_INET, SOCK_STREAM, 0);
 #else
   s = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
 #endif
@@ -133,7 +132,7 @@ bool Socket::pair(Socket& other)
   for(;;)
   {
     // create listener socket
-    serv = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    serv = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if(serv == INVALID_SOCKET)
       return false;
 
@@ -161,8 +160,8 @@ bool Socket::pair(Socket& other)
       goto closeServ;
 
     // create connect socket
-    conn = socket(AF_INET, SOCK_STREAM, 0);
-    if(serv == INVALID_SOCKET)
+    conn = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+    if(conn == INVALID_SOCKET)
       goto closeServ;
 
     // connect
