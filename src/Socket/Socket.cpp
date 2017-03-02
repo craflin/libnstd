@@ -97,7 +97,7 @@ bool Socket::open(Protocol protocol)
 #ifdef _WIN32
   s = WSASocket(AF_INET, Private::typeMap[protocol], Private::protocolMap[protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
 #else
-  s = socket(AF_INET, Private::typeMap[protocol] | SOCK_CLOEXEC, pPrivate::protocolMap[protocol]);
+  s = socket(AF_INET, Private::typeMap[protocol] | SOCK_CLOEXEC, Private::protocolMap[protocol]);
 #endif
   if(s == INVALID_SOCKET)
     return false;
@@ -437,7 +437,7 @@ ssize Socket::sendTo(const byte* data, usize size, uint32 ip, uint16 port)
 ssize Socket::recvFrom(byte* data, usize maxSize, uint32& ip, uint16& port)
 {
   struct sockaddr_in sin;
-  int sinSize = sizeof(sin);
+  socklen_t sinSize = sizeof(sin);
 
   ssize r = ::recvfrom(s, (char*)data, (int)maxSize, 0, (sockaddr*)&sin, &sinSize);
   if(r == SOCKET_ERROR)
