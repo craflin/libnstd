@@ -10,13 +10,20 @@ public:
   {
       anyAddr = 0,
       loopbackAddr = 0x7f000001,
+      broadcastAddr = 0xffffffff,
+  };
+
+  enum Protocol
+  {
+    tcpProtocol,
+    udpProtocol,
   };
 
 public:
   Socket();
   ~Socket();
 
-  bool open();
+  bool open(Protocol protocol = tcpProtocol);
   void close();
   bool isOpen() const;
 
@@ -31,12 +38,17 @@ public:
   ssize send(const byte* data, usize size);
   ssize recv(byte* data, usize maxSize, usize minSize = 0);
 
+  ssize sendTo(const byte* data, usize size, uint32 ip, uint16 port);
+  ssize recvFrom(byte* data, usize maxSize, uint32& ip, uint16& port);
+
   bool setKeepAlive();
   bool setReuseAddress();
+  bool setReusePort();
   bool setNonBlocking();
   bool setNoDelay();
   bool setSendBufferSize(int size);
   bool setReceiveBufferSize(int size);
+  bool setBroadcast();
 
   int getAndResetErrorStatus();
 

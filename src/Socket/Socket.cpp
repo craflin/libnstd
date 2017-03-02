@@ -69,11 +69,17 @@ class Socket::Private
     }
   } winsock;
 #endif
+public:
+  static const int typeMap[2];
+  static const int protocolMap[2];
 };
 
 #ifdef _WIN32
 Socket::Private::Winsock Socket::Private::winsock;
 #endif
+
+const int Socket::Private::typeMap[2] = {SOCK_STREAM, SOCK_DGRAM};
+const int Socket::Private::protocolMap[2] = {IPPROTO_TCP, IPPROTO_UDP};
 
 Socket::Socket() : s(INVALID_SOCKET) {}
 
@@ -83,15 +89,15 @@ Socket::~Socket()
     ::CLOSE(s);
 }
 
-bool Socket::open()
+bool Socket::open(Protocol protocol)
 {
   if(s != INVALID_SOCKET)
     close();
 
 #ifdef _WIN32
-  s = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+  s = WSASocket(AF_INET, Private::typeMap[protocol], Private::protocolMap[protocol], NULL, 0, WSA_FLAG_OVERLAPPED);
 #else
-  s = socket(AF_INET, SOCK_STREAM | SOCK_CLOEXEC, 0);
+  s = socket(AF_INET, Private::typeMap[protocol] | SOCK_CLOEXEC, pPrivate::protocolMap[protocol]);
 #endif
   if(s == INVALID_SOCKET)
     return false;
@@ -160,7 +166,7 @@ bool Socket::pair(Socket& other)
       goto closeServ;
 
     // create connect socket
-    conn = WSASocket(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED);
+    conn = WSASocket(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if(conn == INVALID_SOCKET)
       goto closeServ;
 
@@ -268,6 +274,15 @@ bool Socket::setReceiveBufferSize(int size)
   return true;
 }
 
+bool Socket::setBroadcast()
+{
+  int val = 1;
+  if(setsockopt(s, SOL_SOCKET, SO_BROADCAST, (char*)&val, sizeof(val)) != 0)
+    return false;
+  return true;
+}
+
+
 bool Socket::setKeepAlive()
 {
   int val = 1;
@@ -284,7 +299,19 @@ bool Socket::setReuseAddress()
   return true;
 }
 
-bool Socket::bind(unsigned int ip, unsigned short port)
+bool Socket::setReusePort()
+{
+  int val = 1;
+#ifdef _WIN32
+  if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (char*)&val, sizeof(val)) != 0)
+#else
+  if(setsockopt(s, SOL_SOCKET, SO_REUSEPORT, (char*)&val, sizeof(val)) != 0)
+#endif
+    return false;
+  return true;
+}
+
+bool Socket::bind(uint32 ip, uint16 port)
 {
   struct sockaddr_in sin;
   memset(&sin, 0, sizeof(sin));
@@ -307,7 +334,7 @@ bool Socket::listen()
   return true;
 }
 
-bool Socket::connect(unsigned int ip, unsigned short port)
+bool Socket::connect(uint32 ip, uint16 port)
 {
   struct sockaddr_in sin;
 
@@ -380,6 +407,53 @@ ssize Socket::send(const byte* data, usize size)
     }
     return -1;
   }
+  return r;
+}
+
+ssize Socket::sendTo(const byte* data, usize size, uint32 ip, uint16 port)
+{
+  struct sockaddr_in sin;
+  memset(&sin, 0, sizeof(sin));
+  sin.sin_family = AF_INET;
+  sin.sin_port = htons(port);
+  sin.sin_addr.s_addr = htonl(ip);
+
+  ssize r = ::sendto(s, (const char*)data, (int)size, 0, (sockaddr*)&sin, sizeof(sin));
+  if(r == SOCKET_ERROR)
+  {
+    if(ERRNO == EWOULDBLOCK 
+#ifndef _WIN32
+      || ERRNO == EAGAIN
+#endif
+      )
+    {
+      SET_ERRNO(0);
+    }
+    return -1;
+  }
+  return r;
+}
+
+ssize Socket::recvFrom(byte* data, usize maxSize, uint32& ip, uint16& port)
+{
+  struct sockaddr_in sin;
+  int sinSize = sizeof(sin);
+
+  ssize r = ::recvfrom(s, (char*)data, (int)maxSize, 0, (sockaddr*)&sin, &sinSize);
+  if(r == SOCKET_ERROR)
+  {
+    if(ERRNO == EWOULDBLOCK 
+#ifndef _WIN32
+      || ERRNO == EAGAIN
+#endif
+      )
+    {
+      SET_ERRNO(0);
+    }
+    return -1;
+  }
+  ip = ntohl(sin.sin_addr.s_addr);
+  port = ntohs(sin.sin_port);
   return r;
 }
 
