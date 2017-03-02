@@ -519,7 +519,6 @@ public:
   {
     Socket* socket;
     ULONG_PTR key;
-    HANDLE s; // todo: ?? why?? 
     uint events;
   };
 
@@ -536,7 +535,7 @@ public:
     ULONG_PTR key;
   };
 
-  HashMap<SOCKET, SocketInfo> sockets;
+  HashMap<Socket*, SocketInfo> sockets;
   HashMap<ULONG_PTR, SocketInfo*> keys;
   ULONG_PTR nextKey;
 
@@ -658,13 +657,12 @@ void Socket::Poll::set(Socket& socket, uint events)
 {
 #ifdef _WIN32
   Private::SocketInfo* sockInfo;
-  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->sockets.find(socket.s);
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
   if(it == p->sockets.end()) // this is a new one, lets create a key for it and attach it to the completion port
   {
-    sockInfo = &p->sockets.append(socket.s, Private::SocketInfo());
+    sockInfo = &p->sockets.append(&socket, Private::SocketInfo());
     sockInfo->key = p->nextKey++;
     sockInfo->socket = &socket;
-    sockInfo->s = (HANDLE)socket.s;
     sockInfo->events = 0;
     VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->completionPort, sockInfo->key, 0) == p->completionPort);
     p->keys.append(sockInfo->key, sockInfo);
@@ -687,13 +685,13 @@ void Socket::Poll::set(Socket& socket, uint events)
     WSABUF buf = {};
     DWORD flags = 0;
     DWORD numberOfBytesRecvd;
-    WSARecv((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
+    WSARecv((SOCKET)socket.s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
   }
   if(addedEvents & writeFlag)
   {
     WSABUF buf = {};
     DWORD numberOfBytesRecvd;
-    WSASend((SOCKET)sockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
+    WSASend((SOCKET)socket.s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
   }
   if(addedEvents & connectFlag)
   {
@@ -905,11 +903,11 @@ cleanup:
 
 void Socket::Poll::remove(Socket& socket)
 {
-#ifdef _WIN32
-  HashMap<SOCKET, Private::SocketInfo>::Iterator it = p->sockets.find(socket.s);
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
   if(it == p->sockets.end())
     return;
   Private::SocketInfo& sockInfo = *it;
+#ifdef _WIN32
   if(sockInfo.events & (connectFlag | acceptFlag))
   {
     Private::WorkerMessage message = {Private::WorkerMessage::remove, socket.s, sockInfo.key};
@@ -921,10 +919,6 @@ void Socket::Poll::remove(Socket& socket)
   p->sockets.remove(it);
   // todo: detach socket from iocp?
 #else
-  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
-  if(it == p->sockets.end())
-    return;
-  Private::SocketInfo& sockInfo = *it;
   usize index = sockInfo.index;
   pollfd& pfd = p->pollfds[index];
   p->fdToSocket.remove(pfd.fd);
@@ -952,19 +946,19 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
         WSABUF buf = {};
         DWORD flags = 0;
         DWORD numberOfBytesRecvd;
-        WSARecv((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
+        WSARecv((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
       }
       break;
     case writeFlag:
       {
         WSABUF buf = {};
         DWORD numberOfBytesRecvd;
-        WSASend((SOCKET)p->detachedSockInfo->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
+        WSASend((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
       }
       break;
     case acceptFlag:
       {
-        Private::WorkerMessage message = {Private::WorkerMessage::addAccept, (SOCKET)p->detachedSockInfo->s, p->detachedSockInfo->key };
+        Private::WorkerMessage message = {Private::WorkerMessage::addAccept, (SOCKET)p->detachedSockInfo->socket->s, p->detachedSockInfo->key };
         p->pushWorkerThreadMessage(message);
       }
       break;
