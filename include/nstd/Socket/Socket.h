@@ -50,6 +50,8 @@ public:
   bool setReceiveBufferSize(int size);
   bool setBroadcast();
 
+  bool joinMulticastGroup(uint32 ip, uint32 interfaceIp = anyAddr);
+
   int getAndResetErrorStatus();
 
   bool getSockName(uint32& ip, uint16& port);

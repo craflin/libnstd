@@ -3,6 +3,7 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS // todo: get rid of this
 #define _CRT_NO_POSIX_ERROR_CODES
 #include <winsock2.h>
+#include <Ws2tcpip.h>
 #ifdef UNICODE
 #include <Mstcpip.h>
 #undef ASSERT
@@ -282,6 +283,16 @@ bool Socket::setBroadcast()
   return true;
 }
 
+bool Socket::joinMulticastGroup(uint32 ip, uint32 interfaceIp)
+{
+  ip_mreq mreq;
+  memset(&mreq, 0, sizeof(mreq));
+  mreq.imr_multiaddr.s_addr = htonl(ip);
+  mreq.imr_interface.s_addr = htonl(interfaceIp);
+  if(setsockopt(s, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*)&mreq, sizeof(mreq)) != 0)
+    return false;
+  return true;
+}
 
 bool Socket::setKeepAlive()
 {
@@ -550,7 +561,9 @@ uint32 Socket::inetAddr(const String& addr, uint16* port)
 #ifdef UNICODE
     in_addr inaddr;
     LPCWSTR end; 
-    return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
+    if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
+      return 0;
+    return ntohl(inaddr.s_addr);
 #else
     return ntohl(inet_addr((const tchar*)addr.substr(0, (portStr - (const tchar*)addr) / sizeof(tchar))));
 #endif
@@ -558,7 +571,9 @@ uint32 Socket::inetAddr(const String& addr, uint16* port)
 #ifdef UNICODE
   in_addr inaddr;
   LPCWSTR end; 
-  return RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr);
+  if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
+    return 0;
+  return ntohl(inaddr.s_addr);
 #else
   return ntohl(inet_addr((const tchar*)addr));
 #endif
