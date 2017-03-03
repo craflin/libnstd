@@ -562,7 +562,7 @@ uint32 Socket::inetAddr(const String& addr, uint16* port)
     in_addr inaddr;
     LPCWSTR end; 
     if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
-      return 0;
+      return ntohl(INADDR_NONE);
     return ntohl(inaddr.s_addr);
 #else
     return ntohl(inet_addr((const tchar*)addr.substr(0, (portStr - (const tchar*)addr) / sizeof(tchar))));
@@ -572,7 +572,7 @@ uint32 Socket::inetAddr(const String& addr, uint16* port)
   in_addr inaddr;
   LPCWSTR end; 
   if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
-    return 0;
+    return ntohl(INADDR_NONE);
   return ntohl(inaddr.s_addr);
 #else
   return ntohl(inet_addr((const tchar*)addr));
