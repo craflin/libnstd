@@ -14,8 +14,8 @@ void testSocket()
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(listener2.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
-    ASSERT(listener1.setReusePort());
-    ASSERT(listener2.setReusePort());
+    ASSERT(listener1.setReuseAddress());
+    ASSERT(listener2.setReuseAddress());
     ASSERT(listener1.bind(Socket::anyAddr, 6212));
     ASSERT(listener2.bind(Socket::anyAddr, 6212));
     ASSERT(sender.bind(Socket::anyAddr, 0));

@@ -43,7 +43,6 @@ public:
 
   bool setKeepAlive();
   bool setReuseAddress();
-  bool setReusePort();
   bool setNonBlocking();
   bool setNoDelay();
   bool setSendBufferSize(int size);

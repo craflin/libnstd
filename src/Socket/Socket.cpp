@@ -309,7 +309,7 @@ bool Socket::setReuseAddress()
     return false;
   return true;
 }
-
+/*
 bool Socket::setReusePort()
 {
   int val = 1;
@@ -321,7 +321,7 @@ bool Socket::setReusePort()
     return false;
   return true;
 }
-
+*/
 bool Socket::bind(uint32 ip, uint16 port)
 {
   struct sockaddr_in sin;
