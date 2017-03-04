@@ -38,6 +38,8 @@ as possible. Right now it consists of following headers:
 * Processes
     * [Process.h](include/nstd/Process.h): Abstraction layer of process launching with or without I/O redirecting.
     * [Library.h](include/nstd/Library.h): Abstraction layer of dll / shared object loading.
+* Signals/Slots
+    * [Event.h](include/nstd/Event.h): Base classes for objects that emit or receive signals.
 * Sockets (optional)
     * [Socket.h](include/nstd/Socket/Socket.h): An abstraction layer of native sockets.
     * [Server.h](include/nstd/Socket/Server.h): An asynchronous TCP/IP server multiplexer.
