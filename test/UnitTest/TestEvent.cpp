@@ -35,13 +35,16 @@ void testEvent()
   public:
     MyReceiver* check;
     MyEmitter* emitter;
+    int calls;
 
+    MyReceiver() : calls(0) {}
     virtual ~MyReceiver() {}
 
   public: // slots
     virtual void mySlot(String arg)
     {
       ASSERT(this == check);
+      ++calls;
     }
     void selfDelete(String arg)
     {
@@ -73,6 +76,7 @@ void testEvent()
     Event::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
     emitter.emitMySignal(_T("test"));
     emitter.emitMySignal2(_T("test"), 123);
+    ASSERT(receiver.calls == 2);
   }
 
   // test signal with const String& argument
@@ -102,11 +106,13 @@ void testEvent()
       void mySlot3(String arg)
       {
         ASSERT(this == check);
+        ++calls;
       }
 
       virtual void mySlot(String arg)
       {
         ++mySlotCalled;
+        ++calls;
       }
     };
 
@@ -119,6 +125,7 @@ void testEvent()
       void mySlot4(String arg)
       {
         ASSERT(this == check);
+        ++calls;
       }
     };
 
@@ -143,6 +150,8 @@ void testEvent()
     emitter.emitMySignal(_T("test"));
     emitter.emitMySignal2(_T("test"), 123);
     ASSERT(receiver3.mySlotCalled == 2);
+    ASSERT(receiver3.calls == 3);
+    ASSERT(receiver4.calls == 3);
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver3::mySlot3);
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver3, &MyReceiver::mySlot);
     Event::disconnect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
