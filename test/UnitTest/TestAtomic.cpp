@@ -18,12 +18,14 @@ void testAtomic()
   volatile uint32 uint32 = 0xfffffff0;
   ASSERT(Atomic::increment(uint32) == 0xfffffff1);
   ASSERT(Atomic::decrement(uint32) == 0xfffffff0);
-#ifndef _ARM
   volatile int64 int64 = 0;
+#ifndef _ARM  
   ASSERT(Atomic::increment(int64) == 1);
   ASSERT(Atomic::decrement(int64) == 0);
   ASSERT(Atomic::decrement(int64) == -1);
+#endif
   volatile uint64 uint64 =  (0xffffffffULL << 32) | 0xfffffff0ULL;
+#ifndef _ARM  
   ASSERT(Atomic::increment(uint64) == ((0xffffffffULL << 32) | 0xfffffff1ULL));
   ASSERT(Atomic::decrement(uint64) == ((0xffffffffULL << 32) | 0xfffffff0ULL));
 #endif
@@ -40,6 +42,10 @@ void testAtomic()
   ASSERT(Atomic::swap(int32, 1) == 0);
   ASSERT(Atomic::swap(int32, -1) == 1);
   ASSERT(Atomic::swap(int32, 2) == -1);
+  int64 = 0;
+  ASSERT(Atomic::swap(int64, 1) == 0);
+  ASSERT(Atomic::swap(int64, -1) == 1);
+  ASSERT(Atomic::swap(int64, 2) == -1);
   uint32 = 0;
   ASSERT(Atomic::swap(uint32, 1) == 0);
   ASSERT(Atomic::swap(uint32, 2) == 1);
