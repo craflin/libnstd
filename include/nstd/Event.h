@@ -4,8 +4,6 @@
 #include <nstd/Map.h>
 #include <nstd/List.h>
 
-#include <nstd/Console.h>
-
 class Event
 {
 public:
@@ -132,24 +130,6 @@ public:
   };
 
 public:
-
-  /*
-
-  template <class X, typename A> struct MemberFuncPtr1
-  {
-    static void call(X* x, const MemberFuncPtr& ptr, A a)
-    {
-       void (X::*ptr)(A);
-       ptr = ptr.ptr;
-       (x->*ptr)(a);
-    }
-  };
-
-  template <class X, typename A> struct MemberFuncId
-  {
-  };
-  */
-
   template<class X, class Y, class V, class W> static void connect(V* src, void (X::*signal)(), W* dest, void (Y::*slot)()) {X* x = src; Y* y = dest; connect(x, signal, y, y, slot);}
   template<class X, class Y, class V, class W, typename A> static void connect(V* src, void (X::*signal)(A), W* dest, void (Y::*slot)(A)) {X* x = src; Y* y = dest; connect(x, signal, y, y, slot);}
   template<class X, class Y, class V, class W, typename A, typename B> static void connect(V* src, void (X::*signal)(A, B), W* dest, void (Y::*slot)(A, B)) {X* x = src; Y* y = dest; connect(x, signal, y, y, slot);}
