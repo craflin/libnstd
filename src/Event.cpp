@@ -6,9 +6,9 @@
 
 Event::Source::~Source()
 {
-  for(Map<void*, SignalData>::Iterator i = signalData.begin(); i != signalData.end(); ++i)
+  for(Map<MemberFuncPtr, SignalData>::Iterator i = signalData.begin(); i != signalData.end(); ++i)
   {
-    void* signal = i.key();
+    const MemberFuncPtr& signal = i.key();
     SignalData& data = *i;
     if(data.activation)
       data.activation->invalidated = true;
@@ -32,10 +32,10 @@ Event::Source::~Source()
   }
 }
 
-Event::Source::SignalActivation::SignalActivation(Event::Source* emitter, void* signal) : invalidated(false)
+Event::Source::SignalActivation::SignalActivation(Event::Source* emitter, const MemberFuncPtr& signal) : invalidated(false)
 {
   Console::printf("SignalActivation emitter=%p signal=%p\n", emitter, signal);
-  Map<void*, SignalData>::Iterator it = emitter->signalData.find(*(void**)&signal);
+  Map<MemberFuncPtr, SignalData>::Iterator it = emitter->signalData.find(signal);
   if(it == emitter->signalData.end())
   {
     data = 0;
@@ -85,7 +85,7 @@ Event::Listener::~Listener()
     for(List<Signal>::Iterator i = signals.begin(); i != signals.end(); ++i)
     {
       Signal& signalData1 = *i;
-      Map<void*, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signalData1.signal);
+      Map<MemberFuncPtr, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signalData1.signal);
       if(it != emitter->signalData.end())
       {
         Event::Source::SignalData& signalData = *it;
@@ -106,11 +106,11 @@ Event::Listener::~Listener()
   }
 }
 
-void Event::connect(Event::Source* emitter, void* signal, Event::Listener* receiver, void* object, void* slot)
+void Event::connect(Event::Source* emitter, const MemberFuncPtr& signal, Event::Listener* receiver, void* object, const MemberFuncPtr& slot)
 {
   Console::printf("connect emitter=%p signal=%p receiver=%p object=%p slot=%p\n", emitter, signal, receiver, object, slot);
 
-  Map<void*, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signal);
+  Map<MemberFuncPtr, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signal);
   Event::Source::SignalData& signalData = it == emitter->signalData.end() ? *emitter->signalData.insert(signal, Event::Source::SignalData()) : *it;
   Event::Source::Slot& slotData = signalData.slots.append(Event::Source::Slot());
   if(signalData.activation)
@@ -130,9 +130,9 @@ void Event::connect(Event::Source* emitter, void* signal, Event::Listener* recei
   signalData2.slot = slot;
 }
 
-void Event::disconnect(Event::Source* emitter, void* signal, Event::Listener* receiver, void* slot)
+void Event::disconnect(Event::Source* emitter, const MemberFuncPtr& signal, Event::Listener* receiver, const MemberFuncPtr& slot)
 {
-  Map<void*, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signal);
+  Map<MemberFuncPtr, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signal);
   if(it == emitter->signalData.end())
     return;
 
