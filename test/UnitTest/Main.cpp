@@ -550,10 +550,8 @@ int main(int argc, char* argv[])
 
   /*
   testMemory();
-  */
   testSocket();
   testServer();
-  /*
   testSignal();
   testMonitor();
   testUnicode();
@@ -588,8 +586,8 @@ int main(int argc, char* argv[])
   testVariant();
   testXML();
   testJSON();
-  testEvent();
   */
+  testEvent();
 
   Console::printf(_T("%s\n"), _T("done"));
 

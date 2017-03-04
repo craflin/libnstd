@@ -3,6 +3,7 @@
 
 #include <nstd/Map.h>
 #include <nstd/List.h>
+#include <nstd/Console.h>
 
 class Event
 {
@@ -17,7 +18,25 @@ public:
 
   protected:
     template<class X> void emit(void (X::*signal)()) {SignalActivation activation(this, *(void**)&signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) *(void**)&signal = i->slot, (((X*)i->object)->*signal)(); if(activation.invalidated) return;}}
-    template<class X, typename A> void emit(void (X::*signal)(A), A arg0) {SignalActivation activation(this, *(void**)&signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) *(void**)&signal = i->slot, (((X*)i->object)->*signal)(arg0); if(activation.invalidated) return;}}
+    template<class X, typename A> void emit(void (X::*signal)(A), A arg0)
+    {
+      SignalActivation activation(this, *(void**)&signal);
+      for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i)
+      {
+        if(i->state == Slot::connected)
+        {
+
+          *(void**)&signal = i->slot;
+
+          Console::printf("emit call object=%p signal=%p\n", i->object, *(void**)&signal);
+
+          (((X*)i->object)->*signal)(arg0);
+        }
+        if(activation.invalidated)
+          return;
+      }
+    }
+
     template<class X, typename A, typename B> void emit(void (X::*signal)(A, B), A arg0, B arg1) {SignalActivation activation(this, *(void**)&signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) *(void**)&signal = i->slot, (((X*)i->object)->*signal)(arg0, arg1); if(activation.invalidated) return;}}
     template<class X, typename A, typename B, typename C> void emit(void (X::*signal)(A, B, C), A arg0, B arg1, C arg2) {SignalActivation activation(this, *(void**)&signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) *(void**)&signal = i->slot, (((X*)i->object)->*signal)(arg0, arg1, arg2); if(activation.invalidated) return;}}
     template<class X, typename A, typename B, typename C, typename D> void emit(void (X::*signal)(A, B, C, D), A arg0, B arg1, C arg2, D arg3) {SignalActivation activation(this, *(void**)&signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) *(void**)&signal = i->slot, (((X*)i->object)->*signal)(arg0, arg1, arg2, arg3); if(activation.invalidated) return;}}

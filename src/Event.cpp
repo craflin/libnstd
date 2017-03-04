@@ -1,6 +1,9 @@
 
 #include <nstd/Event.h>
 
+
+
+
 Event::Source::~Source()
 {
   for(Map<void*, SignalData>::Iterator i = signalData.begin(); i != signalData.end(); ++i)
@@ -31,6 +34,7 @@ Event::Source::~Source()
 
 Event::Source::SignalActivation::SignalActivation(Event::Source* emitter, void* signal) : invalidated(false)
 {
+  Console::printf("SignalActivation emitter=%p signal=%p\n", emitter, signal);
   Map<void*, SignalData>::Iterator it = emitter->signalData.find(*(void**)&signal);
   if(it == emitter->signalData.end())
   {
@@ -104,6 +108,8 @@ Event::Listener::~Listener()
 
 void Event::connect(Event::Source* emitter, void* signal, Event::Listener* receiver, void* object, void* slot)
 {
+  Console::printf("connect emitter=%p signal=%p receiver=%p object=%p slot=%p\n", emitter, signal, receiver, object, slot);
+
   Map<void*, Event::Source::SignalData>::Iterator it = emitter->signalData.find(signal);
   Event::Source::SignalData& signalData = it == emitter->signalData.end() ? *emitter->signalData.insert(signal, Event::Source::SignalData()) : *it;
   Event::Source::Slot& slotData = signalData.slots.append(Event::Source::Slot());
