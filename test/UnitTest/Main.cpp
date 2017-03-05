@@ -548,10 +548,10 @@ int main(int argc, char* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
 
-  /*
   testMemory();
   testSocket();
   testServer();
+  /*
   testSignal();
   testMonitor();
   testUnicode();

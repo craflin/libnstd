@@ -843,8 +843,9 @@ void Socket::Poll::Private::pushWorkerThreadMessage(const WorkerMessage& message
       return;
     }
   }
+  else
+    SetEvent(workerThreadEvent);
   workerThreadMessages.append(message);
-  SetEvent(workerThreadEvent);
   LeaveCriticalSection(&workerMutex);
 }
 
@@ -863,87 +864,106 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
   DWORD eventCount = 1;
   events[0] = p->workerThreadEvent;
 
-  for(;;)
+  for(WorkerMessage message;;)
   {
     EnterCriticalSection(&p->workerMutex);
-    while(!p->workerThreadMessages.isEmpty())
+    if(p->workerThreadMessages.isEmpty())
     {
-      WorkerMessage& message = p->workerThreadMessages.front();
-      switch(message.type)
-      {
-      case WorkerMessage::quit:
-        p->workerThreadMessages.removeFront();
-        goto cleanup;
-      case WorkerMessage::addConnect:
-      case WorkerMessage::addAccept:
-        if(eventCount < 64)
-        {
-          WSAEVENT eventHandle;
-          Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
-          if(it == suspendedEvents.end())
-          {
-            eventHandle = WSACreateEvent();
-            if(eventHandle != WSA_INVALID_EVENT)
-            {
-              if(WSAEventSelect(message.s, eventHandle, message.type == WorkerMessage::addConnect ? (FD_CONNECT | FD_CLOSE) : FD_ACCEPT) == SOCKET_ERROR)
-              {
-                WSACloseEvent(eventHandle);
-                eventHandle = WSA_INVALID_EVENT;
-              }
-            }
-          }
-          else
-          {
-            eventHandle = *it;
-            suspendedEvents.remove(it);
-          }
-          if(eventHandle != WSA_INVALID_EVENT)
-          {
-            events[eventCount++] = eventHandle;
-            EventData& event = eventData.append(eventHandle, EventData());
-            event.key = message.key;
-            event.overlapped = message.type == WorkerMessage::addConnect ? &p->connectOverlapped : &p->acceptOverlapped;
-            event.s = message.s;
-          }
-        }
-        break;
-      case WorkerMessage::remove:
-        {
-          Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
-          if(it == suspendedEvents.end())
-          {
-            for(DWORD i = 0; i < eventCount; ++i)
-            {
-              HANDLE eventHandle = events[i];
-              HashMap<HANDLE, EventData>::Iterator it = eventData.find(eventHandle);
-              EventData& event = *it;
-              if(event.s == message.s)
-              {
-                --eventCount;
-                for(DWORD nextEventNum; i < eventCount; i = nextEventNum)
-                {
-                  nextEventNum = i + 1;
-                  events[i] = events[nextEventNum];
-                }
-                eventData.remove(it);
-                break;
-              }
-            }
-          }
-          else
-          {
-            WSACloseEvent(*it);
-            suspendedEvents.remove(it);
-          }
-          break;
-        }
-      }
-      p->workerThreadMessages.removeFront();
+      LeaveCriticalSection(&p->workerMutex);
+      goto skipInputMessage;
     }
-    if(eventCount == 1 && suspendedEvents.isEmpty())
+    message = p->workerThreadMessages.front();
+    switch(message.type)
+    {
+    case WorkerMessage::quit:
+      p->workerThreadMessages.removeFront();
       goto cleanup;
+    case WorkerMessage::addConnect:
+    case WorkerMessage::addAccept:
+      if(eventCount >= 64)
+      {
+        LeaveCriticalSection(&p->workerMutex);
+        goto skipInputMessage;
+      }
+    default:
+      p->workerThreadMessages.removeFront();
+      break;
+    }
     LeaveCriticalSection(&p->workerMutex);
 
+    switch(message.type)
+    {
+    case WorkerMessage::addConnect:
+    case WorkerMessage::addAccept:
+      {
+        WSAEVENT eventHandle;
+        Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
+        if(it == suspendedEvents.end())
+        {
+          eventHandle = WSACreateEvent();
+          if(eventHandle != WSA_INVALID_EVENT)
+          {
+            if(WSAEventSelect(message.s, eventHandle, message.type == WorkerMessage::addConnect ? (FD_CONNECT | FD_CLOSE) : FD_ACCEPT) == SOCKET_ERROR)
+            {
+              WSACloseEvent(eventHandle);
+              eventHandle = WSA_INVALID_EVENT;
+            }
+          }
+        }
+        else
+        {
+          eventHandle = *it;
+          suspendedEvents.remove(it);
+        }
+        if(eventHandle != WSA_INVALID_EVENT)
+        {
+          events[eventCount++] = eventHandle;
+          EventData& event = eventData.append(eventHandle, EventData());
+          event.key = message.key;
+          event.overlapped = message.type == WorkerMessage::addConnect ? &p->connectOverlapped : &p->acceptOverlapped;
+          event.s = message.s;
+        }
+      }
+      break;
+    case WorkerMessage::remove:
+      {
+        Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
+        if(it == suspendedEvents.end())
+        {
+          for(DWORD i = 0; i < eventCount; ++i)
+          {
+            HANDLE eventHandle = events[i];
+            HashMap<HANDLE, EventData>::Iterator it = eventData.find(eventHandle);
+            EventData& event = *it;
+            if(event.s == message.s)
+            {
+              --eventCount;
+              for(DWORD nextEventNum; i < eventCount; i = nextEventNum)
+              {
+                nextEventNum = i + 1;
+                events[i] = events[nextEventNum];
+              }
+              eventData.remove(it);
+              break;
+            }
+          }
+        }
+        else
+        {
+          WSACloseEvent(*it);
+          suspendedEvents.remove(it);
+        }
+        break;
+      }
+    }
+    if(eventCount == 1 && suspendedEvents.isEmpty())
+    {
+      EnterCriticalSection(&p->workerMutex);
+      if(p->workerThreadMessages.isEmpty())
+        goto cleanup;
+    }
+
+  skipInputMessage:
     DWORD eventNum = WaitForMultipleObjects(eventCount, events, FALSE, INFINITE);
     if(eventNum > WAIT_OBJECT_0)
     {
@@ -961,7 +981,15 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
       eventData.remove(it);
 
       if(event.overlapped == &p->connectOverlapped)
+      {
         WSACloseEvent(eventHandle);
+        if(eventCount == 1 && suspendedEvents.isEmpty())
+        {
+          EnterCriticalSection(&p->workerMutex);
+          if(p->workerThreadMessages.isEmpty())
+            goto cleanup;
+        }
+      }
       else
       {
         WSANETWORKEVENTS selectedEvents = {};
