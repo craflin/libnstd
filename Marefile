@@ -80,6 +80,7 @@ targets = {
   libnstd += {
     enableSocket = "true"
     enableDocument = "true"
+    enableCrypto = "true"
     if (tool == "vcxproj" && Cygwin) {
       defines -= { "_CRT_SECURE_NO_WARNINGS", "_WIN64" }
       config = "$(patsubst %_cygwin,%,$(configuration))"

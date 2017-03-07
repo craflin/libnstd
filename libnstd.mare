@@ -13,6 +13,10 @@ libnstd = cppStaticLibrary + {
       "$(mareDir)/src/Document/*.cpp" = cppSource,
       "$(mareDir)/include/nstd/Document/*.h"
     }
+    if enableCrypto {
+      "$(mareDir)/src/Crypto/*.cpp" = cppSource,
+      "$(mareDir)/include/nstd/Crypto/*.h"
+    }
   }
   if tool == "vcxproj" {
     defines += { "_CRT_SECURE_NO_WARNINGS" }

@@ -39,6 +39,7 @@ void testJSON();
 void testEvent();
 void testTime();
 void testMap();
+void testSha256();
 
 void testConsolePrintf()
 {
@@ -549,9 +550,10 @@ int main(int argc, char* argv[])
   Console::printf(_T("%s\n"), _T("Testing..."));
 
   testMemory();
+  testSha256();
+  /*
   testSocket();
   testServer();
-  /*
   testSignal();
   testMonitor();
   testUnicode();
