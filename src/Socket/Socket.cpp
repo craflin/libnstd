@@ -772,15 +772,13 @@ void Socket::Poll::set(Socket& socket, uint events)
   if(addedEvents & readFlag)
   {
     WSABUF buf = {};
-    DWORD flags = 0;
-    DWORD numberOfBytesRecvd;
-    WSARecv((SOCKET)socket.s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
+    DWORD flags = MSG_PEEK;
+    WSARecv((SOCKET)socket.s, &buf, 1, NULL, &flags, &p->readOverlapped, NULL);
   }
   if(addedEvents & writeFlag)
   {
     WSABUF buf = {};
-    DWORD numberOfBytesRecvd;
-    WSASend((SOCKET)socket.s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
+    WSASend((SOCKET)socket.s, &buf, 1, NULL, 0, &p->writeOverlapped, NULL);
   }
   if(addedEvents & connectFlag)
   {
@@ -1061,16 +1059,16 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
     case readFlag:
       {
         WSABUF buf = {};
-        DWORD flags = 0;
+        DWORD flags = MSG_PEEK;
         DWORD numberOfBytesRecvd;
-        WSARecv((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, &numberOfBytesRecvd, &flags, &p->readOverlapped, NULL);
+        WSARecv((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, &flags, &p->readOverlapped, NULL);
       }
       break;
     case writeFlag:
       {
         WSABUF buf = {};
         DWORD numberOfBytesRecvd;
-        WSASend((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, &numberOfBytesRecvd, 0, &p->writeOverlapped, NULL);
+        WSASend((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, 0, &p->writeOverlapped, NULL);
       }
       break;
     case acceptFlag:
@@ -1083,19 +1081,23 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
     p->detachedSockInfo = 0;
   }
   DWORD numberOfBytes;
-  ULONG_PTR completionKey;
+  ULONG_PTR completionKey = 0;
   Private::Overlapped* overlapped;
   for(;;)
   {
     if(!GetQueuedCompletionStatus(p->completionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
     {
-      if(GetLastError() == WAIT_TIMEOUT)
+      switch(GetLastError())
       {
+      case WAIT_TIMEOUT:
         event.flags = 0;
         event.socket = 0;
         return true;
+      case ERROR_MORE_DATA:
+        break;
+      default:
+        return false;
       }
-      return false;
     }
     HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  p->keys.find(completionKey);
     if(it == p->keys.end())
