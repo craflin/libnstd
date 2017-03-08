@@ -1060,14 +1060,12 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       {
         WSABUF buf = {};
         DWORD flags = MSG_PEEK;
-        DWORD numberOfBytesRecvd;
         WSARecv((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, &flags, &p->readOverlapped, NULL);
       }
       break;
     case writeFlag:
       {
         WSABUF buf = {};
-        DWORD numberOfBytesRecvd;
         WSASend((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, 0, &p->writeOverlapped, NULL);
       }
       break;
