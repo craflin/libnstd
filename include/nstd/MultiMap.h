@@ -78,6 +78,7 @@ public:
     _begin.item = &endItem;
     endItem.prev = 0;
     _size = 0;
+    root = 0;
   }
 
   Iterator find(const T& key) const
