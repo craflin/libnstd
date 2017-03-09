@@ -40,6 +40,7 @@ void testEvent();
 void testTime();
 void testMap();
 void testSha256();
+void testMap();
 
 void testConsolePrintf()
 {
@@ -580,10 +581,12 @@ int main(int argc, char* argv[])
   testDirectory();
   testTime();
   testProcess();
+  */
   testMap();
   testPoolList();
   testPoolMap();
   testMultiMap();
+  /*
   testError();
   testVariant();
   testXML();
