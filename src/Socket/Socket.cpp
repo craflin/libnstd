@@ -294,6 +294,14 @@ bool Socket::joinMulticastGroup(uint32 ip, uint32 interfaceIp)
   return true;
 }
 
+bool Socket::setMulticastLoopback(bool enable)
+{
+  DWORD val = enable ? 1 : 0;
+  if(setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, (char*)&val, sizeof(val)) != 0)
+    return false;
+  return true;
+}
+
 bool Socket::setKeepAlive()
 {
   int val = 1;

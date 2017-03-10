@@ -50,6 +50,7 @@ public:
   bool setBroadcast();
 
   bool joinMulticastGroup(uint32 ip, uint32 interfaceIp = anyAddr);
+  bool setMulticastLoopback(bool enable);
 
   int getAndResetErrorStatus();
 
