@@ -84,6 +84,7 @@ public:
     clients.clear();
     timers.clear();
     queuedTimers.clear();
+    queuedTimers.insert(0, 0);
     sockets.clear();
     closingHandles.clear();
     interrupted = false;
