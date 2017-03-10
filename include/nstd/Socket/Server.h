@@ -57,6 +57,7 @@ public:
   void setNoDelay(bool enable = true);
   void setSendBufferSize(int size);
   void setReceiveBufferSize(int size);
+  void setReuseAddress(bool enable);
 
   void clear();
 

@@ -69,11 +69,12 @@ private:
   bool noDelay;
   int sendBufferSize;
   int receiveBufferSize;
+  bool reuseAddress;
 
   bool interrupted;
 
 public:
-  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0), interrupted(false)
+  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0), reuseAddress(true), interrupted(false)
   {
     queuedTimers.insert(0, 0); // add default timeout timer
   }
@@ -94,7 +95,7 @@ public:
   {
     Socket socket;
     if(!socket.open() ||
-      !socket.setReuseAddress() ||
+      (reuseAddress && !socket.setReuseAddress()) ||
       !socket.bind(addr, port) ||
       !socket.listen())
       return 0;
@@ -477,6 +478,7 @@ public:
   void setNoDelay(bool enable) {noDelay = enable;}
   void setSendBufferSize(int size) {sendBufferSize = size;}
   void setReceiveBufferSize(int size) {receiveBufferSize = size;}
+  void setReuseAddress(bool enable) {reuseAddress = enable;}
 };
 
 Server::Server() : p(new Private) {}
@@ -500,4 +502,5 @@ void Server::setKeepAlive(bool enable) {return p->setKeepAlive(enable);}
 void Server::setNoDelay(bool enable) {return p->setNoDelay(enable);}
 void Server::setSendBufferSize(int size) {return p->setSendBufferSize(size);}
 void Server::setReceiveBufferSize(int size) {return p->setReceiveBufferSize(size);}
+void Server::setReuseAddress(bool enable) {return p->setReuseAddress(enable);}
 void Server::clear() {return p->clear();}
