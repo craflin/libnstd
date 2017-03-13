@@ -42,6 +42,8 @@ public:
   void setUserData(Handle& handle, void* userData);
   void* getUserData(Handle& handle);
 
+  Socket* getSocket(Handle& handle);
+
   bool write(Handle& handle, const byte* data, usize size, usize* postponed = 0);
   bool read(Handle& handle, byte* buffer, usize maxSize, usize& size);
 

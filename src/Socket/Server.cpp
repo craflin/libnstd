@@ -481,6 +481,19 @@ public:
   void setReuseAddress(bool enable) {reuseAddress = enable;}
 };
 
+Socket* Server::getSocket(Handle& handle)
+{
+  switch(handle.type)
+  {
+  case Handle::clientType:
+    return &((Private::Client&)handle).socket;
+  case Handle::listenerType:
+    return &((Private::Listener&)handle).socket;
+  default:
+    return 0;
+  }
+}
+
 Server::Server() : p(new Private) {}
 Server::~Server() {delete p;}
 Server::Handle* Server::listen(uint16 port, void* userData) {return p->listen(Socket::anyAddr, port, userData);}
