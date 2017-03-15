@@ -1093,17 +1093,16 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
   {
     if(!GetQueuedCompletionStatus(p->completionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
     {
-      switch(GetLastError())
-      {
-      case WAIT_TIMEOUT:
-        event.flags = 0;
-        event.socket = 0;
-        return true;
-      case ERROR_MORE_DATA:
-        break;
-      default:
-        return false;
-      }
+      if(!overlapped)
+        switch(GetLastError())
+        {
+        case WAIT_TIMEOUT:
+          event.flags = 0;
+          event.socket = 0;
+          return true;
+        default:
+          return false;
+        }
     }
     HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  p->keys.find(completionKey);
     if(it == p->keys.end())
