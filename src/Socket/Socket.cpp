@@ -619,7 +619,7 @@ public:
     uint events;
   };
 
-  struct WorkerMessage
+  struct WaitThreadMessage
   {
     enum Type
     {
@@ -639,10 +639,10 @@ public:
   SocketInfo* detachedSockInfo;
   uint detachedSocketEvent;
 
-  HANDLE workerThread;
-  HANDLE workerThreadEvent;
-  CRITICAL_SECTION workerMutex;
-  List<WorkerMessage> workerThreadMessages;
+  HANDLE waitThread;
+  HANDLE waitThreadEvent;
+  CRITICAL_SECTION waitThreadMutex;
+  List<WaitThreadMessage> waitThreadQueue;
 
   Overlapped connectOverlapped;
   Overlapped acceptOverlapped;
@@ -650,9 +650,9 @@ public:
   Overlapped writeOverlapped;
   Overlapped interruptOverlapped;
 
-  Private() : nextKey(1), detachedSockInfo(0), workerThread(0), workerThreadEvent(0)
+  Private() : nextKey(1), detachedSockInfo(0), waitThread(0), waitThreadEvent(0)
   {
-    InitializeCriticalSection(&workerMutex);
+    InitializeCriticalSection(&waitThreadMutex);
     ZeroMemory(&readOverlapped, sizeof(readOverlapped));
     ZeroMemory(&writeOverlapped, sizeof(writeOverlapped));
     connectOverlapped.event = connectFlag;
@@ -664,31 +664,31 @@ public:
 
   ~Private()
   {
-    if(workerThread)
+    if(waitThread)
     {
       HANDLE thread = 0;
-      EnterCriticalSection(&workerMutex);
-      if(workerThread)
+      EnterCriticalSection(&waitThreadMutex);
+      if(waitThread)
       {
-        thread = workerThread;
-        workerThread = 0;
-        WorkerMessage workerMessage = {WorkerMessage::quit};
-        workerThreadMessages.prepend(workerMessage);
-        SetEvent(workerThreadEvent);
+        thread = waitThread;
+        waitThread = 0;
+        WaitThreadMessage quitMessage = {WaitThreadMessage::quit};
+        waitThreadQueue.prepend(quitMessage);
+        SetEvent(waitThreadEvent);
       }
-      LeaveCriticalSection(&workerMutex);
+      LeaveCriticalSection(&waitThreadMutex);
       if(thread)
       {
         WaitForSingleObject(thread, INFINITE);
         CloseHandle(thread);
       }
     }
-    DeleteCriticalSection(&workerMutex);
+    DeleteCriticalSection(&waitThreadMutex);
   }
 
-  static uint workerThreadProc(Private* p);
+  static uint waitThreadProc(Private* p);
 
-  void pushWorkerThreadMessage(const WorkerMessage& message);
+  void pushWaitThreadMessage(const WaitThreadMessage& message);
 
 #else
   struct SocketInfo
@@ -770,8 +770,8 @@ void Socket::Poll::set(Socket& socket, uint events)
     uint removedEvents = sockInfo->events & ~events;
     if(removedEvents & (connectFlag | acceptFlag))
     {
-      Private::WorkerMessage message = {Private::WorkerMessage::remove, socket.s, sockInfo->key};
-      p->pushWorkerThreadMessage(message);
+      Private::WaitThreadMessage removeMessage = {Private::WaitThreadMessage::remove, socket.s, sockInfo->key};
+      p->pushWaitThreadMessage(removeMessage);
     }
     if(p->detachedSockInfo == sockInfo && removedEvents & p->detachedSocketEvent)
       p->detachedSockInfo = 0;
@@ -790,13 +790,13 @@ void Socket::Poll::set(Socket& socket, uint events)
   }
   if(addedEvents & connectFlag)
   {
-    Private::WorkerMessage message = {Private::WorkerMessage::addConnect, socket.s, sockInfo->key};
-    p->pushWorkerThreadMessage(message);
+    Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addConnect, socket.s, sockInfo->key};
+    p->pushWaitThreadMessage(addMessage);
   }
   if(addedEvents & acceptFlag)
   {
-    Private::WorkerMessage message = {Private::WorkerMessage::addAccept, socket.s, sockInfo->key};
-    p->pushWorkerThreadMessage(message);
+    Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, socket.s, sockInfo->key};
+    p->pushWaitThreadMessage(addMessage);
   }
 
   sockInfo->events = events;
@@ -829,33 +829,33 @@ void Socket::Poll::set(Socket& socket, uint events)
 }
 
 #ifdef _WIN32
-void Socket::Poll::Private::pushWorkerThreadMessage(const WorkerMessage& message)
+void Socket::Poll::Private::pushWaitThreadMessage(const WaitThreadMessage& message)
 {
-  EnterCriticalSection(&workerMutex);
-  if(!workerThread)
+  EnterCriticalSection(&waitThreadMutex);
+  if(!waitThread)
   {
-    workerThreadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-    if(!workerThreadEvent)
+    waitThreadEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+    if(!waitThreadEvent)
     {
-      LeaveCriticalSection(&workerMutex);
+      LeaveCriticalSection(&waitThreadMutex);
       return;
     }
-    workerThread = CreateThread(0, 0, (unsigned long (__stdcall*)(void*))workerThreadProc, this, 0, 0);
-    if(!workerThread)
+    waitThread = CreateThread(0, 0, (unsigned long (__stdcall*)(void*))waitThreadProc, this, 0, 0);
+    if(!waitThread)
     {
-      CloseHandle(workerThreadEvent);
-      workerThreadEvent = 0;
-      LeaveCriticalSection(&workerMutex);
+      CloseHandle(waitThreadEvent);
+      waitThreadEvent = 0;
+      LeaveCriticalSection(&waitThreadMutex);
       return;
     }
   }
   else
-    SetEvent(workerThreadEvent);
-  workerThreadMessages.append(message);
-  LeaveCriticalSection(&workerMutex);
+    SetEvent(waitThreadEvent);
+  waitThreadQueue.append(message);
+  LeaveCriticalSection(&waitThreadMutex);
 }
 
-uint Socket::Poll::Private::workerThreadProc(Private* p)
+uint Socket::Poll::Private::waitThreadProc(Private* p)
 {
   struct EventData
   {
@@ -868,39 +868,39 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
   HashMap<HANDLE, EventData> eventData;
   Map<SOCKET, HANDLE> suspendedEvents;
   DWORD eventCount = 1;
-  events[0] = p->workerThreadEvent;
+  events[0] = p->waitThreadEvent;
 
-  for(WorkerMessage message;;)
+  for(WaitThreadMessage message;;)
   {
-    EnterCriticalSection(&p->workerMutex);
-    if(p->workerThreadMessages.isEmpty())
+    EnterCriticalSection(&p->waitThreadMutex);
+    if(p->waitThreadQueue.isEmpty())
     {
-      LeaveCriticalSection(&p->workerMutex);
+      LeaveCriticalSection(&p->waitThreadMutex);
       goto skipInputMessage;
     }
-    message = p->workerThreadMessages.front();
+    message = p->waitThreadQueue.front();
     switch(message.type)
     {
-    case WorkerMessage::quit:
-      p->workerThreadMessages.removeFront();
+    case WaitThreadMessage::quit:
+      p->waitThreadQueue.removeFront();
       goto cleanup;
-    case WorkerMessage::addConnect:
-    case WorkerMessage::addAccept:
+    case WaitThreadMessage::addConnect:
+    case WaitThreadMessage::addAccept:
       if(eventCount >= 64)
       {
-        LeaveCriticalSection(&p->workerMutex);
+        LeaveCriticalSection(&p->waitThreadMutex);
         goto skipInputMessage;
       }
     default:
-      p->workerThreadMessages.removeFront();
+      p->waitThreadQueue.removeFront();
       break;
     }
-    LeaveCriticalSection(&p->workerMutex);
+    LeaveCriticalSection(&p->waitThreadMutex);
 
     switch(message.type)
     {
-    case WorkerMessage::addConnect:
-    case WorkerMessage::addAccept:
+    case WaitThreadMessage::addConnect:
+    case WaitThreadMessage::addAccept:
       {
         WSAEVENT eventHandle;
         Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
@@ -909,7 +909,7 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
           eventHandle = WSACreateEvent();
           if(eventHandle != WSA_INVALID_EVENT)
           {
-            if(WSAEventSelect(message.s, eventHandle, message.type == WorkerMessage::addConnect ? (FD_CONNECT | FD_CLOSE) : FD_ACCEPT) == SOCKET_ERROR)
+            if(WSAEventSelect(message.s, eventHandle, message.type == WaitThreadMessage::addConnect ? (FD_CONNECT | FD_CLOSE) : FD_ACCEPT) == SOCKET_ERROR)
             {
               WSACloseEvent(eventHandle);
               eventHandle = WSA_INVALID_EVENT;
@@ -926,12 +926,12 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
           events[eventCount++] = eventHandle;
           EventData& event = eventData.append(eventHandle, EventData());
           event.key = message.key;
-          event.overlapped = message.type == WorkerMessage::addConnect ? &p->connectOverlapped : &p->acceptOverlapped;
+          event.overlapped = message.type == WaitThreadMessage::addConnect ? &p->connectOverlapped : &p->acceptOverlapped;
           event.s = message.s;
         }
       }
       break;
-    case WorkerMessage::remove:
+    case WaitThreadMessage::remove:
       {
         Map<SOCKET, HANDLE>::Iterator it = suspendedEvents.find(message.s);
         if(it == suspendedEvents.end())
@@ -964,8 +964,8 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
     }
     if(eventCount == 1 && suspendedEvents.isEmpty())
     {
-      EnterCriticalSection(&p->workerMutex);
-      if(p->workerThreadMessages.isEmpty())
+      EnterCriticalSection(&p->waitThreadMutex);
+      if(p->waitThreadQueue.isEmpty())
         goto cleanup;
     }
     continue;
@@ -992,8 +992,8 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
         eventData.remove(it);
         if(eventCount == 1 && suspendedEvents.isEmpty())
         {
-          EnterCriticalSection(&p->workerMutex);
-          if(p->workerThreadMessages.isEmpty())
+          EnterCriticalSection(&p->waitThreadMutex);
+          if(p->waitThreadQueue.isEmpty())
             goto cleanup;
         }
       }
@@ -1011,14 +1011,14 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
   }
 
 cleanup:
-  WSACloseEvent(p->workerThreadEvent);
-  p->workerThreadEvent = 0;
-  if(p->workerThread)
+  WSACloseEvent(p->waitThreadEvent);
+  p->waitThreadEvent = 0;
+  if(p->waitThread)
   {
-    CloseHandle(p->workerThread);
-    p->workerThread = 0;
+    CloseHandle(p->waitThread);
+    p->waitThread = 0;
   }
-  LeaveCriticalSection(&p->workerMutex);
+  LeaveCriticalSection(&p->waitThreadMutex);
   for(DWORD i = 1; i < eventCount; ++i)
     WSACloseEvent(events[i]);
   for(Map<SOCKET, HANDLE>::Iterator i = suspendedEvents.begin(), end = suspendedEvents.end(); i != end; ++i)
@@ -1036,8 +1036,8 @@ void Socket::Poll::remove(Socket& socket)
 #ifdef _WIN32
   if(sockInfo.events & (connectFlag | acceptFlag))
   {
-    Private::WorkerMessage message = {Private::WorkerMessage::remove, socket.s, sockInfo.key};
-    p->pushWorkerThreadMessage(message);
+    Private::WaitThreadMessage message = {Private::WaitThreadMessage::remove, socket.s, sockInfo.key};
+    p->pushWaitThreadMessage(message);
   }
   if(p->detachedSockInfo == &sockInfo)
     p->detachedSockInfo = 0;
@@ -1082,8 +1082,8 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       break;
     case acceptFlag:
       {
-        Private::WorkerMessage message = {Private::WorkerMessage::addAccept, (SOCKET)p->detachedSockInfo->socket->s, p->detachedSockInfo->key };
-        p->pushWorkerThreadMessage(message);
+        Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, (SOCKET)p->detachedSockInfo->socket->s, p->detachedSockInfo->key };
+        p->pushWaitThreadMessage(addMessage);
       }
       break;
     }
