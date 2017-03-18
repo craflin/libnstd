@@ -968,6 +968,7 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
       if(p->workerThreadMessages.isEmpty())
         goto cleanup;
     }
+    continue;
 
   skipInputMessage:
     DWORD eventNum = WaitForMultipleObjects(eventCount, events, FALSE, INFINITE);
@@ -983,12 +984,12 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
         nextEventNum = eventNum + 1;
         events[eventNum] = events[nextEventNum];
       }
-      PostQueuedCompletionStatus(p->completionPort, 0, event.key, event.overlapped);
-      eventData.remove(it);
 
       if(event.overlapped == &p->connectOverlapped)
       {
         WSACloseEvent(eventHandle);
+        PostQueuedCompletionStatus(p->completionPort, 0, event.key, event.overlapped);
+        eventData.remove(it);
         if(eventCount == 1 && suspendedEvents.isEmpty())
         {
           EnterCriticalSection(&p->workerMutex);
@@ -1001,6 +1002,8 @@ uint Socket::Poll::Private::workerThreadProc(Private* p)
         WSANETWORKEVENTS selectedEvents = {};
         WSAEnumNetworkEvents(event.s, eventHandle, &selectedEvents);
         suspendedEvents.insert(event.s, eventHandle);
+        PostQueuedCompletionStatus(p->completionPort, 0, event.key, event.overlapped);
+        eventData.remove(it);
       }
     }
     else if(eventNum == WAIT_OBJECT_0)
