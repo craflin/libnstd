@@ -601,12 +601,21 @@ String Socket::inetNtoA(uint32 ip)
   return String(buf, String::length(buf));
 }
 
+#ifdef _WIN32
+
 class Socket::Poll::Private
 {
 public:
-#ifdef _WIN32
-  HANDLE completionPort;
+  Private();
+  ~Private();
 
+  void clear();
+  void set(Socket& socket, uint events);
+  void remove(Socket& socket);
+  bool poll(Event& event, int64 timeout);
+  bool interrupt();
+
+public:
   struct Overlapped : public WSAOVERLAPPED
   {
     uint event;
@@ -617,6 +626,7 @@ public:
     Socket* socket;
     ULONG_PTR key;
     uint events;
+    SOCKET s;
   };
 
   struct WaitThreadMessage
@@ -632,6 +642,7 @@ public:
     ULONG_PTR key;
   };
 
+  HANDLE completionPort;
   HashMap<Socket*, SocketInfo> sockets;
   HashMap<ULONG_PTR, SocketInfo*> keys;
   ULONG_PTR nextKey;
@@ -650,155 +661,119 @@ public:
   Overlapped writeOverlapped;
   Overlapped interruptOverlapped;
 
-  Private() : nextKey(1), detachedSockInfo(0), waitThread(0), waitThreadEvent(0)
-  {
-    InitializeCriticalSection(&waitThreadMutex);
-    ZeroMemory(&readOverlapped, sizeof(readOverlapped));
-    ZeroMemory(&writeOverlapped, sizeof(writeOverlapped));
-    connectOverlapped.event = connectFlag;
-    acceptOverlapped.event = acceptFlag;
-    readOverlapped.event = readFlag;
-    writeOverlapped.event = writeFlag;
-    interruptOverlapped.event = 0;
-  }
-
-  ~Private()
-  {
-    if(waitThread)
-    {
-      HANDLE thread = 0;
-      EnterCriticalSection(&waitThreadMutex);
-      if(waitThread)
-      {
-        thread = waitThread;
-        waitThread = 0;
-        WaitThreadMessage quitMessage = {WaitThreadMessage::quit};
-        waitThreadQueue.prepend(quitMessage);
-        SetEvent(waitThreadEvent);
-      }
-      LeaveCriticalSection(&waitThreadMutex);
-      if(thread)
-      {
-        WaitForSingleObject(thread, INFINITE);
-        CloseHandle(thread);
-      }
-    }
-    DeleteCriticalSection(&waitThreadMutex);
-  }
-
-  static uint waitThreadProc(Private* p);
-
+private:
   void pushWaitThreadMessage(const WaitThreadMessage& message);
 
-#else
-  struct SocketInfo
-  {
-    Socket* socket;
-    usize index;
-    uint events;
-  };
-
-  Array<pollfd> pollfds;
-  HashMap<Socket*, SocketInfo> sockets;
-  HashMap<SOCKET, SocketInfo*> fdToSocket;
-  HashMap<Socket*, uint> selectedSockets;
-
-  static short mapEvents(uint events)
-  {
-    short pollEvents = 0;
-    if(events & (readFlag | acceptFlag))
-      pollEvents |= POLLIN | POLLRDHUP | POLLHUP;
-    if(events & (writeFlag | connectFlag))
-      pollEvents |= POLLOUT | POLLRDHUP | POLLHUP;
-    return pollEvents;
-  }
-#endif
+  static uint waitThreadProc(Private* p);
 };
 
-Socket::Poll::Poll() : p(new Private)
+Socket::Poll::Private::Private() : nextKey(1), detachedSockInfo(0), waitThread(0), waitThreadEvent(0)
 {
-#ifdef _WIN32
-  p->completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
-#else
-  pollfd& pfd = p->pollfds.append(pollfd());
-  pfd.fd = eventfd(0, EFD_CLOEXEC);
-  pfd.events = POLLIN | POLLRDHUP | POLLHUP;
-  pfd.revents = 0;
-#endif
+  completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
+  InitializeCriticalSection(&waitThreadMutex);
+  ZeroMemory(&readOverlapped, sizeof(readOverlapped));
+  ZeroMemory(&writeOverlapped, sizeof(writeOverlapped));
+  connectOverlapped.event = connectFlag;
+  acceptOverlapped.event = acceptFlag;
+  readOverlapped.event = readFlag;
+  writeOverlapped.event = writeFlag;
+  interruptOverlapped.event = 0;
 }
 
-Socket::Poll::~Poll()
+Socket::Poll::Private::~Private()
 {
-#ifdef _WIN32
-  if(p->completionPort)
-    CloseHandle(p->completionPort);
-#else
-  ::close(p->pollfds[0].fd);
-#endif
-  delete p;
+  if(waitThread)
+  {
+    HANDLE thread = 0;
+    EnterCriticalSection(&waitThreadMutex);
+    if(waitThread)
+    {
+      thread = waitThread;
+      waitThread = 0;
+      WaitThreadMessage quitMessage = {WaitThreadMessage::quit};
+      waitThreadQueue.prepend(quitMessage);
+      SetEvent(waitThreadEvent);
+    }
+    LeaveCriticalSection(&waitThreadMutex);
+    if(thread)
+    {
+      WaitForSingleObject(thread, INFINITE);
+      CloseHandle(thread);
+    }
+  }
+  DeleteCriticalSection(&waitThreadMutex);
+
+  if(completionPort)
+    CloseHandle(completionPort);
 }
 
-void Socket::Poll::clear()
+void Socket::Poll::Private::clear()
 {
-#ifdef _WIN32
-  // todo
-#else
-  p->pollfds.resize(1);
-  p->sockets.clear();
-  p->fdToSocket.clear();
-  p->selectedSockets.clear();
-#endif
+  if(nextKey != 1)
+  {
+    // todo: join wait thread
+    // clear all lists
+    // recreate iocp
+  }
 }
 
-void Socket::Poll::set(Socket& socket, uint events)
+void Socket::Poll::Private::set(Socket& socket, uint events)
 {
 #ifdef _WIN32
   Private::SocketInfo* sockInfo;
-  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
-  if(it == p->sockets.end()) // this is a new one, lets create a key for it and attach it to the completion port
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it == sockets.end()) // this is a new one, lets create a key for it and attach it to the completion port
   {
-    sockInfo = &p->sockets.append(&socket, Private::SocketInfo());
-    sockInfo->key = p->nextKey++;
+    if(socket.s == INVALID_SOCKET)
+      return;
+    sockInfo = &sockets.append(&socket, Private::SocketInfo());
+    sockInfo->key = nextKey++;
     sockInfo->socket = &socket;
     sockInfo->events = 0;
-    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, p->completionPort, sockInfo->key, 0) == p->completionPort);
-    p->keys.append(sockInfo->key, sockInfo);
+    sockInfo->s = socket.s;
+    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, completionPort, sockInfo->key, 0) == completionPort);
+    keys.append(sockInfo->key, sockInfo);
   }
   else
   {
     sockInfo = &*it;
     uint removedEvents = sockInfo->events & ~events;
-    if(removedEvents & (connectFlag | acceptFlag))
+    if(removedEvents)
     {
-      Private::WaitThreadMessage removeMessage = {Private::WaitThreadMessage::remove, socket.s, sockInfo->key};
-      p->pushWaitThreadMessage(removeMessage);
+      if(removedEvents & (connectFlag | acceptFlag))
+      {
+        Private::WaitThreadMessage removeMessage = {Private::WaitThreadMessage::remove, sockInfo->s, sockInfo->key};
+        pushWaitThreadMessage(removeMessage);
+      }
+      if(detachedSockInfo == sockInfo && removedEvents & detachedSocketEvent)
+        detachedSockInfo = 0;
     }
-    if(p->detachedSockInfo == sockInfo && removedEvents & p->detachedSocketEvent)
-      p->detachedSockInfo = 0;
   }
   uint addedEvents = events & ~sockInfo->events;
-  if(addedEvents & readFlag)
+  if(addedEvents)
   {
-    WSABUF buf = {};
-    DWORD flags = MSG_PEEK;
-    WSARecv((SOCKET)socket.s, &buf, 1, NULL, &flags, &p->readOverlapped, NULL);
+    if(addedEvents & readFlag)
+    {
+      WSABUF buf = {};
+      DWORD flags = MSG_PEEK;
+      WSARecv((SOCKET)socket.s, &buf, 1, NULL, &flags, &readOverlapped, NULL);
+    }
+    if(addedEvents & writeFlag)
+    {
+      WSABUF buf = {};
+      WSASend((SOCKET)socket.s, &buf, 1, NULL, 0, &writeOverlapped, NULL);
+    }
+    if(addedEvents & connectFlag)
+    {
+      Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addConnect, sockInfo->s, sockInfo->key};
+      pushWaitThreadMessage(addMessage);
+    }
+    if(addedEvents & acceptFlag)
+    {
+      Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, sockInfo->s, sockInfo->key};
+      pushWaitThreadMessage(addMessage);
+    }
   }
-  if(addedEvents & writeFlag)
-  {
-    WSABUF buf = {};
-    WSASend((SOCKET)socket.s, &buf, 1, NULL, 0, &p->writeOverlapped, NULL);
-  }
-  if(addedEvents & connectFlag)
-  {
-    Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addConnect, socket.s, sockInfo->key};
-    p->pushWaitThreadMessage(addMessage);
-  }
-  if(addedEvents & acceptFlag)
-  {
-    Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, socket.s, sockInfo->key};
-    p->pushWaitThreadMessage(addMessage);
-  }
-
   sockInfo->events = events;
 #else
   HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
@@ -1027,74 +1002,58 @@ cleanup:
 }
 #endif
 
-void Socket::Poll::remove(Socket& socket)
+void Socket::Poll::Private::remove(Socket& socket)
 {
-  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
-  if(it == p->sockets.end())
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it == sockets.end())
     return;
   Private::SocketInfo& sockInfo = *it;
-#ifdef _WIN32
   if(sockInfo.events & (connectFlag | acceptFlag))
   {
-    Private::WaitThreadMessage message = {Private::WaitThreadMessage::remove, socket.s, sockInfo.key};
-    p->pushWaitThreadMessage(message);
+    Private::WaitThreadMessage message = {Private::WaitThreadMessage::remove, sockInfo.s, sockInfo.key};
+    pushWaitThreadMessage(message);
   }
-  if(p->detachedSockInfo == &sockInfo)
-    p->detachedSockInfo = 0;
-  p->keys.remove(sockInfo.key);
-  p->sockets.remove(it);
+  if(detachedSockInfo == &sockInfo)
+    detachedSockInfo = 0;
+  keys.remove(sockInfo.key);
+  sockets.remove(it);
   // todo: detach socket from iocp?
-#else
-  usize index = sockInfo.index;
-  pollfd& pfd = p->pollfds[index];
-  p->fdToSocket.remove(pfd.fd);
-  p->pollfds.remove(index);
-  p->sockets.remove(it);
-  for(HashMap<Socket*, Private::SocketInfo>::Iterator i = p->sockets.begin(), end = p->sockets.end(); i != end; ++i)
-  {
-    Private::SocketInfo& sockInfo = *i;
-    if(sockInfo.index > index)
-      --sockInfo.index;
-  }
-  p->selectedSockets.remove(&socket);
-#endif
 }
 
-bool Socket::Poll::poll(Event& event, int64 timeout)
+bool Socket::Poll::Private::poll(Event& event, int64 timeout)
 {
-#ifdef _WIN32
-  if(p->detachedSockInfo)
+  if(detachedSockInfo)
   {
-    switch(p->detachedSocketEvent)
+    switch(detachedSocketEvent)
     {
     case readFlag:
       {
         WSABUF buf = {};
         DWORD flags = MSG_PEEK;
-        WSARecv((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, &flags, &p->readOverlapped, NULL);
+        WSARecv(detachedSockInfo->s, &buf, 1, NULL, &flags, &readOverlapped, NULL);
       }
       break;
     case writeFlag:
       {
         WSABUF buf = {};
-        WSASend((SOCKET)p->detachedSockInfo->socket->s, &buf, 1, NULL, 0, &p->writeOverlapped, NULL);
+        WSASend(detachedSockInfo->s, &buf, 1, NULL, 0, &writeOverlapped, NULL);
       }
       break;
     case acceptFlag:
       {
-        Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, (SOCKET)p->detachedSockInfo->socket->s, p->detachedSockInfo->key };
-        p->pushWaitThreadMessage(addMessage);
+        Private::WaitThreadMessage addMessage = {Private::WaitThreadMessage::addAccept, detachedSockInfo->s, detachedSockInfo->key};
+        pushWaitThreadMessage(addMessage);
       }
       break;
     }
-    p->detachedSockInfo = 0;
+    detachedSockInfo = 0;
   }
   DWORD numberOfBytes;
   ULONG_PTR completionKey = 0;
   Private::Overlapped* overlapped;
   for(;;)
   {
-    if(!GetQueuedCompletionStatus(p->completionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
+    if(!GetQueuedCompletionStatus(completionPort, &numberOfBytes, &completionKey, (LPOVERLAPPED*)&overlapped, (DWORD)timeout))
     {
       if(!overlapped)
         switch(GetLastError())
@@ -1107,8 +1066,8 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
           return false;
         }
     }
-    HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  p->keys.find(completionKey);
-    if(it == p->keys.end())
+    HashMap<ULONG_PTR, Private::SocketInfo*>::Iterator it =  keys.find(completionKey);
+    if(it == keys.end())
     {
       if(!overlapped->event)
       {
@@ -1123,22 +1082,140 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       continue;
     event.socket = sockInfo->socket;
     event.flags = overlapped->event;
-    p->detachedSockInfo = sockInfo;
-    p->detachedSocketEvent = overlapped->event;
+    detachedSockInfo = sockInfo;
+    detachedSocketEvent = overlapped->event;
     return true;
   }
-#else
-  if(p->selectedSockets.isEmpty())
+}
+
+bool Socket::Poll::Private::interrupt()
+{
+  return PostQueuedCompletionStatus(completionPort, 0, 0, &interruptOverlapped) == TRUE;
+}
+
+#else // !_WIN32
+
+class Socket::Poll::Private
+{
+public:
+  Private();
+  ~Private();
+
+  void clear();
+  void set(Socket& socket, uint events);
+  void remove(Socket& socket);
+  bool poll(Event& event, int64 timeout);
+  bool interrupt();
+
+private:
+  struct SocketInfo
   {
-    int count = ::poll(p->pollfds, p->pollfds.size(), timeout);
+    Socket* socket;
+    usize index;
+    uint events;
+  };
+
+private:
+  Array<pollfd> pollfds;
+  HashMap<Socket*, SocketInfo> sockets;
+  HashMap<SOCKET, SocketInfo*> fdToSocket;
+  HashMap<Socket*, uint> selectedSockets;
+
+  static short mapEvents(uint events);
+};
+
+Socket::Poll::Private::Private()
+{
+  pollfd& pfd = pollfds.append(pollfd());
+  pfd.fd = eventfd(0, EFD_CLOEXEC);
+  pfd.events = POLLIN | POLLRDHUP | POLLHUP;
+  pfd.revents = 0;
+}
+
+Socket::Poll::Private::~Private()
+{
+  ::close(pollfds[0].fd);
+}
+
+static short Socket::Poll::Private::mapEvents(uint events)
+{
+  short pollEvents = 0;
+  if(events & (readFlag | acceptFlag))
+    pollEvents |= POLLIN | POLLRDHUP | POLLHUP;
+  if(events & (writeFlag | connectFlag))
+    pollEvents |= POLLOUT | POLLRDHUP | POLLHUP;
+  return pollEvents;
+}
+
+void Socket::Poll::Private::clear()
+{
+  pollfds.resize(1);
+  sockets.clear();
+  fdToSocket.clear();
+  selectedSockets.clear();
+}
+
+void Socket::Poll::Private::set(Socket& socket, uint events)
+{
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it != sockets.end())
+  {
+    Private::SocketInfo& sockInfo = *it;
+    if(sockInfo.events == events)
+      return;
+    pollfds[sockInfo.index].events = Private::mapEvents(events);
+    sockInfo.events = events;
+  }
+  else
+  {
+    SOCKET s = socket.s;
+    if(s == INVALID_SOCKET)
+      return;
+    Private::SocketInfo& sockInfo = sockets.append(&socket, Private::SocketInfo());
+    sockInfo.socket = &socket;
+    sockInfo.index = pollfds.size();
+    sockInfo.events = events;
+    fdToSocket.append(s, &sockInfo);
+    pollfd& pfd = pollfds.append(pollfd());
+    pfd.fd = socket.s;
+    pfd.events = Private::mapEvents(events);
+    pfd.revents = 0;
+  }
+}
+
+void Socket::Poll::Private::remove(Socket& socket)
+{
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it == sockets.end())
+    return;
+  Private::SocketInfo& sockInfo = *it;
+  usize index = sockInfo.index;
+  pollfd& pfd = pollfds[index];
+  fdToSocket.remove(pfd.fd);
+  pollfds.remove(index);
+  sockets.remove(it);
+  for(HashMap<Socket*, Private::SocketInfo>::Iterator i = sockets.begin(), end = sockets.end(); i != end; ++i)
+  {
+    Private::SocketInfo& sockInfo = *i;
+    if(sockInfo.index > index)
+      --sockInfo.index;
+  }
+  selectedSockets.remove(&socket);
+}
+
+bool Socket::Poll::Private::poll(Event& event, int64 timeout)
+{
+  if(selectedSockets.isEmpty())
+  {
+    int count = ::poll(pollfds, pollfds.size(), timeout);
     if(count > 0)
     {
-      for(pollfd* i = p->pollfds + 1, * end = i + p->pollfds.size(); i < end; ++i)
+      for(pollfd* i = pollfds + 1, * end = i + pollfds.size(); i < end; ++i)
       {
         if(i->revents)
         {
-          HashMap<SOCKET, Private::SocketInfo*>::Iterator it = p->fdToSocket.find(i->fd);
-          ASSERT(it != p->fdToSocket.end());
+          HashMap<SOCKET, Private::SocketInfo*>::Iterator it = fdToSocket.find(i->fd);
+          ASSERT(it != fdToSocket.end());
           Private::SocketInfo* sockInfo = *it;
           uint events = 0;
           int revents = i->revents;
@@ -1148,7 +1225,7 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
           if(revents & POLLOUT || (events == 0 && revents & (POLLRDHUP | POLLHUP)))
             events |= sockInfo->events & (writeFlag | connectFlag);
 
-          p->selectedSockets.append(sockInfo->socket, events);
+          selectedSockets.append(sockInfo->socket, events);
 
           i->revents = 0;
           if(--count == 0)
@@ -1157,12 +1234,12 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
       }
     }
 
-    if(p->selectedSockets.isEmpty())
+    if(selectedSockets.isEmpty())
     {
-      if(p->pollfds[0].revents)
+      if(pollfds[0].revents)
       {
         uint64 val;
-        read(p->pollfds[0].fd, &val, sizeof(val));
+        read(pollfds[0].fd, &val, sizeof(val));
         p->pollfds[0].revents = 0;
       }
       event.flags = 0;
@@ -1171,20 +1248,25 @@ bool Socket::Poll::poll(Event& event, int64 timeout)
     }
   }
 
-  HashMap<Socket*, uint>::Iterator it = p->selectedSockets.begin();
+  HashMap<Socket*, uint>::Iterator it = selectedSockets.begin();
   event.socket = it.key();
   event.flags = *it;
-  p->selectedSockets.remove(it);
+  selectedSockets.remove(it);
   return true;
-#endif
 }
 
 bool Socket::Poll::interrupt()
 {
-#ifdef _WIN32
-  return PostQueuedCompletionStatus(p->completionPort, 0, 0, &p->interruptOverlapped) == TRUE;
-#else
   uint64 val = 1;
-  return write(p->pollfds[0].fd, &val, sizeof(val)) != -1;
-#endif
+  return write(pollfds[0].fd, &val, sizeof(val)) != -1;
 }
+
+#endif
+
+Socket::Poll::Poll() : p(new Private) {}
+Socket::Poll::~Poll() {delete p;}
+void Socket::Poll::set(Socket& socket, uint flags) {return p->set(socket, flags);}
+void Socket::Poll::remove(Socket& socket) {return p->remove(socket);}
+void Socket::Poll::clear() {return p->clear();}
+bool Socket::Poll::poll(Event& event, int64 timeout) {return p->poll(event, timeout);}
+bool Socket::Poll::interrupt() {return p->interrupt();}
