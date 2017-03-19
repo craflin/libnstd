@@ -296,7 +296,7 @@ bool Socket::joinMulticastGroup(uint32 ip, uint32 interfaceIp)
 
 bool Socket::setMulticastLoopback(bool enable)
 {
-  DWORD val = enable ? 1 : 0;
+  int val = enable ? 1 : 0;
   if(setsockopt(s, IPPROTO_IP, IP_MULTICAST_LOOP, (char*)&val, sizeof(val)) != 0)
     return false;
   return true;
@@ -1137,7 +1137,7 @@ Socket::Poll::Private::~Private()
   ::close(pollfds[0].fd);
 }
 
-static short Socket::Poll::Private::mapEvents(uint events)
+short Socket::Poll::Private::mapEvents(uint events)
 {
   short pollEvents = 0;
   if(events & (readFlag | acceptFlag))
@@ -1240,7 +1240,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
       {
         uint64 val;
         read(pollfds[0].fd, &val, sizeof(val));
-        p->pollfds[0].revents = 0;
+        pollfds[0].revents = 0;
       }
       event.flags = 0;
       event.socket = 0;
@@ -1255,7 +1255,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
   return true;
 }
 
-bool Socket::Poll::interrupt()
+bool Socket::Poll::Private::interrupt()
 {
   uint64 val = 1;
   return write(pollfds[0].fd, &val, sizeof(val)) != -1;

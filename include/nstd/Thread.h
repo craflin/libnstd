@@ -22,8 +22,9 @@ public:
   bool start(uint (*proc)(void*), void* param);
   template <class X> bool start(X* obj, uint (X::*ptr)())
   {
-    func = *(MemberFuncPtr0<Thread>*)&MemberFuncPtr0<X>(obj, ptr);
-    return start(&MemberFuncPtr0<X>::call, &func);
+    MemberFuncPtr0<X> func(obj, ptr);
+    this->func = *(MemberFuncPtr0<Thread>*)&func;
+    return start(&MemberFuncPtr0<X>::call, &this->func);
   }
 
   uint join();

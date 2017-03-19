@@ -23,7 +23,7 @@ public:
     sha256.finalize(result);
   }
 
-  static void hmac(const byte* key, size_t keySize, const byte* message, size_t messageSize, byte (&result)[digestSize])
+  static void hmac(const byte* key, usize keySize, const byte* message, usize messageSize, byte (&result)[digestSize])
   {
     Sha256 sha256;
     byte hashKey[blockSize];
