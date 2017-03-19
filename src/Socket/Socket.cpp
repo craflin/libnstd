@@ -663,6 +663,7 @@ public:
 
 private:
   void pushWaitThreadMessage(const WaitThreadMessage& message);
+  void joinWaitThread();
 
   static uint waitThreadProc(Private* p);
 };
@@ -682,25 +683,7 @@ Socket::Poll::Private::Private() : nextKey(1), detachedSockInfo(0), waitThread(0
 
 Socket::Poll::Private::~Private()
 {
-  if(waitThread)
-  {
-    HANDLE thread = 0;
-    EnterCriticalSection(&waitThreadMutex);
-    if(waitThread)
-    {
-      thread = waitThread;
-      waitThread = 0;
-      WaitThreadMessage quitMessage = {WaitThreadMessage::quit};
-      waitThreadQueue.prepend(quitMessage);
-      SetEvent(waitThreadEvent);
-    }
-    LeaveCriticalSection(&waitThreadMutex);
-    if(thread)
-    {
-      WaitForSingleObject(thread, INFINITE);
-      CloseHandle(thread);
-    }
-  }
+  joinWaitThread();
   DeleteCriticalSection(&waitThreadMutex);
 
   if(completionPort)
@@ -711,9 +694,15 @@ void Socket::Poll::Private::clear()
 {
   if(nextKey != 1)
   {
-    // todo: join wait thread
-    // clear all lists
-    // recreate iocp
+    joinWaitThread();
+    waitThreadQueue.clear();
+    sockets.clear();
+    keys.clear();
+    detachedSockInfo = 0;
+    if(completionPort)
+      CloseHandle(completionPort);
+    completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
+    nextKey = 1;
   }
 }
 
@@ -828,6 +817,29 @@ void Socket::Poll::Private::pushWaitThreadMessage(const WaitThreadMessage& messa
     SetEvent(waitThreadEvent);
   waitThreadQueue.append(message);
   LeaveCriticalSection(&waitThreadMutex);
+}
+
+void Socket::Poll::Private::joinWaitThread()
+{
+  if(waitThread)
+  {
+    HANDLE thread = 0;
+    EnterCriticalSection(&waitThreadMutex);
+    if(waitThread)
+    {
+      thread = waitThread;
+      waitThread = 0;
+      WaitThreadMessage quitMessage = {WaitThreadMessage::quit};
+      waitThreadQueue.prepend(quitMessage);
+      SetEvent(waitThreadEvent);
+    }
+    LeaveCriticalSection(&waitThreadMutex);
+    if(thread)
+    {
+      WaitForSingleObject(thread, INFINITE);
+      CloseHandle(thread);
+    }
+  }
 }
 
 uint Socket::Poll::Private::waitThreadProc(Private* p)
