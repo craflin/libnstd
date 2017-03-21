@@ -6,7 +6,9 @@
 class RefCount
 {
 public:
-  template <class T> class Ptr
+  class Object;
+
+  template <class T = Object> class Ptr
   {
   public:
     Ptr() : obj(0) {}
