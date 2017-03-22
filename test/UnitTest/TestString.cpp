@@ -149,4 +149,23 @@ void testString()
   ASSERT(String("x\t \n").trim() == "x");
   ASSERT(String("\t \nx").trim() == "x");
   ASSERT(String("x").trim() == "x");
+
+  // test toBool
+  ASSERT(!String().toBool());
+  ASSERT(!String("").toBool());
+  ASSERT(!String("0").toBool());
+  ASSERT(!String("false").toBool());
+  ASSERT(!String("False").toBool());
+  ASSERT(!String("falSe").toBool());
+  ASSERT(!String("0.0").toBool());
+  ASSERT(!String(".0").toBool());
+  ASSERT(!String("0.").toBool());
+  ASSERT(!String(".00").toBool());
+  ASSERT(!String("00.").toBool());
+  ASSERT(!String("00.00").toBool());
+  ASSERT(!String("0.00").toBool());
+  ASSERT(!String("00.0").toBool());
+  ASSERT(String(".").toBool());
+  ASSERT(String("dasdas").toBool());
+  ASSERT(String("true").toBool());
 }

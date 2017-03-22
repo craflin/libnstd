@@ -565,8 +565,10 @@ int main(int argc, char* argv[])
   testMutex();
   //testConsolePrintf();
   //testDebugPrintf();
+  */
   testAtomic();
   testString();
+  /*
   testHashSet();
   testHashSetDestructor();
   testHashSetString();
