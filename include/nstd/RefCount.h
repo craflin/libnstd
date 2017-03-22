@@ -8,11 +8,12 @@ class RefCount
 public:
   class Object;
 
-  template <class T = Object> class Ptr
+  template <class C = Object> class Ptr
   {
   public:
     Ptr() : obj(0) {}
-    Ptr(T* obj) : obj(obj)
+
+    template <class D> Ptr(D* obj) : obj(obj)
     {
       if(obj)
       {
@@ -20,7 +21,8 @@ public:
         Atomic::increment(refObj->ref);
       }
     }
-    Ptr(const Ptr& other) : obj(other.obj)
+
+    template <class D> Ptr(const Ptr<D>& other) : obj(other.obj)
     {
       if(obj)
       {
@@ -36,19 +38,20 @@ public:
         delete obj;
     }
 
-    Ptr& operator=(T* obj)
+    Ptr& operator=(C* obj)
     {
       Object* refObj = this->obj;
       if(refObj && Atomic::decrement(refObj->ref) == 0)
         delete this->obj;
      if((this->obj = obj))
      {
-        Object* refObj = obj;
+        refObj = obj;
         Atomic::increment(refObj->ref);
      }
+     return *this;
     }
 
-    Ptr& operator=(const Ptr& other)
+    template <class D> Ptr& operator=(const Ptr<D>& other)
     {
       Object* refObj = obj;
       if(refObj && Atomic::decrement(refObj->ref) == 0)
@@ -61,11 +64,18 @@ public:
      return *this;
     }
 
-    bool operator==(const Ptr& other) const {return obj == other.obj;}
-    bool operator!=(const Ptr& other) const {return obj != other.obj;}
+    C& operator*() const {return *obj;}
+    C* operator->() const {return obj;}
+
+    template <class D> bool operator==(D* other) const {return obj == other;}
+    template <class D> bool operator!=(D* other) const {return obj != other;}
+    template <class D> bool operator==(const Ptr<D>& other) const {return obj == other.obj;}
+    template <class D> bool operator!=(const Ptr<D>& other) const {return obj != other.obj;}
 
   private:
-    T* obj;
+    C* obj;
+
+    template<class D> friend class Ptr;
   };
 
   class Object
@@ -76,6 +86,6 @@ public:
   private:
     usize ref;
 
-    template<class T> friend class Ptr;
+    template<class C> friend class Ptr;
   };
 };
