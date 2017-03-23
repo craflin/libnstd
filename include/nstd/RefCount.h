@@ -13,6 +13,15 @@ public:
   public:
     Ptr() : obj(0) {}
 
+    Ptr(const Ptr& other) : obj(other.obj)
+    {
+      if(obj)
+      {
+        Object* refObj = obj;
+        Atomic::increment(refObj->ref);
+      }
+    }
+
     template <class D> Ptr(D* obj) : obj(obj)
     {
       if(obj)
@@ -36,6 +45,19 @@ public:
       Object* refObj = obj;
       if(refObj && Atomic::decrement(refObj->ref) == 0)
         delete obj;
+    }
+
+    Ptr& operator=(const Ptr& other)
+    {
+      Object* refObj = obj;
+      if(refObj && Atomic::decrement(refObj->ref) == 0)
+        delete obj;
+     if((obj = other.obj))
+     {
+        Object* refObj = obj;
+        Atomic::increment(refObj->ref);
+     }
+     return *this;
     }
 
     Ptr& operator=(C* obj)
@@ -72,6 +94,15 @@ public:
     template <class D> bool operator==(const Ptr<D>& other) const {return obj == other.obj;}
     template <class D> bool operator!=(const Ptr<D>& other) const {return obj != other.obj;}
 
+    operator bool() const {return obj != 0;}
+
+    void swap(Ptr& other)
+    {
+      C* tmp = other.obj;
+      other.obj = obj;
+      obj = tmp;
+    }
+
   private:
     C* obj;
 
@@ -82,6 +113,7 @@ public:
   {
   public:
     Object() : ref(0) {}
+    virtual ~Object() {}
 
   private:
     usize ref;
