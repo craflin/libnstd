@@ -87,21 +87,27 @@ private:
 #ifndef NDEBUG
     ~Private()
     {
-      for(PageHeader* i = first; i; i = i->next)
-      {
-        String file;
-        int line;
-        if(!Debug::getSourceLine(i->returnAddr, file, line))
-          Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
-        else
 #ifdef _MSC_VER
-          Debug::printf(_T("%s(%d): Found memory leak.\n"), (const tchar*)file, line);
-#else
-          Debug::printf(_T("%s:%d: Found memory leak.\n"), (const tchar*)file, line);
+      DWORD exitCode = 0;
+      if(!GetExitCodeProcess(GetCurrentProcess(), &exitCode) || exitCode != STATUS_CONTROL_C_EXIT)
 #endif
+      {
+        for(PageHeader* i = first; i; i = i->next)
+        {
+          String file;
+          int line;
+          if(!Debug::getSourceLine(i->returnAddr, file, line))
+            Debug::printf(_T("%p: Found memory leak.\n"), i->returnAddr);
+          else
+#ifdef _MSC_VER
+            Debug::printf(_T("%s(%d): Found memory leak.\n"), (const tchar*)file, line);
+#else
+            Debug::printf(_T("%s:%d: Found memory leak.\n"), (const tchar*)file, line);
+#endif
+        }
+        if(first)
+          TRAP();
       }
-      if(first)
-        TRAP();
 #ifdef _WIN32
       DeleteCriticalSection(&criticalSection);
 #else
