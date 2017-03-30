@@ -601,6 +601,14 @@ String Socket::inetNtoA(uint32 ip)
   return String(buf, String::length(buf));
 }
 
+String Socket::getHostName()
+{
+  char name[256];
+  if(gethostname(name, sizeof(name)) != 0)
+    return String();
+  return String(name, String::length(name));
+}
+
 #ifdef _WIN32
 
 class Socket::Poll::Private

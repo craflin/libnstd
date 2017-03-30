@@ -62,6 +62,7 @@ public:
   static String getErrorString(int error = getLastError());
   static uint32 inetAddr(const String& addr, uint16* port = 0);
   static String inetNtoA(uint32 ip);
+  static String getHostName();
 
 public:
   class Poll
