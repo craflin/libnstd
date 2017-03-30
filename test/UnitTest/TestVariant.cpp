@@ -33,4 +33,15 @@ void testVariant()
     Variant copy(null);
     ASSERT(copy.isNull());
   }
+
+  // test list detaching
+  {
+    Variant var1;
+    var1.toList().append(123);
+    Variant var2(var1);
+    List<Variant>& var2list = var2.toList();
+    ASSERT(var2list.size() == 1);
+    var2list.clear();
+    ASSERT(((const Variant&)var1).toList().size() == 1);
+  }
 }

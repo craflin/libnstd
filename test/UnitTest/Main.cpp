@@ -589,9 +589,9 @@ int main(int argc, char* argv[])
   testPoolList();
   testPoolMap();
   testMultiMap();
-  /*
   testError();
   testVariant();
+  /*
   testXML();
   testJSON();
   */
