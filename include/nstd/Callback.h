@@ -4,10 +4,10 @@
 #include <nstd/Map.h>
 #include <nstd/List.h>
 
-class Event
+class Callback
 {
 public:
-  class Source;
+  class Emitter;
   class Listener;
 
 private:
@@ -32,10 +32,10 @@ private:
   template <class X, typename A, typename B, typename C, typename D, typename E, typename F, typename G, typename H> struct MemberFuncPtr8 {void (X::*ptr)(A, B, C, D, E, F, G, H);};
 
 public:
-  class Source
+  class Emitter
   {
   public:
-    ~Source();
+    ~Emitter();
 
   protected:
     template<class X> void emit(void (X::*signal)()) {SignalActivation activation(this, signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected)
@@ -99,7 +99,7 @@ public:
       SignalData* data;
       List<Slot>::Iterator begin;
       List<Slot>::Iterator end;
-      SignalActivation(Source* emitter, const MemberFuncPtr& signal);
+      SignalActivation(Emitter* emitter, const MemberFuncPtr& signal);
       ~SignalActivation();
     };
 
@@ -107,7 +107,7 @@ public:
     Map<MemberFuncPtr, SignalData> signalData;
 
   private:
-    friend class Event;
+    friend class Callback;
   };
 
   class Listener
@@ -123,10 +123,10 @@ public:
     };
 
   private:
-    Map<Source*, List<Signal> > slotData;
+    Map<Emitter*, List<Signal> > slotData;
 
   private:
-    friend class Event;
+    friend class Callback;
   };
 
 public:
@@ -151,6 +151,6 @@ public:
   template<class X, class Y, class V, class W, typename A, typename B, typename C, typename D, typename E, typename F, typename G, typename H> static void disconnect(V* src, void (X::*signal)(A, B, C, D, E, F, G, H), W* dest, void (Y::*slot)(A, B, C, D, E, F, G, H)) {disconnect(src, MemberFuncPtr(signal), dest, MemberFuncPtr(slot));}
 
 private:
-  static void connect(Source* emitter, const MemberFuncPtr& signal, Listener* receiver, void* object, const MemberFuncPtr& slot);
-  static void disconnect(Source* emitter, const MemberFuncPtr& signal, Listener* receiver, const MemberFuncPtr& slot);
+  static void connect(Emitter* emitter, const MemberFuncPtr& signal, Listener* receiver, void* object, const MemberFuncPtr& slot);
+  static void disconnect(Emitter* emitter, const MemberFuncPtr& signal, Listener* receiver, const MemberFuncPtr& slot);
 };

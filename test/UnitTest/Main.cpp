@@ -36,7 +36,7 @@ void testVariant();
 void testFile();
 void testXML();
 void testJSON();
-void testEvent();
+void testCallback();
 void testTime();
 void testMap();
 void testSha256();
@@ -595,7 +595,7 @@ int main(int argc, char* argv[])
   testXML();
   testJSON();
   */
-  testEvent();
+  testCallback();
   testRefCount();
 
   Console::printf(_T("%s\n"), _T("done"));
