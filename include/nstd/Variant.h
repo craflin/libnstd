@@ -4,6 +4,7 @@
 #include <nstd/String.h>
 #include <nstd/HashMap.h>
 #include <nstd/List.h>
+#include <nstd/Array.h>
 
 class Variant
 {
@@ -19,6 +20,7 @@ public:
     uint64Type,
     mapType,
     listType,
+    arrayType,
     stringType,
   };
 
@@ -58,6 +60,7 @@ public:
 #ifdef ASSERT
       case mapType:
       case listType:
+      case arrayType:
       case stringType:
         ASSERT(false);
         // no break
@@ -93,6 +96,15 @@ public:
     data->ref = 1;
   }
 
+  Variant(const Array<Variant>& val)
+  {
+    data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+    Array<Variant>* array = (Array<Variant>*)(data + 1);
+    new (array) Array<Variant>(val);
+    data->type = arrayType;
+    data->ref = 1;
+  }
+
   Variant(const String& val)
   {
     data = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
@@ -110,6 +122,7 @@ public:
       {
       case mapType: ((HashMap<String, Variant>*)(data + 1))->~HashMap<String, Variant>(); break;
       case listType: ((List<Variant>*)(data + 1))->~List<Variant>(); break;
+      case arrayType: ((Array<Variant>*)(data + 1))->~Array<Variant>(); break;
       case stringType: ((String*)(data + 1))->~String(); break;
       default: break;
       }
@@ -152,6 +165,7 @@ public:
 #ifdef ASSERT
       case mapType:
       case listType:
+      case arrayType:
       case stringType:
         ASSERT(false);
         // no break
@@ -393,7 +407,7 @@ public:
   {
     if(data->type != listType || data->ref > 1)
     {
-      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(List< Variant>));
+      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
       List<Variant>* list = (List<Variant>*)(newData + 1);
       new (list) List<Variant>(((const Variant*)this)->toList());
       clear();
@@ -418,6 +432,46 @@ public:
     }
     else
       *(List<Variant>*)(data + 1) = other;
+    return *this;
+  }
+
+  const Array<Variant>& toArray() const
+  {
+    if(data->type == arrayType)
+      return *(const Array<Variant>*)(data + 1);
+    static const Array<Variant> array;
+    return array;
+  }
+
+  Array<Variant>& toArray()
+  {
+    if(data->type != arrayType || data->ref > 1)
+    {
+      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+      Array<Variant>* array = (Array<Variant>*)(newData + 1);
+      new (array) Array<Variant>(((const Variant*)this)->toArray());
+      clear();
+      data = newData;
+      data->type = arrayType;
+      data->ref = 1;
+      return *array;
+    }
+    return *(Array<Variant>*)(data + 1);
+  }
+
+  Variant& operator=(const Array<Variant>& other)
+  {
+    if(data->type != arrayType || data->ref > 1)
+    {
+      clear();
+      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+      Array< Variant>* array = (Array<Variant>*)(data + 1);
+      new (array) Array<Variant>(other);
+      data->type = arrayType;
+      data->ref = 1;
+    }
+    else
+      *(Array<Variant>*)(data + 1) = other;
     return *this;
   }
 
