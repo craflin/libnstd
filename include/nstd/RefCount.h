@@ -11,71 +11,62 @@ public:
   template <class C = Object> class Ptr
   {
   public:
-    Ptr() : obj(0) {}
+    Ptr() : refObj(0), obj(0) {}
 
-    Ptr(const Ptr& other) : obj(other.obj)
+    Ptr(const Ptr& other) : refObj(other.refObj), obj(other.obj)
     {
-      if(obj)
-      {
-        Object* refObj = obj;
+      if(refObj)
         Atomic::increment(refObj->ref);
-      }
     }
 
-    template <class D> Ptr(D* obj) : obj(obj)
+    template <class D> Ptr(D* obj) : refObj(obj), obj(obj)
     {
-      if(obj)
-      {
-        Object* refObj = obj;
+      if(refObj)
         Atomic::increment(refObj->ref);
-      }
     }
 
-    template <class D> Ptr(const Ptr<D>& other) : obj(other.obj)
+    template <class D> Ptr(const Ptr<D>& other) : refObj(other.refObj), obj(other.obj)
     {
-      if(obj)
-      {
-        Object* refObj = obj;
+      if(refObj)
         Atomic::increment(refObj->ref);
-      }
     }
 
     ~Ptr()
     {
-      Object* refObj = obj;
       if(refObj && Atomic::decrement(refObj->ref) == 0)
         delete refObj;
     }
 
     Ptr& operator=(const Ptr& other)
     {
-      Object* refObj;
-      if(other.obj)
-        refObj = other.obj, Atomic::increment(refObj->ref);
-      if((refObj = obj) && Atomic::decrement(refObj->ref) == 0)
+      if(other.refObj)
+        Atomic::increment(other.refObj->ref);
+      if(refObj && Atomic::decrement(refObj->ref) == 0)
         delete refObj;
+      refObj = other.refObj;
       obj = other.obj;
       return *this;
     }
 
     Ptr& operator=(C* obj)
     {
-      Object* refObj;
-      if(obj)
-        refObj = obj, Atomic::increment(refObj->ref);
-      if((refObj = this->obj) && Atomic::decrement(refObj->ref) == 0)
-        delete refObj;
+      Object* refObj = obj;
+      if(refObj)
+        Atomic::increment(refObj->ref);
+      if(this->refObj && Atomic::decrement(this->refObj->ref) == 0)
+        delete this->refObj;
+      this->refObj = refObj;
       this->obj = obj;
      return *this;
     }
 
     template <class D> Ptr& operator=(const Ptr<D>& other)
     {
-      Object* refObj;
-      if(other.obj)
-        refObj = other.obj, Atomic::increment(refObj->ref);
-      if((refObj = obj) && Atomic::decrement(refObj->ref) == 0)
+      if(other.refObj)
+        Atomic::increment(other.refObj->ref);
+      if(refObj && Atomic::decrement(refObj->ref) == 0)
         delete refObj;
+      refObj = other.refObj;
       obj = other.obj;
       return *this;
     }
@@ -98,6 +89,7 @@ public:
     }
 
   private:
+    Object* refObj;
     C* obj;
 
     template<class D> friend class Ptr;
