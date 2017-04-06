@@ -250,6 +250,18 @@ public:
       remove(i->key);
   }
 
+  bool operator==(const HashSet& other) const
+  {
+    if(_size != other._size)
+      return false;
+    for(const Item* a = _begin.item, * b = other._begin.item; a != &endItem; a = a->next, b = b->next)
+      if(a->key != b->key)
+        return false;
+    return true;
+  }
+
+  bool operator!=(const HashSet& other) const {return !(*this == other);}
+
 private:
   struct Item
   {
