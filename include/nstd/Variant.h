@@ -465,7 +465,7 @@ public:
     {
       clear();
       data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
-      Array< Variant>* array = (Array<Variant>*)(data + 1);
+      Array<Variant>* array = (Array<Variant>*)(data + 1);
       new (array) Array<Variant>(other);
       data->type = arrayType;
       data->ref = 1;
@@ -529,6 +529,45 @@ public:
     other = *this;
     *this = tmp;
   }
+
+  bool operator==(const Variant& other) const
+  {
+    switch(data->type)
+    {
+    case nullType:
+      return other.isNull();
+    case boolType:
+      return data->data.boolData == other.toBool();
+    case doubleType:
+      return data->data.doubleData == other.toDouble();
+    case intType:
+      return data->data.intData == other.toInt();
+    case uintType:
+      return data->data.uintData == other.toUInt();
+    case int64Type:
+      return data->data.int64Data == other.toInt64();
+    case uint64Type:
+      return data->data.uint64Data == other.toUInt64();
+    case mapType:
+      return other.data->type == mapType && *(const HashMap<String, Variant>*)(data + 1) == *(const HashMap<String, Variant>*)(other.data + 1);
+    case listType:
+      return other.data->type == listType && *(const List<Variant>*)(data + 1) == *(const List<Variant>*)(other.data + 1);
+    case arrayType:
+      return other.data->type == arrayType && *(const Array<Variant>*)(data + 1) == *(const Array<Variant>*)(other.data + 1);
+    case stringType:
+      if(other.data->type == stringType)
+        return *(const String*)(data + 1) == *(const String*)(other.data + 1);
+      else
+        return other == *this;
+#ifdef ASSERT
+    default:
+      ASSERT(false);
+#endif
+    }
+    return false;
+  }
+
+  bool operator!=(const Variant& other) const {return !(*this == other);}
 
 private:
   struct Data
