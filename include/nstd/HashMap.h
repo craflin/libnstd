@@ -247,7 +247,19 @@ public:
     if(it != _end)
       remove(it);
   }
-  
+
+  bool operator==(const HashMap& other) const
+  {
+    if(_size != other._size)
+      return false;
+    for(const Item* a = _begin.item, * b = other._begin.item; a != &endItem; a = a->next, b = b->next)
+      if(a->key != b->key || a->value != b->value)
+        return false;
+    return true;
+  }
+
+  bool operator!=(const HashMap& other) const {return !(*this == other);}
+
 private:
   struct Item
   {
