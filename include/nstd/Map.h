@@ -157,6 +157,17 @@ public:
     return insert(&root, 0, key, value);
   }
 
+  void insert(Map& other)
+  {
+    if(other.root)
+    {
+      Iterator i = other._begin;
+      Iterator it = insert(&root, 0, i.item->key, i.item->value);
+      for(++i; i != other._end; ++i)
+        it = insert(it, i.item->key, i.item->value);
+    }
+  }
+
   //void checkTree(Item* item, Item* parent)
   //{
   //  ASSERT(item->parent == parent);

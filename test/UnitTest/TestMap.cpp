@@ -132,4 +132,16 @@ void testMap()
     ASSERT(map.size() == 1);
     ASSERT(++map.begin() == map.end());
   }
+
+  // inserting another map
+  {
+    Map<int, bool> map;
+    map.insert(1, false);
+    Map<int, bool> map2;
+    map.insert(-1, false);
+    map.insert(2, false);
+    map.insert(3, false);
+    map.insert(map2);
+    ASSERT(map.size() == 4);
+  }
 }
