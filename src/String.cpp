@@ -406,3 +406,25 @@ String& String::join(const List<String>& tokens, tchar separator)
   }
   return *this;
 }
+
+String& String::trim(const tchar* chars)
+{
+  if(data->len)
+  {
+    const tchar* start = data->str;
+    const tchar* p = start;
+    const tchar* end = start + data->len;
+    for(; p < end; ++p)
+      if(!_tcschr(chars, *p))
+        break;
+    --end;
+    for(; end > p; --end)
+      if(!_tcschr(chars, *end))
+        break;
+    ++end;
+    size_t newLen = end - p;
+    if(newLen != data->len)
+      *this = substr(p - start, newLen);
+  }
+  return *this;
+}

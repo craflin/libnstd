@@ -141,4 +141,12 @@ void testString()
     buf[2] = _T('b');
     ASSERT(bufWrapper == _T("aaaaaaaa"));
   }
+
+  // test trim
+  ASSERT(String().trim() == String());
+  ASSERT(String("\t \n\t \n").trim() == String());
+  ASSERT(String("\t \nx\t \n").trim() == "x");
+  ASSERT(String("x\t \n").trim() == "x");
+  ASSERT(String("\t \nx").trim() == "x");
+  ASSERT(String("x").trim() == "x");
 }
