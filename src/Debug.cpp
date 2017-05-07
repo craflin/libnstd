@@ -144,12 +144,12 @@ bool Debug::getSourceLine(void* addr, String& file, int& line)
       return false;
   ++addrStart;
   void* relAddr;
-  if(addrStr.substr(addrStart - addrStr, addrEnd - addrStart).scanf("%p", &relAddr) != 1)
+  if(addrStr.substr(addrStart - (const tchar*)addrStr, addrEnd - addrStart).scanf("%p", &relAddr) != 1)
       return false;
   const tchar* binaryEnd = addrStr.findLast(_T('('));
   if(!binaryEnd)
       return false;
-  String bin = addrStr.substr(0, binaryEnd - addrStr);
+  String bin = addrStr.substr(0, binaryEnd - (const tchar*)addrStr);
   String cmd = String::fromPrintf("addr2line -e \"%s\" %p", (const char*)bin, relAddr);
   Process process;
   if(!process.open(cmd))
@@ -163,8 +163,8 @@ bool Debug::getSourceLine(void* addr, String& file, int& line)
   const tchar* fileEnd = buf.findLast(':');
   if(!fileEnd)
       return false;
-  file = buf.substr(0, fileEnd - buf);
-  if(buf.substr(fileEnd - buf + 1).scanf("%d", &line) != 1)
+  file = buf.substr(0, fileEnd - (const tchar*)buf);
+  if(buf.substr(fileEnd - (const tchar*)buf + 1).scanf("%d", &line) != 1)
       return false;
   return true;
 #endif
