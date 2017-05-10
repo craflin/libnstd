@@ -467,6 +467,29 @@ void JSON::Private::appendVariant(const Variant& data, const String& indentation
       }
       return;
     }
+  case Variant::arrayType:
+    {
+      const Array<Variant>& array = data.toArray();
+      if(array.isEmpty())
+        result += _T("[]");
+      else
+      {
+        result += _T("[\n");;
+        String newIndentation = indentation + _T("\t");
+        for(Array<Variant>::Iterator i = array.begin(), end = array.end();;)
+        {
+          result += newIndentation;
+          appendVariant(*i, newIndentation, result);
+          if(++i == end)
+            break;
+          result += _T(",\n");
+        }
+        result += '\n';
+        result += indentation;
+        result += ']';
+      }
+      return;
+    }
   }
 }
 
