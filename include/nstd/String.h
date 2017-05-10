@@ -361,7 +361,7 @@ public:
   usize split(List<String>& tokens, const tchar* separators, bool skipEmpty = true) const;
   String& join(const List<String>& tokens, tchar separator);
 
-  String& trim(const tchar* chars = " \t\r\n\v");
+  String& trim(const tchar* chars = _T(" \t\r\n\v"));
 
   /**
   * Compute a hash code for this string.

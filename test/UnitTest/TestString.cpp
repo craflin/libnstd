@@ -144,28 +144,28 @@ void testString()
 
   // test trim
   ASSERT(String().trim() == String());
-  ASSERT(String("\t \n\t \n").trim() == String());
-  ASSERT(String("\t \nx\t \n").trim() == "x");
-  ASSERT(String("x\t \n").trim() == "x");
-  ASSERT(String("\t \nx").trim() == "x");
-  ASSERT(String("x").trim() == "x");
+  ASSERT(String(_T("\t \n\t \n")).trim() == String());
+  ASSERT(String(_T("\t \nx\t \n")).trim() == _T("x"));
+  ASSERT(String(_T("x\t \n")).trim() == _T("x"));
+  ASSERT(String(_T("\t \nx")).trim() == _T("x"));
+  ASSERT(String(_T("x")).trim() == _T("x"));
 
   // test toBool
   ASSERT(!String().toBool());
-  ASSERT(!String("").toBool());
-  ASSERT(!String("0").toBool());
-  ASSERT(!String("false").toBool());
-  ASSERT(!String("False").toBool());
-  ASSERT(!String("falSe").toBool());
-  ASSERT(!String("0.0").toBool());
-  ASSERT(!String(".0").toBool());
-  ASSERT(!String("0.").toBool());
-  ASSERT(!String(".00").toBool());
-  ASSERT(!String("00.").toBool());
-  ASSERT(!String("00.00").toBool());
-  ASSERT(!String("0.00").toBool());
-  ASSERT(!String("00.0").toBool());
-  ASSERT(String(".").toBool());
-  ASSERT(String("dasdas").toBool());
-  ASSERT(String("true").toBool());
+  ASSERT(!String(_T("")).toBool());
+  ASSERT(!String(_T("0")).toBool());
+  ASSERT(!String(_T("false")).toBool());
+  ASSERT(!String(_T("False")).toBool());
+  ASSERT(!String(_T("falSe")).toBool());
+  ASSERT(!String(_T("0.0")).toBool());
+  ASSERT(!String(_T(".0")).toBool());
+  ASSERT(!String(_T("0.")).toBool());
+  ASSERT(!String(_T(".00")).toBool());
+  ASSERT(!String(_T("00.")).toBool());
+  ASSERT(!String(_T("00.00")).toBool());
+  ASSERT(!String(_T("0.00")).toBool());
+  ASSERT(!String(_T("00.0")).toBool());
+  ASSERT(String(_T(".")).toBool());
+  ASSERT(String(_T("dasdas")).toBool());
+  ASSERT(String(_T("true")).toBool());
 }
