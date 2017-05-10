@@ -3,7 +3,8 @@ libnstd
 
 libnstd is a cross platform non-standard standard library for C++. In contrast to the Standard Template
 Library (STL) its aim is to provide frequently used features with minimalistic classes and as little usage of templates
-as possible. Right now it consists of following headers:
+as possible. Code written with libnstd should be easily understandable for everyone with basic knowledge of imperative 
+programming and common design patterns. Right now it consists of following headers:
 
 * [Base.h](include/nstd/Base.h): Basic data types and allocation operators.
 * [Debug.h](include/nstd/Debug.h): Low level debugging tools.
