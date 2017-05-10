@@ -19,7 +19,7 @@ as possible. Right now it consists of following headers:
     * [List.h](include/nstd/List.h): A double linked list.
     * [HashMap.h](include/nstd/HashMap.h): An associative container based on a hash map with fixed table size.
     * [HashSet.h](include/nstd/HashSet.h):  A container for unique elements based on a hash set with fixed table size.
-    * [Map.h](include/nstd/Map.h), MultiMap.h: An associative container based on a balanced tree.
+    * [Map.h](include/nstd/Map.h), [MultiMap.h](include/nstd/MultiMap.h): An associative container based on a balanced tree.
     * [Array.h](include/nstd/Array.h): A dynamically growing container based on an array.
     * [PoolList.h](include/nstd/PoolList.h): An iterable object pool for non-copyable objects.
     * [PoolMap.h](include/nstd/PoolMap.h): An associative object pool for non-copyable objects.
@@ -46,6 +46,8 @@ as possible. Right now it consists of following headers:
 * Documents (optional)
     * [JSON.h](include/nstd/Document/JSON.h): A JSON document parser.
     * [XML.h](include/nstd/Document/XML.h): A basic XML document parser.
+* Cryptography (optional)
+    * [Sha256.h](include/nstd/Crypto/Sha256.h): A Sha256 hash tool.
 
 Design Principles
 -----------------
