@@ -268,7 +268,7 @@ public:
     return *this;
   }
 
-  int toUInt() const
+  uint toUInt() const
   {
     switch(data->type)
     {
