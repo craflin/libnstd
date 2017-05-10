@@ -23,6 +23,7 @@ as possible. Right now it consists of following headers:
     * [Array.h](include/nstd/Array.h): A dynamically growing container based on an array.
     * [PoolList.h](include/nstd/PoolList.h): An iterable object pool for non-copyable objects.
     * [PoolMap.h](include/nstd/PoolMap.h): An associative object pool for non-copyable objects.
+    * [RefCount.h](include/nstd/RefCount.h): Tools for object reference counting.
 * Concurrency
     * [Thread.h](include/nstd/Thread.h): Abstraction layer of native multi-threading features.
     * [Atomic.h](include/nstd/Atomic.h): Abstraction layer of atomic functions.
