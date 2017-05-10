@@ -606,7 +606,16 @@ String Socket::getHostName()
   char name[256];
   if(gethostname(name, sizeof(name)) != 0)
     return String();
+#ifdef UNICODE
+  WCHAR wname[256];
+  int size = MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname)/sizeof(WCHAR));
+  if(!size)
+    return String();
+  return String(wname, size - 1);
+  //return String::fromPrintf(_T("%hu"), name);
+#else
   return String(name, String::length(name));
+#endif
 }
 
 #ifdef _WIN32
