@@ -555,7 +555,6 @@ int main(int argc, char* argv[])
   testSha256();
   testSocket();
   testServer();
-  /*
   testSignal();
   testMonitor();
   testUnicode();
@@ -565,10 +564,8 @@ int main(int argc, char* argv[])
   testMutex();
   //testConsolePrintf();
   //testDebugPrintf();
-  */
   testAtomic();
   testString();
-  /*
   testHashSet();
   testHashSetDestructor();
   testHashSetString();
@@ -584,17 +581,14 @@ int main(int argc, char* argv[])
   testDirectory();
   testTime();
   testProcess();
-  */
   testMap();
   testPoolList();
   testPoolMap();
   testMultiMap();
   testError();
   testVariant();
-  /*
   testXML();
   testJSON();
-  */
   testCallback();
   testRefCount();
 
