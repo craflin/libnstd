@@ -249,6 +249,15 @@ bool File::copy(const String& src, const String& destination, bool failIfExists)
 #endif
 }
 
+bool File::createSymbolicLink(const String& target, const String& file)
+{
+#ifdef _WIN32
+  return CreateSymbolicLink(file, target, 0) != 0;
+#else
+  return symlink(target, file) == 0;
+#endif
+}
+
 ssize File::read(void* buffer, usize len)
 {
 #ifdef _WIN32
