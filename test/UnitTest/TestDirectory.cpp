@@ -237,4 +237,10 @@ void testDirectory()
     ASSERT(File().open(String(_T("testDir/x/")) + *i, File::writeFlag));
   ASSERT(Directory::purge(String(_T("testDir/x")), true));
   ASSERT(!File::exists(String(_T("testDir"))));
+
+  // test get etemp
+  {
+    String temp = Directory::getTemp();
+    ASSERT(Directory::exists(temp));
+  }
 }

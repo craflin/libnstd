@@ -460,3 +460,18 @@ String Directory::getCurrent()
 
 #endif
 }
+
+String Directory::getTemp()
+{
+#ifdef _WIN32
+  TCHAR buffer[MAX_PATH + 2];
+  DWORD len = GetTempPath(MAX_PATH + 2, buffer);
+  if(len == 0)
+    return String();
+  while(len > 1 && buffer[len - 1] == '\\')
+    --len;
+  return String(buffer, len);
+#else
+  return "/tmp";
+#endif
+}

@@ -85,6 +85,8 @@ public:
   */
   static String getCurrent();
 
+  static String getTemp();
+
 private:
   bool dirsOnly;
 #ifdef _WIN32
