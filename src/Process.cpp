@@ -724,7 +724,7 @@ String Process::getEnvironmentVariable(const String& name)
   {
     buffer.resize(bufferSize);
     DWORD dw = GetEnvironmentVariable((const tchar*)name, (tchar*)buffer, bufferSize);
-    if(dw == bufferSize)
+    if(dw >= bufferSize)
     {
       bufferSize <<= 1;
       continue;
