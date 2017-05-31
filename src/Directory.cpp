@@ -472,6 +472,6 @@ String Directory::getTemp()
     --len;
   return String(buffer, len);
 #else
-  return "/tmp";
+  return String("/tmp");
 #endif
 }

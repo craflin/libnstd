@@ -13,10 +13,12 @@ public:
   /**
   * Start an external process.
   * @param  command The command to start the process. The first word in \c command should be the name of the executable or a path
-  *                 to the executable. Further words in \c command are arguments for the process.
+  *                 to the executable. Further words in \c command are considered to be arguments for the process.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
   uint32 start(const String& command);
+
+  uint32 start(const String& program, int argc, char* const argv[]);
 
   /**
   * Get id of the process.
@@ -51,6 +53,8 @@ public:
   };
 
   bool open(const String& command, uint streams = stdoutStream);
+
+  bool open(const String& program, int argc, char* const argv[], uint streams = stdoutStream);
 
   ssize read(void* buffer, usize length);
   ssize read(void* buffer, usize length, uint& streams);
@@ -120,4 +124,7 @@ private:
 
   Process(const Process&);
   Process& operator=(const Process&);
+
+private:
+  class Private;
 };

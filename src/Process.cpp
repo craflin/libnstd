@@ -23,6 +23,105 @@
 #endif
 #include <nstd/Process.h>
 
+class Process::Private
+{
+public:
+#ifdef _WIN32
+  static String getCommandLine(const String& program, int argc, char* const argv[])
+  {
+    String commandLine = program;
+    for (int i = 1; i < argc; ++i)
+    {
+      commandLine.append(' ');
+      const char* arg = argv[i];
+      if (!String::findOneOf(arg, " \t\n\v\"") && *arg)
+        commandLine.append(arg, String::length(arg));
+      else
+      {
+        commandLine.append('"');
+        while (*arg)
+        {
+          if (*arg == '\\')
+          {
+            for (const char* p = arg + 1;; ++p)
+              if (*p != '\\')
+              {
+                usize backslashCount = p - arg;
+                if (!*p)
+                {
+                  commandLine.append(arg, backslashCount);
+                  commandLine.append(arg, backslashCount);
+                  arg = p;
+                }
+                else if (*p == '"')
+                {
+                  commandLine.append(arg, backslashCount);
+                  commandLine.append(arg, backslashCount);
+                  commandLine.append("\\\"");
+                  arg = p + 1;
+                }
+                else
+                {
+                  commandLine.append(arg, backslashCount);
+                  arg = p;
+                }
+                break;
+              }
+          }
+          else
+          {
+            commandLine.append(*arg);
+            ++arg;
+          }
+        }
+        commandLine.append('"');
+      }
+    }
+    return commandLine;
+  }
+#else
+  static void splitCommandLine(const String& commandLine, List<String>& command)
+  {
+    String arg;
+    for (const tchar* p = commandLine; *p;)
+      switch (*p)
+      {
+      case _T('"'):
+        for (++p; *p;)
+        {
+          switch (*p)
+          {
+          case _T('"'):
+            ++p;
+            break;
+          case _T('\\'):
+            if (p[1] == _T('"'))
+            {
+              arg.append(_T('"'));
+              p += 2;
+            }
+            continue;
+          default:
+            arg.append(*(p++));
+            continue;
+          }
+          break;
+        }
+        break;
+      case _T(' '):
+        command.append(arg);
+        arg.clear();
+        ++p;
+        break;
+      default:
+        arg.append(*(p++));
+      }
+    if (!arg.isEmpty())
+      command.append(arg);
+  }
+#endif
+};
+
 Process::Process() : pid(0)
 {
 #ifdef _WIN32
@@ -89,68 +188,59 @@ uint32 Process::start(const String& commandLine)
     return false;
   }
 
-  // split commandLine into args
   List<String> command;
+  Private::splitCommandLine(commandLine, command);
+  if(command.isEmpty())
+    command.append(String());
+
+  char** argv = (char**)alloca(sizeof(char*) * (command.size() + 1));
+  int i = 0;
+  for (List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
+    argv[i++] = (char*)(const char*)*j;
+  argv[i] = 0;
+  return start(command.front(), i + 1, argv);
+#endif
+}
+
+uint32 Process::start(const String& program, int argc, char* const argv[])
+{
+#ifdef _WIN32
+  return start(Private::getCommandLine(program, argc, argv));
+#else
+  if (pid)
   {
-    String arg;
-    for(const tchar* p = commandLine; *p;)
-      switch(*p)
-      {
-      case _T('"'):
-        for(++p; *p;)
-        {
-          switch(*p)
-          {
-          case _T('"'):
-            ++p;
-            break;
-          case _T('\\'):
-            if(p[1] == _T('"'))
-            {
-              arg.append(_T('"'));
-              p += 2;
-            }
-            continue;
-          default:
-            arg.append(*(p++));
-            continue;
-          }
-          break;
-        }
-        break;
-      case _T(' '):
-        command.append(arg);
-        arg.clear();
-        ++p;
-        break;
-      default:
-        arg.append(*(p++));
-      }
-    if(!arg.isEmpty())
-      command.append(arg);
+    errno = EINVAL;
+    return false;
   }
 
   // start process
   int r = vfork();
-  if(r == -1)
+  if (r == -1)
     return 0;
-  else if(r != 0) // parent
+  else if (r != 0) // parent
   {
     pid = r;
     return r;
   }
   else // child
   {
-    const char** argv = (const char**)alloca(sizeof(const char*) * (command.size() + 1));
-    int i = 0;
-    for(List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
-      argv[i++] = *j;
-    argv[i] = 0;
-
-    const char* executable = i > 0 ? argv[0] : "";
-    if(execvp(executable, (char* const*)argv) == -1)
+    const char** args;
+    if(argc && !argv[argc - 1])
+      args = (const char**)argv;
+    else
     {
-      fprintf(stderr, "%s: %s\n", executable, strerror(errno));
+      if(!argc)
+        ++argc;
+      args = (const char**)alloca(sizeof(const char*) * (argc + 1));
+      args[argc] = 0;
+      for (int i = 1; i < argc; ++i)
+        args[i] = argv[i];
+      args[0] = program;
+    }
+
+    if(execvp(program, (char* const*)args) == -1)
+    {
+      fprintf(stderr, "%s: %s\n", (const char*)program, strerror(errno));
       _exit(EXIT_FAILURE);
     }
     ASSERT(false); // unreachable
@@ -408,81 +498,65 @@ error:
     return false;
   }
 
-  // split commandLine into args
   List<String> command;
+  Private::splitCommandLine(commandLine, command);
+  if(command.isEmpty())
+    command.append(String());
+
+  char** argv = (char**)alloca(sizeof(char*) * (command.size() + 1));
+  int i = 0;
+  for (List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
+    argv[i++] = (char*)(const char*)*j;
+  argv[i] = 0;
+  return open(command.front(), i + 1, argv, streams);
+#endif
+}
+
+bool Process::open(const String& program, int argc, char* const argv[], uint streams)
+{
+#ifdef _WIN32
+  return open(Private::getCommandLine(program, argc, argv), streams);
+#else
+  if (pid)
   {
-    String arg;
-    for(const tchar* p = commandLine; *p;)
-      switch(*p)
-      {
-      case _T('"'):
-        for(++p; *p;)
-        {
-          switch(*p)
-          {
-          case _T('"'):
-            ++p;
-            break;
-          case _T('\\'):
-            if(p[1] == _T('"'))
-            {
-              arg.append(_T('"'));
-              p += 2;
-            }
-            continue;
-          default:
-            arg.append(*(p++));
-            continue;
-          }
-          break;
-        }
-        break;
-      case _T(' '):
-        command.append(arg);
-        arg.clear();
-        ++p;
-        break;
-      default:
-        arg.append(*(p++));
-      }
-    if(!arg.isEmpty())
-      command.append(arg);
+    errno = EINVAL;
+    return false;
   }
 
   // create pipes
   int stdoutFds[2] = {};
   int stderrFds[2] = {};
   int stdinFds[2] = {};
-  if(streams & stdoutStream)
+  if (streams & stdoutStream)
   {
-    if(pipe(stdoutFds) != 0)
+    if (pipe(stdoutFds) != 0)
       goto error;
   }
-  if(streams & stderrStream)
+  if (streams & stderrStream)
   {
-    if(pipe(stderrFds) != 0)
+    if (pipe(stderrFds) != 0)
       goto error;
   }
-  if(streams & stdinStream)
+  if (streams & stdinStream)
   {
-    if(pipe(stdinFds) != 0)
+    if (pipe(stdinFds) != 0)
       goto error;
   }
 
   // start process
   {
     int r = vfork();
-    if(r == -1)
+    if (r == -1)
       return false;
-    else if(r != 0) // parent
+    else if (r != 0) // parent
     {
       pid = r;
 
-      if(stdoutFds[1])
+      if (stdoutFds[1])
         close(stdoutFds[1]);
-      if(stderrFds[1])
+      if (stderrFds[1])
         close(stderrFds[1]);
-      if(stdinFds[0])
+      if (stdinFds[0])
         close(stdinFds[0]);
 
       fdStdOutRead = stdoutFds[0];
@@ -493,39 +567,46 @@ error:
     }
     else // child
     {
-      if(stdoutFds[1])
+      if (stdoutFds[1])
       {
         dup2(stdoutFds[1], STDOUT_FILENO);
         close(stdoutFds[1]);
       }
-      if(stderrFds[1])
+      if (stderrFds[1])
       {
         dup2(stderrFds[1], STDERR_FILENO);
         close(stderrFds[1]);
       }
-      if(stdinFds[0])
+      if (stdinFds[0])
       {
         dup2(stdinFds[0], STDIN_FILENO);
         close(stdinFds[0]);
       }
 
-      if(stdoutFds[0])
+      if (stdoutFds[0])
         close(stdoutFds[0]);
-      if(stderrFds[0])
+      if (stderrFds[0])
         close(stderrFds[0]);
-      if(stdinFds[1])
+      if (stdinFds[1])
         close(stdinFds[1]);
 
-      const char** argv = (const char**)alloca(sizeof(const char*) * (command.size() + 1));
-      int i = 0;
-      for(List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
-        argv[i++] = *j;
-      argv[i] = 0;
-
-      const char* executable = i > 0 ? argv[0] : "";
-      if(execvp(executable, (char* const*)argv) == -1)
+      const char** args;
+      if (argc && !argv[argc - 1])
+        args = (const char**)argv;
+      else
       {
-        fprintf(stderr, "%s: %s\n", executable, strerror(errno));
+        if (!argc)
+          ++argc;
+        args = (const char**)alloca(sizeof(const char*) * (argc + 1));
+        args[argc] = 0;
+        for (int i = 1; i < argc; ++i)
+          args[i] = argv[i];
+        args[0] = program;
+      }
+
+      if (execvp(program, (char* const*)args) == -1)
+      {
+        fprintf(stderr, "%s: %s\n", (const char*)program, strerror(errno));
         _exit(EXIT_FAILURE);
       }
       ASSERT(false); // unreachable
@@ -534,17 +615,17 @@ error:
   }
 error:
   int err = errno;
-  if(stdoutFds[0])
+  if (stdoutFds[0])
   {
     close(stdoutFds[0]);
     close(stdoutFds[1]);
   }
-  if(stderrFds[0])
+  if (stderrFds[0])
   {
     close(stderrFds[0]);
     close(stderrFds[1]);
   }
-  if(stdinFds[0])
+  if (stdinFds[0])
   {
     close(stdinFds[0]);
     close(stdinFds[1]);
