@@ -39,7 +39,7 @@ void Signal::set()
   VERIFY(pthread_mutex_lock((pthread_mutex_t*)mdata) == 0);
   signaled = true;
   VERIFY(pthread_mutex_unlock((pthread_mutex_t*)mdata) == 0);
-  VERIFY(pthread_cond_signal((pthread_cond_t*)cdata) == 0);
+  VERIFY(pthread_cond_broadcast((pthread_cond_t*)cdata) == 0);
 #endif
 }
 
