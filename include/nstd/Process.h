@@ -18,7 +18,7 @@ public:
   */
   uint32 start(const String& command);
 
-  uint32 start(const String& program, int argc, char* const argv[]);
+  uint32 start(const String& executable, int argc, char* const argv[]);
 
   /**
   * Get id of the process.
@@ -39,6 +39,8 @@ public:
   */
   bool join(uint32& exitCode);
 
+  bool join();
+
   /**
   * Kill and join the process. The method send a hard KILL signal to the process and waits for it to terminate.
   * @return Whether the process terminated properly.
@@ -54,7 +56,7 @@ public:
 
   bool open(const String& command, uint streams = stdoutStream);
 
-  bool open(const String& program, int argc, char* const argv[], uint streams = stdoutStream);
+  bool open(const String& executable, int argc, char* const argv[], uint streams = stdoutStream);
 
   ssize read(void* buffer, usize length);
   ssize read(void* buffer, usize length, uint& streams);

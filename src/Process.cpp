@@ -377,6 +377,12 @@ bool Process::join(uint32& exitCode)
 #endif
 }
 
+bool Process::join()
+{
+  uint32 exitCode;
+  return join(exitCode);
+}
+
 uint32 Process::getCurrentProcessId()
 {
 #ifdef _WIN32
