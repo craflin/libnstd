@@ -126,8 +126,8 @@ uint64 Atomic::compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal
 template <typename T> inline T* Atomic::compareAndSwap(T* volatile& ptr, T* oldVal, T* newVal) {return (T*)__sync_val_compare_and_swap(&ptr, oldVal, newVal);}
 int32 Atomic::swap(int32 volatile& var, int32 val) {return __sync_lock_test_and_set(&var, val);}
 uint32 Atomic::swap(uint32 volatile& var, uint32 val) {return __sync_lock_test_and_set(&var, val);}
-int64 swap(int64 volatile& var, int64 val) {return __sync_lock_test_and_set(&var, val);}
-uint64 swap(uint64 volatile& var, uint64 val) {return __sync_lock_test_and_set(&var, val);}
+int64 Atomic::swap(int64 volatile& var, int64 val) {return __sync_lock_test_and_set(&var, val);}
+uint64 Atomic::swap(uint64 volatile& var, uint64 val) {return __sync_lock_test_and_set(&var, val);}
 template <typename T> inline T* Atomic::swap(T* volatile& ptr, T* val) {return (T*)__sync_lock_test_and_set(&ptr, val);}
 int32 Atomic::testAndSet(int32 volatile& var) {return __sync_lock_test_and_set(&var, 1);}
 int32 Atomic::fetchAndAdd(int32 volatile& var, int32 val) {return __sync_fetch_and_add(&var, val);}
