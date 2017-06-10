@@ -19,6 +19,16 @@ void testAtomic()
     ASSERT(uint32 == 43);
     ASSERT(int64 == 43);
     ASSERT(uint64 == 43);
+
+    int32 = -100;
+    uint32 = 0xfffffff0;
+    int64 = -100;
+    uint64 = 0xfffffffffffffff0;
+
+    ASSERT(Atomic::increment(int32) == -99);
+    ASSERT(Atomic::increment(uint32) == 0xfffffff1);
+    ASSERT(Atomic::increment(int64) == -99);
+    ASSERT(Atomic::increment(uint64) == 0xfffffffffffffff1);
   }
 
   {
@@ -104,7 +114,7 @@ void testAtomic()
     ASSERT(Atomic::swap(uint32, 1) == 0);
     ASSERT(Atomic::swap(int64, 1) == 0);
     ASSERT(Atomic::swap(uint64, 1) == 0);
-    ASSERT(Atomic::swap(ptr, (char*)0 + 1) == 0);
+    ASSERT(Atomic::swap(ptr, (void*)((char*)0 + 1)) == 0);
 
     ASSERT(int32 == 1);
     ASSERT(uint32 == 1);
