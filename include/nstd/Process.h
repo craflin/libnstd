@@ -18,7 +18,7 @@ public:
   */
   uint32 start(const String& command);
 
-  uint32 start(const String& executable, int argc, char* const argv[]);
+  uint32 start(const String& executable, int argc, tchar* const argv[]);
 
   /**
   * Get id of the process.
@@ -56,7 +56,7 @@ public:
 
   bool open(const String& command, uint streams = stdoutStream);
 
-  bool open(const String& executable, int argc, char* const argv[], uint streams = stdoutStream);
+  bool open(const String& executable, int argc, tchar* const argv[], uint streams = stdoutStream);
 
   ssize read(void* buffer, usize length);
   ssize read(void* buffer, usize length, uint& streams);

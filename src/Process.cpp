@@ -27,14 +27,14 @@ class Process::Private
 {
 public:
 #ifdef _WIN32
-  static String getCommandLine(const String& program, int argc, char* const argv[])
+  static String getCommandLine(const String& program, int argc, tchar* const argv[])
   {
     String commandLine = program;
     for (int i = 1; i < argc; ++i)
     {
       commandLine.append(' ');
-      const char* arg = argv[i];
-      if (!String::findOneOf(arg, " \t\n\v\"") && *arg)
+      const tchar* arg = argv[i];
+      if (!String::findOneOf(arg, _T(" \t\n\v\"")) && *arg)
         commandLine.append(arg, String::length(arg));
       else
       {
@@ -43,7 +43,7 @@ public:
         {
           if (*arg == '\\')
           {
-            for (const char* p = arg + 1;; ++p)
+            for (const tchar* p = arg + 1;; ++p)
               if (*p != '\\')
               {
                 usize backslashCount = p - arg;
@@ -57,7 +57,7 @@ public:
                 {
                   commandLine.append(arg, backslashCount);
                   commandLine.append(arg, backslashCount);
-                  commandLine.append("\\\"");
+                  commandLine.append(_T("\\\""));
                   arg = p + 1;
                 }
                 else
@@ -202,7 +202,7 @@ uint32 Process::start(const String& commandLine)
 #endif
 }
 
-uint32 Process::start(const String& program, int argc, char* const argv[])
+uint32 Process::start(const String& program, int argc, tchar* const argv[])
 {
 #ifdef _WIN32
   return start(Private::getCommandLine(program, argc, argv));
@@ -518,7 +518,7 @@ error:
 #endif
 }
 
-bool Process::open(const String& program, int argc, char* const argv[], uint streams)
+bool Process::open(const String& program, int argc, tchar* const argv[], uint streams)
 {
 #ifdef _WIN32
   return open(Private::getCommandLine(program, argc, argv), streams);
