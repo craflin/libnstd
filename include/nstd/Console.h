@@ -20,6 +20,10 @@ public:
     String getLine(const String& prompt);
 
   private:
+    Prompt(const Prompt&);
+    Prompt& operator=(const Prompt&);
+
+  private:
     class Private;
     Private* p;
   };
