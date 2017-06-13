@@ -1,7 +1,7 @@
 libnstd
 =======
 
-libnstd is a cross platform non-standard standard library for C++. In contrast to the Standard Template
+libnstd is a cross platform non-standard standard library replacement for C++. In contrast to the Standard Template
 Library (STL) its aim is to provide frequently used features with minimalistic classes and as little usage of templates
 as possible. Code written with libnstd should be easily understandable for everyone with basic knowledge of imperative 
 programming and common design patterns. Right now it consists of following headers:
@@ -54,10 +54,10 @@ programming and common design patterns. Right now it consists of following heade
 Design Principles
 -----------------
 
- * Be as much optimized as currently possible. (Unfortunately, I do not have the time to optimize the shit out of each function, but some classes/functions are already pretty optimized and faster than their STL counterpart.)
+ * Be as much optimized as currently possible.
  * Do not use macros except for code that should be excluded in optimized builds.
  * Use templates only when it is required to improve performance.
- * Do not include system header files in libnstd header files.
+ * Do not include system header files in public header files.
  * Design class interfaces to be minimalistic and easy to use.
  * Do not use exceptions.
  * Avoid dynamic memory allocation when possible.
@@ -67,6 +67,6 @@ Supported Platforms
 
  * Windows x86/x86_64 (since Windows Vista / Server 2008)
  * Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
- * Cygwin i686 (since Windows Vista / Server 2008)
+ * Cygwin i686 (since Windows Vista / Server 2008) (might not work anymore)
  * Linux i686/x86_64
  * Linux armv61
