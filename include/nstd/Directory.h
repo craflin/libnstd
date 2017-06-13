@@ -85,6 +85,10 @@ public:
   */
   static String getCurrent();
 
+  /**
+  * Get directory for temporary data.
+  * @return The absolute path of the temp directory.
+  */
   static String getTemp();
 
 private:

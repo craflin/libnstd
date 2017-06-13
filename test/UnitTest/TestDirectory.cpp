@@ -238,7 +238,7 @@ void testDirectory()
   ASSERT(Directory::purge(String(_T("testDir/x")), true));
   ASSERT(!File::exists(String(_T("testDir"))));
 
-  // test get etemp
+  // test get temp
   {
     String temp = Directory::getTemp();
     ASSERT(Directory::exists(temp));
