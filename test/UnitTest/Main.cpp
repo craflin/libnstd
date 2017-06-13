@@ -16,6 +16,7 @@
 
 void testAtomic();
 void testConsole();
+void testDebug();
 void testProcess();
 void testMonitor();
 void testSignal();
@@ -43,17 +44,6 @@ void testMap();
 void testSha256();
 void testMap();
 void testRefCount();
-
-void testDebugPrintf()
-{
-  Debug::printf(_T("%s\n"), _T("Hello world"));
-  usize bufferSize;
-  char* buffer = (char*)Memory::alloc(5000 * 4, bufferSize);
-  Memory::fill(buffer, 'a', bufferSize - 1);
-  buffer[bufferSize - 2] = 'b';
-  buffer[bufferSize - 1] = '\0';
-  Debug::printf(_T("%hs%hs\n"), buffer, buffer);
-}
 
 void testHashSet()
 {
@@ -553,7 +543,7 @@ int main(int argc, char* argv[])
   testSempahore();
   testMutex();
   //testConsole();
-  //testDebugPrintf();
+  //testDebug();
   testAtomic();
   testString();
   testHashSet();
