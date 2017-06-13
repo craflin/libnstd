@@ -95,6 +95,10 @@ public:
     bool interrupt();
 
   private:
+    Poll(const Poll&);
+    Poll& operator=(const Poll&);
+
+  private:
     class Private;
     Private* p;
   };
