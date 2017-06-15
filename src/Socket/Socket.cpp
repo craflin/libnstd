@@ -725,7 +725,6 @@ void Socket::Poll::Private::clear()
 
 void Socket::Poll::Private::set(Socket& socket, uint events)
 {
-#ifdef _WIN32
   Private::SocketInfo* sockInfo;
   HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
   if(it == sockets.end()) // this is a new one, lets create a key for it and attach it to the completion port
@@ -781,35 +780,8 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
     }
   }
   sockInfo->events = events;
-#else
-  HashMap<Socket*, Private::SocketInfo>::Iterator it = p->sockets.find(&socket);
-  if(it != p->sockets.end())
-  {
-    Private::SocketInfo& sockInfo = *it;
-    if(sockInfo.events == events)
-      return;
-    p->pollfds[sockInfo.index].events = Private::mapEvents(events);
-    sockInfo.events = events;
-  }
-  else
-  {
-    SOCKET s = socket.s;
-    if(s == INVALID_SOCKET)
-      return;
-    Private::SocketInfo& sockInfo = p->sockets.append(&socket, Private::SocketInfo());
-    sockInfo.socket = &socket;
-    sockInfo.index = p->pollfds.size();
-    sockInfo.events = events;
-    p->fdToSocket.append(s, &sockInfo);
-    pollfd& pfd = p->pollfds.append(pollfd());
-    pfd.fd = socket.s;
-    pfd.events = Private::mapEvents(events);
-    pfd.revents = 0;
-  }
-#endif
 }
 
-#ifdef _WIN32
 void Socket::Poll::Private::pushWaitThreadMessage(const WaitThreadMessage& message)
 {
   EnterCriticalSection(&waitThreadMutex);
@@ -1029,7 +1001,6 @@ cleanup:
     WSACloseEvent(*i);
   return 0;
 }
-#endif
 
 void Socket::Poll::Private::remove(Socket& socket)
 {
