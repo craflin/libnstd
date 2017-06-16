@@ -18,11 +18,15 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <arpa/inet.h>
+#if defined(__linux__)
+#include <sys/epoll.h>
+#else
 #include <poll.h>
+#endif
 #include <sys/eventfd.h>
 #include <cstring>
+#include <cerrno>
 #endif
 
 #ifdef _WIN32
@@ -626,11 +630,11 @@ public:
   Private();
   ~Private();
 
-  void clear();
-  void set(Socket& socket, uint events);
-  void remove(Socket& socket);
-  bool poll(Event& event, int64 timeout);
-  bool interrupt();
+  inline void clear();
+  inline void set(Socket& socket, uint events);
+  inline void remove(Socket& socket);
+  inline bool poll(Event& event, int64 timeout);
+  inline bool interrupt();
 
 public:
   struct Overlapped : public WSAOVERLAPPED
@@ -750,8 +754,12 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
         Private::WaitThreadMessage removeMessage = {Private::WaitThreadMessage::remove, sockInfo->s, sockInfo->key};
         pushWaitThreadMessage(removeMessage);
       }
-      if(detachedSockInfo == sockInfo && removedEvents & detachedSocketEvent)
-        detachedSockInfo = 0;
+      if(detachedSockInfo == sockInfo)
+      {
+        detachedSocketEvent &= ~removedEvents;
+        if(detachedSocketEvent == 0)
+          detachedSockInfo = 0;
+      }
     }
   }
   uint addedEvents = events & ~sockInfo->events;
@@ -1093,7 +1101,7 @@ bool Socket::Poll::Private::interrupt()
   return PostQueuedCompletionStatus(completionPort, 0, 0, &interruptOverlapped) == TRUE;
 }
 
-#else // !_WIN32
+#elif defined(__linux__)
 
 class Socket::Poll::Private
 {
@@ -1101,11 +1109,181 @@ public:
   Private();
   ~Private();
 
-  void clear();
-  void set(Socket& socket, uint events);
-  void remove(Socket& socket);
-  bool poll(Event& event, int64 timeout);
-  bool interrupt();
+  inline void set(Socket& socket, uint events);
+  inline void remove(Socket& socket);
+  inline void clear();
+  inline bool poll(Event& event, int64 timeout);
+  inline bool interrupt();
+
+private:
+  struct SocketInfo
+  {
+    Socket* socket;
+    uint events;
+  };
+
+private:
+  int fd;
+  int eventFd;
+  HashMap<Socket*, SocketInfo> sockets;
+  HashMap<Socket*, uint> selectedSockets;
+
+  inline static uint32 mapEvents(uint events);
+  inline static uint unmapEvents(uint32 nativeEvents, uint events);
+};
+
+Socket::Poll::Private::Private()
+{
+  fd = epoll_create1(EPOLL_CLOEXEC);
+  eventFd = eventfd(0, EFD_CLOEXEC);
+  epoll_event ev;
+  ev.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
+  ev.data.ptr = NULL;
+  VERIFY(epoll_ctl(fd, EPOLL_CTL_ADD, eventFd, &ev) == 0);
+}
+
+Socket::Poll::Private::~Private()
+{
+  ::close(fd);
+  ::close(eventFd);
+}
+
+uint32 Socket::Poll::Private::mapEvents(uint events)
+{
+  uint32 pollEvents = 0;
+  if(events & (readFlag | acceptFlag))
+    pollEvents = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
+  if(events & (writeFlag | connectFlag))
+    pollEvents |= EPOLLOUT | EPOLLRDHUP | EPOLLHUP;
+  return pollEvents;
+}
+
+uint Socket::Poll::Private::unmapEvents(uint32 nativeEvents, uint events)
+{
+  uint result = 0;
+  if(nativeEvents & (EPOLLIN | EPOLLRDHUP | EPOLLHUP))
+    result = events & (readFlag | acceptFlag);
+  if(nativeEvents & EPOLLOUT || (result == 0 && nativeEvents & (EPOLLRDHUP | EPOLLHUP)))
+    result |= events & (writeFlag | connectFlag);
+  return result;
+}
+
+void Socket::Poll::Private::set(Socket& socket, uint events)
+{
+  epoll_event ev;
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it != sockets.end())
+  {
+    Private::SocketInfo& sockInfo = *it;
+    if(sockInfo.events == events)
+      return;
+    uint removedEvents = sockInfo.events & ~events;
+    sockInfo.events = events;
+    ev.events = mapEvents(events);
+    ev.data.ptr = &sockInfo;
+    VERIFY(epoll_ctl(fd, EPOLL_CTL_MOD, socket.s, &ev) == 0);
+    HashMap<Socket*, uint>::Iterator it = selectedSockets.find(sockInfo.socket);
+    if(it != selectedSockets.end())
+    {
+      uint& selectedEvents = *it;
+      selectedEvents &= ~removedEvents;
+      if(selectedEvents == 0)
+        selectedSockets.remove(it);
+    }
+  }
+  else
+  {
+    SOCKET s = socket.s;
+    if(s == INVALID_SOCKET)
+      return;
+    Private::SocketInfo& sockInfo = sockets.append(&socket, Private::SocketInfo());
+    sockInfo.socket = &socket;
+    sockInfo.events = events;
+    ev.events = mapEvents(events);
+    ev.data.ptr = &sockInfo;
+    VERIFY(epoll_ctl(fd, EPOLL_CTL_ADD, s, &ev) == 0);
+  }
+}
+
+void Socket::Poll::Private::remove(Socket& socket)
+{
+  HashMap<Socket*, Private::SocketInfo>::Iterator it = sockets.find(&socket);
+  if(it == sockets.end())
+    return;
+  Private::SocketInfo& sockInfo = *it;
+  epoll_event ev;
+  VERIFY(epoll_ctl(fd, EPOLL_CTL_DEL, socket.s, &ev) == 0);
+  sockets.remove(it);
+  selectedSockets.remove(&socket);
+}
+
+void Socket::Poll::Private::clear()
+{
+  ::close(fd);
+  fd = epoll_create1(EPOLL_CLOEXEC);
+  sockets.clear();
+  selectedSockets.clear();
+  epoll_event ev;
+  ev.events = EPOLLIN | EPOLLRDHUP | EPOLLHUP;
+  ev.data.ptr = NULL;
+  VERIFY(epoll_ctl(fd, EPOLL_CTL_ADD, eventFd, &ev) == 0);
+}
+
+bool Socket::Poll::Private::poll(Event& event, int64 timeout)
+{
+  if(selectedSockets.isEmpty())
+  {
+    epoll_event events[64];
+    int count = ::epoll_wait(fd, events, sizeof(events) / sizeof(*events), timeout);
+    bool interrupted = false;
+    for(epoll_event* i = events, * end = events + count; i < end; ++i)
+    {
+      Private::SocketInfo* sockInfo = (Private::SocketInfo*)i->data.ptr;
+      if(sockInfo)
+        selectedSockets.append(sockInfo->socket, unmapEvents(i->events, sockInfo->events));
+      else if(i->events & EPOLLIN)
+        interrupted = true;
+    }
+
+    if(selectedSockets.isEmpty() || interrupted)
+    {
+      if(interrupted)
+      {
+        uint64 val;
+        read(eventFd, &val, sizeof(val));
+      }
+      event.flags = 0;
+      event.socket = 0;
+      return true; // timeout or interrupt
+    }
+  }
+
+  HashMap<Socket*, uint>::Iterator it = selectedSockets.begin();
+  event.socket = it.key();
+  event.flags = *it;
+  selectedSockets.remove(it);
+  return true;
+}
+
+bool Socket::Poll::Private::interrupt()
+{
+  uint64 val = 1;
+  return write(eventFd, &val, sizeof(val)) != -1;
+}
+
+#else
+
+class Socket::Poll::Private
+{
+public:
+  Private();
+  ~Private();
+
+  inline void clear();
+  inline void set(Socket& socket, uint events);
+  inline void remove(Socket& socket);
+  inline bool poll(Event& event, int64 timeout);
+  inline bool interrupt();
 
 private:
   struct SocketInfo
@@ -1121,7 +1299,8 @@ private:
   HashMap<SOCKET, SocketInfo*> fdToSocket;
   HashMap<Socket*, uint> selectedSockets;
 
-  static short mapEvents(uint events);
+  inline static short mapEvents(uint events);
+  inline static uint unmapEvents(short nativeEvents, uint events);
 };
 
 Socket::Poll::Private::Private()
@@ -1141,10 +1320,20 @@ short Socket::Poll::Private::mapEvents(uint events)
 {
   short pollEvents = 0;
   if(events & (readFlag | acceptFlag))
-    pollEvents |= POLLIN | POLLRDHUP | POLLHUP;
+    pollEvents = POLLIN | POLLRDHUP | POLLHUP;
   if(events & (writeFlag | connectFlag))
     pollEvents |= POLLOUT | POLLRDHUP | POLLHUP;
   return pollEvents;
+}
+
+uint Socket::Poll::Private::unmapEvents(short nativeEvents, uint events)
+{
+  uint result = 0;
+  if(nativeEvents & (POLLIN | POLLRDHUP | POLLHUP))
+    result = events & (readFlag | acceptFlag);
+  if(nativeEvents & POLLOUT || (result == 0 && nativeEvents & (POLLRDHUP | POLLHUP)))
+    result |= events & (writeFlag | connectFlag);
+  return result;
 }
 
 void Socket::Poll::Private::clear()
@@ -1163,8 +1352,17 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
     Private::SocketInfo& sockInfo = *it;
     if(sockInfo.events == events)
       return;
+    uint removedEvents = sockInfo.events & ~events;
     pollfds[sockInfo.index].events = Private::mapEvents(events);
     sockInfo.events = events;
+    HashMap<Socket*, uint>::Iterator it = selectedSockets.find(sockInfo.socket);
+    if(it != selectedSockets.end())
+    {
+      uint& selectedEvents = *it;
+      selectedEvents &= ~removedEvents;
+      if(selectedEvents == 0)
+        selectedSockets.remove(it);
+    }
   }
   else
   {
@@ -1217,16 +1415,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
           HashMap<SOCKET, Private::SocketInfo*>::Iterator it = fdToSocket.find(i->fd);
           ASSERT(it != fdToSocket.end());
           Private::SocketInfo* sockInfo = *it;
-          uint events = 0;
-          int revents = i->revents;
-
-          if(revents & (POLLIN | POLLRDHUP | POLLHUP))
-            events |= sockInfo->events & (readFlag | acceptFlag);
-          if(revents & POLLOUT || (events == 0 && revents & (POLLRDHUP | POLLHUP)))
-            events |= sockInfo->events & (writeFlag | connectFlag);
-
-          selectedSockets.append(sockInfo->socket, events);
-
+          selectedSockets.append(sockInfo->socket, unmapEvents(i->revents, sockInfo->events));
           i->revents = 0;
           if(--count == 0)
             break;
@@ -1234,9 +1423,10 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
       }
     }
 
-    if(selectedSockets.isEmpty())
+    bool interrupted;;
+    if(selectedSockets.isEmpty() || (interrupted = pollfds[0].revents & POLLIN))
     {
-      if(pollfds[0].revents)
+      if(interrupted)
       {
         uint64 val;
         read(pollfds[0].fd, &val, sizeof(val));
