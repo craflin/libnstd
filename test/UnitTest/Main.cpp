@@ -47,6 +47,7 @@ void testMap();
 void testRefCount(); 
 void testList();
 void testHashMap();
+void testFuture();
 
 void testNewDelete()
 {
@@ -196,7 +197,7 @@ void testArrayString()
 int main(int argc, char* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
-
+  /*
   testMemory();
   testSha256();
   testSocket();
@@ -230,8 +231,10 @@ int main(int argc, char* argv[])
   testVariant();
   testXML();
   testJSON();
-  testCallback();
   testRefCount();
+  */
+  testCallback();
+  testFuture();
 
   Console::printf(_T("%s\n"), _T("done"));
 
