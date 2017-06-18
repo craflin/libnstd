@@ -14,6 +14,11 @@ void testCallback()
       emit(&MyEmitter::mySignal, arg);
     }
 
+    void emitMySignal0()
+    {
+      emit(&MyEmitter::mySignal0);
+    }
+
     void emitMySignal2(const String& arg0, int arg1)
     {
       emit(&MyEmitter::mySignal2, arg0, arg1);
@@ -26,6 +31,7 @@ void testCallback()
  
   public: // signals
     void mySignal(String arg) {}
+    void mySignal0() {}
     void mySignal2(String arg, int arg1) {}
     void mySignal3(const String& arg) {}
   };
@@ -62,6 +68,11 @@ void testCallback()
       Callback::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::emitterDelete);
       delete emitter;
     }
+    void mySlot0()
+    {
+      ASSERT(this == check);
+      ++calls;
+    }
   };
 
   // test simple connect and disconnect
@@ -77,6 +88,16 @@ void testCallback()
     emitter.emitMySignal(_T("test"));
     emitter.emitMySignal2(_T("test"), 123);
     ASSERT(receiver.calls == 2);
+  }
+
+  // test simple connect and disconnect without args
+  {
+    MyEmitter emitter;
+    MyReceiver receiver;
+    receiver.check = &receiver;
+    Callback::connect(&emitter, &MyEmitter::mySignal0, &receiver, &MyReceiver::mySlot0);
+    emitter.emitMySignal0();
+    ASSERT(receiver.calls == 1);
   }
 
   // test signal with const String& argument
