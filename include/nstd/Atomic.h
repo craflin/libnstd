@@ -29,6 +29,9 @@ public:
   template <typename T> static inline T* swap(T* volatile& ptr, T* val);
 
   static inline int32 testAndSet(int32 volatile& var);
+  static inline uint32 testAndSet(uint32 volatile& var);
+  static inline int64 testAndSet(int64 volatile& var);
+  static inline uint64 testAndSet(uint64 volatile& var);
 
   static inline int32 fetchAndAdd(int32 volatile& var, int32 val);
   static inline uint32 fetchAndAdd(uint32 volatile& var, uint32 val);
@@ -36,6 +39,12 @@ public:
   static inline uint64 fetchAndAdd(uint64 volatile& var, uint64 val);
 
   static inline void memoryBarrier();
+
+  static inline int32 load(int32 volatile& var);
+  static inline uint32 load(uint32 volatile& var);
+  static inline int64 load(int64 volatile& var);
+  static inline uint64 load(uint64 volatile& var);
+  template <typename T> static inline T* load(T* volatile& ptr);
 };
 
 #ifdef _MSC_VER
@@ -52,6 +61,7 @@ extern "C" __int64 _InterlockedDecrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __int64);
 extern "C" __int64 _InterlockedExchange64(__int64 volatile*, __int64);
 extern "C" __int64 _InterlockedExchangeAdd64(__int64 volatile*, __int64);
+extern "C" long _InterlockedOr64(long volatile*, long);
 #endif
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
@@ -66,15 +76,16 @@ extern "C" __int64 _InterlockedExchangeAdd64(__int64 volatile*, __int64);
 #pragma intrinsic(_InterlockedCompareExchange64)
 #pragma intrinsic(_InterlockedExchange64)
 #pragma intrinsic(_InterlockedExchangeAdd64)
+#pragma intrinsic(_InterlockedOr64)
 #endif
 #endif
 
 #ifdef _MSC_VER
 
-int32 Atomic::increment(volatile int32& var) {return _InterlockedIncrement((long volatile *)&var);}
-uint32 Atomic::increment(volatile uint32& var) {return _InterlockedIncrement((long volatile *)&var);}
-int32 Atomic::decrement(volatile int32& var) {return _InterlockedDecrement((long volatile *)&var);}
-uint32 Atomic::decrement(volatile uint32& var) {return _InterlockedDecrement((long volatile *)&var);}
+int32 Atomic::increment(volatile int32& var) {return _InterlockedIncrement((long volatile*)&var);}
+uint32 Atomic::increment(volatile uint32& var) {return _InterlockedIncrement((long volatile*)&var);}
+int32 Atomic::decrement(volatile int32& var) {return _InterlockedDecrement((long volatile*)&var);}
+uint32 Atomic::decrement(volatile uint32& var) {return _InterlockedDecrement((long volatile*)&var);}
 int32 Atomic::compareAndSwap(int32 volatile& var, int32 oldVal, int32 newVal) {return _InterlockedCompareExchange((long volatile*)&var, newVal, oldVal);}
 uint32 Atomic::compareAndSwap(uint32 volatile& var, uint32 oldVal, uint32 newVal) {return _InterlockedCompareExchange((long volatile*)&var, newVal, oldVal);}
 int64 Atomic::compareAndSwap(int64 volatile& var, int64 oldVal, int64 newVal) {return _InterlockedCompareExchange64(&var, newVal, oldVal);}
@@ -82,9 +93,11 @@ uint64 Atomic::compareAndSwap(uint64 volatile& var, uint64 oldVal, uint64 newVal
 int32 Atomic::swap(int32 volatile& var, int32 val) {return _InterlockedExchange((long volatile*)&var, val);}
 uint32 Atomic::swap(uint32 volatile& var, uint32 val) {return _InterlockedExchange((long volatile*)&var, val);}
 int32 Atomic::testAndSet(int32 volatile& var) {return _InterlockedExchange((long volatile*)&var, 1L);}
+uint32 Atomic::testAndSet(uint32 volatile& var) {return _InterlockedExchange((long volatile*)&var, 1L);}
 int32 Atomic::fetchAndAdd(int32 volatile& var, int32 val) {return _InterlockedExchangeAdd((long volatile*)&var, val);}
 uint32 Atomic::fetchAndAdd(uint32 volatile& var, uint32 val) {return _InterlockedExchangeAdd((long volatile*)&var, val);}
-void Atomic::memoryBarrier() {long barrier; _InterlockedOr(&barrier, 0);} // todo: use SSE?
+int32 Atomic::load(int32 volatile& var) {return _InterlockedOr((long volatile*)&var, 0);}
+uint32 Atomic::load(uint32 volatile& var) {return _InterlockedOr((long volatile*)&var, 0);}
 #ifdef _M_AMD64
 int64 Atomic::increment(volatile int64& var) {return _InterlockedIncrement64((__int64 volatile*)&var);}
 uint64 Atomic::increment(volatile uint64& var) {return _InterlockedIncrement64((__int64 volatile*)&var);}
@@ -94,8 +107,13 @@ template <typename T> inline T* Atomic::compareAndSwap(T* volatile& ptr, T* oldV
 int64 Atomic::swap(int64 volatile& var, int64 val) {return _InterlockedExchange64(&var, val);}
 uint64 Atomic::swap(uint64 volatile& var, uint64 val) {return _InterlockedExchange64((__int64 volatile*)&var, val);}
 template <typename T> inline T* Atomic::swap(T* volatile& ptr, T* val) {return (T*)_InterlockedExchange64((__int64 volatile*)&ptr, (__int64&)val);}
+int64 Atomic::testAndSet(int64 volatile& var) {return _InterlockedExchange64((__int64 volatile*)&var, 1LL);}
+uint64 Atomic::testAndSet(uint64 volatile& var) {return _InterlockedExchange64((__int64 volatile*)&var, 1LL);}
 int64 Atomic::fetchAndAdd(int64 volatile& var, int64 val) {return _InterlockedExchangeAdd64(&var, val);}
 uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {return _InterlockedExchangeAdd64((__int64 volatile*)&var, (__int64)val);}
+void Atomic::memoryBarrier() {__int64 barrier; _InterlockedOr64(&barrier, 0);} // todo: use SSE?
+int64 Atomic::load(int64 volatile& var) {return _InterlockedOr64((&var, 0);}
+uint64 Atomic::load(uint64 volatile& var) {return _InterlockedOr64((__int64 volatile*)&var, 0);}
 #else
 int64 Atomic::increment(volatile int64& var) {for(int64 oldVal = var, newVal = oldVal + 1;; newVal = (oldVal = var) + 1) if(_InterlockedCompareExchange64(&var, newVal, oldVal) == oldVal) return newVal;}
 uint64 Atomic::increment(volatile uint64& var) {for(uint64 oldVal = var, newVal = oldVal + 1;; newVal = (oldVal = var) + 1) if(_InterlockedCompareExchange64((volatile __int64*)&var, newVal, oldVal) == oldVal) return newVal;}
@@ -105,8 +123,13 @@ template <typename T> inline T* Atomic::compareAndSwap(T* volatile& ptr, T* oldV
 int64 Atomic::swap(int64 volatile& var, int64 val) {for(int64 oldVal = var;; oldVal = var) if(_InterlockedCompareExchange64(&var, val, oldVal) == oldVal) return oldVal;}
 uint64 Atomic::swap(uint64 volatile& var, uint64 val) {for(uint64 oldVal = var;; oldVal = var) if(_InterlockedCompareExchange64((__int64 volatile*)&var, (__int64)val, oldVal) == oldVal) return oldVal;}
 template <typename T> inline T* Atomic::swap(T* volatile& ptr, T* val) {return (T*)_InterlockedExchange((long volatile*)&ptr, (long)val);}
+int64 Atomic::testAndSet(volatile int64& var) {for(int64 val = var;;) if(_InterlockedCompareExchange64(&var, val, 1LL) == val) return val;}
+uint64 Atomic::testAndSet(volatile uint64& var) {for(uint64 val = var;;) if(_InterlockedCompareExchange64((volatile __int64*)&var, val, 1LL) == val) return val;}
 inline int64 Atomic::fetchAndAdd(int64 volatile& var, int64 val) {for(int64 oldVal = var;; oldVal = var) if(_InterlockedCompareExchange64(&var, oldVal + val, oldVal) == oldVal) return oldVal;}
 inline uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {for(uint64 oldVal = var;; oldVal = var) if(_InterlockedCompareExchange64((__int64 volatile*)&var, (__int64)(oldVal + val), oldVal) == oldVal) return oldVal;}
+void Atomic::memoryBarrier() {long barrier; _InterlockedOr(&barrier, 0);} // todo: use SSE?
+int64 Atomic::load(volatile int64& var) {for(int64 val = var;; val = var) if(_InterlockedCompareExchange64(&var, val, val) == val) return val;}
+uint64 Atomic::load(volatile uint64& var) {for(uint64 val = var;; val = var) if(_InterlockedCompareExchange64((volatile __int64*)&var, val, val) == val) return val;}
 #endif
 
 #else
