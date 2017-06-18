@@ -3,25 +3,8 @@
 #include <nstd/Future.h>
 #include <nstd/String.h>
 
-template<typename T> class How;
-
-template<> class How<void>
-{
-};
-
-template<typename T> class How : public How<void>
-{
-public:
-  void dasd() {}
-};
-
-
 void testFuture()
 {
-  //How<int> lol;
-  //void* x = &lol.dasd();
-
-
   class FutureTest
   {
   public:
@@ -37,9 +20,9 @@ void testFuture()
       return str.length();
     }
 
-    static void testVoid(int* const& check)
+    static void testVoid(int check)
     {
-      *check = 32;
+      ASSERT(check == 32);
     }
 
   private:
@@ -64,12 +47,10 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    int x = 23;
-    future.start(&FutureTest::testVoid, &x);
+    future.start(&FutureTest::testVoid, 32);
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
-    ASSERT(x == 32);
   }
 }

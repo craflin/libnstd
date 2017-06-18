@@ -11,23 +11,22 @@ public:
   Future() : sig(true), aborting(false), state(idleState) {}
   ~Future() {join();}
 
-  template <typename A> void start(void (*func)(const A&), const A& a)
+  template <typename P, typename A> void start(void (*func)(P), const A& a)
   {
     struct FuncArgs
     {
       Future& x;
-      void (*y)(const A&);
+      void (*y)(P);
       A a;
-      FuncArgs(Future& x, void (*y)(const A&), const A& a) : x(x), y(y), a(a) {}
-      static uint proc(FuncArgs* p)
+      FuncArgs(Future& x, void (*y)(P), const A& a) : x(x), y(y), a(a) {}
+      static void proc(FuncArgs* p)
       {
         p->y(p->a);
         p->x.set();
         delete p;
-        return 0;
       }
     };
-    startProc((uint (*)(void*))&FuncArgs::proc, new FuncArgs(*this, func, a));
+    startProc((void (*)(void*))&FuncArgs::proc, new FuncArgs(*this, func, a));
   }
 
   void abort() {aborting = true;}
@@ -52,11 +51,13 @@ protected:
 
 protected:
   void set();
-  void startProc(uint (*proc)(void*), void* param);
+  void startProc(void (*proc)(void*), void* param);
 
 private:
   Future(const Future&);
   Future& operator=(const Future&);
+
+  class Private;
 };
 
 template <typename T> class Future : private Future<void>
@@ -73,14 +74,13 @@ public:
       T (*y)(const A&);
       A a;
       FuncArgs(Future& x, T (*y)(const A&), const A& a) : x(x), y(y), a(a) {}
-      static uint proc(FuncArgs* p)
+      static void proc(FuncArgs* p)
       {
         p->x.set(p->y(p->a));
         delete p;
-        return 0;
       }
     };
-    startProc((uint (*)(void*))&FuncArgs::proc, new FuncArgs(*this, func, a));
+    startProc((void (*)(void*))&FuncArgs::proc, new FuncArgs(*this, func, a));
   }
 
   void abort() {aborting = true;}
