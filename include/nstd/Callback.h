@@ -39,19 +39,9 @@ public:
 
   protected:
     template<class X> void emit(void (X::*signal)()) {SignalActivation activation(this, signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected)
-      (((X*)i->object)->*((MemberFuncPtr0<X>*)&i->slot))(); if(activation.invalidated) return;}}
-    template<class X, typename A> void emit(void (X::*signal)(A), A arg0)
-    {
-      SignalActivation activation(this, signal);
-      for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i)
-      {
-        if(i->state == Slot::connected)
-          (((X*)i->object)->*((MemberFuncPtr1<X, A>*)&i->slot)->ptr)(arg0);
-        if(activation.invalidated)
-          return;
-      }
-    }
-
+      (((X*)i->object)->*((MemberFuncPtr0<X>*)&i->slot)->ptr)(); if(activation.invalidated) return;}}
+    template<class X, typename A> void emit(void (X::*signal)(A), A arg0) {SignalActivation activation(this, signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected)
+      (((X*)i->object)->*((MemberFuncPtr1<X, A>*)&i->slot)->ptr)(arg0); if(activation.invalidated) return;}}
     template<class X, typename A, typename B> void emit(void (X::*signal)(A, B), A arg0, B arg1){SignalActivation activation(this, signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected) 
       (((X*)i->object)->*((MemberFuncPtr2<X, A, B>*)&i->slot)->ptr)(arg0, arg1); if(activation.invalidated) return;}}
     template<class X, typename A, typename B, typename C> void emit(void (X::*signal)(A, B, C), A arg0, B arg1, C arg2) {SignalActivation activation(this, signal); for(List<Slot>::Iterator i = activation.begin; i != activation.end; ++i) {if(i->state == Slot::connected)
