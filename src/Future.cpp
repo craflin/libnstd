@@ -132,7 +132,7 @@ public:
             }
           }
         }
-        else if(idleThreads > 1 && threadCount > minThreads && (uint32)(Time::time() >> 10) - idleResetTime > 0)
+        else if(idleThreads > 1 && threadCount > minThreads && (uint32)(Time::time() >> 10) - idleResetTime > 1)
         { // terminate a worker thread
           mutex.lock();
           if(this->threadCount > minThreads)

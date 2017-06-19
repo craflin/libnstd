@@ -34,7 +34,7 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start(&FutureTest::test2, String("hello"));
+    future.start2(&FutureTest::test2, String("hello"));
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
@@ -47,7 +47,7 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start(&FutureTest::testVoid, 32);
+    future.start2(&FutureTest::testVoid, 32);
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
