@@ -5,6 +5,42 @@
 
 template <typename T> class Future;
 
+template <typename A> struct Call // A
+{
+  template <class C> struct Member // C
+  {
+    C* c;
+    template <typename D> struct Func1 : public Member // D E F G H I J K L M
+    {
+      A (C::*a)(D);
+      A call(D d) {return c->*a(d);}
+
+      template <typename P> struct Args : public Func // P Q R S T U V W X Y
+      {
+        P p;
+        A call() {return c->*a(p)}
+      };
+    };
+  };
+
+  template <typename D> struct Func1 // D E F G H I J K L M
+  {
+    A (*a)(D);
+    A call(D d) {return a(d);}
+    Func1(A (*a)(D)) : a(a) {}
+
+    template <typename P> struct Args1 : public Func1 // P Q R S T U V W X Y
+    {
+      P p;
+      void* z;
+      A call() {return a(p);}
+      Args1(A (*a)(D), const P& p, void* z) : Func1(a), p(p), z(z) {}
+    };
+  };
+
+ 
+};
+
 template <> class Future<void>
 {
 public:
@@ -12,8 +48,7 @@ public:
   ~Future() {join();}
 
 protected:
-  template <typename X> struct Func;
-  /*
+  template <typename X> struct Func
   {
     template <typename P, typename A> struct Args1
     {
@@ -25,8 +60,18 @@ protected:
       static void proc(Args1* p) {p->x.callAndSet(p); delete p; }
     };
   };
-  */
+
 public:
+  template <class A> struct ArgsProc
+  {
+    static void proc(A* a)
+    {
+      a->call();
+      ((Future<void>*)a->z)->set();
+      delete a;
+    }
+  };
+
   template <typename P, typename A> void start(void (*func)(P), const A& a)
   {
     struct FuncArgs
@@ -48,6 +93,11 @@ public:
   template <typename P, typename A> void start2(void (*func)(P), const A& a)
   {
     startProc((void (*)(void*))&Func<void>::Args1<P, A>::proc, new Func<void>::Args1<P, A>(*this, func, a));
+  }
+
+  template <typename P, typename A> void start3(void (*func)(P), const A& a)
+  {
+    startProc((void (*)(void*))&ArgsProc< Call<void>::Func1<P>::Args1<A> >::proc, new Call<void>::Func1<P>::Args1<A>(func, a, this));
   }
 
 
@@ -146,6 +196,7 @@ template <typename T> void Future<T>::set(const T& val)
     Future<void>::set();
 }
 
+/*
 
   template <typename X> struct Future<void>::Func
   {
@@ -159,3 +210,4 @@ template <typename T> void Future<T>::set(const T& val)
       static void proc(Args1* p) {p->x.callAndSet(p); delete p; }
     };
   };
+*/
