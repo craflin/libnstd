@@ -7,6 +7,7 @@ template <typename T> class Future;
 
 template <typename A> struct Call // A
 {
+  /*
   template <class C> struct Member // C
   {
     C* c;
@@ -22,24 +23,26 @@ template <typename A> struct Call // A
       };
     };
   };
+  */
+ 
+};
 
-  template <typename D> struct Func1 // D E F G H I J K L M
+  template <typename A, typename D> struct Func1 // D E F G H I J K L M
   {
     A (*a)(D);
     A call(D d) {return a(d);}
     Func1(A (*a)(D)) : a(a) {}
 
-    template <typename P> struct Args1 : public Func1 // P Q R S T U V W X Y
+    
+  };
+
+template <typename A, typename D, typename P> struct Args1 : Func1<A, D> // P Q R S T U V W X Y
     {
       P p;
       void* z;
       A call() {return a(p);}
       Args1(A (*a)(D), const P& p, void* z) : Func1(a), p(p), z(z) {}
     };
-  };
-
- 
-};
 
 template <> class Future<void>
 {
@@ -48,6 +51,7 @@ public:
   ~Future() {join();}
 
 protected:
+  /*
   template <typename X> struct Func
   {
     template <typename P, typename A> struct Args1
@@ -60,18 +64,16 @@ protected:
       static void proc(Args1* p) {p->x.callAndSet(p); delete p; }
     };
   };
+  */
 
 public:
-  template <class A> struct ArgsProc
-  {
-    static void proc(A* a)
+  template <class A> static void proc(A* a)
     {
       a->call();
       ((Future<void>*)a->z)->set();
       delete a;
     }
-  };
-
+  /*
   template <typename P, typename A> void start(void (*func)(P), const A& a)
   {
     struct FuncArgs
@@ -94,10 +96,10 @@ public:
   {
     startProc((void (*)(void*))&Func<void>::Args1<P, A>::proc, new Func<void>::Args1<P, A>(*this, func, a));
   }
-
+  */
   template <typename P, typename A> void start3(void (*func)(P), const A& a)
   {
-    startProc((void (*)(void*))&ArgsProc< Call<void>::Func1<P>::Args1<A> >::proc, new Call<void>::Func1<P>::Args1<A>(func, a, this));
+    startProc((void (*)(void*))&proc< Args1<void, P, A> >, new Args1<void, P, A>(func, a, this));
   }
 
 
@@ -138,7 +140,7 @@ private:
   class Private;
 };
 
-
+/*
 template <typename T> class Future : private Future<void>
 {
 public:
@@ -195,7 +197,7 @@ template <typename T> void Future<T>::set(const T& val)
     result = val;
     Future<void>::set();
 }
-
+*/
 /*
 
   template <typename X> struct Future<void>::Func

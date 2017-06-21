@@ -29,6 +29,7 @@ void testFuture()
     int check;
   };
 
+  /*
   {
     Future<usize> future;
     ASSERT(!future.isAborting());
@@ -41,8 +42,9 @@ void testFuture()
     ASSERT(!future.isAborted());
     ASSERT(future == 5);
   }
+  */
 
-{
+  {
     Future<void> future;
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());

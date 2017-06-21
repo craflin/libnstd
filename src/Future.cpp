@@ -212,7 +212,7 @@ public:
   static ThreadPool* volatile threadPool;
   static volatile int threadPoolLock;
 
-  static class Framework
+  class Framework
   {
     ~Framework();
     static Framework framework;
