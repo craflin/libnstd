@@ -34,12 +34,12 @@ template <typename A> struct Call // A
     
   };
 
-  template <typename D, typename P> struct Args1 : Func1<D> // P Q R S T U V W X Y
+  template <typename D, typename P> struct Args1 : public Func1<D> // P Q R S T U V W X Y
   {
     P p;
     void* z;
-    A call() {return a(p);}
-    Args1(A (*a)(D), const P& p, void* z) : Func1(a), p(p), z(z) {}
+    A call() {return Func1<D>::a(p);}
+    Args1(A (*a)(D), const P& p, void* z) : Func1<D>(a), p(p), z(z) {}
   };
 };
 

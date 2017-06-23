@@ -161,9 +161,9 @@ uint32 Atomic::fetchAndAdd(uint32 volatile& var, uint32 val) {return __sync_fetc
 int64 Atomic::fetchAndAdd(int64 volatile& var, int64 val) {return __sync_fetch_and_add(&var, val);}
 uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {return __sync_fetch_and_add(&var, val);}
 void Atomic::memoryBarrier() {__sync_synchronize();}
-int32 Atomic::load(int32 volatile& var) {return __sync_fetch_and_or((&var, 0);}
+int32 Atomic::load(int32 volatile& var) {return __sync_fetch_and_or(&var, 0);}
 uint32 Atomic::load(uint32 volatile& var) {return __sync_fetch_and_or(&var, 0);}
-int64 Atomic::load(int64 volatile& var) {return __sync_fetch_and_or((&var, 0);}
+int64 Atomic::load(int64 volatile& var) {return __sync_fetch_and_or(&var, 0);}
 uint64 Atomic::load(uint64 volatile& var) {return __sync_fetch_and_or(&var, 0);}
 
 #endif
