@@ -25,9 +25,7 @@ template <typename A> struct Call // A
   };
   */
  
-};
-
-  template <typename A, typename D> struct Func1 // D E F G H I J K L M
+  template <typename D> struct Func1 // D E F G H I J K L M
   {
     A (*a)(D);
     A call(D d) {return a(d);}
@@ -36,13 +34,14 @@ template <typename A> struct Call // A
     
   };
 
-template <typename A, typename D, typename P> struct Args1 : Func1<A, D> // P Q R S T U V W X Y
-    {
-      P p;
-      void* z;
-      A call() {return a(p);}
-      Args1(A (*a)(D), const P& p, void* z) : Func1(a), p(p), z(z) {}
-    };
+  template <typename D, typename P> struct Args1 : Func1<D> // P Q R S T U V W X Y
+  {
+    P p;
+    void* z;
+    A call() {return a(p);}
+    Args1(A (*a)(D), const P& p, void* z) : Func1(a), p(p), z(z) {}
+  };
+};
 
 template <> class Future<void>
 {
@@ -99,7 +98,7 @@ public:
   */
   template <typename P, typename A> void start3(void (*func)(P), const A& a)
   {
-    startProc((void (*)(void*))&proc< Args1<void, P, A> >, new Args1<void, P, A>(func, a, this));
+    startProc((void (*)(void*))&proc< Call<void>::template Args1<P, A> >, new Call<void>::template Args1<P, A>(func, a, this));
   }
 
 
