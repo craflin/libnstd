@@ -50,7 +50,7 @@ public:
   void abort() {aborting = true;}
   bool isAborting() const {return aborting;}
   bool isFinished() const {return state == finishedState;}
-  bool isAborted() {return state == abortedState;}
+  bool isAborted() const {return state == abortedState;}
   void join() {sig.wait();}
 
   template <typename P, typename A> void start(void (*func)(P), const A& a)
@@ -58,7 +58,7 @@ public:
     startProc((void (*)(void*))&proc< Call<void>::template Args1<P, A> >, new Call<void>::template Args1<P, A>(func, a, this));
   }
 
-protected:
+private:
   enum State
   {
     idleState,
@@ -67,7 +67,7 @@ protected:
     abortedState,
   };
 
-protected:
+private:
   Signal sig;
   volatile bool aborting;
   volatile int state;
@@ -83,28 +83,30 @@ private:
   Future& operator=(const Future&);
 
   class Private;
+  template <typename T> friend class Future;
 };
 
-template <typename T> class Future : private Future<void>
+template <typename T> class Future
 {
 public:
   Future() {}
   ~Future() {join();}
 
-  void abort() {aborting = true;}
-  bool isAborting() const {return aborting;}
-  bool isFinished() const {return state == finishedState;}
-  bool isAborted() {return state == abortedState;}
-  void join() {sig.wait();}
+  void abort() {future.abort();}
+  bool isAborting() const {return future.isAborting();}
+  bool isFinished() const {return future.isFinished();}
+  bool isAborted() const {return future.isAborted();}
+  void join() {future.join();}
 
   operator const T&() const {return result;}
 
   template <typename P, typename A> void start(T (*func)(P), const A& a)
   {
-    startProc((void (*)(void*))&proc< typename Call<T>::template Args1<P, A> >, new typename Call<T>::template Args1<P, A>(func, a, this));
+    future.startProc((void (*)(void*))&proc< typename Call<T>::template Args1<P, A> >, new typename Call<T>::template Args1<P, A>(func, a, this));
   }
 
 private:
+  Future<void> future;
   T result;
 
 private:
@@ -125,6 +127,6 @@ template <class A> void Future<void>::proc(A* a)
 template<typename T> template <class A> void Future<T>::proc(A* a)
 {
   ((Future<T>*)a->z)->result = a->call();
-  ((Future<T>*)a->z)->set();
+  ((Future<T>*)a->z)->future.set();
   delete a;
 }
