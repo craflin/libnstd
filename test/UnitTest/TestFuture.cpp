@@ -29,27 +29,25 @@ void testFuture()
     int check;
   };
 
-  /*
   {
     Future<usize> future;
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start2(&FutureTest::test2, String("hello"));
+    future.start(&FutureTest::test2, String("hello"));
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
     ASSERT(future == 5);
   }
-  */
 
   {
     Future<void> future;
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start3(&FutureTest::testVoid, 32);
+    future.start(&FutureTest::testVoid, 32);
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
