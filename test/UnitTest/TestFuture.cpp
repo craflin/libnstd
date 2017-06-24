@@ -8,21 +8,30 @@ void testFuture()
   class FutureTest
   {
   public:
-    FutureTest() : check(42) {}
+    bool called;
 
-    usize test1(const String& str)
-    {
-      return str.length() + check;
-    }
+  public:
+    FutureTest() : check(42), called(false) {}
 
-    static usize test2(const String& str)
+    static usize staticTest1(const String& str)
     {
       return str.length();
     }
 
-    static void testVoid(int check)
+    usize memberTest1(const String& str)
+    {
+      return str.length() + check;
+    }
+
+    static void staticVoidTest(int check)
     {
       ASSERT(check == 32);
+    }
+
+    void memberVoidTest(int check)
+    {
+      called = true;
+      ASSERT(this->check + check == 42 + 32);
     }
 
   private:
@@ -34,7 +43,7 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start(&FutureTest::test2, String("hello"));
+    future.start(&FutureTest::staticTest1, String("hello"));
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
@@ -43,14 +52,43 @@ void testFuture()
   }
 
   {
+    Future<usize> future;
+    ASSERT(!future.isAborting());
+    ASSERT(!future.isFinished());
+    ASSERT(!future.isAborted());
+    FutureTest t;
+    future.start(t, &FutureTest::memberTest1, String("hello"));
+    future.join();
+    ASSERT(!future.isAborting());
+    ASSERT(future.isFinished());
+    ASSERT(!future.isAborted());
+    ASSERT(future == 42 + 5);
+  }
+
+  {
     Future<void> future;
     ASSERT(!future.isAborting());
     ASSERT(!future.isFinished());
     ASSERT(!future.isAborted());
-    future.start(&FutureTest::testVoid, 32);
+    future.start(&FutureTest::staticVoidTest, 32);
     future.join();
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
   }
+
+  {
+    Future<void> future;
+    ASSERT(!future.isAborting());
+    ASSERT(!future.isFinished());
+    ASSERT(!future.isAborted());
+    FutureTest t;
+    future.start(t, &FutureTest::memberVoidTest, 32);
+    future.join();
+    ASSERT(t.called);
+    ASSERT(!future.isAborting());
+    ASSERT(future.isFinished());
+    ASSERT(!future.isAborted());
+  }
+
 }

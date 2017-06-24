@@ -5,33 +5,35 @@
 
 template <typename T> class Future;
 
-template <typename A> struct Call // A
+template <typename A> struct Call
 {
-  template <class C> struct Member // C
+  template <class C> struct Member
   {
     template <typename D> struct Func1 // D E F G H I J K L M
     {
-      C* c;
+      C& c;
       A (C::*a)(D);
-      A call(D d) {return c->*a(d);}
+      A call(D d) {return (c.*a)(d);}
+      Func1(C& c, A (C::*a)(D)) : c(c), a(a) {}
     };
 
-    template <typename D, typename P> struct Args1 : public Func1<D> // P Q R S T U V W X Y
+    template <typename D, typename P> struct Args1 : public Func1<D>
     {
       P p;
       void* z;
-      A call() {return Func1<D>::c->*Func1<D>::a(p);}
+      A call() {return (Func1<D>::c.*Func1<D>::a)(p);}
+      Args1(C& c, A (C::*a)(D), const P& p, void* z) :  Func1<D>(c, a), p(p), z(z) {}
     };
   };
  
-  template <typename D> struct Func1 // D E F G H I J K L M
+  template <typename D> struct Func1
   {
     A (*a)(D);
     A call(D d) {return a(d);}
     Func1(A (*a)(D)) : a(a) {}
   };
 
-  template <typename D, typename P> struct Args1 : public Func1<D> // P Q R S T U V W X Y
+  template <typename D, typename P> struct Args1 : public Func1<D>
   {
     P p;
     void* z;
@@ -56,6 +58,10 @@ public:
   template <typename P, typename A> void start(void (*func)(P), const A& a)
   {
     startProc((void (*)(void*))&proc< Call<void>::template Args1<P, A> >, new Call<void>::template Args1<P, A>(func, a, this));
+  }
+  template <class C, typename P, typename A> void start(C& c, void (C::*func)(P), const A& a)
+  {
+    startProc((void (*)(void*))&proc< Call<void>::template Member<C>::template Args1<P, A> >, new Call<void>::template Member<C>::template Args1<P, A>(c, func, a, this));
   }
 
 private:
@@ -103,6 +109,10 @@ public:
   template <typename P, typename A> void start(T (*func)(P), const A& a)
   {
     future.startProc((void (*)(void*))&proc< typename Call<T>::template Args1<P, A> >, new typename Call<T>::template Args1<P, A>(func, a, this));
+  }
+  template <class C, typename P, typename A> void start(C& c, T (C::*func)(P), const A& a)
+  {
+    future.startProc((void (*)(void*))&proc< typename Call<T>::template Member<C>::template Args1<P, A> >, new typename Call<T>::template Member<C>::template Args1<P, A>(c, func, a, this));
   }
 
 private:
