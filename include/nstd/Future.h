@@ -20,7 +20,7 @@ template <typename A> struct Call // A
     {
       P p;
       void* z;
-      A call() {return Func1<D>::c->*Func1<D>::a(p)}
+      A call() {return Func1<D>::c->*Func1<D>::a(p);}
     };
   };
  
@@ -101,7 +101,7 @@ public:
 
   template <typename P, typename A> void start(T (*func)(P), const A& a)
   {
-    startProc((void (*)(void*))&proc< Call<T>::template Args1<P, A> >, new Call<T>::template Args1<P, A>(func, a, this));
+    startProc((void (*)(void*))&proc< typename Call<T>::template Args1<P, A> >, new typename Call<T>::template Args1<P, A>(func, a, this));
   }
 
 private:
@@ -115,7 +115,7 @@ private:
 };
 
 
-template <class A> static void Future<void>::proc(A* a)
+template <class A> void Future<void>::proc(A* a)
 {
   a->call();
   ((Future<void>*)a->z)->set();
