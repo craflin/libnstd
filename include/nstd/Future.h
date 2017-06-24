@@ -193,9 +193,9 @@ public:
   void join() {sig.wait();}
 
   void start(void (*func)()) {startProc((void (*)(void*))&proc< Call<void>::Args0 >, new Call<void>::Args0(func, this));}
-  template <typename D, typename P> void start(void (*func)(D), const P& p) {startProc((void (*)(void*))&proc< Call<void>::template Args1<D, P> >, new Call<void>::template Args1<D, P>(func, p, this));}
+  template <typename D, typename P> void start(void (*func)(D), const P& p) {startProc((void (*)(void*))&proc< typename Call<void>::template Args1<D, P> >, new typename Call<void>::template Args1<D, P>(func, p, this));}
 
-  template <class C, typename D, typename P> void start(C& c, void (C::*func)(D), const P& p){startProc((void (*)(void*))&proc< Call<void>::template Member<C>::template Args1<D, P> >, new Call<void>::template Member<C>::template Args1<D, P>(c, func, p, this));}
+  template <class C, typename D, typename P> void start(C& c, void (C::*func)(D), const P& p){startProc((void (*)(void*))&proc< typename Call<void>::template Member<C>::template Args1<D, P> >, new typename Call<void>::template Member<C>::template Args1<D, P>(c, func, p, this));}
 
 private:
   enum State

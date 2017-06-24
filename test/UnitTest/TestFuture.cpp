@@ -11,7 +11,7 @@ void testFuture()
     bool called;
 
   public:
-    FutureTest() : check(42), called(false) {}
+    FutureTest() : called(false), check(42) {}
 
     static usize staticTest1(const String& str)
     {
