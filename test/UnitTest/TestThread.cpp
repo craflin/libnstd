@@ -54,7 +54,7 @@ void testThread()
     } threadData;
     Thread thread;
     threadData.counter = 0;
-    ASSERT(thread.start(&threadData, &ThreadData::proc));
+    ASSERT(thread.start(threadData, &ThreadData::proc));
     ASSERT(thread.join() == 42);
   }
 }

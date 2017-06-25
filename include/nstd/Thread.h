@@ -2,29 +2,20 @@
 #pragma once
 
 #include <nstd/Base.h>
+#include <nstd/Call.h>
 
 class Thread
 {
-private:
-  template <class X> struct MemberFuncPtr0
-  {
-    X* obj;
-    uint (X::*ptr)();
-    MemberFuncPtr0() {}
-    MemberFuncPtr0(X* obj, uint (X::*ptr)()) : obj(obj), ptr(ptr) {}
-    static uint call(void* p) {return (((MemberFuncPtr0*)p)->obj->*((MemberFuncPtr0*)p)->ptr)();}
-  };
-
 public:
   Thread();
   ~Thread();
 
   bool start(uint (*proc)(void*), void* param);
-  template <class X> bool start(X* obj, uint (X::*ptr)())
+  template <class X> bool start(X& obj, uint (X::*ptr)())
   {
-    MemberFuncPtr0<X> func(obj, ptr);
-    this->func = *(MemberFuncPtr0<Thread>*)&func;
-    return start(&MemberFuncPtr0<X>::call, &this->func);
+    Call<uint>::Member<X>::Func0 func(obj, ptr);
+    this->func = *(Call<uint>::Member<Thread>::Func0*)&func;
+    return start((uint (*)(void*))&proc< Call<uint>::Member<X>::Func0 >, &this->func);
   }
 
   uint join();
@@ -40,9 +31,16 @@ public:
   static uint32 getCurrentThreadId();
 
 private:
+  template <class T> static uint proc(T* t);
+
   void* thread;
-  MemberFuncPtr0<Thread> func;
+  Call<uint>::Member<Thread>::Func0 func;
 
   Thread(const Thread&);
   Thread& operator=(const Thread&);
 };
+
+template <class T> uint Thread::proc(T* t)
+{
+  return t->call();
+}

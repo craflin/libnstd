@@ -7,48 +7,49 @@ template <typename A> struct Call
   {
     struct Func0
     {
-      C& c;
+      C* c;
       A (C::*a)();
-      A call() {return (c.*a)();}
-      Func0(C& c, A (C::*a)()) : c(c), a(a) {}
+      A call() {return (c->*a)();}
+      Func0(C& c, A (C::*a)()) : c(&c), a(a) {}
+      Func0() {}
     };
 
     template <typename D> struct Func1
     {
-      C& c;
+      C* c;
       A (C::*a)(D);
-      A call(D d) {return (c.*a)(d);}
-      Func1(C& c, A (C::*a)(D)) : c(c), a(a) {}
+      A call(D d) {return (c->*a)(d);}
+      Func1(C& c, A (C::*a)(D)) : c(&c), a(a) {}
     };
 
     template <typename D, typename E> struct Func2
     {
-      C& c;
+      C* c;
       A (C::*a)(D, E);
-      A call(D d, E e) {return (c.*a)(d, e);}
-      Func2(C& c, A (C::*a)(D, E)) : c(c), a(a) {}
+      A call(D d, E e) {return (c->*a)(d, e);}
+      Func2(C& c, A (C::*a)(D, E)) : c(&c), a(a) {}
     };
 
     template <typename D, typename E, typename F> struct Func3
     {
-      C& c;
+      C* c;
       A (C::*a)(D, E, F);
-      A call(D d, E e, F f) {return (c.*a)(d, e, f);}
-      Func3(C& c, A (C::*a)(D, E, F)) : c(c), a(a) {}
+      A call(D d, E e, F f) {return (c->*a)(d, e, f);}
+      Func3(C& c, A (C::*a)(D, E, F)) : c(&c), a(a) {}
     };
 
     template <typename D, typename E, typename F, typename G> struct Func4
     {
-      C& c;
+      C* c;
       A (C::*a)(D, E, F, G);
-      A call(D d, E e, F f, G g) {return (c.*a)(d, e, f, g);}
-      Func4(C& c, A (C::*a)(D, E, F, G)) : c(c), a(a) {}
+      A call(D d, E e, F f, G g) {return (c->*a)(d, e, f, g);}
+      Func4(C& c, A (C::*a)(D, E, F, G)) : c(&c), a(a) {}
     };
 
     struct Args0 : public Func0
     {
       void* z;
-      A call() {return (Func0::c.*Func0::a)();}
+      A call() {return (Func0::c->*Func0::a)();}
       Args0(C& c, A (C::*a)(), void* z) :  Func0(c, a), z(z) {}
     };
 
@@ -56,7 +57,7 @@ template <typename A> struct Call
     {
       P p;
       void* z;
-      A call() {return (Func1<D>::c.*Func1<D>::a)(p);}
+      A call() {return (Func1<D>::c->*Func1<D>::a)(p);}
       Args1(C& c, A (C::*a)(D), const P& p, void* z) :  Func1<D>(c, a), p(p), z(z) {}
     };
 
@@ -64,7 +65,7 @@ template <typename A> struct Call
     {
       P p; Q q;
       void* z;
-      A call() {return (Func2<D, E>::c.*Func2<D, E>::a)(p, q);}
+      A call() {return (Func2<D, E>::c->*Func2<D, E>::a)(p, q);}
       Args2(C& c, A (C::*a)(D, E), const P& p, const Q& q, void* z) :  Func2<D, E>(c, a), p(p), q(q), z(z) {}
     };
 
@@ -72,7 +73,7 @@ template <typename A> struct Call
     {
       P p; Q q; R r;
       void* z;
-      A call() {return (Func3<D, E, F>::c.*Func3<D, E, F>::a)(p, q, r);}
+      A call() {return (Func3<D, E, F>::c->*Func3<D, E, F>::a)(p, q, r);}
       Args3(C& c, A (C::*a)(D, E, F), const P& p, const Q& q, const R& r, void* z) :  Func3<D, E, F>(c, a), p(p), q(q), r(r), z(z) {}
     };
 
@@ -80,7 +81,7 @@ template <typename A> struct Call
     {
       P p; Q q; R r; S s;
       void* z;
-      A call() {return (Func4<D, E, F, G>::c.*Func4<D, E, F, G>::a)(p, q, r, s);}
+      A call() {return (Func4<D, E, F, G>::c->*Func4<D, E, F, G>::a)(p, q, r, s);}
       Args4(C& c, A (C::*a)(D, E, F, G), const P& p, const Q& q, const R& r, const S& s, void* z) :  Func4<D, E, F, G>(c, a), p(p), q(q), r(r), s(s), z(z) {}
     };
   };

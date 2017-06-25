@@ -127,7 +127,7 @@ public:
             if(context)
             {
               context->pool = this;
-              if(!context->thread.start(context, &ThreadContext::proc))
+              if(!context->thread.start(*context, &ThreadContext::proc))
                 context->terminated = true;
             }
           }
