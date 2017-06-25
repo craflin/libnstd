@@ -54,22 +54,23 @@ programming and common design patterns. Right now it consists of following heade
 Design Principles
 -----------------
 
- * Be as much optimized as currently possible.
- * Do not use macros except for code that should be excluded in optimized builds.
- * Use templates only when it is required to improve performance.
- * Do not include system header files in public header files.
- * Design class interfaces to be minimalistic and easy to use.
- * Do not use exceptions.
- * Avoid dynamic memory allocation when possible.
+* Be as much optimized as currently possible.
+* Do not use macros except for code that should be excluded in optimized builds.
+* Use templates only when it is required to improve performance or convenience.
+* Do not include system header files in public header files.
+* Design class interfaces to be minimalistic and easy to use.
+* Do not use exceptions.
+* Avoid dynamic memory allocation when possible.
+* Do not depend on c++11 (or newer) language features.
  
 Supported Platforms
 -------------------
 
- * Windows x86/x86_64 (since Windows Vista / Server 2008)
- * Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
- * Cygwin i686 (since Windows Vista / Server 2008) (might not work anymore)
- * Linux i686/x86_64
- * Linux armv61
+* Windows x86/x86_64 (since Windows Vista / Server 2008)
+* Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
+* Cygwin i686 (since Windows Vista / Server 2008) (might not work anymore)
+* Linux i686/x86_64
+* Linux armv61
 
 Motivation
 ----------
