@@ -197,7 +197,7 @@ void testArrayString()
 int main(int argc, char* argv[])
 {
   Console::printf(_T("%s\n"), _T("Testing..."));
-  /*
+
   testMemory();
   testSha256();
   testSocket();
@@ -232,7 +232,6 @@ int main(int argc, char* argv[])
   testXML();
   testJSON();
   testRefCount();
-  */
   testCallback();
   testFuture();
 
