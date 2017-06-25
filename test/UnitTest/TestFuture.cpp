@@ -173,7 +173,7 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
-    ASSERT(future == 5);
+    ASSERT(future == 32);
   }
 
   {
@@ -199,7 +199,7 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
-    ASSERT(future == 5);
+    ASSERT(future == 25);
   }
 
   {
@@ -227,6 +227,6 @@ void testFuture()
     ASSERT(!future.isAborting());
     ASSERT(future.isFinished());
     ASSERT(!future.isAborted());
-    ASSERT(future == 42 + 5);
+    ASSERT(future == 42 + 6 * 4);
   }
 }
