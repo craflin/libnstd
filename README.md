@@ -32,6 +32,7 @@ programming and common design patterns. Right now it consists of following heade
     * [Semaphore.h](include/nstd/Semaphore.h): Abstraction layer of a native semaphore construct.
     * [Signal.h](include/nstd/Signal.h): Abstraction layer of a native signal construct.
     * [Monitor.h](include/nstd/Monitor.h): Abstraction layer of a native monitor construct.
+    * [Future.h](include/nstd/Future.h): Asynchronous function calls with global thread pool.
 * Input/Output
     * [File.h](include/nstd/File.h): Abstraction layer of file input/output.
     * [Directory.h](include/nstd/Directory.h): Abstraction layer to access directories.
@@ -39,7 +40,7 @@ programming and common design patterns. Right now it consists of following heade
     * [Log.h](include/nstd/Log.h): Console logging helper functions.
 * Processes
     * [Process.h](include/nstd/Process.h): Abstraction layer of process launching with or without I/O redirecting.
-    * [Library.h](include/nstd/Library.h): Abstraction layer of dll / shared object loading.
+    * [Library.h](include/nstd/Library.h): Abstraction layer of DLL / shared object loading.
 * Signals/Slots
     * [Callback.h](include/nstd/Callback.h): Base classes for objects that emit or receive signals.
 * Sockets (optional)
