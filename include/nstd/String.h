@@ -363,28 +363,6 @@ public:
 
   String& trim(const tchar* chars = _T(" \t\r\n\v"));
 
-  /**
-  * Compute a hash code for this string.
-  * @return The hash code
-  */
-#if __cplusplus >= 201103L
-  explicit operator usize() const
-#else
-  operator usize() const
-#endif
-  {
-    usize len;
-    usize hashCode = (len = data->len);
-    const tchar* str = data->str;
-    hashCode *= 16807;
-    hashCode ^= str[0];
-    hashCode *= 16807;
-    hashCode ^= str[len / 2];
-    hashCode *= 16807;
-    hashCode ^= str[len - (len != 0)];
-    return hashCode;
-  }
-
 public:
   static int toInt(const tchar* s);
   static uint toUInt(const tchar* s);
@@ -546,3 +524,22 @@ private:
   static tchar upperCaseMap[0x101];
 #endif
 };
+
+/**
+* Compute a hash code of a string.
+* @param str The string.
+* @return The hash code
+*/
+inline usize hash(const String& str)
+{
+  usize len;
+  usize hashCode = (len = str.length());
+  const tchar* s = str;
+  hashCode *= 16807;
+  hashCode ^= s[0];
+  hashCode *= 16807;
+  hashCode ^= s[len / 2];
+  hashCode *= 16807;
+  hashCode ^= s[len - (len != 0)];
+  return hashCode;
+}

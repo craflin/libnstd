@@ -71,3 +71,15 @@ inline void operator delete(void* p, void*) {}
 #else
 #define __TFILE__ __FILE__
 #endif
+
+inline usize hash(int8 v) {return (usize)v;}
+inline usize hash(uint8 v) {return (usize)v;}
+inline usize hash(int16 v) {return (usize)v;}
+inline usize hash(uint16 v) {return (usize)v;}
+inline usize hash(int32 v) {return (usize)v;}
+inline usize hash(uint32 v) {return (usize)v;}
+inline usize hash(int64 v) {return (usize)v;}
+inline usize hash(uint64 v) {return (usize)v;}
+inline usize hash(void* v) {return (usize)v >> (sizeof(void*) / 4 + 1);}
+inline usize hash(long v) {return (usize)v;}
+inline usize hash(unsigned long v) {return (usize)v;}

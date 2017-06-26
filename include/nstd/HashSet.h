@@ -146,7 +146,7 @@ public:
   Iterator find(const T& key) const
   {
     if(!data) return _end;
-    usize hashCode = (usize)key;
+    usize hashCode = hash(key);
     Item* item = data[hashCode % capacity];
     while(item)
     {
@@ -192,7 +192,7 @@ public:
       }
     }
 
-    usize hashCode = (usize)key;
+    usize hashCode = hash(key);
 #ifdef VERIFY
     VERIFY(new(item)Item(key) == item);
 #else
