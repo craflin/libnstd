@@ -34,40 +34,10 @@ public:
       data = other.data;
       Atomic::increment(data->ref);
     }
-    else switch(other.data->type)
+    else
     {
-      case boolType:
-        _data.type = boolType;
-        _data.ref = 0;
-        _data.data.boolData = other.data->data.boolData;
-        data = &_data;
-        break;
-      case intType:
-      case uintType:
-        _data.type = other.data->type;
-        _data.ref = 0;
-        _data.data.intData = other.data->data.intData;
-        data = &_data;
-        break;
-      case doubleType:
-      case int64Type:
-      case uint64Type:
-        _data.type = other.data->type;
-        _data.ref = 0;
-        _data.data.int64Data = other.data->data.int64Data;
-        data = &_data;
-        break;
-#ifdef ASSERT
-      case mapType:
-      case listType:
-      case arrayType:
-      case stringType:
-        ASSERT(false);
-        // no break
-#endif
-      default:
-        data = &nullData;
-        break;
+      data = &_data;
+      _data = *other.data;
     }
   }
 
@@ -133,46 +103,17 @@ public:
 
   Variant& operator=(const Variant& other)
   {
-    clear();
     if(other.data->ref)
     {
+      Atomic::increment(other.data->ref);
+      clear();
       data = other.data;
-      Atomic::increment(data->ref);
     }
-    else switch(other.data->type)
+    else
     {
-      case boolType:
-        _data.type = boolType;
-        _data.ref = 0;
-        _data.data.boolData = other.data->data.boolData;
-        data = &_data;
-        break;
-      case intType:
-      case uintType:
-        _data.type = other.data->type;
-        _data.ref = 0;
-        _data.data.intData = other.data->data.intData;
-        data = &_data;
-        break;
-      case doubleType:
-      case int64Type:
-      case uint64Type:
-        _data.type = other.data->type;
-        _data.ref = 0;
-        _data.data.int64Data = other.data->data.int64Data;
-        data = &_data;
-        break;
-#ifdef ASSERT
-      case mapType:
-      case listType:
-      case arrayType:
-      case stringType:
-        ASSERT(false);
-        // no break
-#endif
-      default:
-        data = &nullData;
-        break;
+      clear();
+      data = &_data;
+      _data = *other.data;
     }
     return *this;
   }
