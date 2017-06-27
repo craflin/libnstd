@@ -88,7 +88,7 @@ Having used and seen various libraries, I consider STL to have some serious flaw
 * IDEs have a hard time understanding it. Helpers from IDEs like tool tips for method signatures are barely helpful because of the complexity from the template types.
 * Debugging STL using code is complicated. The STL template source code is barely readable.
 * Code written with STL does not describe itself very well (partly because of obstructing abbreviations). (cout streams to the console, fstream to a file, algorithms on iterators...)
-* STL feels more like feasibility study and C++ core language feature demonstrator than a actual standard library that is supposed to help application developers.
+* STL feels more like feasibility study and C++ core language feature demonstrator than an actual standard library that is supposed to help application developers.
 * It's not getting significantly better with the new iterations of the C++ standard.
 * It fails to provide frequently used functionality like getopt, process control, file system management (fixed in C++17?) that is commonly required to write basic applications.
 * The coding style with all lower case and underscore looks an feels outdated.
