@@ -35,6 +35,7 @@ public:
   class Emitter
   {
   public:
+    Emitter() {}
     ~Emitter();
 
   protected:
@@ -97,12 +98,16 @@ public:
     Map<MemberFuncPtr, SignalData> signalData;
 
   private:
+    Emitter(const Emitter&);
+    Emitter& operator=(const Emitter&);
+
     friend class Callback;
   };
 
   class Listener
   {
   public:
+    Listener() {}
     ~Listener();
 
   private:
@@ -116,6 +121,9 @@ public:
     Map<Emitter*, List<Signal> > slotData;
 
   private:
+    Listener(const Listener&);
+    Listener& operator=(const Listener&);
+
     friend class Callback;
   };
 
