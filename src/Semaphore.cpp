@@ -5,7 +5,8 @@
 
 #ifdef _WIN32
 #include <climits>
-#include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #else
 #include <semaphore.h>
 #include <time.h>

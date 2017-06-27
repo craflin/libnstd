@@ -6,7 +6,8 @@
 
 #include <cstring>
 #ifdef _WIN32
-#include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
 #ifdef _MSC_VER
 #include <tchar.h>
 #else

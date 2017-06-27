@@ -1,6 +1,8 @@
 
 #ifdef _WIN32
-#include <windows.h>
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <cstdlib>
 #else
 #include <alloca.h>
 #include <unistd.h>
