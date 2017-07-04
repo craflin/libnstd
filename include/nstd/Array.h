@@ -104,16 +104,19 @@ public:
       T* newData = (T*)Memory::alloc(sizeof(T) * _capacity, bsize);
       _capacity = bsize / sizeof(T);
       T* dest = newData;
-      for (T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
+      if(_begin.item)
       {
+        for (T* src = _begin.item, * end = _end.item; src != end; ++src, ++dest)
+        {
 #ifdef VERIFY
-        VERIFY(new(dest)T(*src) == dest);
+          VERIFY(new(dest)T(*src) == dest);
 #else
-        new(dest)T(*src);
+          new(dest)T(*src);
 #endif
-        src->~T();
+          src->~T();
+        }
+        Memory::free(_begin.item);
       }
-      Memory::free(_begin.item);
       _begin.item = newData;
       _end.item = dest;
     }
