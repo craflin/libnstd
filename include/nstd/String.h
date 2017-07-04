@@ -237,7 +237,7 @@ public:
   {
     tchar c1, c2;
     for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
-      if(!*s1 || (c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)))
+      if((c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)) || !*s1)
         return (int)(const utchar&)c1 - (const utchar&)c2;
     return 0;
   }
@@ -418,7 +418,7 @@ public:
   {
     tchar c1, c2;
     for(const tchar* end1 = s1 + len; s1 < end1; ++s1, ++s2)
-      if(!*s1 || (c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)))
+      if((c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)) || !*s1)
         return (int)(const utchar&)c1 - (const utchar&)c2;
     return 0;
   }
