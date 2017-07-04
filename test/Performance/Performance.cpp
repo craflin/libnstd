@@ -8,7 +8,8 @@ void testHashMapStd(int iterations);
 void testHashMapNStd(int iterations);
 void testStringStd(int iterations);
 void testStringNStd(int iterations);
-
+void testFutureStd(int iterations);
+void testFutureNStd(int iterations);
 
 const int mapTestIterations = 1000000;
 
@@ -58,6 +59,22 @@ int main(int argc, char* argv[])
       Console::printf(_T("testStringNStd... "));
       int64 startTime = Time::microTicks();
       testStringNStd(mapTestIterations);
+      int64 duration = Time::microTicks() - startTime;
+      Console::printf(_T("%lld microseconds\n"), duration);
+    }
+
+    {
+      Console::printf(_T("testFutureStd...  "));
+      int64 startTime = Time::microTicks();
+      testFutureStd(mapTestIterations / 10);
+      int64 duration = Time::microTicks() - startTime;
+      Console::printf(_T("%lld microseconds\n"), duration);
+    }
+
+    {
+      Console::printf(_T("testFutureNStd... "));
+      int64 startTime = Time::microTicks();
+      testFutureNStd(mapTestIterations / 10);
       int64 duration = Time::microTicks() - startTime;
       Console::printf(_T("%lld microseconds\n"), duration);
     }

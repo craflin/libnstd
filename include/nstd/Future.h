@@ -71,7 +71,7 @@ public:
   bool isAborted() const {return future.isAborted();}
   void join() {future.join();}
 
-  operator const A&() const {return result;}
+  operator const A&() const {future.join();return result;}
 
   void start(A (*func)()) {future.startProc((void (*)(void*))&proc< typename Call<A>::Args0 >, new typename Call<A>::Args0(func, this));}
   template <typename D, typename P> void start(A (*func)(D), const P& p) {future.startProc((void (*)(void*))&proc< typename Call<A>::template Args1<D, P> >, new typename Call<A>::template Args1<D, P>(func, p, this));}
@@ -82,19 +82,12 @@ public:
 
   template <class C> void start(C& c, A (C::*func)()){future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::Args0 >, new typename Call<A>::template Member<C>::Args0(c, func, this));}
   template <class C, typename D, typename P> void start(C& c, A (C::*func)(D), const P& p) {future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args1<D, P> >, new typename Call<A>::template Member<C>::template Args1<D, P>(c, func, p, this));}
-  template <class C, typename D, typename E, typename P, typename Q> void start(C& c, A (C::*func)(D, E), const P& p, const Q& q){future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args2<D, E, P, Q> >, new typename Call<A>::template Member<C>::template Args2<D, E, P, Q>(c, func, p, q, this));}
-  template <class C, typename D, typename E, typename F, typename P, typename Q, typename R> void start(C& c, A (C::*func)(D, E, F), const P& p, const Q& q, const R& r){future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args3<D, E, F, P, Q, R> >, new typename Call<A>::template Member<C>::template Args3<D, E, F, P, Q, R>(c, func, p, q, r, this));}
-
-  template <class C, typename D, typename E, typename F, typename G, typename P, typename Q, typename R, typename S> 
-  void start(C& c, A (C::*func)(D, E, F, G), const P& p, const Q& q, const R& r, const S& s)
-  {
-    future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args4<D, E, F, G, P, Q, R, S> >, new typename Call<A>::template Member<C>::template Args4<D, E, F, G, P, Q, R, S>(c, func, p, q, r, s, this));
-  }
-
-
+  template <class C, typename D, typename E, typename P, typename Q> void start(C& c, A (C::*func)(D, E), const P& p, const Q& q) {future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args2<D, E, P, Q> >, new typename Call<A>::template Member<C>::template Args2<D, E, P, Q>(c, func, p, q, this));}
+  template <class C, typename D, typename E, typename F, typename P, typename Q, typename R> void start(C& c, A (C::*func)(D, E, F), const P& p, const Q& q, const R& r) {future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args3<D, E, F, P, Q, R> >, new typename Call<A>::template Member<C>::template Args3<D, E, F, P, Q, R>(c, func, p, q, r, this));}
+  template <class C, typename D, typename E, typename F, typename G, typename P, typename Q, typename R, typename S> void start(C& c, A (C::*func)(D, E, F, G), const P& p, const Q& q, const R& r, const S& s) {future.startProc((void (*)(void*))&proc< typename Call<A>::template Member<C>::template Args4<D, E, F, G, P, Q, R, S> >, new typename Call<A>::template Member<C>::template Args4<D, E, F, G, P, Q, R, S>(c, func, p, q, r, s, this));}
 
 private:
-  Future<void> future;
+  mutable Future<void> future;
   A result;
 
 private:

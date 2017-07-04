@@ -61,12 +61,14 @@ public:
       , queue(queueSize) 
       , pushedJobs(0)
       , processedJobs(0)
-      , threadCount(0) {}
-    ~ThreadPool()
+      , threadCount(0)
     {
       if(this->maxThreads < 3)
         this->maxThreads = 3;
+    }
 
+    ~ThreadPool()
+    {
       Job job = {0, 0};
       for(PoolList<ThreadContext>::Iterator i = threads.begin(), end = threads.end(); i != end; ++i)
       {
@@ -101,12 +103,12 @@ public:
       usize threadCount = this->threadCount;
       ssize idleThreads = (ssize)threadCount - busyThreads;
       if(idleThreads == 1)
-        idleResetTime = (uint32)(Time::time() >> 10);
+        idleResetTime = (uint32)(Time::ticks() >> 10);
       else
       {
         if(idleThreads <= 0)
         { // start new worker thread
-          idleResetTime = (uint32)(Time::time() >> 10);
+          idleResetTime = (uint32)(Time::ticks() >> 10);
           if(threadCount < maxThreads)
           {
             ThreadContext* context = 0;
@@ -132,7 +134,7 @@ public:
             }
           }
         }
-        else if(idleThreads > 1 && threadCount > minThreads && (uint32)(Time::time() >> 10) - idleResetTime > 1)
+        else if(idleThreads > 1 && threadCount > minThreads && (uint32)(Time::ticks() >> 10) - idleResetTime > 1)
         { // terminate a worker thread
           mutex.lock();
           if(this->threadCount > minThreads)
@@ -238,7 +240,7 @@ void Future<void>::set()
 
 void Future<void>::startProc(void (*proc)(void*), void* args)
 {
-  Private::ThreadPool*  threadPool = Private::threadPool;
+  Private::ThreadPool* threadPool = Private::threadPool;
   if(!threadPool)
   {
     while(Atomic::testAndSet(Private::threadPoolLock) != 0);
