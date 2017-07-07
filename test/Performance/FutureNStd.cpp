@@ -1,5 +1,7 @@
 
 #include <nstd/Future.h>
+#include <nstd/Console.h>
+#include <nstd/Process.h>
 
 void testFutureNStd(int iterations)
 {
@@ -12,10 +14,15 @@ void testFutureNStd(int iterations)
   };
 
   int64 result = 0;
-  Future<int64> future;
   for(int i = 0; i < iterations; ++i)
   {
+    Future<int64> future;
     future.start(&A::testProc, i);
     result += future;
+  }
+  if(result != (int64)iterations * (int64)(iterations - 1) / 2)
+  {
+    Console::printf("fail\n");
+    Process::exit(1);
   }
 }

@@ -1,5 +1,7 @@
 
 #include <future>
+#include <cassert>
+#include <cstdio>
 
 void testFutureStd(int iterations)
 {
@@ -16,5 +18,10 @@ void testFutureStd(int iterations)
   {
     std::future<int64_t> future = std::async(&A::testProc, i);
     result += future.get();
+  }
+  if(result != (int64_t)iterations * (int64_t)(iterations - 1) / 2)
+  {
+    printf("fail\n");
+    std::terminate();
   }
 }
