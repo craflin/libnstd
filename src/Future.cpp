@@ -253,9 +253,8 @@ void Future<void>::startProc(void (*proc)(void*), void* args)
   }
 
   join();
+  joinable = true;
   aborting = false;
-  state = runningState;
-  sig.reset();
   threadPool->run(proc, args);
 }
 

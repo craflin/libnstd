@@ -8,7 +8,7 @@ template <typename A> class Future;
 template <> class Future<void>
 {
 public:
-  Future() : sig(true), aborting(false), state(idleState) {}
+  Future() : aborting(false), state(idleState), joinable(false) {}
   ~Future() {join();}
 
 public:
@@ -16,7 +16,7 @@ public:
   bool isAborting() const {return aborting;}
   bool isFinished() const {return state == finishedState;}
   bool isAborted() const {return state == abortedState;}
-  void join() {sig.wait();}
+  void join() {if(joinable) { sig.wait(); sig.reset(); joinable = false;}}
 
   void start(void (*func)()) {startProc((void (*)(void*))&proc< Call<void>::Args0 >, new Call<void>::Args0(func, this));}
   template <typename D, typename P> void start(void (*func)(D), const P& p) {startProc((void (*)(void*))&proc< typename Call<void>::template Args1<D, P> >, new typename Call<void>::template Args1<D, P>(func, p, this));}
@@ -44,6 +44,7 @@ private:
   Signal sig;
   volatile bool aborting;
   volatile int state;
+  bool joinable;
 
   void set();
 
