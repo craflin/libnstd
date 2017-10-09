@@ -61,7 +61,7 @@ extern "C" __int64 _InterlockedDecrement64(__int64 volatile*);
 extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __int64);
 extern "C" __int64 _InterlockedExchange64(__int64 volatile*, __int64);
 extern "C" __int64 _InterlockedExchangeAdd64(__int64 volatile*, __int64);
-extern "C" long _InterlockedOr64(long volatile*, long);
+extern "C" __int64 _InterlockedOr64(__int64 volatile*, __int64);
 #endif
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
@@ -112,7 +112,7 @@ uint64 Atomic::testAndSet(uint64 volatile& var) {return _InterlockedExchange64((
 int64 Atomic::fetchAndAdd(int64 volatile& var, int64 val) {return _InterlockedExchangeAdd64(&var, val);}
 uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {return _InterlockedExchangeAdd64((__int64 volatile*)&var, (__int64)val);}
 void Atomic::memoryBarrier() {__int64 barrier; _InterlockedOr64(&barrier, 0);} // todo: use SSE?
-int64 Atomic::load(int64 volatile& var) {return _InterlockedOr64((&var, 0);}
+int64 Atomic::load(int64 volatile& var) {return _InterlockedOr64(&var, 0);}
 uint64 Atomic::load(uint64 volatile& var) {return _InterlockedOr64((__int64 volatile*)&var, 0);}
 #else
 int64 Atomic::increment(volatile int64& var) {for(int64 oldVal = var, newVal = oldVal + 1;; newVal = (oldVal = var) + 1) if(_InterlockedCompareExchange64(&var, newVal, oldVal) == oldVal) return newVal;}
