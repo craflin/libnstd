@@ -62,6 +62,7 @@ extern "C" __int64 _InterlockedCompareExchange64(__int64 volatile*, __int64, __i
 extern "C" __int64 _InterlockedExchange64(__int64 volatile*, __int64);
 extern "C" __int64 _InterlockedExchangeAdd64(__int64 volatile*, __int64);
 extern "C" __int64 _InterlockedOr64(__int64 volatile*, __int64);
+extern "C" void __faststorefence(void);
 #endif
 #pragma intrinsic(_InterlockedIncrement)
 #pragma intrinsic(_InterlockedDecrement)
@@ -77,6 +78,7 @@ extern "C" __int64 _InterlockedOr64(__int64 volatile*, __int64);
 #pragma intrinsic(_InterlockedExchange64)
 #pragma intrinsic(_InterlockedExchangeAdd64)
 #pragma intrinsic(_InterlockedOr64)
+#pragma intrinsic(__faststorefence)
 #endif
 #endif
 
@@ -111,7 +113,7 @@ int64 Atomic::testAndSet(int64 volatile& var) {return _InterlockedExchange64((__
 uint64 Atomic::testAndSet(uint64 volatile& var) {return _InterlockedExchange64((__int64 volatile*)&var, 1LL);}
 int64 Atomic::fetchAndAdd(int64 volatile& var, int64 val) {return _InterlockedExchangeAdd64(&var, val);}
 uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {return _InterlockedExchangeAdd64((__int64 volatile*)&var, (__int64)val);}
-void Atomic::memoryBarrier() {__int64 barrier; _InterlockedOr64(&barrier, 0);} // todo: use SSE?
+void Atomic::memoryBarrier() {__faststorefence();}
 int64 Atomic::load(int64 volatile& var) {return _InterlockedOr64(&var, 0);}
 uint64 Atomic::load(uint64 volatile& var) {return _InterlockedOr64((__int64 volatile*)&var, 0);}
 #else
