@@ -44,7 +44,7 @@ public:
   static inline uint32 load(const uint32 volatile& var);
   static inline int64 load(const int64 volatile& var);
   static inline uint64 load(const uint64 volatile& var);
-  template <typename T> static inline T* load(const T* volatile& ptr);
+  template <typename T> static inline T* load(T* const volatile& ptr);
 
   static inline void store(int32 volatile& var, int32 value);
   static inline void store(uint32 volatile& var, uint32 value);
@@ -124,6 +124,7 @@ uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {return _Interlocke
 void Atomic::memoryBarrier() {__faststorefence();}
 int64 Atomic::load(const int64 volatile& var) {return _InterlockedOr64((__int64 volatile*)&var, 0);}
 uint64 Atomic::load(const uint64 volatile& var) {return _InterlockedOr64((__int64 volatile*)&var, 0);}
+template <typename T> inline T* Atomic::load(T* const volatile& ptr) {return (T*)_InterlockedOr64((__int64 volatile*)&ptr, 0);}
 void Atomic::store(int64 volatile& var, int64 val) {_InterlockedExchange64(&var, val);}
 void Atomic::store(uint64 volatile& var, uint64 val) {_InterlockedExchange64((__int64 volatile*)&var, val);}
 template <typename T> inline void Atomic::store(T* volatile& ptr, T* val) {_InterlockedExchange64((__int64 volatile*)&ptr, (__int64&)val);}
@@ -143,6 +144,7 @@ inline uint64 Atomic::fetchAndAdd(uint64 volatile& var, uint64 val) {for(uint64 
 void Atomic::memoryBarrier() {long barrier; _InterlockedOr(&barrier, 0);}
 int64 Atomic::load(const volatile int64& var) {for(int64 val = var;; val = var) if(_InterlockedCompareExchange64((volatile __int64*)&var, val, val) == val) return val;}
 uint64 Atomic::load(const volatile uint64& var) {for(uint64 val = var;; val = var) if(_InterlockedCompareExchange64((volatile __int64*)&var, val, val) == val) return val;}
+template <typename T> inline T* Atomic::load(T* const volatile& ptr) {return (T*)_InterlockedOr((long volatile*)&ptr, 0);}
 void Atomic::store(int64 volatile& var, int64 val) {Atomic::swap(var, val);}
 void Atomic::store(uint64 volatile& var, uint64 val) {Atomic::swap(var, val);}
 template <typename T> inline void Atomic::store(T* volatile& ptr, T* val) {_InterlockedExchange((long volatile*)&ptr, (long)val);}

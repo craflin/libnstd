@@ -122,4 +122,38 @@ void testAtomic()
     ASSERT(uint64 == 1);
     ASSERT(ptr == (char*)0 + 1);
   }
+
+  {
+    volatile int32 int32 = 0;
+    volatile uint32 uint32 = 0;
+    volatile int64 int64 = 0;
+    volatile uint64 uint64 = 0;
+    void* volatile ptr = 0;
+  
+    ASSERT(Atomic::load(int32) == 0);
+    ASSERT(Atomic::load(uint32) == 0);
+    ASSERT(Atomic::load(int64) == 0);
+    ASSERT(Atomic::load(uint64) == 0);
+    ASSERT(Atomic::load(ptr) == 0);
+  }
+
+  {
+    volatile int32 int32 = 0;
+    volatile uint32 uint32 = 0;
+    volatile int64 int64 = 0;
+    volatile uint64 uint64 = 0;
+    void* volatile ptr = 0;
+  
+    Atomic::store(int32, 1);
+    Atomic::store(uint32, 1);
+    Atomic::store(int64, 1);
+    Atomic::store(uint64, 1);
+    Atomic::store(ptr, (void*)((char*)0 + 1));
+
+    ASSERT(int32 == 1);
+    ASSERT(uint32 == 1);
+    ASSERT(int64 == 1);
+    ASSERT(uint64 == 1);
+    ASSERT(ptr == (char*)0 + 1);
+  }
 }
