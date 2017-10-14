@@ -81,5 +81,3 @@ inline usize hash(uint32 v) {return (usize)v;}
 inline usize hash(int64 v) {return (usize)v;}
 inline usize hash(uint64 v) {return (usize)v;}
 inline usize hash(void* v) {return (usize)v >> (sizeof(void*) / 4 + 1);}
-inline usize hash(long v) {return (usize)v;}
-inline usize hash(unsigned long v) {return (usize)v;}
