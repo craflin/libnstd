@@ -13,10 +13,10 @@ void testVariant()
 
   // test self assign
   {
-    Variant var(String("hallo"));
-    ASSERT(var.toString() == "hallo");
+    Variant var(String(_T("hallo")));
+    ASSERT(var.toString() == _T("hallo"));
     var = var;
-    ASSERT(var.toString() == "hallo");
+    ASSERT(var.toString() == _T("hallo"));
 
     Variant var2(123);
     ASSERT(var2.toInt() == 123);

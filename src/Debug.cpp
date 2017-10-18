@@ -5,6 +5,9 @@
 #ifndef NDEBUG
 #include <Dbghelp.h>
 #endif
+#ifdef UNICODE
+#include <cstdlib>
+#endif
 #else
 #ifndef NDEBUG
 #include <cstdlib>
