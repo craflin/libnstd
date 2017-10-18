@@ -11,6 +11,19 @@ void testVariant()
     ASSERT(var.toBool() == false);
   }
 
+  // test self assign
+  {
+    Variant var(String("hallo"));
+    ASSERT(var.toString() == "hallo");
+    var = var;
+    ASSERT(var.toString() == "hallo");
+
+    Variant var2(123);
+    ASSERT(var2.toInt() == 123);
+    var2 = var2;
+    ASSERT(var2.toInt() == 123);
+  }
+
   // test boolean constructor
   {
     Variant var(true);

@@ -103,17 +103,20 @@ public:
 
   Variant& operator=(const Variant& other)
   {
-    if(other.data->ref)
+    if(&other != this)
     {
-      Atomic::increment(other.data->ref);
-      clear();
-      data = other.data;
-    }
-    else
-    {
-      clear();
-      data = &_data;
-      _data = *other.data;
+      if(other.data->ref)
+      {
+        Atomic::increment(other.data->ref);
+        clear();
+        data = other.data;
+      }
+      else //if(&other != this)
+      {
+        clear();
+        data = &_data;
+        _data = *other.data;
+      }
     }
     return *this;
   }
