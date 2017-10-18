@@ -130,7 +130,7 @@ uint64 Atomic::load(const uint64 volatile& var) {return var;}
 template <typename T> inline T* Atomic::load(T* const volatile& ptr) {return ptr;}
 void Atomic::store(int64 volatile& var, int64 val) {var = val;}
 void Atomic::store(uint64 volatile& var, uint64 val) {var = val;}
-template <typename T> inline void Atomic::store(T* volatile& ptr, T* val) {var = val;}
+template <typename T> inline void Atomic::store(T* volatile& ptr, T* val) {ptr = val;}
 #endif
 #else
 int64 Atomic::increment(volatile int64& var) {for(int64 oldVal = var, newVal = oldVal + 1;; newVal = (oldVal = var) + 1) if(_InterlockedCompareExchange64(&var, newVal, oldVal) == oldVal) return newVal;}
