@@ -57,7 +57,7 @@ void testProcess()
     {
       static uint32 proc(void*)
       {
-        Thread::sleep(30);
+        Thread::sleep(50);
         Process::interrupt();
         return 0;
       }
