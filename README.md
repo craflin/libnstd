@@ -81,15 +81,16 @@ Having used and seen various libraries, I consider STL to have some serious flaw
 * It is nearly impossible to use STL if you want to combine components that were compiled with different compilers.
 * It is unnecessarily complex to do very basic things (like case insensitive string comparisons for example) with STL.
 * The stream API that has to be used for simple file IO is very cryptic because of all the involved classes (fstream, iostream, ostream, istream, ios and ios_base).
+* The interface of STL containers would be a lot better if insert functions would return the inserted element or an iterator. The interface of associative containers based on std::pair is quite cumbersome. 'unordered' containers could easily remember the insertion order without significant additional costs.
 * The C++11 std::thread class features thread detaching, which cannot safely be combined with dynamic library unloading.
 * The C++14 std::variant class requires complex typedefs to be used and it does not help you to convert between types.
-* Its not low-level enough. There are some atomic data types, but how do you use them on shared memory for instance without in-place new operations that cannot even grantee a simple a well defined memory layout. Using STL you get little sense for how it translate to operating system API calls.
+* It is not low-level enough. There are some atomic data types, but how do you use them on shared memory for instance without in-place new operations that cannot even grantee a simple a well defined memory layout. Using STL you get little sense for how it translate to operating system API calls.
 * Compilation of code that uses STL is slow.
 * IDEs have a hard time understanding it. Helpers from IDEs like tool tips for method signatures are barely helpful because of the complexity from the template types.
 * Debugging STL using code is complicated. The STL template source code is barely readable.
 * Code written with STL does not describe itself very well (partly because of obstructing abbreviations). (cout streams to the console, fstream to a file, algorithms on iterators...)
 * STL feels more like feasibility study and C++ core language feature demonstrator than an actual standard library that is supposed to help application developers.
-* It's not getting significantly better with the new iterations of the C++ standard.
-* It fails to provide frequently used functionality like getopt, process control, file system management (fixed in C++17?) that is commonly required to write basic applications.
+* It is not getting significantly better with the new iterations of the C++ standard.
+* It fails to provide frequently used functionality like `getopt`, process control, file system management (fixed in C++17?) that is commonly required to write basic applications.
 * The coding style with all lower case and underscore looks an feels outdated.
 
