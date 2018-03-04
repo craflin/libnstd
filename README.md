@@ -92,5 +92,5 @@ Having used and seen various libraries, I consider STL to have some serious flaw
 * STL feels more like feasibility study and C++ core language feature demonstrator than an actual standard library that is supposed to help application developers.
 * It is not getting significantly better with the new iterations of the C++ standard.
 * It fails to provide frequently used functionality like `getopt`, process control, file system management (fixed in C++17?) that is commonly required to write basic applications.
-* The coding style with all lower case and underscore looks an feels outdated.
+* The coding style with all lower case and underscore looks and feels outdated.
 
