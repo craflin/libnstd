@@ -1294,6 +1294,7 @@ private:
   };
 
 private:
+  int interruptFd;
   Array<pollfd> pollfds;
   HashMap<Socket*, SocketInfo> sockets;
   HashMap<SOCKET, SocketInfo*> fdToSocket;
@@ -1306,14 +1307,14 @@ private:
 Socket::Poll::Private::Private()
 {
   pollfd& pfd = pollfds.append(pollfd());
-  pfd.fd = eventfd(0, EFD_CLOEXEC);
+  pfd.fd = interruptFd = eventfd(0, EFD_CLOEXEC);
   pfd.events = POLLIN | POLLRDHUP | POLLHUP;
   pfd.revents = 0;
 }
 
 Socket::Poll::Private::~Private()
 {
-  ::close(pollfds[0].fd);
+  ::close(interruptFd);
 }
 
 short Socket::Poll::Private::mapEvents(uint events)
@@ -1429,7 +1430,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
       if(interrupted)
       {
         uint64 val;
-        read(pollfds[0].fd, &val, sizeof(val));
+        read(interruptFd, &val, sizeof(val));
         pollfds[0].revents = 0;
       }
       event.flags = 0;
@@ -1448,7 +1449,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
 bool Socket::Poll::Private::interrupt()
 {
   uint64 val = 1;
-  return write(pollfds[0].fd, &val, sizeof(val)) != -1;
+  return write(interruptFd, &val, sizeof(val)) != -1;
 }
 
 #endif
