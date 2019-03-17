@@ -132,7 +132,7 @@ bool JSON::Private::readToken()
                   else
                     return syntaxError(pos, _T("Expected hexadecimal digit")), false;
                 uint w1;
-                if(k.scanf(_T("%x"), &w1) == 1)
+                if(k.scanf(_T("%x"), &w1) != 1)
                   return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
                 if((w1 & 0xF800ULL) == 0xD800ULL && (w1 & 0xFC00ULL) == 0xD800ULL)
                 { // this must be an UTF-8 surrogate pair
@@ -149,7 +149,7 @@ bool JSON::Private::readToken()
                     else
                       return syntaxError(pos, _T("Expected hexadecimal digit")), false;
                   uint w2;
-                  if(k.scanf(_T("%x"), &w2) == 1)
+                  if(k.scanf(_T("%x"), &w2) != 1)
                     return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
                   if((w2 & 0xFC00UL) != 0xDC00UL)
                     return pos.pos -= 6,syntaxError(pos, _T("Expected UTF-8 surrogate pair")), false;
