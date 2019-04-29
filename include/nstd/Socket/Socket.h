@@ -57,6 +57,8 @@ public:
   bool getSockName(uint32& ip, uint16& port);
   bool getPeerName(uint32& ip, uint16& port);
 
+  bool getSockOpt(int level, int optname, void *optval, usize& optlen);
+
   static void setLastError(int error);
   static int getLastError();
   static String getErrorString(int error = getLastError());

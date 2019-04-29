@@ -415,6 +415,15 @@ bool Socket::getPeerName(uint32& ip, uint16& port)
   return true;
 }
 
+bool Socket::getSockOpt(int level, int optname, void *optval, usize& optlen)
+{
+  socklen_t len = optlen;
+  if(getsockopt(s, level, optname, (char*)optval, &len) != 0)
+    return false;
+  optlen = len;
+  return true;
+}
+
 ssize Socket::send(const byte* data, usize size)
 {
   ssize r = ::send(s, (const char*)data, (int)size, MSG_NOSIGNAL);
