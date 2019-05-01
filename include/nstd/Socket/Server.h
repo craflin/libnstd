@@ -37,7 +37,7 @@ public:
   Handle* connect(uint32 addr, uint16 port, void* userData);
   Handle* pair(Socket& socket, void* userData);
   Handle* createTimer(int64 interval, void* userData);
-  Handle* accept(Handle& handle, void* userData, uint32* addr = 0, uint16* port = 0);
+  Handle* accept(Handle& handle, void* userData, uint32* addr = 0, uint16* port = 0, bool suspend = false);
 
   void setUserData(Handle& handle, void* userData);
   void* getUserData(Handle& handle);

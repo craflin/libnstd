@@ -109,7 +109,7 @@ public:
     return &listener;
   }
 
-  Handle* accept(Handle& handle, void* userData, uint32* addr, uint16* port)
+  Handle* accept(Handle& handle, void* userData, uint32* addr, uint16* port, bool suspend)
   {
     Listener& listener = (Listener&)handle;
     Socket socket;
@@ -124,11 +124,12 @@ public:
       return 0;
     Client& client = clients.append();
     client.type = Handle::clientType;
-    client.state = Handle::connectedState;
+    client.state = suspend ? Handle::suspendedState : Handle::connectedState;
     client.socket.swap(socket);
     client.socket.handle = &client;
     client.userData = userData;
-    sockets.set(client.socket, Socket::Poll::readFlag);
+    if (!suspend)
+        sockets.set(client.socket, Socket::Poll::readFlag);
     return &client;
   }
 
@@ -501,7 +502,7 @@ Server::Handle* Server::listen(uint32 addr, uint16 port, void* userData) {return
 Server::Handle* Server::connect(uint32 addr, uint16 port, void* userData) {return p->connect(addr, port, userData);}
 Server::Handle* Server::pair(Socket& socket, void* userData) {return p->pair(socket, userData);}
 Server::Handle* Server::createTimer(int64 interval, void* userData) {return p->createTimer(interval, userData);}
-Server::Handle* Server::accept(Handle& handle, void* userData, uint32* addr, uint16* port) {return p->accept(handle, userData, addr, port);}
+Server::Handle* Server::accept(Handle& handle, void* userData, uint32* addr, uint16* port, bool suspend) {return p->accept(handle, userData, addr, port, suspend);}
 void Server::setUserData(Handle& handle, void* userData) {handle.userData = userData;}
 void* Server::getUserData(Handle& handle) {return handle.userData;}
 bool Server::write(Handle& handle, const byte* data, usize size, usize* postponed) {return p->write(handle, data, size, postponed);}
