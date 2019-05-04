@@ -112,4 +112,11 @@ void testSocket()
   {
       ASSERT(Socket::inetNtoA(Socket::loopbackAddr) == _T("127.0.0.1"));
   }
+
+  // test getHostByName
+  {
+      uint32 addr = 0;
+      ASSERT(Socket::getHostByName(Socket::getHostName(), addr));
+      ASSERT(addr != 0);
+  }
 }

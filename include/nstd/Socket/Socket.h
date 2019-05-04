@@ -65,6 +65,7 @@ public:
   static uint32 inetAddr(const String& addr, uint16* port = 0);
   static String inetNtoA(uint32 ip);
   static String getHostName();
+  static bool getHostByName(const String& host, uint32& addr);
 
 public:
   class Poll

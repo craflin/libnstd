@@ -25,6 +25,7 @@
 #include <poll.h>
 #endif
 #include <sys/eventfd.h>
+#include <netdb.h>
 #include <cstring>
 #include <cerrno>
 #endif
@@ -629,6 +630,44 @@ String Socket::getHostName()
 #else
   return String(name, String::length(name));
 #endif
+}
+
+bool Socket::getHostByName(const String& host, uint32& addr)
+{
+#ifdef _WIN32
+  ADDRINFOT hints = {0};
+  hints.ai_family = PF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_IPV4;
+  ADDRINFOT* ai;
+  if (GetAddrInfo((const tchar*)host, NULL, &hints, &ai) != 0)
+    return false;
+  for (ADDRINFOT* res = ai; res; res = res->ai_next)
+    if(res->ai_family == AF_INET)
+    {
+      addr = ntohl(((sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
+      FreeAddrInfo(ai);
+      return true;
+    }
+  FreeAddrInfo(ai);
+#else
+  addrinfo hints = {0};
+  hints.ai_family = PF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = IPPROTO_IPV4;
+  addrinfo* ai;
+  if (getaddrinfo((const tchar*)host, NULL, &hints, &ai) != 0)
+    return false;
+  for (addrinfo* res = ai; res; res = res->ai_next)
+    if(res->ai_family == AF_INET)
+    {
+      addr = ntohl(((sockaddr_in*)res->ai_addr)->sin_addr.s_addr);
+      freeaddrinfo(ai);
+      return true;
+    }
+  freeaddrinfo(ai);
+#endif
+    return false;
 }
 
 #ifdef _WIN32
