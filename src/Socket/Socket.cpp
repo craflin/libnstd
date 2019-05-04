@@ -602,16 +602,16 @@ uint32 Socket::inetAddr(const String& addr, uint16* port)
 
 String Socket::inetNtoA(uint32 ip)
 {
+#if defined(_WIN32) && defined(UNICODE)
   in_addr in;
   in.s_addr = htonl(ip);
-#ifdef UNICODE
-  WCHAR buf[17];
+  tchar buf[17];
   buf[0] = _T('\0');
   RtlIpv4AddressToString(&in, buf);
-#else
-  char* buf = inet_ntoa(in);
-#endif
   return String(buf, String::length(buf));
+#else
+  return String::fromPrintf("%hu.%hu.%hu.%hu", (uint16)(ip >> 24),  (uint16)((ip >> 16) & 0xff), (uint16)((ip >> 8) & 0xff), (uint16)(ip & 0xff));
+#endif
 }
 
 String Socket::getHostName()

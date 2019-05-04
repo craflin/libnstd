@@ -108,4 +108,8 @@ void testSocket()
     ASSERT(Memory::compare(rcvData, testData, sizeof(rcvData)) == 0);
   }
 
+  // test inetNtoA
+  {
+      ASSERT(Socket::inetNtoA(Socket::loopbackAddr) == _T("127.0.0.1"));
+  }
 }
