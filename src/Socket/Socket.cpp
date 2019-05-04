@@ -654,7 +654,7 @@ bool Socket::getHostByName(const String& host, uint32& addr)
   addrinfo hints = {0};
   hints.ai_family = PF_INET;
   hints.ai_socktype = SOCK_STREAM;
-  hints.ai_protocol = IPPROTO_IPV4;
+  hints.ai_protocol = IPPROTO_IP;
   addrinfo* ai;
   if (getaddrinfo((const tchar*)host, NULL, &hints, &ai) != 0)
     return false;
