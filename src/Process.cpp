@@ -935,7 +935,7 @@ bool Process::Arguments::read(int& character, String& argument)
     for(const Option* opt = options; opt < optionsEnd; ++opt)
       if(opt->character == character)
       {
-        if(opt->flags & Process::argumentFlag)
+        if(opt->flags & Process::argumentFlag && !(opt->flags & Process::optionalFlag))
         {
           if(!*arg)
           {
