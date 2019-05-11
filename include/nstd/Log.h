@@ -15,6 +15,12 @@ public:
     critical = 50,
   };
 
+  enum Device
+  {
+    stdOutErr, ///< Write log messages up to log level warning to stdout and errors to stderr
+    syslog ///< Write log messages to syslog (on Linux)
+  };
+
 public:
   /**
   * Set logging format.
@@ -29,6 +35,20 @@ public:
   */
   static void setFormat(const String& lineFormat, const String& timeFormat = String(_T("%H:%M:%S")));
 
+  /**
+   * Controls how log messages are handled.
+   * The default is @c Log::stdOutErr.
+   *
+   * @param [in] device The log output device.
+   */
+  static void setDevice(Device device);
+
+  /**
+   * Sets the log level minimum .
+   * Log messages smaller than this level are ignored.
+   *
+   * @param [in] level  The log level.
+   */
   static void setLevel(int level);
 
   static void logf(int level, const tchar* format, ...);

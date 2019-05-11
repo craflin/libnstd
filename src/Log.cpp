@@ -1,8 +1,13 @@
 
+#include <nstd/Log.h>
+
+#ifndef _WIN32
+#include <syslog.h>
+#endif
+
 #include <cstdarg>
 #include <cstdio>
 
-#include <nstd/Log.h>
 #include <nstd/Mutex.h>
 #include <nstd/Time.h>
 #include <nstd/Process.h>
@@ -10,23 +15,53 @@
 #include <nstd/Console.h>
 #include <nstd/Debug.h>
 
-class _Log
+static class _Log
 {
 public:
   static Mutex mutex;
   static String lineFormat;
   static String timeFormat;
+  static Log::Device device;
   static int level;
+
+#ifndef _WIN32
+  ~_Log()
+  {
+    if(device == Log::syslog)
+      ::closelog();
+  }
+
+  static int mapLevelToSyslog(int level)
+  {
+    if(level <= Log::debug)
+      return LOG_DEBUG;
+    if(level <= Log::info)
+      return LOG_INFO;
+    if(level <= Log::warning)
+      return LOG_WARNING;
+    if(level <= Log::error)
+      return LOG_ERR;
+    return LOG_CRIT;
+  }
+#endif
 
   static void vlogf(int level, const tchar* format, va_list& vl)
   {
     int64 time = Time::time();
     String lineFormat;
     String timeFormat;
-    _Log::mutex.lock();
-    lineFormat = _Log::lineFormat;
-    timeFormat = _Log::timeFormat;
-    _Log::mutex.unlock();
+    Log::Device device;
+
+    {
+      _Log::mutex.lock();
+      device = _Log::device;
+      if (device != Log::syslog)
+      {
+        lineFormat = _Log::lineFormat;
+        timeFormat = _Log::timeFormat;
+      }
+      _Log::mutex.unlock();
+    }
 
     // get message
     String data(200);
@@ -65,6 +100,12 @@ public:
             data.resize(result);
         }
       }
+    }
+
+    if(_Log::device == Log::syslog)
+    {
+      syslog(mapLevelToSyslog(level), "%s", (const char*)data);
+      return;
     }
 
     // build line
@@ -118,18 +159,37 @@ public:
       Console::print(line);
   }
 
-};
+} _log;
 
 Mutex _Log::mutex;
 String _Log::lineFormat(_T("[%t] %L: %m"));
 String _Log::timeFormat(_T("%H:%M:%S"));
 int _Log::level = Log::info;
+Log::Device _Log::device = Log::stdOutErr;
 
 void Log::setFormat(const String& lineFormat, const String& timeFormat)
 {
   _Log::mutex.lock();
   _Log::lineFormat = lineFormat;
   _Log::timeFormat = timeFormat;
+  _Log::mutex.unlock();
+}
+
+void Log::setDevice(Device device)
+{
+  _Log::mutex.lock();
+  if(_Log::device != device)
+  {
+#ifndef _WIN32
+    if(_Log::device == Log::syslog)
+      ::closelog();
+#endif
+    _Log::device = device;
+#ifndef _WIN32
+    if(device == Log::syslog)
+      ::openlog(NULL, LOG_CONS|LOG_NDELAY|LOG_PID, LOG_DAEMON);
+#endif
+  }
   _Log::mutex.unlock();
 }
 
