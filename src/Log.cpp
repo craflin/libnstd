@@ -102,11 +102,13 @@ public:
       }
     }
 
+#ifndef _WIN32
     if(_Log::device == Log::syslog)
     {
       syslog(mapLevelToSyslog(level), "%s", (const char*)data);
       return;
     }
+#endif
 
     // build line
     String line(data.length() + 200);
