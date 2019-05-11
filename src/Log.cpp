@@ -148,6 +148,16 @@ void Log::logf(int level, const tchar* format, ...)
   va_end(vl);
 }
 
+void Log::debugf(const tchar* format, ...)
+{
+  if(Log::debug < _Log::level)
+    return;
+  va_list vl;
+  va_start(vl, format);
+  _Log::vlogf(Log::debug, format, vl);
+  va_end(vl);
+}
+
 void Log::infof(const tchar* format, ...)
 {
   if(Log::info < _Log::level)

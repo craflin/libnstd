@@ -32,6 +32,7 @@ public:
   static void setLevel(int level);
 
   static void logf(int level, const tchar* format, ...);
+  static void debugf(const tchar* format, ...);
   static void infof(const tchar* format, ...);
   static void warningf(const tchar* format, ...);
   static void errorf(const tchar* format, ...);
