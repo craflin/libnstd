@@ -82,6 +82,11 @@ set(socket_sources
 add_library(libnstd STATIC
     ${sources} ${crypto_sources} ${document_sources} ${socket_sources}
 )
+if(NOT WIN32)
+    set_target_properties(libnstd PROPERTIES
+        PREFIX ""
+    )
+endif()
 
 target_include_directories(libnstd PUBLIC
     ../include
