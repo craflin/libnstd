@@ -1,6 +1,7 @@
 
 #include <nstd/Debug.h>
 #include <nstd/String.h>
+#include <nstd/List.h>
 
 #include <cctype>
 
@@ -32,7 +33,6 @@ void testString()
   ASSERT(String(_T("1234")).compare(_T("xxx"), 3) != 0);
   ASSERT(String(_T("123")).compare(_T("1234"), 3) == 0);
   ASSERT(String(_T("xxx")).compare(_T("1234"), 3) != 0);
-
 
   // test ignore case comparison
   ASSERT(String(_T("abc")).compareIgnoreCase(_T("ABC")) == 0);
@@ -168,4 +168,10 @@ void testString()
   ASSERT(String(_T(".")).toBool());
   ASSERT(String(_T("dasdas")).toBool());
   ASSERT(String(_T("true")).toBool());
+
+  // test join
+  {
+    String str;
+    ASSERT(str.join(List<String>(), '.') == String());
+  }
 }

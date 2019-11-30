@@ -397,13 +397,14 @@ usize String::split(List<String>& tokens, const tchar* separators, bool skipEmpt
 String& String::join(const List<String>& tokens, tchar separator)
 {
   clear();
-  for(List<String>::Iterator i = tokens.begin(), end = tokens.end();;)
-  {
-    append(*i);
-    if(++i == end)
-      break;
-    append(separator);
-  }
+  if(!tokens.isEmpty())
+    for(List<String>::Iterator i = tokens.begin(), end = tokens.end();;)
+    {
+      append(*i);
+      if(++i == end)
+        break;
+      append(separator);
+    }
   return *this;
 }
 
