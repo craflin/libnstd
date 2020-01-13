@@ -67,8 +67,19 @@ public:
       Memory::free(data);
   }
 
-  operator const tchar*() const {return data->str;}
-  operator const tchar*() {return data->str;}
+  operator const tchar*() const
+  {
+      if(data->str[data->len])
+          const_cast<String*>(this)->detach(data->len, data->len);
+      return data->str;
+  }
+
+  operator const tchar*()
+  {
+      if(data->str[data->len])
+          const_cast<String*>(this)->detach(data->len, data->len);
+      return data->str;
+  }
 
   operator tchar*()
   {
