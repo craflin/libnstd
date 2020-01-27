@@ -491,11 +491,11 @@ error:
     CloseHandle(hStdInWrite);
     hStdInWrite = INVALID_HANDLE_VALUE;
   }
-  if(si.hStdOutput != INVALID_HANDLE_VALUE)
+  if(streams & stdoutStream && si.hStdOutput != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdOutput);
-  if(si.hStdError != INVALID_HANDLE_VALUE)
+  if(streams & stderrStream && si.hStdError != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdError);
-  if(si.hStdInput != INVALID_HANDLE_VALUE)
+  if(streams & stdinStream && si.hStdInput != INVALID_HANDLE_VALUE)
     CloseHandle(si.hStdInput);
   SetLastError(err);
   return false;
