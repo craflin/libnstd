@@ -12,12 +12,19 @@ public:
 
   /**
   * Start an external process.
-  * @param  command The command to start the process. The first word in \c command should be the name of the executable or a path
-  *                 to the executable. Further words in \c command are considered to be arguments for the process.
+  * @param[in]  command The command to start the process. The first word in \c command should be the name of the executable or a path
+  *                     to the executable. Further words in \c command are considered to be arguments for the process.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
   uint32 start(const String& command);
 
+  /**
+  * Start an external process.
+  * @param[in]  executable  The path to the executable to be started.
+  * @param[in]  argc        The amount of parameters in \c argv.
+  * @param[in]  argv        Arguments to the process.
+  * @return The process id of the newly started process or \c 0 if an errors occurred.
+  */
   uint32 start(const String& executable, int argc, tchar* const argv[]);
 
   /**
@@ -39,6 +46,10 @@ public:
   */
   bool join(uint32& exitCode);
 
+  /**
+  * Wait for the process to terminate.
+  * @return Whether the process terminated properly.
+  */
   bool join();
 
   /**
@@ -57,6 +68,11 @@ public:
   bool open(const String& command, uint streams = stdoutStream);
 
   bool open(const String& executable, int argc, tchar* const argv[], uint streams = stdoutStream);
+
+  /*
+  * Closes the stdin pipe of an opened process.
+  */
+  void close();
 
   ssize read(void* buffer, usize length);
   ssize read(void* buffer, usize length, uint& streams);

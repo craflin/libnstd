@@ -643,6 +643,23 @@ error:
 #endif
 }
 
+void Process::close()
+{
+#ifdef _WIN32
+  if(hStdInWrite != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdInWrite);
+    hStdInWrite = INVALID_HANDLE_VALUE;
+  }
+#else
+  if(fdStdInWrite)
+  {
+    ::close(fdStdInWrite);
+    fdStdInWrite = 0;
+  }
+#endif
+}
+
 ssize Process::read(void* buffer, usize len)
 {
 #ifdef _WIN32
