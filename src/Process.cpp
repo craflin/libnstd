@@ -293,17 +293,17 @@ bool Process::kill()
     return false;
   if(fdStdOutRead)
   {
-    close(fdStdOutRead);
+    ::close(fdStdOutRead);
     fdStdOutRead = 0;
   }
   if(fdStdErrRead)
   {
-    close(fdStdErrRead);
+    ::close(fdStdErrRead);
     fdStdErrRead = 0;
   }
   if(fdStdInWrite)
   {
-    close(fdStdInWrite);
+    ::close(fdStdInWrite);
     fdStdInWrite = 0;
   }
   pid = 0;
@@ -361,17 +361,17 @@ bool Process::join(uint32& exitCode)
   exitCode = WEXITSTATUS(status);
   if(fdStdOutRead)
   {
-    close(fdStdOutRead);
+    ::close(fdStdOutRead);
     fdStdOutRead = 0;
   }
   if(fdStdErrRead)
   {
-    close(fdStdErrRead);
+    ::close(fdStdErrRead);
     fdStdErrRead = 0;
   }
   if(fdStdInWrite)
   {
-    close(fdStdInWrite);
+    ::close(fdStdInWrite);
     fdStdInWrite = 0;
   }
   pid = 0;
@@ -561,11 +561,11 @@ bool Process::open(const String& program, int argc, tchar* const argv[], uint st
       pid = r;
 
       if (stdoutFds[1])
-        close(stdoutFds[1]);
+        ::close(stdoutFds[1]);
       if (stderrFds[1])
-        close(stderrFds[1]);
+        ::close(stderrFds[1]);
       if (stdinFds[0])
-        close(stdinFds[0]);
+        ::close(stdinFds[0]);
 
       fdStdOutRead = stdoutFds[0];
       fdStdErrRead = stderrFds[0];
@@ -578,25 +578,25 @@ bool Process::open(const String& program, int argc, tchar* const argv[], uint st
       if (stdoutFds[1])
       {
         dup2(stdoutFds[1], STDOUT_FILENO);
-        close(stdoutFds[1]);
+        ::close(stdoutFds[1]);
       }
       if (stderrFds[1])
       {
         dup2(stderrFds[1], STDERR_FILENO);
-        close(stderrFds[1]);
+        ::close(stderrFds[1]);
       }
       if (stdinFds[0])
       {
         dup2(stdinFds[0], STDIN_FILENO);
-        close(stdinFds[0]);
+        ::close(stdinFds[0]);
       }
 
       if (stdoutFds[0])
-        close(stdoutFds[0]);
+        ::close(stdoutFds[0]);
       if (stderrFds[0])
-        close(stderrFds[0]);
+        ::close(stderrFds[0]);
       if (stdinFds[1])
-        close(stdinFds[1]);
+        ::close(stdinFds[1]);
 
       const char** args;
       if (argc && !argv[argc - 1])
@@ -625,18 +625,18 @@ error:
   int err = errno;
   if (stdoutFds[0])
   {
-    close(stdoutFds[0]);
-    close(stdoutFds[1]);
+    ::close(stdoutFds[0]);
+    ::close(stdoutFds[1]);
   }
   if (stderrFds[0])
   {
-    close(stderrFds[0]);
-    close(stderrFds[1]);
+    ::close(stderrFds[0]);
+    ::close(stderrFds[1]);
   }
   if (stdinFds[0])
   {
-    close(stdinFds[0]);
-    close(stdinFds[1]);
+    ::close(stdinFds[0]);
+    ::close(stdinFds[1]);
   }
   errno = err;
   return false;
@@ -998,7 +998,7 @@ bool Process::daemonize(const String& logFile)
     return false;
   VERIFY(dup2(fd, STDOUT_FILENO) != -1);
   VERIFY(dup2(fd, STDERR_FILENO) != -1);
-  close(fd);
+  ::close(fd);
 
   pid_t childPid = fork();
   if(childPid == -1)
