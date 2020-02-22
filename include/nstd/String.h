@@ -5,6 +5,7 @@
 #include <nstd/Memory.h>
 
 template<typename T> class List;
+template<typename T> class HashSet;
 
 class String
 {
@@ -370,6 +371,7 @@ public:
   String token(const tchar* separators, usize& start) const;
 
   usize split(List<String>& tokens, const tchar* separators, bool skipEmpty = true) const;
+  usize split(HashSet<String>& tokens, const tchar* separators, bool skipEmpty = true) const;
   String& join(const List<String>& tokens, tchar separator);
 
   String& trim(const tchar* chars = _T(" \t\r\n\v"));

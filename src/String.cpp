@@ -11,6 +11,7 @@
 #include <nstd/String.h>
 #include <nstd/Debug.h>
 #include <nstd/List.h>
+#include <nstd/HashSet.h>
 
 #ifndef _MSC_VER
 #define _tcschr strchr
@@ -359,6 +360,42 @@ String String::token(const tchar* separators, usize& start) const
 }
 
 usize String::split(List<String>& tokens, const tchar* separators, bool skipEmpty) const
+{
+  tokens.clear();
+
+  const tchar* start = data->str;
+  const tchar* p = start, * endStr;
+  for(;;)
+  {
+    endStr = _tcspbrk(p, separators);
+    if(endStr)
+    {
+      usize len = endStr - p;
+      if(len)
+      {
+        tokens.append(substr(p - start, len));
+        p = endStr + 1;
+      }
+      else
+      {
+        if(!skipEmpty)
+          tokens.append(String());
+        ++p;
+      }
+    }
+    else
+    {
+      if(p < start + data->len)
+        tokens.append(substr(p - start));
+      else if(!skipEmpty)
+        tokens.append(String());
+      break;
+    }
+  }
+  return tokens.size();
+}
+
+usize String::split(HashSet<String>& tokens, const tchar* separators, bool skipEmpty) const
 {
   tokens.clear();
 
