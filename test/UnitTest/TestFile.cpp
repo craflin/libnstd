@@ -142,6 +142,8 @@ void testFile()
     ASSERT(File::simplifyPath(_T("dsadsad/.././2dsads")) == _T("2dsads"));
     ASSERT(File::simplifyPath(_T("/dsadsad/../2dsads")) == _T("/2dsads"));
     ASSERT(File::simplifyPath(_T("/../../aaa/2dsads")) == _T("/../../aaa/2dsads"));
+    ASSERT(File::simplifyPath(_T("/dsadsad/../2dsads/")) == _T("/2dsads"));
+    ASSERT(File::simplifyPath(_T("dsadsad\\")) == _T("dsadsad"));
 
     ASSERT(File::isAbsolutePath(_T("/aaa/2dsads")));
     ASSERT(File::isAbsolutePath(_T("\\aaa\\2dsads")));
