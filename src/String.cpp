@@ -466,3 +466,18 @@ String& String::trim(const tchar* chars)
   }
   return *this;
 }
+
+String String::fromHex(const byte* data, usize size)
+{
+  String result;
+  result.resize(size * 2);
+  tchar* dest = result;
+  static const tchar* hex = _T("0123456789ABCDEF");
+  for(const byte* src =  data, * end = data + size; src < end; ++src)
+  {
+    dest[0] = hex[*src >> 4];
+    dest[1] = hex[*src & 0xf];
+    dest += 2;
+  }
+  return result;
+}

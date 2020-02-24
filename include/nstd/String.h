@@ -475,6 +475,7 @@ public:
   static String fromCString(const tchar* str) {return String(str, length(str));}
   static String fromCString(const tchar* str, usize len) {return String(str, len);}
   static String fromPrintf(const tchar* format, ...);
+  static String fromHex(const byte* data, usize size);
 
   static bool startsWith(const tchar* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
 
