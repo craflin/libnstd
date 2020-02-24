@@ -82,8 +82,9 @@ public:
 
   static void exit(uint32 exitCode);
 
-  static String getEnvironmentVariable(const String& name);
+  static String getEnvironmentVariable(const String& name, const String& defaultValue = String());
   static bool setEnvironmentVariable(const String& name, const String& value);
+  static String getExecutablePath();
 
   static Process* wait(Process** processes, usize count);
   static void interrupt();

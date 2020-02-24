@@ -24,6 +24,7 @@
 #include <nstd/File.h>
 #endif
 #include <nstd/Process.h>
+#include <nstd/Buffer.h>
 
 class Process::Private
 {
@@ -821,7 +822,7 @@ ssize Process::write(const void* buffer, usize len)
 #endif
 }
 
-String Process::getEnvironmentVariable(const String& name)
+String Process::getEnvironmentVariable(const String& name, const String& defaultValue)
 {
 #ifdef _MSC_VER
   String buffer;
@@ -836,14 +837,18 @@ String Process::getEnvironmentVariable(const String& name)
       continue;
     }
     if(!dw)
+    {
+      if (GetLastError() ==  ERROR_ENVVAR_NOT_FOUND)
+        return defaultValue;
       return String();
+    }
     buffer.resize(dw);
     return buffer;
   }
 #else
   const tchar* var = getenv((const tchar*)name);
   if(!var)
-    return String();
+    return defaultValue;
   return String(var, String::length(var));
 #endif
 }
@@ -1181,5 +1186,32 @@ void Process::interrupt()
       ProcessFramework::signaled = -1;
     }
   VERIFY(pthread_mutex_unlock(&ProcessFramework::mutex) == 0);
+#endif
+}
+
+
+String Process::getExecutablePath()
+{
+#ifdef _WIN32
+  TCHAR path[MAX_PATH + 1];
+  DWORD len = GetModuleFileName(NULL, path, sizeof(path) / sizeof(*path));
+  if (len != sizeof(path) / sizeof(*path))
+    return String::fromCString(path, len);
+  Buffer buffer;
+  buffer.resize((MAX_PATH << 1) * sizeof(TCHAR));
+  for (;;)
+  {
+    DWORD len = GetModuleFileName(NULL, (TCHAR*)(byte*)buffer, buffer.size());
+    if (len != buffer.size() / sizeof(TCHAR))
+      return String::fromCString(path, len);
+    buffer.resize(buffer.size() << 1);
+  }
+#else
+  char procFilePath[32];
+  sprintf(procFilePath, "/proc/%d/exe", getpid());
+  char path[PATH_MAX + 1];
+  if (readlink(procFilePath, path, sizeof(path)) == -1)
+    return String();
+  return path;
 #endif
 }
