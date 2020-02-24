@@ -8,6 +8,7 @@
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <Shlobj.h>
 #ifdef _MSC_VER
 #include <tchar.h>
 #else
@@ -421,7 +422,7 @@ bool Directory::change(const String& dir)
 #endif
 }
 
-String Directory::getCurrent()
+String Directory::getCurrentDirectory()
 {
 #ifdef _WIN32
   String result;
@@ -462,7 +463,7 @@ String Directory::getCurrent()
 #endif
 }
 
-String Directory::getTemp()
+String Directory::getTempDirectory()
 {
 #ifdef _WIN32
   TCHAR buffer[MAX_PATH + 2];
@@ -474,5 +475,20 @@ String Directory::getTemp()
   return String(buffer, len);
 #else
   return String("/tmp");
+#endif
+}
+
+String Directory::getHomeDirectory()
+{
+#ifdef _WIN32
+    char path[MAX_PATH];
+    if (!SHGetSpecialFolderPath(NULL, path, CSIDL_PROFILE, FALSE))
+        return String();
+    return String::fromCString(path);
+#else
+    const struct passwd* pw = getpwuid(geteuid());
+    if (!pw)
+        return String();
+    return String:fromCString(pw->pw_dir);
 #endif
 }

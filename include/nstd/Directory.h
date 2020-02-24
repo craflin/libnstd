@@ -83,13 +83,19 @@ public:
   * Get current working directory.
   * @return The absolute path of the current working directory.
   */
-  static String getCurrent();
+  static String getCurrentDirectory();
 
   /**
   * Get directory for temporary data.
-  * @return The absolute path of the temp directory.
+  * @return The absolute path to the temp directory.
   */
-  static String getTemp();
+  static String getTempDirectory();
+
+  /**
+  * Get the home directory of the current user.
+  * @return The absolute path to the home directory.
+  */
+  static String getHomeDirectory();
 
 private:
   bool dirsOnly;

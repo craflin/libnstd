@@ -524,7 +524,7 @@ String File::getAbsolutePath(const String& path)
 {
   if(isAbsolutePath(path))
     return path;
-  String result = Directory::getCurrent();
+  String result = Directory::getCurrentDirectory();
   result.reserve(result.length() + 1 + path.length());
   result.append('/');
   result.append(path);
