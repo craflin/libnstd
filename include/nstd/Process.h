@@ -69,6 +69,8 @@ public:
 
   bool open(const String& executable, int argc, tchar* const argv[], uint streams = stdoutStream);
 
+  bool open(const String& executable, const List<String>& args, uint streams = stdoutStream);
+
   /*
   * Closes the stdin pipe of an opened process.
   */

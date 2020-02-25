@@ -25,6 +25,7 @@
 #endif
 #include <nstd/Process.h>
 #include <nstd/Buffer.h>
+#include <nstd/Array.h>
 
 class Process::Private
 {
@@ -521,10 +522,10 @@ error:
 #endif
 }
 
-bool Process::open(const String& program, int argc, tchar* const argv[], uint streams)
+bool Process::open(const String& executable, int argc, tchar* const argv[], uint streams)
 {
 #ifdef _WIN32
-  return open(Private::getCommandLine(program, argc, argv), streams);
+  return open(Private::getCommandLine(executable, argc, argv), streams);
 #else
   if (pid)
   {
@@ -610,12 +611,12 @@ bool Process::open(const String& program, int argc, tchar* const argv[], uint st
         args[argc] = 0;
         for (int i = 1; i < argc; ++i)
           args[i] = argv[i];
-        args[0] = program;
+        args[0] = executable;
       }
 
-      if (execvp(program, (char* const*)args) == -1)
+      if (execvp(executable, (char* const*)args) == -1)
       {
-        fprintf(stderr, "%s: %s\n", (const char*)program, strerror(errno));
+        fprintf(stderr, "%s: %s\n", (const char*)executable, strerror(errno));
         _exit(EXIT_FAILURE);
       }
       ASSERT(false); // unreachable
@@ -642,6 +643,14 @@ error:
   errno = err;
   return false;
 #endif
+}
+
+bool Process::open(const String& executable, const List<String>& args, uint streams)
+{
+  Array<const tchar*> argv(args.size());
+  for (List<String>::Iterator i = args.begin(), end = args.end(); i != end; ++i)
+    argv.append((const tchar*)*i);
+  return open(executable, args.size(), (tchar**)(const tchar**)argv, streams);
 }
 
 void Process::close()
