@@ -16,6 +16,7 @@
 #include <cstdlib> // setenv
 #include <fcntl.h>
 #include <pthread.h>
+#include <dirent.h>
 #endif
 
 #include <nstd/Debug.h>

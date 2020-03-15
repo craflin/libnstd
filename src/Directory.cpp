@@ -20,6 +20,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #include <fnmatch.h>
+#include <pwd.h>
 #include <cerrno>
 #endif
 
@@ -489,6 +490,6 @@ String Directory::getHomeDirectory()
     const struct passwd* pw = getpwuid(geteuid());
     if (!pw)
         return String();
-    return String:fromCString(pw->pw_dir);
+    return String::fromCString(pw->pw_dir);
 #endif
 }
