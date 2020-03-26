@@ -202,16 +202,16 @@ void testDirectory()
   
   // test getCurrentDir and change
   {
-    String currentDir = Directory::getCurrent();
+    String currentDir = Directory::getCurrentDirectory();
     ASSERT(!currentDir.isEmpty());
     ASSERT(Directory::change(_T("testDir")));
 #ifdef _WIN32
-    ASSERT(Directory::getCurrent() == currentDir + _T("\\testDir"));
+    ASSERT(Directory::getCurrentDirectory() == currentDir + _T("\\testDir"));
 #else
-    ASSERT(Directory::getCurrent() == currentDir + _T("/testDir"));
+    ASSERT(Directory::getCurrentDirectory() == currentDir + _T("/testDir"));
 #endif
     ASSERT(Directory::change(_T("..")));
-    ASSERT(Directory::getCurrent() == currentDir);
+    ASSERT(Directory::getCurrentDirectory() == currentDir);
   }
 
   // delete test files
@@ -240,7 +240,7 @@ void testDirectory()
 
   // test get temp
   {
-    String temp = Directory::getTemp();
+    String temp = Directory::getTempDirectory();
     ASSERT(Directory::exists(temp));
   }
 }
