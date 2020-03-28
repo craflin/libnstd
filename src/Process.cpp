@@ -1220,8 +1220,9 @@ String Process::getExecutablePath()
   char procFilePath[32];
   sprintf(procFilePath, "/proc/%d/exe", getpid());
   char path[PATH_MAX + 1];
-  if (readlink(procFilePath, path, sizeof(path)) == -1)
+  ssize_t len = readlink(procFilePath, path, sizeof(path));
+  if (len == -1)
     return String();
-  return path;
+  return String::fromCString(path, len);
 #endif
 }
