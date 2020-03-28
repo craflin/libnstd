@@ -60,63 +60,37 @@ set(sources
     ../include/nstd/Variant.h
 )
 
-set(crypto_sources
-    Crypto/Sha256.cpp
-    ../include/nstd/Crypto/Sha256.h
+add_library(nstd STATIC
+    ${sources}
 )
+add_library(libnstd::Core ALIAS nstd)
 
-set(document_sources
-    Document/JSON.cpp
-    Document/XML.cpp
-    ../include/nstd/Document/JSON.h
-    ../include/nstd/Document/XML.h
-)
-
-set(socket_sources
-    Socket/Server.cpp
-    Socket/Socket.cpp
-    ../include/nstd/Socket/Server.h
-    ../include/nstd/Socket/Socket.h
-)
-
-add_library(libnstd STATIC
-    ${sources} ${crypto_sources} ${document_sources} ${socket_sources}
-)
-if(NOT WIN32)
-    set_target_properties(libnstd PROPERTIES
-        PREFIX ""
-    )
-endif()
-
-target_include_directories(libnstd PUBLIC
+target_include_directories(nstd PUBLIC
     ../include
 )
-target_link_libraries(libnstd PUBLIC
+target_link_libraries(nstd PUBLIC
     Threads::Threads
 )
 if(MSVC)
-    target_compile_definitions(libnstd PRIVATE
+    target_compile_definitions(nstd PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
-    target_link_libraries(libnstd PUBLIC
+    target_link_libraries(nstd PUBLIC
         ntdll
     )
 endif()
 if(WIN32)
-    target_compile_definitions(libnstd PRIVATE
+    target_compile_definitions(nstd PRIVATE
         _WIN32_WINNT=0x0600
     )
-    target_link_libraries(libnstd PUBLIC
-        ws2_32
-    )
 else()
-    target_link_libraries(libnstd PUBLIC
+    target_link_libraries(nstd PUBLIC
         rt
     )
 endif()
 
 source_group("" FILES ${sources})
-source_group("Crypto" FILES ${crypto_sources})
-source_group("Document" FILES ${document_sources})
-source_group("Socket" FILES ${socket_sources})
 
+add_subdirectory(Crypto)
+add_subdirectory(Document)
+add_subdirectory(Socket)

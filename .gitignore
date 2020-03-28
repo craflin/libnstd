@@ -13,6 +13,5 @@ build/
 *.mk
 *.project
 *.workspace
-*.txt
 Makefile
 
