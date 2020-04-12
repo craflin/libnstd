@@ -16,3 +16,4 @@ target_link_libraries(nstdDocument PUBLIC
 )
 
 source_group("" FILES ${sources})
+set_property(TARGET nstdDocument PROPERTY FOLDER "src")

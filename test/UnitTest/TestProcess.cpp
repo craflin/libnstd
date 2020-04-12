@@ -20,7 +20,7 @@ void testProcess()
     ASSERT(process.join(exitCode));
     ASSERT(!process.isRunning());
 #ifdef _WIN32
-    ASSERT(exitCode == 2);
+    ASSERT(exitCode == 2 || exitCode == 255);
 #else
     ASSERT(exitCode == 0);
 #endif

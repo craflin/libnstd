@@ -22,3 +22,4 @@ if(WIN32)
 endif()
 
 source_group("" FILES ${sources})
+set_property(TARGET nstdSocket PROPERTY FOLDER "src")

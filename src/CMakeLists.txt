@@ -75,9 +75,6 @@ if(MSVC)
     target_compile_definitions(nstd PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
-    target_link_libraries(nstd PUBLIC
-        ntdll
-    )
 endif()
 if(WIN32)
     target_compile_definitions(nstd PRIVATE
@@ -89,6 +86,7 @@ else()
     )
 endif()
 
+set_property(TARGET nstd PROPERTY FOLDER "src")
 source_group("" FILES ${sources})
 
 add_subdirectory(Crypto)

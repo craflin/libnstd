@@ -14,3 +14,4 @@ target_link_libraries(nstdCrypto PUBLIC
 )
 
 source_group("" FILES ${sources})
+set_property(TARGET nstdCrypto PROPERTY FOLDER "src")
