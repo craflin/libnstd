@@ -2,9 +2,9 @@
 #include <nstd/Buffer.h>
 #include <nstd/Unicode.h>
 #include <nstd/Error.h>
-#include <nstd/Document/JSON.h>
+#include <nstd/Document/Json.h>
 
-class JSON::Private
+class Json::Private
 {
 public:
   class Position
@@ -49,11 +49,11 @@ public:
   static void appendVariant(const Variant& data, const String& indentation, String& result);
 };
 
-class JSON::Parser::Private : public JSON::Private
+class Json::Parser::Private : public Json::Private
 {
 };
 
-bool JSON::Private::readToken()
+bool Json::Private::readToken()
 {
   skipSpace();
   token.token = *pos.pos;
@@ -255,7 +255,7 @@ bool JSON::Private::readToken()
 }
 
 
-void JSON::Private::skipSpace()
+void Json::Private::skipSpace()
 {
   for(tchar c;;)
     switch((c = *pos.pos))
@@ -277,7 +277,7 @@ void JSON::Private::skipSpace()
     }
 }
 
-void JSON::Private::syntaxError(const Position& pos, const String& error)
+void Json::Private::syntaxError(const Position& pos, const String& error)
 {
   int column = 1;
   for(const tchar* p = pos.pos; p > start;)
@@ -292,7 +292,7 @@ void JSON::Private::syntaxError(const Position& pos, const String& error)
   errorString = error;
 }
 
-bool JSON::Private::parseObject(Variant& result)
+bool Json::Private::parseObject(Variant& result)
 {
   if(token.token != '{')
     return syntaxError(pos, _T("Expected '{'")), false;
@@ -325,7 +325,7 @@ bool JSON::Private::parseObject(Variant& result)
   return true;
 }
 
-bool JSON::Private::parseArray(Variant& result)
+bool Json::Private::parseArray(Variant& result)
 {
   if(token.token != '[')
     return syntaxError(pos, _T("Expected '['")), false;
@@ -348,7 +348,7 @@ bool JSON::Private::parseArray(Variant& result)
   return true;
 }
 
-bool JSON::Private::parseValue(Variant& result)
+bool Json::Private::parseValue(Variant& result)
 {
   switch(token.token)
   {
@@ -372,7 +372,7 @@ bool JSON::Private::parseValue(Variant& result)
 }
 
 
-void JSON::Private::appendEscapedString(const String& str, String& result)
+void Json::Private::appendEscapedString(const String& str, String& result)
 {
   usize strLen = str.length();
   result.reserve(result.length() + 2 + strLen * 2);
@@ -401,7 +401,7 @@ void JSON::Private::appendEscapedString(const String& str, String& result)
   result += '"';
 }
 
-void JSON::Private::appendVariant(const Variant& data, const String& indentation, String& result)
+void Json::Private::appendVariant(const Variant& data, const String& indentation, String& result)
 {
   switch(data.getType())
   {
@@ -493,7 +493,7 @@ void JSON::Private::appendVariant(const Variant& data, const String& indentation
   }
 }
 
-bool JSON::Private::parse(const tchar* data, Variant& result)
+bool Json::Private::parse(const tchar* data, Variant& result)
 {
   start = data;
   pos.line = 1;
@@ -506,7 +506,7 @@ bool JSON::Private::parse(const tchar* data, Variant& result)
   return true;
 }
 
-bool JSON::parse(const tchar* data, Variant& result)
+bool Json::parse(const tchar* data, Variant& result)
 {
   Private parser;
   if(parser.parse(data, result))
@@ -515,12 +515,12 @@ bool JSON::parse(const tchar* data, Variant& result)
   return false;
 }
 
-bool JSON::parse(const String& data, Variant& result)
+bool Json::parse(const String& data, Variant& result)
 {
   return parse((const tchar*)data, result);
 }
 
-String JSON::toString(const Variant& data)
+String Json::toString(const Variant& data)
 {
   String result;
   Private::appendVariant(data, String(), result);
@@ -528,10 +528,10 @@ String JSON::toString(const Variant& data)
   return result;
 }
 
-JSON::Parser::Parser() : p(new Private) {}
-JSON::Parser::~Parser() {delete p;}
-int JSON::Parser::getErrorLine() const {return p->errorLine;}
-int JSON::Parser::getErrorColumn() const {return p->errorColumn;}
-String JSON::Parser::getErrorString() const {return p->errorString;}
-bool JSON::Parser::parse(const tchar* data, Variant& result) {return p->parse(data, result);}
-bool JSON::Parser::parse(const String& data, Variant& result) {return p->parse(data, result);}
+Json::Parser::Parser() : p(new Private) {}
+Json::Parser::~Parser() {delete p;}
+int Json::Parser::getErrorLine() const {return p->errorLine;}
+int Json::Parser::getErrorColumn() const {return p->errorColumn;}
+String Json::Parser::getErrorString() const {return p->errorString;}
+bool Json::Parser::parse(const tchar* data, Variant& result) {return p->parse(data, result);}
+bool Json::Parser::parse(const String& data, Variant& result) {return p->parse(data, result);}

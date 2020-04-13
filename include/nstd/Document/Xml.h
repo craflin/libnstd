@@ -5,7 +5,7 @@
 #include <nstd/HashMap.h>
 #include <nstd/List.h>
 
-class XML
+class Xml
 {
 public:
   class Element;

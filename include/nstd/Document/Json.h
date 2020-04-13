@@ -3,7 +3,7 @@
 
 #include <nstd/Variant.h>
 
-class JSON
+class Json
 {
 public:
   class Parser

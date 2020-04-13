@@ -1,11 +1,11 @@
 
 #include <nstd/Debug.h>
-#include <nstd/Document/JSON.h>
+#include <nstd/Document/Json.h>
 #include <nstd/Unicode.h>
 
-void testJSON()
+void testJson()
 {
-  JSON::Parser parser;
+  Json::Parser parser;
   Variant data;
   String input(_T("{\n")
 _T("  \"title\": \"Example Schema\",\n")

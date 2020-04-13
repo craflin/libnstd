@@ -3,9 +3,9 @@
 #include <nstd/File.h>
 #include <nstd/Document/XML.h>
 
-XML::Variant::NullData XML::Variant::nullData;
+Xml::Variant::NullData Xml::Variant::nullData;
 
-class XML::Private
+class Xml::Private
 {
 public:
   class Position
@@ -66,14 +66,14 @@ public:
   static const tchar* escapeChars;
 };
 
-class XML::Parser::Private : public XML::Private
+class Xml::Parser::Private : public Xml::Private
 {
 };
 
-const tchar* XML::Private::escapeChars = _T("'\"&<>");
-String XML::Private::escapeStrings[5] = {String(_T("apos")), String(_T("quot")), String(_T("amp")), String(_T("lt")), String(_T("gt"))};
+const tchar* Xml::Private::escapeChars = _T("'\"&<>");
+String Xml::Private::escapeStrings[5] = {String(_T("apos")), String(_T("quot")), String(_T("amp")), String(_T("lt")), String(_T("gt"))};
 
-bool XML::Private::readToken()
+bool Xml::Private::readToken()
 {
   skipSpace();
   token.pos = pos;
@@ -140,7 +140,7 @@ bool XML::Private::readToken()
   }
 }
 
-void XML::Private::skipSpace()
+void Xml::Private::skipSpace()
 {
   for(tchar c;;)
     switch((c = *pos.pos))
@@ -203,14 +203,14 @@ void XML::Private::skipSpace()
     }
 }
 
-void XML::Private::syntaxError(const Position& pos, const String& error)
+void Xml::Private::syntaxError(const Position& pos, const String& error)
 {
   errorLine = pos.line;
   errorColumn = (int)(pos.pos - pos.lineStart) + 1;
   errorString = error;
 }
 
-String XML::Private::unescapeString(const String& str)
+String Xml::Private::unescapeString(const String& str)
 {
   String result(str.length());
   tchar* destStart = result;
@@ -244,7 +244,7 @@ String XML::Private::unescapeString(const String& str)
   return result;
 }
 
-String XML::Private::escapeString(const String& str)
+String Xml::Private::escapeString(const String& str)
 {
   String result(str.length() + 200);
   tchar* destStart = result;
@@ -279,7 +279,7 @@ String XML::Private::escapeString(const String& str)
   return result;
 }
 
-bool XML::Private::parse(const tchar* data, Element& element)
+bool Xml::Private::parse(const tchar* data, Element& element)
 {
   pos.line = 1;
   pos.pos = pos.lineStart = data;
@@ -309,7 +309,7 @@ bool XML::Private::parse(const tchar* data, Element& element)
   return parseElement(element);
 }
 
-bool XML::Private::parseElement(Element& element)
+bool Xml::Private::parseElement(Element& element)
 {
   element.line = token.pos.line;
   element.column = (int)(token.pos.pos - token.pos.lineStart) + 1;
@@ -376,7 +376,7 @@ bool XML::Private::parseElement(Element& element)
   return true;
 }
 
-bool XML::Private::parseText(String& text)
+bool Xml::Private::parseText(String& text)
 {
   const tchar* start = pos.pos;
   for(;;)
@@ -412,16 +412,16 @@ bool XML::Private::parseText(String& text)
   }
 }
 
-XML::Parser::Parser() : p(new Private) {}
-XML::Parser::~Parser() {delete p;}
+Xml::Parser::Parser() : p(new Private) {}
+Xml::Parser::~Parser() {delete p;}
 
-int XML::Parser::getErrorLine() const {return p->errorLine;}
-int XML::Parser::getErrorColumn() const {return p->errorColumn;}
-String XML::Parser::getErrorString() const {return p->errorString;}
+int Xml::Parser::getErrorLine() const {return p->errorLine;}
+int Xml::Parser::getErrorColumn() const {return p->errorColumn;}
+String Xml::Parser::getErrorString() const {return p->errorString;}
 
-bool XML::Parser::parse(const String& data, Element& element) {return p->parse(data, element);}
+bool Xml::Parser::parse(const String& data, Element& element) {return p->parse(data, element);}
 
-bool XML::Parser::load(const String& filePath, Element& element)
+bool Xml::Parser::load(const String& filePath, Element& element)
 {
   File file;
   if(!file.open(filePath))
@@ -432,7 +432,7 @@ bool XML::Parser::load(const String& filePath, Element& element)
   return p->parse(data, element);
 }
 
-bool XML::parse(const tchar* data, Element& element)
+bool Xml::parse(const tchar* data, Element& element)
 {
   Private parser;
   if(parser.parse(data, element))
@@ -441,12 +441,12 @@ bool XML::parse(const tchar* data, Element& element)
   return false;
 }
 
-bool XML::parse(const String& data, Element& element)
+bool Xml::parse(const String& data, Element& element)
 {
   return parse((const tchar*)data, element);
 }
 
-bool XML::load(const String& filePath, Element& element)
+bool Xml::load(const String& filePath, Element& element)
 {
   File file;
   if(!file.open(filePath))
@@ -457,7 +457,7 @@ bool XML::load(const String& filePath, Element& element)
   return parse(data, element);
 }
 
-bool XML::save(const Element& element, const String& filePath)
+bool Xml::save(const Element& element, const String& filePath)
 {
   File file;
   if(!file.open(filePath, File::writeFlag))
@@ -465,14 +465,14 @@ bool XML::save(const Element& element, const String& filePath)
   return file.write(toString(element));
 }
 
-String XML::toString(const Element& element)
+String Xml::toString(const Element& element)
 {
   String result(_T("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
   result += element.toString();
   return result;
 }
 
-String XML::Element::toString() const
+String Xml::Element::toString() const
 {
   String result(type.length() + 200);
   result.append('<');
@@ -482,7 +482,7 @@ String XML::Element::toString() const
     result.append(' ');
     result.append(i.key());
     result.append(_T("=\""));
-    result.append(XML::Private::escapeString(*i));
+    result.append(Xml::Private::escapeString(*i));
     result.append('"');
   }
   if(content.isEmpty())
@@ -499,7 +499,7 @@ String XML::Element::toString() const
         result.append(variant.toElement().toString());
         break;
       case Variant::textType:
-        result.append(XML::Private::escapeString(variant.toString()));
+        result.append(Xml::Private::escapeString(variant.toString()));
         break;
       default: ;
       }
