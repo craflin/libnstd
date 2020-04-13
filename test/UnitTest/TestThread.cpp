@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Thread.h>
-#include <nstd/Atomic.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Atomic.hpp>
 
 void testThread()
 {

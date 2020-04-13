@@ -2,8 +2,8 @@
 set(sources
     Server.cpp
     Socket.cpp
-    ../../include/nstd/Socket/Server.h
-    ../../include/nstd/Socket/Socket.h
+    ../../include/nstd/Socket/Server.hpp
+    ../../include/nstd/Socket/Socket.hpp
 )
 
 add_library(nstdSocket STATIC

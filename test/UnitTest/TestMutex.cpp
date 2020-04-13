@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Mutex.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Mutex.hpp>
 
 void testMutex()
 {

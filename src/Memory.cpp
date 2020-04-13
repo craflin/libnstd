@@ -17,13 +17,13 @@
 #endif
 #endif
 
-#include <nstd/Memory.h>
-#include <nstd/Debug.h>
+#include <nstd/Memory.hpp>
+#include <nstd/Debug.hpp>
 
 #ifndef NDEBUG
-#include <nstd/HashMap.h>
-#include <nstd/String.h>
-#include <nstd/MultiMap.h>
+#include <nstd/HashMap.hpp>
+#include <nstd/String.hpp>
+#include <nstd/MultiMap.hpp>
 #endif
 
 class Memory::Private

@@ -1,9 +1,9 @@
 
-#include <nstd/Debug.h>
-#include <nstd/File.h>
-#include <nstd/Time.h>
+#include <nstd/Debug.hpp>
+#include <nstd/File.hpp>
+#include <nstd/Time.hpp>
 
-#include <nstd/Error.h>
+#include <nstd/Error.hpp>
 
 
 void testFile()

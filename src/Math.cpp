@@ -2,7 +2,7 @@
 #include <cstdlib>
 #include <cmath>
 
-#include <nstd/Math.h>
+#include <nstd/Math.hpp>
 
 uint Math::random() {return rand();}
 uint Math::random(uint seed) {return srand(seed), rand();}

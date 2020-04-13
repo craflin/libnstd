@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Unicode.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Unicode.hpp>
 
 void testUnicode()
 {

@@ -1,8 +1,8 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Map.h>
-#include <nstd/String.h>
-#include <nstd/Math.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Map.hpp>
+#include <nstd/String.hpp>
+#include <nstd/Math.hpp>
 
 void testMap()
 {

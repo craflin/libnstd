@@ -14,9 +14,9 @@
 #include <sys/sendfile.h>
 #endif
 
-#include <nstd/File.h>
-#include <nstd/Debug.h>
-#include <nstd/Directory.h>
+#include <nstd/File.hpp>
+#include <nstd/Debug.hpp>
+#include <nstd/Directory.hpp>
 
 File::File()
 {

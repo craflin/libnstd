@@ -1,7 +1,7 @@
 
 set(sources
     Sha256.cpp
-    ../../include/nstd/Crypto/Sha256.h
+    ../../include/nstd/Crypto/Sha256.hpp
 )
 
 add_library(nstdCrypto STATIC

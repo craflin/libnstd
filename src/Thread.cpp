@@ -8,8 +8,8 @@
 #include <sys/syscall.h>
 #endif
 
-#include <nstd/Debug.h>
-#include <nstd/Thread.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Thread.hpp>
 
 Thread::Thread() : thread(0)//, threadId(0)
 {

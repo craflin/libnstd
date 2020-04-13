@@ -14,8 +14,8 @@
 #include <unistd.h> // usleep
 #endif
 
-#include <nstd/Semaphore.h>
-#include <nstd/Debug.h>
+#include <nstd/Semaphore.hpp>
+#include <nstd/Debug.hpp>
 
 Semaphore::Semaphore(uint value)
 {

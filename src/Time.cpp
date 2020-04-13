@@ -6,9 +6,9 @@
 #include <Windows.h>
 #endif
 
-#include <nstd/Time.h>
+#include <nstd/Time.hpp>
 #ifdef _WIN32
-#include <nstd/Debug.h>
+#include <nstd/Debug.hpp>
 #endif
 
 class Time::Private

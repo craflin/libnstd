@@ -1,10 +1,10 @@
 
-#include <nstd/Console.h>
-#include <nstd/Process.h>
+#include <nstd/Console.hpp>
+#include <nstd/Process.hpp>
 
-#include <nstd/Thread.h>
-#include <nstd/Signal.h>
-#include <nstd/Log.h>
+#include <nstd/Thread.hpp>
+#include <nstd/Signal.hpp>
+#include <nstd/Log.hpp>
 
 uint threadProc(void* param)
 {

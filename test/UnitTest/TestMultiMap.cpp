@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/MultiMap.h>
+#include <nstd/Debug.hpp>
+#include <nstd/MultiMap.hpp>
 
 void testMultiMap()
 {

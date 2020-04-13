@@ -25,14 +25,14 @@
 #include <errno.h>
 #endif
 
-#include <nstd/Debug.h>
-#include <nstd/Console.h>
-#include <nstd/Array.h>
-#include <nstd/List.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Console.hpp>
+#include <nstd/Array.hpp>
+#include <nstd/List.hpp>
 #ifndef _MSC_VER
-#include <nstd/Buffer.h>
-#include <nstd/Unicode.h>
-#include <nstd/Process.h>
+#include <nstd/Buffer.hpp>
+#include <nstd/Unicode.hpp>
+#include <nstd/Process.hpp>
 #endif
 
 int Console::print(const tchar* str)

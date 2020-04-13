@@ -1,5 +1,5 @@
 
-#include <nstd/Map.h>
+#include <nstd/Map.hpp>
 #include <cstdlib>
 
 void testMapNStd(int iterations)

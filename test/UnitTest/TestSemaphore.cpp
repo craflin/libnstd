@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Semaphore.h>
-#include <nstd/Time.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Semaphore.hpp>
+#include <nstd/Time.hpp>
 
 void testSempahore()
 {

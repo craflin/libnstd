@@ -1,7 +1,7 @@
 
-#include <nstd/Callback.h>
-#include <nstd/String.h>
-#include <nstd/Debug.h>
+#include <nstd/Callback.hpp>
+#include <nstd/String.hpp>
+#include <nstd/Debug.hpp>
 
 void testCallback()
 {

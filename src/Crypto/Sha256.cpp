@@ -23,7 +23,7 @@ typedef unsigned char Byte;
 typedef unsigned long long UInt64;
 #define CSha256 Sha256
 
-#include <nstd/Crypto/Sha256.h>
+#include <nstd/Crypto/Sha256.hpp>
 
 /* define it for speed optimization */
 /* #define _SHA256_UNROLL */

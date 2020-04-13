@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/PoolList.h>
+#include <nstd/Debug.hpp>
+#include <nstd/PoolList.hpp>
 
 struct TestObject
 {

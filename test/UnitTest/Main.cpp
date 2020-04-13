@@ -1,18 +1,18 @@
 
-#include <nstd/Console.h>
-#include <nstd/Memory.h>
-#include <nstd/Debug.h>
-#include <nstd/Mutex.h>
-#include <nstd/String.h>
-#include <nstd/HashSet.h>
-#include <nstd/List.h>
-#include <nstd/HashMap.h>
-#include <nstd/Array.h>
-#include <nstd/Thread.h>
-#include <nstd/Time.h>
-#include <nstd/Error.h>
-#include <nstd/Variant.h>
-#include <nstd/Math.h>
+#include <nstd/Console.hpp>
+#include <nstd/Memory.hpp>
+#include <nstd/Debug.hpp>
+#include <nstd/Mutex.hpp>
+#include <nstd/String.hpp>
+#include <nstd/HashSet.hpp>
+#include <nstd/List.hpp>
+#include <nstd/HashMap.hpp>
+#include <nstd/Array.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Time.hpp>
+#include <nstd/Error.hpp>
+#include <nstd/Variant.hpp>
+#include <nstd/Math.hpp>
 
 void testAtomic();
 void testConsole();

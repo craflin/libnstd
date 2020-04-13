@@ -1,7 +1,7 @@
 
-#include <nstd/String.h>
-#include <nstd/Debug.h>
-#include <nstd/Time.h>
+#include <nstd/String.hpp>
+#include <nstd/Debug.hpp>
+#include <nstd/Time.hpp>
 
 void testTime()
 {

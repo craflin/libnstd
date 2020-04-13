@@ -11,9 +11,9 @@
 #include <sys/syscall.h>
 #endif
 
-#include <nstd/Error.h>
-#include <nstd/Map.h>
-#include <nstd/Debug.h>
+#include <nstd/Error.hpp>
+#include <nstd/Map.hpp>
+#include <nstd/Debug.hpp>
 
 class Error::Private
 {

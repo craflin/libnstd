@@ -9,10 +9,10 @@
 #include <dlfcn.h>
 #endif
 
-#include <nstd/Library.h>
-#include <nstd/Debug.h>
+#include <nstd/Library.hpp>
+#include <nstd/Debug.hpp>
 #ifndef _WIN32
-#include <nstd/Error.h>
+#include <nstd/Error.hpp>
 #endif
 
 Library::Library() : library(0) {}

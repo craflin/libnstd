@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Variant.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Variant.hpp>
 
 void testVariant()
 {

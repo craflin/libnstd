@@ -6,51 +6,51 @@ Library (STL) its aim is to provide frequently used features with minimalistic c
 as possible. Code written with libnstd should be easily understandable for everyone with basic knowledge of imperative 
 programming and common design patterns. Right now it consists of following headers:
 
-* [Base.h](include/nstd/Base.h): Basic data types and allocation operators.
-* [Debug.h](include/nstd/Debug.h): Low level debugging tools.
-* [Memory.h](include/nstd/Memory.h): Memory allocation and other memory tools.
-* [Error.h](include/nstd/Error.h): Abstraction layer of operating system error reporting.
-* [Math.h](include/nstd/Math.h): Basic mathematics functions.
+* [Base.hpp](include/nstd/Base.hpp): Basic data types and allocation operators.
+* [Debug.hpp](include/nstd/Debug.hpp): Low level debugging tools.
+* [Memory.hpp](include/nstd/Memory.hpp): Memory allocation and other memory tools.
+* [Error.hpp](include/nstd/Error.hpp): Abstraction layer of operating system error reporting.
+* [Math.hpp](include/nstd/Math.hpp): Basic mathematics functions.
 * Data types
-    * [String.h](include/nstd/String.h): A lazy copying string class.
-    * [Variant.h](include/nstd/Variant.h): A lazy copying variable data type for strings, lists, maps, integers and floats.
-    * [Buffer.h](include/nstd/Buffer.h): A dynamic byte buffer.
-    * [Time.h](include/nstd/Time.h): Date and time functions.
+    * [String.hpp](include/nstd/String.hpp): A lazy copying string class.
+    * [Variant.hpp](include/nstd/Variant.hpp): A lazy copying variable data type for strings, lists, maps, integers and floats.
+    * [Buffer.hpp](include/nstd/Buffer.hpp): A dynamic byte buffer.
+    * [Time.hpp](include/nstd/Time.hpp): Date and time functions.
 * Containers
-    * [List.h](include/nstd/List.h): A double linked list.
-    * [HashMap.h](include/nstd/HashMap.h): An associative container based on a hash map with fixed table size.
-    * [HashSet.h](include/nstd/HashSet.h):  A container for unique elements based on a hash set with fixed table size.
-    * [Map.h](include/nstd/Map.h), [MultiMap.h](include/nstd/MultiMap.h): An associative container based on a balanced tree.
-    * [Array.h](include/nstd/Array.h): A dynamically growing container based on an array.
-    * [PoolList.h](include/nstd/PoolList.h): An iterable object pool for non-copyable objects.
-    * [PoolMap.h](include/nstd/PoolMap.h): An associative object pool for non-copyable objects.
-    * [RefCount.h](include/nstd/RefCount.h): Tools for object reference counting.
+    * [List.hpp](include/nstd/List.hpp): A double linked list.
+    * [HashMap.hpp](include/nstd/HashMap.hpp): An associative container based on a hash map with fixed table size.
+    * [HashSet.hpp](include/nstd/HashSet.hpp):  A container for unique elements based on a hash set with fixed table size.
+    * [Map.hpp](include/nstd/Map.hpp), [MultiMap.hpp](include/nstd/MultiMap.hpp): An associative container based on a balanced tree.
+    * [Array.hpp](include/nstd/Array.hpp): A dynamically growing container based on an array.
+    * [PoolList.hpp](include/nstd/PoolList.hpp): An iterable object pool for non-copyable objects.
+    * [PoolMap.hpp](include/nstd/PoolMap.hpp): An associative object pool for non-copyable objects.
+    * [RefCount.hpp](include/nstd/RefCount.hpp): Tools for object reference counting.
 * Concurrency
-    * [Thread.h](include/nstd/Thread.h): Abstraction layer of native multi-threading features.
-    * [Atomic.h](include/nstd/Atomic.h): Abstraction layer of atomic functions.
-    * [Mutex.h](include/nstd/Mutex.h): Abstraction layer of a native mutual exclusion feature.
-    * [Semaphore.h](include/nstd/Semaphore.h): Abstraction layer of a native semaphore construct.
-    * [Signal.h](include/nstd/Signal.h): Abstraction layer of a native signal construct.
-    * [Monitor.h](include/nstd/Monitor.h): Abstraction layer of a native monitor construct.
-    * [Future.h](include/nstd/Future.h): Asynchronous function calls with global thread pool.
+    * [Thread.hpp](include/nstd/Thread.hpp): Abstraction layer of native multi-threading features.
+    * [Atomic.hpp](include/nstd/Atomic.hpp): Abstraction layer of atomic functions.
+    * [Mutex.hpp](include/nstd/Mutex.hpp): Abstraction layer of a native mutual exclusion feature.
+    * [Semaphore.hpp](include/nstd/Semaphore.hpp): Abstraction layer of a native semaphore construct.
+    * [Signal.hpp](include/nstd/Signal.hpp): Abstraction layer of a native signal construct.
+    * [Monitor.hpp](include/nstd/Monitor.hpp): Abstraction layer of a native monitor construct.
+    * [Future.hpp](include/nstd/Future.hpp): Asynchronous function calls with global thread pool.
 * Input/Output
-    * [File.h](include/nstd/File.h): Abstraction layer of file input/output.
-    * [Directory.h](include/nstd/Directory.h): Abstraction layer to access directories.
-    * [Console.h](include/nstd/Console.h): Helper function for Console I/O and command prompting.
-    * [Log.h](include/nstd/Log.h): Console logging helper functions.
+    * [File.hpp](include/nstd/File.hpp): Abstraction layer of file input/output.
+    * [Directory.hpp](include/nstd/Directory.hpp): Abstraction layer to access directories.
+    * [Console.hpp](include/nstd/Console.hpp): Helper function for Console I/O and command prompting.
+    * [Log.hpp](include/nstd/Log.hpp): Console logging helper functions.
 * Processes
-    * [Process.h](include/nstd/Process.h): Abstraction layer of process launching with or without I/O redirecting.
-    * [Library.h](include/nstd/Library.h): Abstraction layer of DLL / shared object loading.
+    * [Process.hpp](include/nstd/Process.hpp): Abstraction layer of process launching with or without I/O redirecting.
+    * [Library.hpp](include/nstd/Library.hpp): Abstraction layer of DLL / shared object loading.
 * Signals/Slots
-    * [Callback.h](include/nstd/Callback.h): Base classes for objects that emit or receive signals.
+    * [Callback.hpp](include/nstd/Callback.hpp): Base classes for objects that emit or receive signals.
 * Sockets (optional)
-    * [Socket.h](include/nstd/Socket/Socket.h): An abstraction layer of native sockets.
-    * [Server.h](include/nstd/Socket/Server.h): An asynchronous TCP/IP server multiplexer.
+    * [Socket.hpp](include/nstd/Socket/Socket.hpp): An abstraction layer of native sockets.
+    * [Server.hpp](include/nstd/Socket/Server.hpp): An asynchronous TCP/IP server multiplexer.
 * Documents (optional)
-    * [Json.h](include/nstd/Document/Json.h): A JSON document parser.
-    * [Xml.h](include/nstd/Document/Xml.h): A basic XML document parser.
+    * [Json.hpp](include/nstd/Document/Json.hpp): A JSON document parser.
+    * [Xml.hpp](include/nstd/Document/Xml.hpp): A basic XML document parser.
 * Cryptography (optional)
-    * [Sha256.h](include/nstd/Crypto/Sha256.h): A Sha256 hash tool.
+    * [Sha256.hpp](include/nstd/Crypto/Sha256.hpp): A Sha256 hash tool.
 
 Design Principles
 -----------------

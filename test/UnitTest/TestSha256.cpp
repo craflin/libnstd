@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Crypto/Sha256.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Crypto/Sha256.hpp>
 
 void testSha256()
 {

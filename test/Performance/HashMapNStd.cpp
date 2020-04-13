@@ -1,5 +1,5 @@
 
-#include <nstd/HashMap.h>
+#include <nstd/HashMap.hpp>
 #include <cstdlib>
 
 void testHashMapNStd(int iterations)

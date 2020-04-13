@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Socket/Socket.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Socket/Socket.hpp>
 
 void testSocket()
 {

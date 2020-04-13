@@ -1,7 +1,7 @@
 
-#include <nstd/Future.h>
-#include <nstd/Console.h>
-#include <nstd/Process.h>
+#include <nstd/Future.hpp>
+#include <nstd/Console.hpp>
+#include <nstd/Process.hpp>
 
 void testFutureNStd(int iterations)
 {

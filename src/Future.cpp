@@ -1,12 +1,12 @@
 
-#include <nstd/Future.h>
-#include <nstd/Atomic.h>
-#include <nstd/Signal.h>
-#include <nstd/Thread.h>
-#include <nstd/Time.h>
-#include <nstd/Mutex.h>
-#include <nstd/PoolList.h>
-#include <nstd/System.h>
+#include <nstd/Future.hpp>
+#include <nstd/Atomic.hpp>
+#include <nstd/Signal.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Time.hpp>
+#include <nstd/Mutex.hpp>
+#include <nstd/PoolList.hpp>
+#include <nstd/System.hpp>
 
 class Future<void>::Private
 {

@@ -1,12 +1,12 @@
 
-#include <nstd/Socket/Socket.h>
-#include <nstd/Socket/Server.h>
-#include <nstd/PoolList.h>
-#include <nstd/Error.h>
-#include <nstd/Buffer.h>
-#include <nstd/List.h>
-#include <nstd/MultiMap.h>
-#include <nstd/Time.h>
+#include <nstd/Socket/Socket.hpp>
+#include <nstd/Socket/Server.hpp>
+#include <nstd/PoolList.hpp>
+#include <nstd/Error.hpp>
+#include <nstd/Buffer.hpp>
+#include <nstd/List.hpp>
+#include <nstd/MultiMap.hpp>
+#include <nstd/Time.hpp>
 
 struct Server::Handle
 {

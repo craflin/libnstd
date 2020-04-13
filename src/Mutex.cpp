@@ -6,8 +6,8 @@
 #include <pthread.h>
 #endif
 
-#include <nstd/Mutex.h>
-#include <nstd/Debug.h>
+#include <nstd/Mutex.hpp>
+#include <nstd/Debug.hpp>
 
 Mutex::Mutex()
 {

@@ -48,13 +48,13 @@ typedef int SOCKET;
 #define SOCKET_ERROR (-1)
 #endif
 
-#include <nstd/Debug.h>
-#include <nstd/HashMap.h>
-#include <nstd/Array.h>
-#include <nstd/Socket/Socket.h>
+#include <nstd/Debug.hpp>
+#include <nstd/HashMap.hpp>
+#include <nstd/Array.hpp>
+#include <nstd/Socket/Socket.hpp>
 #ifdef _WIN32
-#include <nstd/List.h>
-#include <nstd/Map.h>
+#include <nstd/List.hpp>
+#include <nstd/Map.hpp>
 #endif
 
 class Socket::Private

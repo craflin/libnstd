@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/HashMap.h>
-#include <nstd/String.h>
+#include <nstd/Debug.hpp>
+#include <nstd/HashMap.hpp>
+#include <nstd/String.hpp>
 
 void testHashMap()
 {

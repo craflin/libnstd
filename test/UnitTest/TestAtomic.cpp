@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Atomic.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Atomic.hpp>
 
 void testAtomic()
 {

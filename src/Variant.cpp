@@ -1,4 +1,4 @@
 
-#include <nstd/Variant.h>
+#include <nstd/Variant.hpp>
 
 Variant::NullData Variant::nullData;

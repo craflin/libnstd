@@ -6,8 +6,8 @@
 #include <pthread.h>
 #endif
 
-#include <nstd/Signal.h>
-#include <nstd/Debug.h>
+#include <nstd/Signal.hpp>
+#include <nstd/Debug.hpp>
 
 Signal::Signal(bool set)
 {

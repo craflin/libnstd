@@ -1,5 +1,5 @@
 
-#include <nstd/Log.h>
+#include <nstd/Log.hpp>
 
 #ifndef _WIN32
 #include <syslog.h>
@@ -8,12 +8,12 @@
 #include <cstdarg>
 #include <cstdio>
 
-#include <nstd/Mutex.h>
-#include <nstd/Time.h>
-#include <nstd/Process.h>
-#include <nstd/Thread.h>
-#include <nstd/Console.h>
-#include <nstd/Debug.h>
+#include <nstd/Mutex.hpp>
+#include <nstd/Time.hpp>
+#include <nstd/Process.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Console.hpp>
+#include <nstd/Debug.hpp>
 
 static class _Log
 {

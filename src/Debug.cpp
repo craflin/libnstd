@@ -12,15 +12,15 @@
 #ifndef NDEBUG
 #include <cstdlib>
 #include <execinfo.h>
-#include <nstd/Process.h>
+#include <nstd/Process.hpp>
 #endif
 #endif
 #include <cstdio>
 #include <cstdarg>
 
-#include <nstd/Debug.h>
-#include <nstd/Memory.h>
-#include <nstd/String.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Memory.hpp>
+#include <nstd/String.hpp>
 
 int Debug::print(const tchar* str)
 {

@@ -1,5 +1,5 @@
 
-#include <nstd/String.h>
+#include <nstd/String.hpp>
 #include <cstdlib>
 
 void testStringNStd(int iterations)

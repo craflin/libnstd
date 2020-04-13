@@ -6,8 +6,8 @@
 #include <pthread.h>
 #endif
 
-#include <nstd/Monitor.h>
-#include <nstd/Debug.h>
+#include <nstd/Monitor.hpp>
+#include <nstd/Debug.hpp>
 
 Monitor::Monitor() : signaled(false)
 {

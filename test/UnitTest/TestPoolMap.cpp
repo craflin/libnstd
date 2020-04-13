@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/String.h>
-#include <nstd/PoolMap.h>
+#include <nstd/Debug.hpp>
+#include <nstd/String.hpp>
+#include <nstd/PoolMap.hpp>
 
 struct TestObject
 {

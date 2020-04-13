@@ -1,8 +1,8 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Directory.h>
-#include <nstd/File.h>
-#include <nstd/List.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Directory.hpp>
+#include <nstd/File.hpp>
+#include <nstd/List.hpp>
 
 void testDirectory()
 {

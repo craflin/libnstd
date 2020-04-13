@@ -8,10 +8,10 @@
 #include <tchar.h>
 #endif
 
-#include <nstd/String.h>
-#include <nstd/Debug.h>
-#include <nstd/List.h>
-#include <nstd/HashSet.h>
+#include <nstd/String.hpp>
+#include <nstd/Debug.hpp>
+#include <nstd/List.hpp>
+#include <nstd/HashSet.hpp>
 
 #ifndef _MSC_VER
 #define _tcschr strchr

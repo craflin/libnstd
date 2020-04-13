@@ -2,8 +2,8 @@
 set(sources
     Json.cpp
     Xml.cpp
-    ../../include/nstd/Document/Json.h
-    ../../include/nstd/Document/Xml.h
+    ../../include/nstd/Document/Json.hpp
+    ../../include/nstd/Document/Xml.hpp
 )
 
 add_library(nstdDocument STATIC

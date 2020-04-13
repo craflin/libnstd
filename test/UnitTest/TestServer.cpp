@@ -1,8 +1,8 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Socket/Server.h>
-#include <nstd/Socket/Socket.h>
-#include <nstd/Thread.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Socket/Server.hpp>
+#include <nstd/Socket/Socket.hpp>
+#include <nstd/Thread.hpp>
 
 void testServer()
 {

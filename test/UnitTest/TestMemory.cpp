@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Memory.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Memory.hpp>
 
 #include <cstring>
 

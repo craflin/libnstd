@@ -19,14 +19,14 @@
 #include <dirent.h>
 #endif
 
-#include <nstd/Debug.h>
-#include <nstd/List.h>
+#include <nstd/Debug.hpp>
+#include <nstd/List.hpp>
 #ifndef _WIN32
-#include <nstd/File.h>
+#include <nstd/File.hpp>
 #endif
-#include <nstd/Process.h>
-#include <nstd/Buffer.h>
-#include <nstd/Array.h>
+#include <nstd/Process.hpp>
+#include <nstd/Buffer.hpp>
+#include <nstd/Array.hpp>
 
 class Process::Private
 {

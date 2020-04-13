@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Future.h>
-#include <nstd/String.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Future.hpp>
+#include <nstd/String.hpp>
 
 void testFuture()
 {

@@ -1,8 +1,8 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Signal.h>
-#include <nstd/Thread.h>
-#include <nstd/Monitor.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Signal.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Monitor.hpp>
 
 void testMonitor()
 {

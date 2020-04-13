@@ -31,9 +31,9 @@
 #define _tcslen strlen
 #endif
 
-#include <nstd/Directory.h>
-#include <nstd/File.h>
-#include <nstd/Debug.h>
+#include <nstd/Directory.hpp>
+#include <nstd/File.hpp>
+#include <nstd/Debug.hpp>
 
 Directory::Directory()
 {

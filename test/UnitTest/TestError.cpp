@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Error.h>
-#include <nstd/File.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Error.hpp>
+#include <nstd/File.hpp>
 
 void testError()
 {

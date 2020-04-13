@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Buffer.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Buffer.hpp>
 
 void testBuffer()
 {

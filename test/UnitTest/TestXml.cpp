@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Document/Xml.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Document/Xml.hpp>
 
 void testXml()
 {

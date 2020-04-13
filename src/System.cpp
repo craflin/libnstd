@@ -6,7 +6,7 @@
 #include <unistd.h>
 #endif
 
-#include <nstd/System.h>
+#include <nstd/System.hpp>
 
 uint System::getProcessorCount()
 {

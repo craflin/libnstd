@@ -1,7 +1,7 @@
 
-#include <nstd/Error.h>
-#include <nstd/File.h>
-#include <nstd/Document/XML.h>
+#include <nstd/Error.hpp>
+#include <nstd/File.hpp>
+#include <nstd/Document/Xml.hpp>
 
 Xml::Variant::NullData Xml::Variant::nullData;
 

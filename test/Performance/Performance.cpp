@@ -1,6 +1,6 @@
 
-#include <nstd/Console.h>
-#include <nstd/Time.h>
+#include <nstd/Console.hpp>
+#include <nstd/Time.hpp>
 
 void testMapStd(int iterations);
 void testMapNStd(int iterations);

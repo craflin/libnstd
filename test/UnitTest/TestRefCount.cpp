@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.h>
-#include <nstd/RefCount.h>
+#include <nstd/Debug.hpp>
+#include <nstd/RefCount.hpp>
 
 void testRefCount()
 {

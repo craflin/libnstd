@@ -1,8 +1,8 @@
 
-#include <nstd/Buffer.h>
-#include <nstd/Unicode.h>
-#include <nstd/Error.h>
-#include <nstd/Document/Json.h>
+#include <nstd/Buffer.hpp>
+#include <nstd/Unicode.hpp>
+#include <nstd/Error.hpp>
+#include <nstd/Document/Json.hpp>
 
 class Json::Private
 {

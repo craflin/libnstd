@@ -1,8 +1,8 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Process.h>
-#include <nstd/Thread.h>
-#include <nstd/Time.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Process.hpp>
+#include <nstd/Thread.hpp>
+#include <nstd/Time.hpp>
 
 void testProcess()
 {

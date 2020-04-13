@@ -1,7 +1,7 @@
 
-#include <nstd/Debug.h>
-#include <nstd/Document/Json.h>
-#include <nstd/Unicode.h>
+#include <nstd/Debug.hpp>
+#include <nstd/Document/Json.hpp>
+#include <nstd/Unicode.hpp>
 
 void testJson()
 {
