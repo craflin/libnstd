@@ -12,7 +12,7 @@ set(sources
     TestFuture.cpp
     TestHashMap.cpp
     TestHashSet.cpp
-    TestJSON.cpp
+    TestJson.cpp
     TestList.cpp
     TestMap.cpp
     TestMemory.cpp
@@ -33,7 +33,7 @@ set(sources
     TestTime.cpp
     TestUnicode.cpp
     TestVariant.cpp
-    TestXML.cpp
+    TestXml.cpp
 )
 add_executable(UnitTest ${sources})
 target_link_libraries(UnitTest PRIVATE libnstd::Core libnstd::Socket libnstd::Document libnstd::Crypto)
