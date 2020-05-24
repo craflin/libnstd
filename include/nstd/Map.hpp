@@ -157,7 +157,7 @@ public:
     return insert(&root, 0, key, value);
   }
 
-  void insert(Map& other)
+  void insert(const Map& other)
   {
     if(other.root)
     {
