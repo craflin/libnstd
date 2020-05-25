@@ -74,7 +74,7 @@ public:
   T& back() { return _end.item->prev->value; }
 
   Iterator removeFront() {return remove(_begin);}
-  Iterator removeBack() {return remove(_end.item->prev);}
+  Iterator removeBack() {return remove(Iterator(_end.item->prev));}
 
   usize size() const {return _size;}
   bool isEmpty() const {return endItem.prev == 0;}
