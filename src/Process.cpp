@@ -651,7 +651,7 @@ bool Process::open(const String& executable, const List<String>& args, uint stre
   Array<const tchar*> argv(args.size());
   for (List<String>::Iterator i = args.begin(), end = args.end(); i != end; ++i)
     argv.append((const tchar*)*i);
-  return open(executable, args.size(), (tchar**)(const tchar**)argv, streams);
+  return open(executable, (int)args.size(), (tchar**)(const tchar**)argv, streams);
 }
 
 void Process::close()
@@ -1211,7 +1211,7 @@ String Process::getExecutablePath()
   buffer.resize((MAX_PATH << 1) * sizeof(TCHAR));
   for (;;)
   {
-    DWORD len = GetModuleFileName(NULL, (TCHAR*)(byte*)buffer, buffer.size());
+    DWORD len = GetModuleFileName(NULL, (TCHAR*)(byte*)buffer, (DWORD)buffer.size());
     if (len != buffer.size() / sizeof(TCHAR))
       return String::fromCString(path, len);
     buffer.resize(buffer.size() << 1);
