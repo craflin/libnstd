@@ -82,6 +82,9 @@ public:
   T& prepend(const T& value) {return insert(_begin, value).item->value;}
   T& append(const T& value) {return insert(_end, value).item->value;}
 
+  void prepend(const List& list){insert(_begin, list);}
+  void append(const List& list){insert(_end, list);}
+
   void clear()
   {
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
@@ -173,6 +176,16 @@ public:
     insertPos->prev = item;
     ++_size;
     return item;
+  }
+
+  Iterator insert(const Iterator& position, const List& list)
+  {
+    if (list.endItem.prev == 0)
+      return position;
+    Iterator result = insert(position, list._begin.item->value);
+    for(const Item* i = list._begin.item->next, * end = &list.endItem; i != end; i = i->next)
+      insert(position, i->value);
+    return result;
   }
 
   Iterator remove(const Iterator& it)

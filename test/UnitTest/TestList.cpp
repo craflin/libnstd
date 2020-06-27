@@ -114,4 +114,33 @@ void testList()
       current = *i;
     }
   }
+
+  // insert list
+  {
+    List<int> list;
+    list.append(1);
+    list.append(2);
+    List<int> otherList;
+    otherList.append(10);
+    otherList.append(11);
+    otherList.append(12);
+    List<int>::Iterator i = list.begin();
+    ++i;
+    ASSERT(*i == 2);
+    i = list.insert(i, otherList);
+    ASSERT(*i == 10);
+    ASSERT(list.size() == 5);
+    i = list.begin();
+    ASSERT(*i == 1);
+    ASSERT(*(++i) == 10);
+    ASSERT(*(++i) == 11);
+    ASSERT(*(++i) == 12);
+    ASSERT(*(++i) == 2);
+    ASSERT(++i == list.end());
+    List<int> emptyList;
+    i = list.begin();
+    ++i;
+    ASSERT(list.insert(i, emptyList) == i);
+    ASSERT(list.size() == 5);
+  }
 }
