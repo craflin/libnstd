@@ -418,7 +418,7 @@ bool Socket::getPeerName(uint32& ip, uint16& port)
 
 bool Socket::getSockOpt(int level, int optname, void *optval, usize& optlen)
 {
-  socklen_t len = optlen;
+  socklen_t len = (socklen_t)optlen;
   if(getsockopt(s, level, optname, (char*)optval, &len) != 0)
     return false;
   optlen = len;
