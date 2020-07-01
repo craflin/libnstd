@@ -1298,7 +1298,7 @@ bool Socket::Poll::Private::poll(Event& event, int64 timeout)
       if(interrupted)
       {
         uint64 val;
-        read(eventFd, &val, sizeof(val));
+        VERIFY(read(eventFd, &val, sizeof(val)) == sizeof(val));
       }
       event.flags = 0;
       event.socket = 0;
