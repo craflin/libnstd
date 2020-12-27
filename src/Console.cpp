@@ -21,6 +21,7 @@
 #include <cstring>
 #include <cctype>
 #include <cstdlib>
+#include <cassert>
 #include <signal.h>
 #include <errno.h>
 #endif
@@ -369,6 +370,7 @@ public:
     VERIFY(SetConsoleCursorPosition(hOriginalStdOut, pos)); // this resets the caret blink timer
 #else
     usize to = from + x;
+    assert(stdoutScreenWidth != 0);
     usize oldY = from / stdoutScreenWidth;
     usize oldX = from % stdoutScreenWidth;
     usize newY = to / stdoutScreenWidth;
@@ -1048,6 +1050,7 @@ public:
       if(ch == '\x1b')
       {
         *buffer = ch;
+        buffer[1] = 0;
         usize len = 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
         char sequenceType = buffer[len - 1];
         if(sequenceType != lastChar || buffer[1] != firstChar)

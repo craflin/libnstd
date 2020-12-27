@@ -218,6 +218,21 @@ uint32 Process::start(const String& program, int argc, tchar* const argv[])
     return false;
   }
 
+  // prepare argv of child
+  const char** args;
+  if(argc && !argv[argc - 1])
+    args = (const char**)argv;
+  else
+  {
+    if(!argc)
+      ++argc;
+    args = (const char**)alloca(sizeof(const char*) * (argc + 1));
+    args[argc] = 0;
+    for (int i = 1; i < argc; ++i)
+      args[i] = argv[i];
+    args[0] = program;
+  }
+
   // start process
   int r = vfork();
   if (r == -1)
@@ -229,20 +244,6 @@ uint32 Process::start(const String& program, int argc, tchar* const argv[])
   }
   else // child
   {
-    const char** args;
-    if(argc && !argv[argc - 1])
-      args = (const char**)argv;
-    else
-    {
-      if(!argc)
-        ++argc;
-      args = (const char**)alloca(sizeof(const char*) * (argc + 1));
-      args[argc] = 0;
-      for (int i = 1; i < argc; ++i)
-        args[i] = argv[i];
-      args[0] = program;
-    }
-
     if(execvp(program, (char* const*)args) == -1)
     {
       fprintf(stderr, "%s: %s\n", (const char*)program, strerror(errno));
@@ -554,6 +555,21 @@ bool Process::open(const String& executable, int argc, tchar* const argv[], uint
       goto error;
   }
 
+  // prepare argv of child
+  const char** args;
+  if (argc && !argv[argc - 1])
+    args = (const char**)argv;
+  else
+  {
+    if (!argc)
+      ++argc;
+    args = (const char**)alloca(sizeof(const char*) * (argc + 1));
+    args[argc] = 0;
+    for (int i = 1; i < argc; ++i)
+      args[i] = argv[i];
+    args[0] = executable;
+  }
+
   // start process
   {
     int r = vfork();
@@ -600,20 +616,6 @@ bool Process::open(const String& executable, int argc, tchar* const argv[], uint
         ::close(stderrFds[0]);
       if (stdinFds[1])
         ::close(stdinFds[1]);
-
-      const char** args;
-      if (argc && !argv[argc - 1])
-        args = (const char**)argv;
-      else
-      {
-        if (!argc)
-          ++argc;
-        args = (const char**)alloca(sizeof(const char*) * (argc + 1));
-        args[argc] = 0;
-        for (int i = 1; i < argc; ++i)
-          args[i] = argv[i];
-        args[0] = executable;
-      }
 
       if (execvp(executable, (char* const*)args) == -1)
       {
@@ -1180,7 +1182,7 @@ void Process::interrupt()
         switch(pid)
         {
         case 0:
-          exit(0);
+          _exit(0);
         case -1:
           break;
         default:

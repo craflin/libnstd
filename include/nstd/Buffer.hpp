@@ -37,7 +37,7 @@ public:
   }
 
   void attach(byte* data, usize length)
-  {
+  { 
     Memory::free(buffer);
     buffer = 0;
     bufferStart = data;
@@ -93,7 +93,7 @@ public:
 
   void prepend(const byte* data, usize size)
   {
-    if((usize)(bufferStart - buffer) >= size)
+    if(buffer && (usize)(bufferStart - buffer) >= size)
     {
       bufferStart -= size;
       Memory::copy(bufferStart, data, size);
@@ -101,7 +101,7 @@ public:
     }
     usize oldSize = bufferEnd - bufferStart;
     usize requiredCapacity = size + oldSize;
-    if(_capacity >= requiredCapacity)
+    if(buffer && _capacity >= requiredCapacity)
     {
       Memory::move(buffer + size, bufferStart, oldSize);
       Memory::copy(buffer, data, size);
@@ -147,17 +147,20 @@ public:
       bufferEnd = newBuffer + size;
       *bufferEnd = 0;
     }
-    else if(bufferStart + size <= buffer + _capacity)
-    {
-      bufferEnd = bufferStart + size;
-      *bufferEnd = 0;
-    }
     else if(buffer)
     {
-      Memory::move(buffer, bufferStart, bufferEnd - bufferStart);
-      bufferStart = buffer;
-      bufferEnd = buffer + size;
-      *bufferEnd = 0;
+      if(bufferStart + size <= buffer + _capacity)
+      {
+        bufferEnd = bufferStart + size;
+        *bufferEnd = 0;
+      }
+      else
+      {
+        Memory::move(buffer, bufferStart, bufferEnd - bufferStart);
+        bufferStart = buffer;
+        bufferEnd = buffer + size;
+        *bufferEnd = 0;
+      }
     }
   }
 

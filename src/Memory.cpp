@@ -286,7 +286,9 @@ void Memory::Private::free(void* buffer)
 #ifdef _WIN32
   VERIFY(HeapFree(Memory::Private::processHeap, 0, header));
 #else
+#ifndef __clang_analyzer__
   ::free(header);
+#endif
 #endif
 }
 
