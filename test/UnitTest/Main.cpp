@@ -49,38 +49,7 @@ void testHashMap();
 void testFuture();
 void testArray();
 void testArrayString();
-
-void testNewDelete()
-{
-  static uint constructorCalls = 0;
-  static uint destructorCalls = 0;
-  class MyClass
-  {
-  public:
-    MyClass()
-    {
-      if(constructorCalls == 0)
-      {
-        ASSERT(Memory::size(this) >= sizeof(MyClass));
-      }
-      ++constructorCalls;
-    };
-    ~MyClass() {++destructorCalls;};
-    String aaaa;
-  };
-
-  MyClass* aa = new MyClass;
-  delete aa;
-
-  MyClass* bb = new MyClass[23];
-  delete [] bb;
-
-  ASSERT(constructorCalls == 24);
-  ASSERT(destructorCalls == 24);
-}
-
-
-
+void testNewDelete();
 
 int main(int argc, char* argv[])
 {

@@ -1,6 +1,7 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Memory.hpp>
+#include <nstd/Debug.hpp>
+#include <nstd/String.hpp>
 
 #include <cstring>
 
@@ -41,3 +42,33 @@ void testMemory()
     Memory::free(buffer);
   }
 }
+
+void testNewDelete()
+{
+  static uint constructorCalls = 0;
+  static uint destructorCalls = 0;
+  class MyClass
+  {
+  public:
+    MyClass()
+    {
+      if(constructorCalls == 0)
+      {
+        ASSERT(Memory::size(this) >= sizeof(MyClass));
+      }
+      ++constructorCalls;
+    };
+    ~MyClass() {++destructorCalls;};
+    String aaaa;
+  };
+
+  MyClass* aa = new MyClass;
+  delete aa;
+
+  MyClass* bb = new MyClass[23];
+  delete [] bb;
+
+  ASSERT(constructorCalls == 24);
+  ASSERT(destructorCalls == 24);
+}
+
