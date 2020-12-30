@@ -11,15 +11,16 @@
 class Future<void>::Private
 {
 public:
-  template <typename T> class LockFreeQueue
+  template <typename T>
+  class LockFreeQueue
   {
   public:
     inline LockFreeQueue(usize capacity);
     inline ~LockFreeQueue();
-    inline usize capacity() const {return _capacity;}
+    inline usize capacity() const { return _capacity; }
     inline usize size() const;
-    inline bool push(const T& data);
-    inline bool pop(T& result);
+    inline bool push(const T &data);
+    inline bool pop(T &result);
 
   private:
     struct Node
@@ -32,125 +33,121 @@ public:
   private:
     usize _capacity;
     usize _capacityMask;
-    Node* _queue;
-    char cacheLinePad1[64];
+    Node *_queue;
+    char _cacheLinePad1[64];
     volatile usize _tail;
-    char cacheLinePad2[64];
+    char _cacheLinePad2[64];
     volatile usize _head;
-    char cacheLinePad3[64];
+    char _cacheLinePad3[64];
   };
 
   class FastSignal
   {
   public:
-    inline FastSignal() : state(0) {}
+    inline FastSignal() : _state(0) {}
     inline void set();
     inline void reset();
     inline bool wait();
+
   private:
-    Signal signal;
-    volatile usize state;
+    Signal _signal;
+    volatile usize _state;
   };
 
   class ThreadPool
   {
   public:
     ThreadPool(usize minThreads = 0, usize maxThreads = System::getProcessorCount(), usize queueSize = 0x100)
-      : minThreads(minThreads)
-      , maxThreads(maxThreads)
-      , queue(queueSize) 
-      , pushedJobs(0)
-      , processedJobs(0)
-      , threadCount(0)
+        : _minThreads(minThreads), _maxThreads(maxThreads), _queue(queueSize), _pushedJobs(0), _processedJobs(0), _threadCount(0)
     {
-      if(this->maxThreads < 3)
-        this->maxThreads = 3;
+      if (_maxThreads < 3)
+        _maxThreads = 3;
     }
 
     ~ThreadPool()
     {
       Job job = {0, 0};
-      for(PoolList<ThreadContext>::Iterator i = threads.begin(), end = threads.end(); i != end; ++i)
+      for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end; ++i)
       {
-        if(i->terminated)
+        if (i->_terminated)
           continue;
-        while(!queue.push(job))
+        while (!_queue.push(job))
         {
-          dequeuedSignal.reset();
-          if(queue.push(job))
+          _dequeuedSignal.reset();
+          if (_queue.push(job))
             break;
-          dequeuedSignal.wait();
+          _dequeuedSignal.wait();
         }
-        enqueuedSignal.set();
+        _enqueuedSignal.set();
       }
     }
 
-    void run(void (*proc)(void*), void* args)
+    void run(void (*proc)(void *), void *args)
     {
       Job job = {proc, args};
-      while(!queue.push(job))
+      while (!_queue.push(job))
       {
-        dequeuedSignal.reset();
-        if(queue.push(job))
+        _dequeuedSignal.reset();
+        if (_queue.push(job))
           break;
-        dequeuedSignal.wait();
+        _dequeuedSignal.wait();
       }
-      enqueuedSignal.set();
+      _enqueuedSignal.set();
 
       // adjust worker thread count
-      usize pushedJobs = Atomic::increment(this->pushedJobs);
-      ssize busyThreads = (ssize)(pushedJobs - processedJobs);
-      usize threadCount = this->threadCount;
+      usize pushedJobs = Atomic::increment(_pushedJobs);
+      ssize busyThreads = (ssize)(pushedJobs - _processedJobs);
+      usize threadCount = _threadCount;
       ssize idleThreads = (ssize)threadCount - busyThreads;
-      if(idleThreads == 1)
-        idleResetTime = (uint32)(Time::ticks() >> 10);
+      if (idleThreads == 1)
+        _idleResetTime = (uint32)(Time::ticks() >> 10);
       else
       {
-        if(idleThreads <= 0)
+        if (idleThreads <= 0)
         { // start new worker thread
-          idleResetTime = (uint32)(Time::ticks() >> 10);
-          if(threadCount < maxThreads)
+          _idleResetTime = (uint32)(Time::ticks() >> 10);
+          if (threadCount < _maxThreads)
           {
-            ThreadContext* context = 0;
-            mutex.lock();
-            for(PoolList<ThreadContext>::Iterator i = threads.begin(), end = threads.end(); i != end;)
+            ThreadContext *context = 0;
+            _mutex.lock();
+            for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end;)
             {
-              if(i->terminated)
-                i = threads.remove(i);
+              if (i->_terminated)
+                i = _threads.remove(i);
               else
                 ++i;
             }
-            if(this->threadCount < maxThreads)
+            if (_threadCount < _maxThreads)
             {
-              ++this->threadCount;
-              context = &threads.append();
+              ++_threadCount;
+              context = &_threads.append();
             }
-            mutex.unlock();
-            if(context)
+            _mutex.unlock();
+            if (context)
             {
-              context->pool = this;
-              if(!context->thread.start(*context, &ThreadContext::proc))
-                context->terminated = true;
+              context->_pool = this;
+              if (!context->_thread.start(*context, &ThreadContext::proc))
+                context->_terminated = true;
             }
           }
         }
-        else if(idleThreads > 1 && threadCount > minThreads && (uint32)(Time::ticks() >> 10) - idleResetTime > 1)
+        else if (idleThreads > 1 && threadCount > _minThreads && (uint32)(Time::ticks() >> 10) - _idleResetTime > 1)
         { // terminate a worker thread
-          mutex.lock();
-          if(this->threadCount > minThreads)
+          _mutex.lock();
+          if (_threadCount > _minThreads)
           {
             Job job = {0, 0};
-            if(queue.push(job))
-              --this->threadCount;
+            if (_queue.push(job))
+              --_threadCount;
           }
-          for(PoolList<ThreadContext>::Iterator i = threads.begin(), end = threads.end(); i != end;)
+          for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end;)
           {
-            if(i->terminated)
-              i = threads.remove(i);
+            if (i->_terminated)
+              i = _threads.remove(i);
             else
               ++i;
           }
-          mutex.unlock();
+          _mutex.unlock();
         }
       }
     }
@@ -158,107 +155,108 @@ public:
   private:
     struct Job
     {
-      void (*proc)(void*);
-      void* args;
+      void (*proc)(void *);
+      void *args;
     };
 
     struct ThreadContext
     {
-      Thread thread;
-      volatile bool terminated;
-      ThreadPool* pool;
-      ThreadContext() : terminated(false) {}
+      Thread _thread;
+      volatile bool _terminated;
+      ThreadPool *_pool;
+      ThreadContext() : _terminated(false) {}
       uint proc()
       {
         Job job;
-        LockFreeQueue<Job>& queue = pool->queue;
-        FastSignal& enqueuedSignal = pool->enqueuedSignal; 
-        FastSignal& dequeuedSignal = pool->dequeuedSignal; 
-        for(;;)
+        LockFreeQueue<Job> &queue = _pool->_queue;
+        FastSignal &enqueuedSignal = _pool->_enqueuedSignal;
+        FastSignal &dequeuedSignal = _pool->_dequeuedSignal;
+        for (;;)
         {
-          while(!queue.pop(job))
+          while (!queue.pop(job))
           {
             enqueuedSignal.reset();
-            if(queue.pop(job))
+            if (queue.pop(job))
               break;
             enqueuedSignal.wait();
           }
           dequeuedSignal.set();
-          if(job.proc)
+          if (job.proc)
           {
             job.proc(job.args);
-            Atomic::increment(pool->processedJobs);
+            Atomic::increment(_pool->_processedJobs);
           }
           else
             break;
         }
-        terminated = true;
+        _terminated = true;
         return 0;
       }
     };
 
   private:
-    usize minThreads;
-    usize maxThreads;
-    LockFreeQueue<Job> queue;
-    FastSignal dequeuedSignal;
-    FastSignal enqueuedSignal;
-    volatile usize pushedJobs;
-    volatile usize processedJobs;
-    volatile usize threadCount;
-    volatile uint32 idleResetTime;
-    Mutex mutex;
-    PoolList<ThreadContext> threads;
+    usize _minThreads;
+    usize _maxThreads;
+    LockFreeQueue<Job> _queue;
+    FastSignal _dequeuedSignal;
+    FastSignal _enqueuedSignal;
+    volatile usize _pushedJobs;
+    volatile usize _processedJobs;
+    volatile usize _threadCount;
+    volatile uint32 _idleResetTime;
+    Mutex _mutex;
+    PoolList<ThreadContext> _threads;
   };
 
-  static ThreadPool* volatile threadPool;
-  static volatile int threadPoolLock;
+  static ThreadPool *volatile _threadPool;
+  static volatile int _threadPoolLock;
 
   class Framework
   {
     ~Framework();
     static Framework framework;
   };
-
 };
 
-Future<void>::Private::ThreadPool* volatile Future<void>::Private::threadPool = 0;
-volatile int Future<void>::Private::threadPoolLock = 0;
+Future<void>::Private::ThreadPool *volatile Future<void>::Private::_threadPool = 0;
+volatile int Future<void>::Private::_threadPoolLock = 0;
 Future<void>::Private::Framework Future<void>::Private::Framework::framework;
 
 Future<void>::Private::Framework::~Framework()
 {
-  if(threadPool)
-    delete threadPool;
+  if (_threadPool)
+    delete _threadPool;
 }
 
 void Future<void>::set()
 {
-  Atomic::swap(state, aborting ? abortedState : finishedState);
-  sig.set();
+  Atomic::swap(_state, _aborting ? abortedState : finishedState);
+  _sig.set();
 }
 
-void Future<void>::startProc(void (*proc)(void*), void* args)
+void Future<void>::startProc(void (*proc)(void *), void *args)
 {
-  Private::ThreadPool* threadPool = Private::threadPool;
-  if(!threadPool)
+  Private::ThreadPool *threadPool = Private::_threadPool;
+  if (!threadPool)
   {
-    while(Atomic::testAndSet(Private::threadPoolLock) != 0);
-    if(!(threadPool = Private::threadPool))
+    while (Atomic::testAndSet(Private::_threadPoolLock) != 0)
+      ;
+    if (!(threadPool = Private::_threadPool))
     {
       threadPool = new Private::ThreadPool;
-      Atomic::swap(Private::threadPool, threadPool);
+      Atomic::swap(Private::_threadPool, threadPool);
     }
-    Private::threadPoolLock = 0;
+    Private::_threadPoolLock = 0;
   }
 
   join();
-  joinable = true;
-  aborting = false;
+  _joinable = true;
+  _aborting = false;
   threadPool->run(proc, args);
 }
 
-template<typename T> inline Future<void>::Private::LockFreeQueue<T>::LockFreeQueue(usize capacity)
+template <typename T>
+inline Future<void>::Private::LockFreeQueue<T>::LockFreeQueue(usize capacity)
 {
   _capacityMask = capacity - 1;
   _capacityMask |= _capacityMask >> 1;
@@ -268,8 +266,8 @@ template<typename T> inline Future<void>::Private::LockFreeQueue<T>::LockFreeQue
   _capacityMask |= _capacityMask >> 16;
   _capacity = _capacityMask + 1;
 
-  _queue = (Node*)Memory::alloc(sizeof(Node) * _capacity);
-  for(usize i = 0; i < _capacity; ++i)
+  _queue = (Node *)Memory::alloc(sizeof(Node) * _capacity);
+  for (usize i = 0; i < _capacity; ++i)
   {
     _queue[i].tail = i;
     _queue[i].head = -1;
@@ -279,48 +277,52 @@ template<typename T> inline Future<void>::Private::LockFreeQueue<T>::LockFreeQue
   _head = 0;
 }
 
-template<typename T> inline Future<void>::Private::LockFreeQueue<T>::~LockFreeQueue()
+template <typename T>
+inline Future<void>::Private::LockFreeQueue<T>::~LockFreeQueue()
 {
-  for(usize i = _head; i != _tail; ++i)
+  for (usize i = _head; i != _tail; ++i)
     (&_queue[i % _capacity].data)->~T();
 
   Memory::free(_queue);
 }
 
-template<typename T> inline usize Future<void>::Private::LockFreeQueue<T>::size() const
+template <typename T>
+inline usize Future<void>::Private::LockFreeQueue<T>::size() const
 {
   usize head = _head;
   Atomic::memoryBarrier();
   return _tail - head;
 }
-  
-template<typename T> inline bool Future<void>::Private::LockFreeQueue<T>::push(const T& data)
+
+template <typename T>
+inline bool Future<void>::Private::LockFreeQueue<T>::push(const T &data)
 {
-  Node* node;
+  Node *node;
   usize next, tail = _tail;
-  for(;; tail = next)
+  for (;; tail = next)
   {
     node = &_queue[tail & _capacityMask];
-    if(node->tail != tail)
+    if (node->tail != tail)
       return false;
-    if((next = Atomic::compareAndSwap(_tail, tail, tail + 1)) == tail)
+    if ((next = Atomic::compareAndSwap(_tail, tail, tail + 1)) == tail)
       break;
   }
-  new (&node->data)T(data);
+  new (&node->data) T(data);
   Atomic::swap(node->head, tail);
   return true;
 }
 
-template<typename T> inline bool Future<void>::Private::LockFreeQueue<T>::pop(T& result)
+template <typename T>
+inline bool Future<void>::Private::LockFreeQueue<T>::pop(T &result)
 {
-  Node* node;
+  Node *node;
   usize next, head = _head;
-  for(;; head = next)
+  for (;; head = next)
   {
     node = &_queue[head & _capacityMask];
-    if(node->head != head)
+    if (node->head != head)
       return false;
-    if((next = Atomic::compareAndSwap(_head, head, head + 1)) == head)
+    if ((next = Atomic::compareAndSwap(_head, head, head + 1)) == head)
       break;
   }
   result = node->data;
@@ -331,19 +333,19 @@ template<typename T> inline bool Future<void>::Private::LockFreeQueue<T>::pop(T&
 
 void Future<void>::Private::FastSignal::set()
 {
-  if(Atomic::testAndSet(state) == 0)
-    signal.set();
+  if (Atomic::testAndSet(_state) == 0)
+    _signal.set();
 }
 
 void Future<void>::Private::FastSignal::reset()
 {
-  if(Atomic::swap(state, 0) == 1)
-    signal.reset();
+  if (Atomic::swap(_state, 0) == 1)
+    _signal.reset();
 }
 
 bool Future<void>::Private::FastSignal::wait()
 {
-  if(Atomic::load(state))
+  if (Atomic::load(_state))
     return true;
-  return signal.wait();
+  return _signal.wait();
 }
