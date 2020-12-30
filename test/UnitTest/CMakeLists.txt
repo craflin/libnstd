@@ -1,6 +1,7 @@
 
 set(sources
     Main.cpp
+    TestArray.cpp
     TestAtomic.cpp
     TestBuffer.cpp
     TestCallback.cpp
@@ -37,6 +38,7 @@ set(sources
 )
 add_executable(UnitTest ${sources})
 target_link_libraries(UnitTest PRIVATE libnstd::Core libnstd::Socket libnstd::Document libnstd::Crypto)
+target_compile_definitions(UnitTest PRIVATE DEBUG)
 set_property(TARGET UnitTest PROPERTY FOLDER "test")
 source_group("" FILES ${sources})
 
