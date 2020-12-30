@@ -69,8 +69,6 @@ public:
       Job job = {0, 0};
       for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end; ++i)
       {
-        if (i->_terminated)
-          continue;
         while (!_queue.push(job))
         {
           _dequeuedSignal.reset();
@@ -80,6 +78,8 @@ public:
         }
         _enqueuedSignal.set();
       }
+      for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end; ++i)
+        i->_thread.join();
     }
 
     void run(void (*proc)(void *), void *args)
