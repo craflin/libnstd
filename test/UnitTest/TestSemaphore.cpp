@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Semaphore.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Time.hpp>
 
 void testSempahore()
@@ -16,4 +16,10 @@ void testSempahore()
   ASSERT(!sem.wait(300));
   int64 waitTime = Time::ticks() - start;
   ASSERT(waitTime > 200);
+}
+
+int main(int argc, char* argv[])
+{
+  testSempahore();
+  return 0;
 }

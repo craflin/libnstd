@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Directory.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/File.hpp>
 #include <nstd/List.hpp>
 
@@ -243,4 +243,10 @@ void testDirectory()
     String temp = Directory::getTempDirectory();
     ASSERT(Directory::exists(temp));
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testDirectory();
+    return 0;
 }

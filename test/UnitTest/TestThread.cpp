@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Thread.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Atomic.hpp>
 
 void testThread()
@@ -57,4 +57,10 @@ void testThread()
     ASSERT(thread.start(threadData, &ThreadData::proc));
     ASSERT(thread.join() == 42);
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testThread();
+  return 0;
 }

@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Future.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
 
 void testFuture()
@@ -301,4 +301,10 @@ void testFuture()
     future.join();
     ASSERT(future == 42 + 6 * 4);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testFuture();
+    return 0;
 }

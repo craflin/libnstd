@@ -1,8 +1,8 @@
 
+#include <nstd/Monitor.hpp>
 #include <nstd/Debug.hpp>
 #include <nstd/Signal.hpp>
 #include <nstd/Thread.hpp>
-#include <nstd/Monitor.hpp>
 
 void testMonitor()
 {
@@ -54,4 +54,10 @@ void testMonitor()
     ASSERT(monitor.wait(40));
     monitor.unlock();
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testMonitor();
+  return 0;
 }

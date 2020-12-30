@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/PoolList.hpp>
+#include <nstd/Debug.hpp>
 
 struct TestObject
 {
@@ -39,4 +39,10 @@ void testPoolList()
   pool.swap(pool2);
   ASSERT(pool.size() == 0);
   ASSERT(pool2.size() == 2);
+}
+
+int main(int argc, char* argv[])
+{
+  testPoolList();
+  return 0;
 }

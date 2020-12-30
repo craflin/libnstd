@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Document/Xml.hpp>
+#include <nstd/Debug.hpp>
 
 void testXml()
 {
@@ -13,4 +13,10 @@ void testXml()
   ASSERT(element.content.front().toString() == _T("test&test"));
   String output = element.toString();
   ASSERT(input == output);
+}
+
+int main(int argc, char* argv[])
+{
+  testXml();
+  return 0;
 }

@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Buffer.hpp>
+#include <nstd/Debug.hpp>
 
 void testBuffer()
 {
@@ -13,4 +13,10 @@ void testBuffer()
   buffer3.assign((byte*)"123", 3);
   buffer3 = buffer2;
   ASSERT(buffer3 == buffer2);
+}
+
+int main(int argc, char* argv[])
+{
+    testBuffer();
+    return 0;
 }

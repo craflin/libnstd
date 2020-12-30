@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Signal.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Thread.hpp>
 
 void testSignal()
@@ -47,4 +47,10 @@ void testSignal()
     data.setSignal.set();
     ASSERT(signal.wait(40));
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testSignal();
+  return 0;
 }

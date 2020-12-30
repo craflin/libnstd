@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Map.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
 #include <nstd/Math.hpp>
 
@@ -144,4 +144,10 @@ void testMap()
     map.insert(map2);
     ASSERT(map.size() == 4);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testMap();
+    return 0;
 }

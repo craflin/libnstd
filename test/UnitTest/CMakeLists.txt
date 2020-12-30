@@ -1,47 +1,52 @@
 
-set(sources
-    Main.cpp
-    TestArray.cpp
-    TestAtomic.cpp
-    TestBuffer.cpp
-    TestCallback.cpp
-    TestConsole.cpp
-    TestDebug.cpp
-    TestDirectory.cpp
-    TestError.cpp
-    TestFile.cpp
-    TestFuture.cpp
-    TestHashMap.cpp
-    TestHashSet.cpp
-    TestJson.cpp
-    TestList.cpp
-    TestMap.cpp
-    TestMemory.cpp
-    TestMonitor.cpp
-    TestMultiMap.cpp
-    TestMutex.cpp
-    TestPoolList.cpp
-    TestPoolMap.cpp
-    TestProcess.cpp
-    TestRefCount.cpp
-    TestSemaphore.cpp
-    TestServer.cpp
-    TestSha256.cpp
-    TestSignal.cpp
-    TestSocket.cpp
-    TestString.cpp
-    TestThread.cpp
-    TestTime.cpp
-    TestUnicode.cpp
-    TestVariant.cpp
-    TestXml.cpp
-)
-add_executable(UnitTest ${sources})
-target_link_libraries(UnitTest PRIVATE libnstd::Core libnstd::Socket libnstd::Document libnstd::Crypto)
-target_compile_definitions(UnitTest PRIVATE DEBUG)
-set_property(TARGET UnitTest PROPERTY FOLDER "test")
-source_group("" FILES ${sources})
+function(add_unit_test name)
+    add_executable(${name} ${ARGN})
+    target_link_libraries(${name} PRIVATE libnstd::Core)
+    target_compile_definitions(${name} PRIVATE DEBUG)
+    set_property(TARGET ${name} PROPERTY FOLDER "test")
+    source_group("" FILES ${ARGN})
+    add_test(NAME ${name} COMMAND ${name})
+endfunction()
 
-add_test(NAME UnitTest COMMAND UnitTest)
+add_unit_test(TestArray TestArray.cpp)
+add_unit_test(TestAtomic TestAtomic.cpp)
+add_unit_test(TestBuffer TestBuffer.cpp)
+add_unit_test(TestCallback TestCallback.cpp)
+add_unit_test(TestConsole TestConsole.cpp)
+add_unit_test(TestDebug TestDebug.cpp)
+add_unit_test(TestDirectory TestDirectory.cpp)
+add_unit_test(TestError TestError.cpp)
+add_unit_test(TestFile TestFile.cpp)
+add_unit_test(TestFuture TestFuture.cpp)
+add_unit_test(TestHashMap TestHashMap.cpp)
+add_unit_test(TestHashSet TestHashSet.cpp)
+add_unit_test(TestJson TestJson.cpp)
+target_link_libraries(TestJson PRIVATE libnstd::Document)
+add_unit_test(TestList TestList.cpp)
+add_unit_test(TestMap TestMap.cpp)
+add_unit_test(TestMemory TestMemory.cpp)
+add_unit_test(TestMonitor TestMonitor.cpp)
+add_unit_test(TestMultiMap TestMultiMap.cpp)
+add_unit_test(TestMutex TestMutex.cpp)
+add_unit_test(TestPoolList TestPoolList.cpp)
+add_unit_test(TestPoolMap TestPoolMap.cpp)
+add_unit_test(TestProcess TestProcess.cpp)
+add_unit_test(TestRefCount TestRefCount.cpp)
+add_unit_test(TestSemaphore TestSemaphore.cpp)
+add_unit_test(TestServer TestServer.cpp)
+target_link_libraries(TestServer PRIVATE libnstd::Socket)
+add_unit_test(TestSha256 TestSha256.cpp)
+target_link_libraries(TestSha256 PRIVATE libnstd::Crypto)
+add_unit_test(TestSignal TestSignal.cpp)
+add_unit_test(TestSocket TestSocket.cpp)
+target_link_libraries(TestSocket PRIVATE libnstd::Socket)
+add_unit_test(TestString TestString.cpp)
+add_unit_test(TestThread TestThread.cpp)
+add_unit_test(TestTime TestTime.cpp)
+add_unit_test(TestUnicode TestUnicode.cpp)
+add_unit_test(TestVariant TestVariant.cpp)
+add_unit_test(TestXml TestXml.cpp)
+target_link_libraries(TestXml PRIVATE libnstd::Document)
+
 
 

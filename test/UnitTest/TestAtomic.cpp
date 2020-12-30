@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Atomic.hpp>
+#include <nstd/Debug.hpp>
 
 void testAtomic()
 {
@@ -156,4 +156,10 @@ void testAtomic()
     ASSERT(uint64 == 1);
     ASSERT(ptr == (char*)0 + 1);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testAtomic();
+    return 0;
 }

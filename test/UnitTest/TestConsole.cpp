@@ -12,5 +12,12 @@ void testConsole()
     buffer[bufferSize - 2] = 'b';
     buffer[bufferSize - 1] = '\0';
     Console::printf(_T("%hs%hs\n"), buffer, buffer);
+    Memory::free(buffer);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testConsole();
+    return 0;
 }

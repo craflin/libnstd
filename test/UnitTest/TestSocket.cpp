@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Socket/Socket.hpp>
+#include <nstd/Debug.hpp>
 
 void testSocket()
 {
@@ -119,4 +119,10 @@ void testSocket()
       ASSERT(Socket::getHostByName(Socket::getHostName(), addr));
       ASSERT(addr != 0);
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testSocket();
+  return 0;
 }

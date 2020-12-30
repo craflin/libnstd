@@ -1,7 +1,7 @@
 
+#include <nstd/PoolMap.hpp>
 #include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
-#include <nstd/PoolMap.hpp>
 
 struct TestObject
 {
@@ -40,4 +40,10 @@ void testPoolMap()
   pool.swap(pool2);
   ASSERT(pool.size() == 0);
   ASSERT(pool2.size() == 2);
+}
+
+int main(int argc, char* argv[])
+{
+  testPoolMap();
+  return 0;
 }

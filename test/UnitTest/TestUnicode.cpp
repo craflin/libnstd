@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Unicode.hpp>
+#include <nstd/Debug.hpp>
 
 void testUnicode()
 {
@@ -17,4 +17,10 @@ void testUnicode()
     ASSERT(Unicode::isValid(str));
     ASSERT(Unicode::fromString(str) == i);
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testUnicode();
+  return 0;
 }

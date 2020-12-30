@@ -1,7 +1,7 @@
 
+#include <nstd/Time.hpp>
 #include <nstd/String.hpp>
 #include <nstd/Debug.hpp>
-#include <nstd/Time.hpp>
 
 void testTime()
 {
@@ -36,4 +36,10 @@ void testTime()
   ASSERT(timeUtc != time);
   ASSERT(timeUtc2 == timeUtc);
   ASSERT(timeUtc2.toTimestamp() == now);
+}
+
+int main(int argc, char* argv[])
+{
+  testTime();
+  return 0;
 }

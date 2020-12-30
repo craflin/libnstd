@@ -72,3 +72,9 @@ void testNewDelete()
   ASSERT(destructorCalls == 24);
 }
 
+int main(int argc, char* argv[])
+{
+  testMemory();
+  testNewDelete();
+  return 0;
+}

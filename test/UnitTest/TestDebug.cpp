@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Memory.hpp>
+#include <nstd/Debug.hpp>
 
 void testDebug()
 {
@@ -11,4 +11,11 @@ void testDebug()
   buffer[bufferSize - 2] = 'b';
   buffer[bufferSize - 1] = '\0';
   Debug::printf(_T("%hs%hs\n"), buffer, buffer);
+  Memory::free(buffer);
+}
+
+int main(int argc, char* argv[])
+{
+    testDebug();
+    return 0;
 }

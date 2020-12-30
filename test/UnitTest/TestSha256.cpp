@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Crypto/Sha256.hpp>
+#include <nstd/Debug.hpp>
 
 void testSha256()
 {
@@ -15,4 +15,10 @@ void testSha256()
   };
   Sha256::hash((const byte*)"But First, We Need to Talk About Parallel Universes", 51, checksum);
   ASSERT(Memory::compare(checksum, check2, sizeof(check2)) == 0);
+}
+
+int main(int argc, char* argv[])
+{
+  testSha256();
+  return 0;
 }

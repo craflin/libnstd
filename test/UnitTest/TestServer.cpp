@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Socket/Server.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Socket/Socket.hpp>
 #include <nstd/Thread.hpp>
 
@@ -243,4 +243,10 @@ void testServer()
     ASSERT(closed);
     ASSERT(thread.join() == 32);
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testServer();
+  return 0;
 }

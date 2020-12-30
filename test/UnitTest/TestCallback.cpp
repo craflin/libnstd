@@ -276,3 +276,9 @@ void testCallback()
     emitter.emitMySignal();
   }
 }
+
+int main(int argc, char* argv[])
+{
+    testCallback();
+    return 0;
+}

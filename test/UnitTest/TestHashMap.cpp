@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/HashMap.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
 
 void testHashMap()
@@ -88,4 +88,10 @@ void testHashMap()
     ASSERT(myMap.front() == 2);
     ASSERT(myMap.back() == 2);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testHashMap();
+    return 0;
 }

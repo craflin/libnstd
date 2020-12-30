@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/MultiMap.hpp>
+#include <nstd/Debug.hpp>
 
 void testMultiMap()
 {
@@ -30,3 +30,8 @@ void testMultiMap()
   }
 }
 
+int main(int argc, char* argv[])
+{
+  testMultiMap();
+  return 0;
+}

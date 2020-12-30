@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Process.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Thread.hpp>
 #include <nstd/Time.hpp>
 
@@ -95,4 +95,10 @@ void testProcess()
     ASSERT(exitCode == 0);
 #endif
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testProcess();
+  return 0;
 }

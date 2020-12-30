@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Error.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/File.hpp>
 
 void testError()
@@ -23,4 +23,10 @@ void testError()
     Error::setErrorString(_T("blah"));
     ASSERT(Error::getErrorString() == _T("blah"));
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testError();
+    return 0;
 }

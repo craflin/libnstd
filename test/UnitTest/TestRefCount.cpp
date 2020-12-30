@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/RefCount.hpp>
+#include <nstd/Debug.hpp>
 
 void testRefCount()
 {
@@ -33,4 +33,10 @@ void testRefCount()
   }
   ASSERT(count == 0);
 
+}
+
+int main(int argc, char* argv[])
+{
+  testRefCount();
+  return 0;
 }

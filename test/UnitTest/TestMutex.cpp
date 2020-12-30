@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Mutex.hpp>
+#include <nstd/Debug.hpp>
 
 void testMutex()
 {
@@ -12,4 +12,10 @@ void testMutex()
     mutex.unlock();
     mutex.unlock();
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testMutex();
+  return 0;
 }

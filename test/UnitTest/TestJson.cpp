@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Document/Json.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Unicode.hpp>
 
 void testJson()
@@ -42,4 +42,10 @@ _T("}\n"));
   ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("age"))->toMap().find(_T("minimum"))->toInt() == 0);
   ASSERT(data.toMap().find(_T("required"))->toList().front().toString() == _T("firstName"));
   ASSERT(data.toMap().find(_T("required"))->toList().back().toString() == _T("lastName"));
+}
+
+int main(int argc, char* argv[])
+{
+    testJson();
+    return 0;
 }

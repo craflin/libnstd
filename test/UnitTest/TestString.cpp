@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/List.hpp>
 
 #include <cctype>
@@ -174,4 +174,10 @@ void testString()
     String str;
     ASSERT(str.join(List<String>(), '.') == String());
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testString();
+  return 0;
 }

@@ -1,10 +1,8 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/File.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/Time.hpp>
-
 #include <nstd/Error.hpp>
-
 
 void testFile()
 {
@@ -152,4 +150,10 @@ void testFile()
     ASSERT(!File::isAbsolutePath(_T("..\\aaa\\2dsads")));
     ASSERT(!File::isAbsolutePath(_T("aaa/2dsads")));
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testFile();
+    return 0;
 }

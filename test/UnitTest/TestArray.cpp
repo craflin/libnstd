@@ -118,3 +118,10 @@ void testArrayString()
   ASSERT(myArray.front() == _T("2"));
   ASSERT(myArray.back() == _T("2"));
 }
+
+int main(int argc, char* argv[])
+{
+    testArray();
+    testArrayString();
+    return 0;
+}

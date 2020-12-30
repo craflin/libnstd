@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/List.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
 #include <nstd/Math.hpp>
 
@@ -143,4 +143,10 @@ void testList()
     ASSERT(list.insert(i, emptyList) == i);
     ASSERT(list.size() == 5);
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testList();
+    return 0;
 }

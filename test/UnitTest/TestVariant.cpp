@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/Variant.hpp>
+#include <nstd/Debug.hpp>
 
 void testVariant()
 {
@@ -57,4 +57,10 @@ void testVariant()
     var2list.clear();
     ASSERT(((const Variant&)var1).toList().size() == 1);
   }
+}
+
+int main(int argc, char* argv[])
+{
+  testVariant();
+  return 0;
 }

@@ -1,6 +1,6 @@
 
-#include <nstd/Debug.hpp>
 #include <nstd/HashSet.hpp>
+#include <nstd/Debug.hpp>
 #include <nstd/String.hpp>
 #include <nstd/Math.hpp>
 
@@ -141,4 +141,10 @@ void testHashSet()
     ASSERT(*(++HashSet<String>::Iterator(mySet3.begin())) == _T("string2"));
     ASSERT(mySet3.back() == _T("string3"));
   }
+}
+
+int main(int argc, char* argv[])
+{
+    testHashSet();
+    return 0;
 }
