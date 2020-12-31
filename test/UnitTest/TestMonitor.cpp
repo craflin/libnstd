@@ -9,9 +9,10 @@ void testMonitor()
   // test wait with timeout - running into a timeout
   {
     Monitor monitor;
-    monitor.lock();
-    ASSERT(!monitor.wait(40));
-    monitor.unlock();
+    {
+      Monitor::Guard guard(monitor);
+      ASSERT(!guard.wait(40));
+    }
   }
 
   // test wait with timeout - not running into a timeout
@@ -35,10 +36,11 @@ void testMonitor()
     data.monitor = &monitor;
     thread.start(SetMonitorProcData::threadProc, &data);
 
-    monitor.lock();
-    data.setSignal.set();
-    ASSERT(monitor.wait(40));
-    monitor.unlock();
+    {
+      Monitor::Guard guard(monitor);
+      data.setSignal.set();
+      ASSERT(guard.wait(40));
+    }
   }
 
   // test wait without timeout
@@ -49,10 +51,11 @@ void testMonitor()
     data.monitor = &monitor;
     thread.start(SetMonitorProcData::threadProc, &data);
 
-    monitor.lock();
-    data.setSignal.set();
-    ASSERT(monitor.wait(40));
-    monitor.unlock();
+    {
+      Monitor::Guard guard(monitor);
+      data.setSignal.set();
+      ASSERT(guard.wait(40));
+    }
   }
 }
 
