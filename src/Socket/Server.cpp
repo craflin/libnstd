@@ -1,520 +1,443 @@
 
-#include <nstd/Socket/Socket.hpp>
 #include <nstd/Socket/Server.hpp>
-#include <nstd/PoolList.hpp>
-#include <nstd/Error.hpp>
-#include <nstd/Buffer.hpp>
-#include <nstd/List.hpp>
+#include <nstd/Socket/Socket.hpp>
 #include <nstd/MultiMap.hpp>
+#include <nstd/PoolList.hpp>
+#include <nstd/List.hpp>
 #include <nstd/Time.hpp>
-
-struct Server::Handle
-{
-  enum Type
-  {
-    clientType,
-    timerType,
-    listenerType,
-  };
-
-  enum State
-  {
-    connectingState,
-    connectedState,
-    suspendedState,
-    closingState,
-    closedState,
-  };
-
-  Type type;
-  State state;
-  void* userData;
-};
+#include <nstd/Buffer.hpp>
+#include <nstd/Error.hpp>
+#include <nstd/Mutex.hpp>
 
 class Server::Private
 {
 public:
-  class HandleSocket : public Socket
+  struct ListenerImpl : public Socket
+  {
+    Listener::ICallback *callback;
+  };
+
+  class ClientImpl : public Socket
   {
   public:
-    Handle* handle;
+    Client::ICallback *_callback;
+    Buffer _sendBuffer;
+    bool _suspended;
+    Server::Private *_p;
+    ClientImpl() : _suspended(false) {}
+    bool write(const byte *data, usize size, usize *postponed = 0);
+    bool read(byte *buffer, usize maxSize, usize &size);
+    void suspend();
+    void resume();
   };
 
-  struct Listener : public Handle
+  struct EstablisherImpl : public Socket
   {
-    HandleSocket socket;
+    Establisher::ICallback *callback;
   };
 
-  struct Client : public Handle
+  struct TimerImpl
   {
-    HandleSocket socket;
-    Buffer sendBuffer;
-  };
-
-  struct Timer : public Handle
-  {
+    Timer::ICallback *callback;
     int64 executionTime;
     int64 interval;
   };
 
-private:
-  PoolList<Listener> listeners;
-  PoolList<Client> clients;
-  PoolList<Timer> timers;
-  MultiMap<int64, Timer*> queuedTimers;
-  Socket::Poll sockets;
-  List<Handle*> closingHandles;
-
-  bool keepAlive;
-  bool noDelay;
-  int sendBufferSize;
-  int receiveBufferSize;
-  bool reuseAddress;
-
-  bool interrupted;
-
 public:
-  Private() : keepAlive(false), noDelay(false), sendBufferSize(0), receiveBufferSize(0), reuseAddress(true), interrupted(false)
-  {
-    queuedTimers.insert(0, 0); // add default timeout timer
-  }
+  Private();
 
-  void clear()
-  {
-    listeners.clear();
-    clients.clear();
-    timers.clear();
-    queuedTimers.clear();
-    queuedTimers.insert(0, 0);
-    sockets.clear();
-    closingHandles.clear();
-    interrupted = false;
-  }
+  void setKeepAlive(bool enable) { _keepAlive = enable; }
+  void setNoDelay(bool enable) { _noDelay = enable; }
+  void setSendBufferSize(int size) { _sendBufferSize = size; }
+  void setReceiveBufferSize(int size) { _receiveBufferSize = size; }
+  void setReuseAddress(bool enable) { _reuseAddress = enable; }
 
-  Handle* listen(uint32 addr, uint16 port, void* userData)
-  {
-    Socket socket;
-    if(!socket.open() ||
-      (reuseAddress && !socket.setReuseAddress()) ||
+  Listener *listen(uint32 addr, uint16 port, Listener::ICallback &callback);
+  Establisher *connect(uint32 addr, uint16 port, Establisher::ICallback &callback);
+  Timer *time(int64 interval, Timer::ICallback &callback);
+  Client *pair(Client::ICallback &callback, Socket &socket);
+
+  void remove(Client &client);
+  void remove(Listener &listener);
+  void remove(Establisher &establisher);
+  void remove(Timer &timer);
+
+  void run();
+  void interrupt();
+
+  void clear();
+
+private:
+  bool _keepAlive;
+  bool _noDelay;
+  int _sendBufferSize;
+  int _receiveBufferSize;
+  bool _reuseAddress;
+
+  Socket::Poll _sockets;
+  MultiMap<int64, TimerImpl *> _queuedTimers;
+  PoolList<ListenerImpl> _listeners;
+  PoolList<EstablisherImpl> _establishers;
+  PoolList<ClientImpl> _clients;
+  PoolList<TimerImpl> _timers;
+
+  List<ClientImpl *> _closingClients;
+
+  Mutex _interruptMutex;
+  bool _interrupted;
+};
+
+Server::Private::Private() : _keepAlive(false), _noDelay(false), _sendBufferSize(0), _receiveBufferSize(0), _reuseAddress(true), _interrupted(false)
+{
+  _queuedTimers.insert(0, 0); // add default timeout timer
+}
+
+Server::Listener *Server::Private::listen(uint32 addr, uint16 port, Listener::ICallback &callback)
+{
+  Socket socket;
+  if (!socket.open() ||
+      (_reuseAddress && !socket.setReuseAddress()) ||
       !socket.bind(addr, port) ||
       !socket.listen())
-      return 0;
-    Listener& listener = listeners.append();
-    listener.type = Handle::listenerType;
-    listener.state = Handle::connectedState;
-    listener.socket.swap(socket);
-    listener.socket.handle = &listener;
-    listener.userData = userData;
-    sockets.set(listener.socket, Socket::Poll::acceptFlag);
-    return &listener;
-  }
+    return 0;
+  ListenerImpl &listener = _listeners.append();
+  listener.swap(socket);
+  listener.callback = &callback;
+  _sockets.set(listener, Socket::Poll::acceptFlag);
+  return (Server::Listener *)&listener;
+}
 
-  Handle* accept(Handle& handle, void* userData, uint32* addr, uint16* port, bool suspend)
-  {
-    Listener& listener = (Listener&)handle;
-    Socket socket;
-    uint32 addr2;
-    uint16 port2;
-    if(!listener.socket.accept(socket, *(addr ? addr : &addr2), *(port ? port : &port2)) ||
-      !socket.setNonBlocking() ||
-      (keepAlive && !socket.setKeepAlive()) ||
-      (noDelay && !socket.setNoDelay()) ||
-      (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
-      (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
-      return 0;
-    Client& client = clients.append();
-    client.type = Handle::clientType;
-    client.state = suspend ? Handle::suspendedState : Handle::connectedState;
-    client.socket.swap(socket);
-    client.socket.handle = &client;
-    client.userData = userData;
-    if (!suspend)
-        sockets.set(client.socket, Socket::Poll::readFlag);
-    return &client;
-  }
-
-  Handle* connect(uint32 addr, uint16 port, void* userData)
-  {
-    Socket socket;
-    if(!socket.open() ||
+Server::Establisher *Server::Private::connect(uint32 addr, uint16 port, Establisher::ICallback &callback)
+{
+  Socket socket;
+  if (!socket.open() ||
       !socket.setNonBlocking() ||
       !socket.connect(addr, port))
-      return 0;
-    Client& client = clients.append();
-    client.type = Handle::clientType;
-    client.state = Handle::connectingState;
-    client.socket.swap(socket);
-    client.socket.handle = &client;
-    client.userData = userData;
-    sockets.set(client.socket, Socket::Poll::connectFlag);
-    return &client;
-  }
+    return 0;
+  EstablisherImpl &establisher = _establishers.append();
+  establisher.swap(socket);
+  establisher.callback = &callback;
+  _sockets.set(establisher, Socket::Poll::connectFlag);
+  return (Server::Establisher *)&establisher;
+}
 
-  Handle* pair(Socket& otherSocket, void* userData)
-  {
-    Socket socket;
-    if(!socket.pair(otherSocket) ||
+Server::Timer *Server::Private::time(int64 interval, Timer::ICallback &callback)
+{
+  TimerImpl &timer = _timers.append();
+  timer.callback = &callback;
+  timer.executionTime = Time::ticks() + interval;
+  timer.interval = interval;
+  _queuedTimers.insert(timer.executionTime, &timer);
+  return (Server::Timer *)&timer;
+}
+
+Server::Client *Server::Private::pair(Client::ICallback &callback, Socket &otherSocket)
+{
+  Socket socket;
+  if (!socket.pair(otherSocket) ||
       !socket.setNonBlocking() ||
-      (keepAlive && !socket.setKeepAlive()) ||
-      (noDelay && !socket.setNoDelay()) ||
-      (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
-      (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
+      (_keepAlive && !socket.setKeepAlive()) ||
+      (_noDelay && !socket.setNoDelay()) ||
+      (_sendBufferSize > 0 && !socket.setSendBufferSize(_sendBufferSize)) ||
+      (_receiveBufferSize > 0 && !socket.setReceiveBufferSize(_receiveBufferSize)))
+  {
+    otherSocket.close();
+    return 0;
+  }
+  ClientImpl &client = _clients.append();
+  client._p = this;
+  client.swap(socket);
+  _sockets.set(client, Socket::Poll::readFlag);
+  return (Server::Client *)&client;
+}
+
+void Server::Private::remove(Client &client_)
+{
+  ClientImpl &client = *(ClientImpl *)&client_;
+  _sockets.remove(client);
+  _clients.remove(client);
+}
+
+void Server::Private::remove(Listener &listener_)
+{
+  ListenerImpl &listener = *(ListenerImpl *)&listener_;
+  _sockets.remove(listener);
+  _listeners.remove(listener);
+}
+
+void Server::Private::remove(Establisher &establisher_)
+{
+  EstablisherImpl &establisher = *(EstablisherImpl *)&establisher_;
+  _sockets.remove(establisher);
+  _establishers.remove(establisher);
+}
+
+void Server::Private::remove(Timer &timer_)
+{
+  TimerImpl &timer = *(TimerImpl *)&timer_;
+  for (MultiMap<int64, TimerImpl *>::Iterator i = _queuedTimers.find(timer.executionTime), end = _queuedTimers.end(); i != end; ++i)
+  {
+    if (*i == &timer)
     {
-      otherSocket.close();
-      return 0;
+      _queuedTimers.remove(i);
+      break;
     }
-    Client& client = clients.append();
-    client.type = Handle::clientType;
-    client.state = Handle::connectedState;
-    client.socket.swap(socket);
-    client.socket.handle = &client;
-    client.userData = userData;
-    sockets.set(client.socket, Socket::Poll::readFlag);
-    return &client;
+    if (i.key() != timer.executionTime)
+      break;
   }
+  _timers.remove(timer);
+}
 
-  Handle* createTimer(int64 interval, void* userData)
+void Server::Private::run()
+{
+  for (Socket::Poll::Event pollEvent;;)
   {
-    int64 executionTime = Time::ticks() + interval;
-    Timer& timer = timers.append();
-    timer.type = Handle::timerType;
-    timer.state = Handle::connectedState;
-    timer.userData = userData;
-    timer.executionTime = executionTime;
-    timer.interval = interval;
-    queuedTimers.insert(executionTime, &timer);
-    return &timer;
-  }
-
-  bool write(Handle& handle, const byte* data, usize size, usize* postponed)
-  {
-    if(handle.type != Handle::clientType)
-      return false;
-    Client& client = (Client&)handle;
-    if(client.state != Client::connectedState && client.state != Client::suspendedState)
-      return false;
-    if(client.sendBuffer.isEmpty())
+    int64 now = Time::ticks();
+    int64 timeout = _queuedTimers.begin().key() - now;
+    for (; timeout <= 0; timeout = _queuedTimers.begin().key() - now)
     {
-      ssize sent = client.socket.send(data, size);
-      switch(sent)
+      TimerImpl *timer = _queuedTimers.front();
+      _queuedTimers.removeFront();
+      if (timer) // user timer
       {
-      case -1:
-        if(Socket::getLastError() == 0) // EWOULDBLOCK
+        timer->executionTime += timer->interval;
+        _queuedTimers.insert(timer->executionTime, timer);
+        timer->callback->onActivated();
+      }
+      else
+        _queuedTimers.insert(now + 300 * 1000, 0); // keep "default timeout" timer
+    }
+
+    while (!_closingClients.isEmpty())
+    {
+      ClientImpl &client = *_closingClients.front();
+      _closingClients.removeFront();
+      client._callback->onClosed();
+    }
+
+    if (!_sockets.poll(pollEvent, timeout))
+      break;
+
+    if (!pollEvent.flags)
+    {
+      if (_interrupted)
+      {
+        Mutex::Guard guard(_interruptMutex);
+        if (_interrupted)
         {
-          sent = 0;
+          _interrupted = false;
+          return;
+        }
+      }
+      continue; // timeout
+    }
+
+    if (pollEvent.flags & Socket::Poll::readFlag)
+      ((ClientImpl *)pollEvent.socket)->_callback->onRead();
+    else if (pollEvent.flags & Socket::Poll::writeFlag)
+    {
+      ClientImpl &client = *(ClientImpl *)pollEvent.socket;
+      if (!client._sendBuffer.isEmpty())
+      {
+        ssize sent = client.send(client._sendBuffer, client._sendBuffer.size());
+        switch (sent)
+        {
+        case -1:
+          if (Socket::getLastError() == 0) // EWOULDBLOCK
+            continue;
+          // no break
+        case 0:
+          client._sendBuffer.free();
+          _sockets.remove(client);
+          client._callback->onClosed();
+          continue;
+        default:
           break;
         }
-        // no break
-      case 0:
-        client.state = Client::closingState;
-        closingHandles.append(&client);
-        return false;
-      default:
-        break;
+        client._sendBuffer.removeFront((usize)sent);
       }
-      if((usize)sent >= size)
+      if (client._sendBuffer.isEmpty())
       {
-        if(postponed)
-          *postponed = 0;
-        return true;
+        client._sendBuffer.free();
+        if (client._suspended)
+          _sockets.remove(client);
+        else
+          _sockets.set(client, Socket::Poll::readFlag);
+        client._callback->onWrite();
       }
-      client.sendBuffer.append(data + sent, size - sent);
-      sockets.set(client.socket, Socket::Poll::writeFlag);
+      continue;
     }
-    else
-      client.sendBuffer.append(data, size);
-    if(postponed)
-      *postponed = client.sendBuffer.size();
-    return true;
+    else if (pollEvent.flags & Socket::Poll::acceptFlag)
+    {
+      ListenerImpl &listener = *(ListenerImpl *)pollEvent.socket;
+      Socket clientSocket;
+      uint32 ip;
+      uint16 port;
+      if (!listener.accept(clientSocket, ip, port) ||
+          !clientSocket.setNonBlocking() ||
+          (_keepAlive && !clientSocket.setKeepAlive()) ||
+          (_noDelay && !clientSocket.setNoDelay()) ||
+          (_sendBufferSize > 0 && !clientSocket.setSendBufferSize(_sendBufferSize)) ||
+          (_receiveBufferSize > 0 && !clientSocket.setReceiveBufferSize(_receiveBufferSize)))
+        continue;
+      ClientImpl &client = _clients.append();
+      client._p = this;
+      client.swap(clientSocket);
+      _sockets.set(client, Socket::Poll::readFlag);
+      client._callback = listener.callback->onAccepted(*(Client *)&client, ip, port);
+      if (!client._callback)
+        _clients.remove(client);
+      continue;
+    }
+    else if (pollEvent.flags & Socket::Poll::connectFlag)
+    {
+      EstablisherImpl &establisher = *(EstablisherImpl *)pollEvent.socket;
+      _sockets.remove(establisher);
+      int error = establisher.getAndResetErrorStatus();
+      if (error)
+      {
+        Error::setLastError((uint)error);
+        establisher.callback->onAbolished();
+      }
+      else
+      {
+        if ((_keepAlive && !establisher.setKeepAlive()) ||
+            (_noDelay && !establisher.setNoDelay()) ||
+            (_sendBufferSize > 0 && !establisher.setSendBufferSize(_sendBufferSize)) ||
+            (_receiveBufferSize > 0 && !establisher.setReceiveBufferSize(_receiveBufferSize)))
+          establisher.callback->onAbolished();
+        else
+        {
+          ClientImpl &client = _clients.append();
+          client._p = this;
+          client.swap(establisher);
+          _sockets.set(client, Socket::Poll::readFlag);
+          client._callback = establisher.callback->onConnected(*(Client *)&client);
+          if (!client._callback)
+            _clients.remove(client);
+        }
+      }
+      continue;
+    }
   }
+}
 
-  bool read(Handle& handle, byte* buffer, usize maxSize, usize& size)
+void Server::Private::interrupt()
+{
   {
-    if(handle.type != Handle::clientType)
-      return false;
-    Client& client = (Client&)handle;
-    if(client.state != Client::connectedState && client.state != Client::suspendedState)
-      return false;
-    ssize received = client.socket.recv(buffer, maxSize);
-    switch(received)
+    Mutex::Guard guard(_interruptMutex);
+    if (_interrupted)
+      return;
+    _interrupted = true;
+  }
+  _sockets.interrupt();
+}
+
+void Server::Private::clear()
+{
+  _sockets.clear();
+  _queuedTimers.clear();
+  _listeners.clear();
+  _establishers.clear();
+  _clients.clear();
+  _timers.clear();
+  _closingClients.clear();
+  _queuedTimers.insert(0, 0);
+  _interrupted = false;
+}
+
+bool Server::Private::ClientImpl::write(const byte *data, usize size, usize *postponed)
+{
+  if (_sendBuffer.isEmpty())
+  {
+    ssize sent = send(data, size);
+    switch (sent)
     {
     case -1:
-      if(Socket::getLastError() == 0) // EWOULDBLOCK
-        return false;
+      if (Socket::getLastError() == 0) // EWOULDBLOCK
+      {
+        sent = 0;
+        break;
+      }
       // no break
     case 0:
-      client.state = Client::closingState;
-      closingHandles.append(&client);
+      _p->_closingClients.append(this);
       return false;
     default:
       break;
     }
-    size = (usize)received;
-    return true;
-  }
-
-  void close(Handle& handle)
-  {
-    closingHandles.remove(&handle);
-    switch(handle.type)
+    if ((usize)sent >= size)
     {
-    case Handle::clientType:
-      {
-        Client& client = (Client&)handle;
-        sockets.remove(client.socket);
-        clients.remove(client);
-      }
-      break;
-    case Handle::timerType:
-      {
-        Timer& timer = (Timer&)handle;
-        if(timer.state == Handle::connectedState)
-          for(MultiMap<int64, Timer*>::Iterator i = queuedTimers.find(timer.executionTime), end = queuedTimers.end(); i != end; ++i)
-          {
-            if(*i == &timer)
-            {
-              queuedTimers.remove(i);
-              break;
-            }
-            if(i.key() != timer.executionTime)
-              break;
-          }
-        timers.remove(timer);
-      }
-      break;
-    case Handle::listenerType:
-      {
-        Listener& listener = (Listener&)handle;
-        sockets.remove(listener.socket);
-        listeners.remove(listener);
-      }
-      break;
+      if (postponed)
+        *postponed = 0;
+      return true;
     }
+    _sendBuffer.append(data + sent, size - sent);
+    _p->_sockets.set(*this, Socket::Poll::writeFlag);
   }
-
-  bool poll(Event& event)
-  {
-    while(!closingHandles.isEmpty())
-    {
-      Handle& handle = *closingHandles.front();
-      closingHandles.removeFront();
-      switch(handle.type)
-      {
-      case Handle::clientType:
-        if(handle.state == Handle::closingState)
-        {
-          Client& client = (Client&)handle;
-          event.handle = &client;
-          event.userData = client.userData;
-          event.type = Event::closeType;
-          client.state = Client::closedState;
-          sockets.remove(client.socket);
-          return true;
-        }
-        break;
-      case Handle::timerType:
-        if(handle.state == Handle::suspendedState)
-        {
-          Timer& timer = (Timer&)handle;
-          timer.executionTime += timer.interval;
-          queuedTimers.insert(timer.executionTime, &timer);
-          timer.state = Handle::connectedState;
-        }
-        break;
-      default:
-        break;
-      }
-    }
-
-    for(Socket::Poll::Event pollEvent;;)
-    {
-      int64 now = Time::ticks();
-      int64 timeout = queuedTimers.begin().key() - now;
-      for(; timeout <= 0; timeout = queuedTimers.begin().key() - now)
-      {
-        Timer* timer = queuedTimers.front();
-        queuedTimers.removeFront();
-        if(timer) // user timer
-        {
-          event.handle = timer;
-          event.userData = timer->userData;
-          event.type = Event::timerType;
-          timer->state = Handle::suspendedState;
-          closingHandles.append(timer);
-          return true;
-        }
-        else
-          queuedTimers.insert(now + 300 * 1000, 0); // keep "default timeout" timer
-      }
-
-      if(!sockets.poll(pollEvent, timeout))
-        break;
-
-      if(!pollEvent.flags)
-      {
-        if(interrupted)
-        {
-          interrupted = false;
-          event.handle = 0;
-          event.userData = 0;
-          event.type = Event::interruptType;
-          return true;
-        }
-        continue; // timeout
-      }
-      event.handle = ((HandleSocket*)pollEvent.socket)->handle;
-      event.userData = event.handle->userData;
-      if(pollEvent.flags & Socket::Poll::readFlag)
-      {
-        event.type = Event::readType;
-        return true;
-      }
-      else if(pollEvent.flags & Socket::Poll::writeFlag)
-      {
-        Client& client = (Client&)*event.handle;
-        if(!client.sendBuffer.isEmpty())
-        {
-          ssize sent = client.socket.send(client.sendBuffer, client.sendBuffer.size());
-          switch(sent)
-          {
-          case -1:
-            if(Socket::getLastError() == 0) // EWOULDBLOCK
-              continue;
-            // no break
-          case 0:
-            client.sendBuffer.free();
-            event.type = Event::closeType;
-            client.state = Client::closedState;
-            sockets.remove(client.socket);
-            return true;
-          default:
-            break;
-          }
-          client.sendBuffer.removeFront((usize)sent);
-        }
-        if(client.sendBuffer.isEmpty())
-        {
-          client.sendBuffer.free();
-          event.type = Event::writeType;
-          if(client.state != Client::suspendedState)
-            sockets.set(client.socket, Socket::Poll::readFlag);
-          else
-            sockets.remove(client.socket);
-          return true;
-        }
-        continue;
-      }
-      else if(pollEvent.flags & Socket::Poll::acceptFlag)
-      {
-        event.type = Event::acceptType;
-        return true;
-      }
-      else if(pollEvent.flags & Socket::Poll::connectFlag)
-      {
-        Client& client = *(Client*)event.handle;
-        Socket& socket = client.socket;
-        int error = socket.getAndResetErrorStatus();
-        if(error)
-        {
-          Error::setLastError((uint)error);
-          event.type = Event::failType;
-          client.state = Client::closedState;
-          sockets.remove(client.socket);
-        }
-        else
-        {
-          if((keepAlive && !socket.setKeepAlive()) ||
-            (noDelay && !socket.setNoDelay()) ||
-            (sendBufferSize > 0 && !socket.setSendBufferSize(sendBufferSize)) ||
-            (receiveBufferSize > 0 && !socket.setReceiveBufferSize(receiveBufferSize)))
-          {
-            event.type = Event::failType;
-            client.state = Client::closedState;
-            sockets.remove(client.socket);
-          }
-          else
-          {
-            client.state = Client::connectedState;
-            event.type = Event::openType;
-            sockets.set(*pollEvent.socket, Socket::Poll::readFlag);
-          }
-        }
-        return true;
-      }
-    }
-    return false;
-  }
-
-  bool interrupt()
-  {
-    interrupted = true;
-    return sockets.interrupt();
-  }
-
-  void suspend(Handle& handle)
-  {
-    if(handle.type != Handle::clientType)
-      return;
-    Client& client = (Client&)handle;
-    if(client.state != Client::connectedState)
-      return;
-    if(client.sendBuffer.isEmpty())
-      sockets.remove(client.socket);
-    client.state = Client::suspendedState;
-  }
-
-  void resume(Handle& handle)
-  {
-    if(handle.type != Handle::clientType)
-      return;
-    Client& client = (Client&)handle;
-    if(client.state != Client::suspendedState)
-      return;
-    if(client.sendBuffer.isEmpty())
-      sockets.set(client.socket, Socket::Poll::readFlag);
-    client.state = Client::connectedState;
-  }
-
-  void setKeepAlive(bool enable) {keepAlive = enable;}
-  void setNoDelay(bool enable) {noDelay = enable;}
-  void setSendBufferSize(int size) {sendBufferSize = size;}
-  void setReceiveBufferSize(int size) {receiveBufferSize = size;}
-  void setReuseAddress(bool enable) {reuseAddress = enable;}
-};
-
-Socket* Server::getSocket(Handle& handle)
-{
-  switch(handle.type)
-  {
-  case Handle::clientType:
-    return &((Private::Client&)handle).socket;
-  case Handle::listenerType:
-    return &((Private::Listener&)handle).socket;
-  default:
-    return 0;
-  }
+  else
+    _sendBuffer.append(data, size);
+  if (postponed)
+    *postponed = _sendBuffer.size();
+  return true;
 }
 
-Server::Server() : p(new Private) {}
-Server::~Server() {delete p;}
-Server::Handle* Server::listen(uint16 port, void* userData) {return p->listen(Socket::anyAddr, port, userData);}
-Server::Handle* Server::listen(uint32 addr, uint16 port, void* userData) {return p->listen(addr, port, userData);}
-Server::Handle* Server::connect(uint32 addr, uint16 port, void* userData) {return p->connect(addr, port, userData);}
-Server::Handle* Server::pair(Socket& socket, void* userData) {return p->pair(socket, userData);}
-Server::Handle* Server::createTimer(int64 interval, void* userData) {return p->createTimer(interval, userData);}
-Server::Handle* Server::accept(Handle& handle, void* userData, uint32* addr, uint16* port, bool suspend) {return p->accept(handle, userData, addr, port, suspend);}
-void Server::setUserData(Handle& handle, void* userData) {handle.userData = userData;}
-void* Server::getUserData(Handle& handle) {return handle.userData;}
-bool Server::write(Handle& handle, const byte* data, usize size, usize* postponed) {return p->write(handle, data, size, postponed);}
-bool Server::read(Handle& handle, byte* buffer, usize maxSize, usize& size) {return p->read(handle, buffer, maxSize, size);}
-void Server::close(Handle& handle) {return p->close(handle);}
-bool Server::poll(Event& event) {return p->poll(event);}
-bool Server::interrupt() {return p->interrupt();}
-void Server::suspend(Handle& handle) {return p->suspend(handle);}
-void Server::resume(Handle& handle) {return p->resume(handle);}
-void Server::setKeepAlive(bool enable) {return p->setKeepAlive(enable);}
-void Server::setNoDelay(bool enable) {return p->setNoDelay(enable);}
-void Server::setSendBufferSize(int size) {return p->setSendBufferSize(size);}
-void Server::setReceiveBufferSize(int size) {return p->setReceiveBufferSize(size);}
-void Server::setReuseAddress(bool enable) {return p->setReuseAddress(enable);}
-void Server::clear() {return p->clear();}
+bool Server::Private::ClientImpl::read(byte *buffer, usize maxSize, usize &size)
+{
+  ssize received = recv(buffer, maxSize);
+  switch (received)
+  {
+  case -1:
+    if (Socket::getLastError() == 0) // EWOULDBLOCK
+    {
+      size = 0;
+      return false;
+    }
+    // no break
+  case 0:
+    _p->_closingClients.append(this);
+    size = 0;
+    return false;
+  default:
+    break;
+  }
+  size = (usize)received;
+  return true;
+}
+
+void Server::Private::ClientImpl::suspend()
+{
+  _suspended = true;
+  if (_sendBuffer.isEmpty())
+    _p->_sockets.remove(*this);
+}
+
+void Server::Private::ClientImpl::resume()
+{
+  _suspended = false;
+  if (_sendBuffer.isEmpty())
+    _p->_sockets.set(*this, Socket::Poll::readFlag);
+}
+
+Server::Server() : _p(new Private) {}
+Server::~Server() { delete _p; }
+void Server::setKeepAlive(bool enable) { return _p->setKeepAlive(enable); }
+void Server::setNoDelay(bool enable) { return _p->setNoDelay(enable); }
+void Server::setSendBufferSize(int size) { return _p->setSendBufferSize(size); }
+void Server::setReceiveBufferSize(int size) { return _p->setReceiveBufferSize(size); }
+void Server::setReuseAddress(bool enable) { return _p->setReuseAddress(enable); }
+Server::Listener *Server::listen(uint32 addr, uint16 port, Listener::ICallback &callback) { return _p->listen(addr, port, callback); }
+Server::Establisher *Server::connect(uint32 addr, uint16 port, Establisher::ICallback &callback) { return _p->connect(addr, port, callback); }
+Server::Timer *Server::time(int64 interval, Timer::ICallback &callback) { return _p->time(interval, callback); }
+Server::Client *Server::pair(Client::ICallback &callback, Socket &socket) { return _p->pair(callback, socket); }
+void Server::remove(Server::Client &client) { return _p->remove(client); }
+void Server::remove(Server::Listener &listener) { return _p->remove(listener); }
+void Server::remove(Server::Establisher &establisher) { return _p->remove(establisher); }
+void Server::remove(Server::Timer &timer) { return _p->remove(timer); }
+void Server::run() { return _p->run(); }
+void Server::interrupt() { return _p->interrupt(); }
+void Server::clear() { return _p->clear(); }
+bool Server::Client::write(const byte *data, usize size, usize *postponed) { return ((Private::ClientImpl *)this)->write(data, size, postponed); }
+bool Server::Client::read(byte *buffer, usize maxSize, usize &size) { return ((Private::ClientImpl *)this)->read(buffer, maxSize, size); }
+void Server::Client::suspend() { return ((Private::ClientImpl *)this)->suspend(); }
+void Server::Client::resume() { return ((Private::ClientImpl *)this)->resume(); }

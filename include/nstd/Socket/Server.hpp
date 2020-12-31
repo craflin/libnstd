@@ -8,52 +8,90 @@ class Socket;
 class Server
 {
 public:
-  struct Handle;
-
-  struct Event
+  class Client
   {
-    enum Type
+  public:
+    class ICallback
     {
-      interruptType,
-      failType,
-      openType,
-      readType,
-      writeType,
-      closeType,
-      acceptType,
-      timerType,
+    public:
+      virtual void onRead() = 0;
+      virtual void onWrite() = 0;
+      virtual void onClosed() = 0;
+
+    protected:
+      ICallback() {}
+      ~ICallback() {}
     };
-    Type type;
-    Handle* handle;
-    void* userData;
+
+  public:
+    bool write(const byte *data, usize size, usize *postponed = 0);
+    bool read(byte *buffer, usize maxSize, usize &size);
+    void suspend();
+    void resume();
+
+  private:
+    Client(const Client &);
+    Client &operator=(const Client &);
+  };
+
+  class Listener
+  {
+  public:
+    class ICallback
+    {
+    public:
+      virtual Client::ICallback *onAccepted(Client &client, uint32 ip, uint16 port) = 0;
+
+    protected:
+      ICallback() {}
+      ~ICallback() {}
+    };
+
+  private:
+    Listener(const Listener &);
+    Listener &operator=(const Listener &);
+  };
+
+  class Establisher
+  {
+  public:
+    class ICallback
+    {
+    public:
+      virtual Client::ICallback *onConnected(Client &client) = 0;
+      virtual void onAbolished() = 0;
+
+    protected:
+      ICallback() {}
+      ~ICallback() {}
+    };
+
+  private:
+    Establisher(const Establisher &);
+    Establisher &operator=(const Establisher &);
+  };
+
+  class Timer
+  {
+  public:
+    class ICallback
+    {
+    public:
+      virtual void onActivated() = 0;
+
+    protected:
+      ICallback() {}
+      ~ICallback() {}
+    };
+
+  private:
+    Timer(const Timer &);
+    Timer &operator=(const Timer &);
   };
 
 public:
   Server();
   ~Server();
-
-  Handle* listen(uint16 port, void* userData);
-  Handle* listen(uint32 addr, uint16 port, void* userData);
-  Handle* connect(uint32 addr, uint16 port, void* userData);
-  Handle* pair(Socket& socket, void* userData);
-  Handle* createTimer(int64 interval, void* userData);
-  Handle* accept(Handle& handle, void* userData, uint32* addr = 0, uint16* port = 0, bool suspend = false);
-
-  void setUserData(Handle& handle, void* userData);
-  void* getUserData(Handle& handle);
-
-  Socket* getSocket(Handle& handle);
-
-  bool write(Handle& handle, const byte* data, usize size, usize* postponed = 0);
-  bool read(Handle& handle, byte* buffer, usize maxSize, usize& size);
-
-  void close(Handle& handle);
-
-  bool poll(Event& event);
-  bool interrupt();
-
-  void suspend(Handle& handle);
-  void resume(Handle& handle);
 
   void setKeepAlive(bool enable = true);
   void setNoDelay(bool enable = true);
@@ -61,13 +99,26 @@ public:
   void setReceiveBufferSize(int size);
   void setReuseAddress(bool enable);
 
+  Listener *listen(uint32 addr, uint16 port, Listener::ICallback &callback);
+  Establisher *connect(uint32 addr, uint16 port, Establisher::ICallback &callback);
+  Timer *time(int64 interval, Timer::ICallback &callback);
+  Client *pair(Client::ICallback &callback, Socket &socket);
+
+  void remove(Client &client);
+  void remove(Listener &listener);
+  void remove(Establisher &establisher);
+  void remove(Timer &timer);
+
+  void run();
+  void interrupt();
+
   void clear();
 
 private:
-  Server(const Server&);
-  Server& operator=(const Server&);
+  Server(const Server &);
+  Server &operator=(const Server &);
 
 private:
   class Private;
-  Private* p;
+  Private *_p;
 };

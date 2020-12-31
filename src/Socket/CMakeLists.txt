@@ -1,8 +1,8 @@
 
 set(sources
-    Server2.cpp
+    Server.cpp
     Socket.cpp
-    ../../include/nstd/Socket/Server2.hpp
+    ../../include/nstd/Socket/Server.hpp
     ../../include/nstd/Socket/Socket.hpp
 )
 
