@@ -267,8 +267,33 @@ void testServer()
   }
 }
 
+void testHostnameResolving()
+{
+  Socket socket;
+  ASSERT(socket.open());
+  ASSERT(socket.setReuseAddress());
+  ASSERT(socket.listen());
+  uint32 ip;
+  uint16 port;
+  ASSERT(socket.getSockName(ip, port));
+  class Handler : public Server::Establisher::ICallback 
+  {
+  public:
+    Server _server;
+    Server::Client::ICallback *onConnected(Server::Client &client) override
+    {
+      _server.interrupt();
+      return 0;
+    }
+    void onAbolished() override { ASSERT(false);}
+  } handler;
+  handler._server.connect(Socket::getHostName(), port, handler);
+  handler._server.run();
+}
+
 int main(int argc, char *argv[])
 {
   testServer();
+  testHostnameResolving();
   return 0;
 }

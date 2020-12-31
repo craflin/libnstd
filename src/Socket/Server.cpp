@@ -8,6 +8,7 @@
 #include <nstd/Buffer.hpp>
 #include <nstd/Error.hpp>
 #include <nstd/Mutex.hpp>
+#include <nstd/Future.hpp>
 
 class Server::Private
 {
@@ -31,9 +32,12 @@ public:
     void resume();
   };
 
+  struct Resolver;
+
   struct EstablisherImpl : public Socket
   {
     Establisher::ICallback *callback;
+    Resolver *resolver;
   };
 
   struct TimerImpl
@@ -41,6 +45,16 @@ public:
     Timer::ICallback *callback;
     int64 executionTime;
     int64 interval;
+  };
+
+  struct Resolver
+  {
+    String host;
+    uint16 port;
+    Future<uint32> future;
+    EstablisherImpl *establisher;
+    bool finished;
+    Resolver() : finished(false) {}
   };
 
 public:
@@ -54,6 +68,7 @@ public:
 
   Listener *listen(uint32 addr, uint16 port, Listener::ICallback &callback);
   Establisher *connect(uint32 addr, uint16 port, Establisher::ICallback &callback);
+  Establisher *connect(const String &host, uint16 port, Establisher::ICallback &callback);
   Timer *time(int64 interval, Timer::ICallback &callback);
   Client *pair(Client::ICallback &callback, Socket &socket);
 
@@ -80,11 +95,15 @@ private:
   PoolList<EstablisherImpl> _establishers;
   PoolList<ClientImpl> _clients;
   PoolList<TimerImpl> _timers;
+  PoolList<Resolver> _resolvers;
 
   List<ClientImpl *> _closingClients;
 
   Mutex _interruptMutex;
   bool _interrupted;
+
+private:
+  uint32 resolve(Resolver *resolver);
 };
 
 Server::Private::Private() : _keepAlive(false), _noDelay(false), _sendBufferSize(0), _receiveBufferSize(0), _reuseAddress(true), _interrupted(false)
@@ -119,6 +138,34 @@ Server::Establisher *Server::Private::connect(uint32 addr, uint16 port, Establis
   establisher.callback = &callback;
   _sockets.set(establisher, Socket::Poll::connectFlag);
   return (Server::Establisher *)&establisher;
+}
+
+Server::Establisher *Server::Private::connect(const String &host, uint16 port, Establisher::ICallback &callback)
+{
+  uint32 addr = Socket::inetAddr(host, 0);
+  if (addr != Socket::anyAddr && addr != Socket::broadcastAddr)
+    return connect(addr, port, callback);
+  else
+  {
+    EstablisherImpl &establisher = _establishers.append();
+    Resolver &resolver = _resolvers.append();
+    resolver.establisher = &establisher;
+    resolver.host = host;
+    resolver.port = port;
+    establisher.resolver = &resolver;
+    establisher.callback = &callback;
+    resolver.future.start(*this, &Private::resolve, &resolver);
+    return (Server::Establisher *)&establisher;
+  }
+}
+
+uint32 Server::Private::resolve(Resolver *resolver)
+{
+  uint32 result = 0;
+  Socket::getHostByName(resolver->host, result);
+  resolver->finished = true;
+  _sockets.interrupt();
+  return result;
 }
 
 Server::Timer *Server::Private::time(int64 interval, Timer::ICallback &callback)
@@ -168,6 +215,8 @@ void Server::Private::remove(Listener &listener_)
 void Server::Private::remove(Establisher &establisher_)
 {
   EstablisherImpl &establisher = *(EstablisherImpl *)&establisher_;
+  if (establisher.resolver)
+    establisher.resolver->establisher = 0;
   _sockets.remove(establisher);
   _establishers.remove(establisher);
 }
@@ -220,6 +269,36 @@ void Server::Private::run()
 
     if (!pollEvent.flags)
     {
+      for (PoolList<Resolver>::Iterator i = _resolvers.begin(); i != _resolvers.end();)
+      {
+        Resolver &resolver = *i;
+        ++i;
+        if (resolver.finished)
+        {
+          if (resolver.establisher)
+          {
+            EstablisherImpl& establisher = *resolver.establisher;
+            establisher.resolver = 0;
+            uint32 addr = resolver.future;
+            if (addr)
+            {
+              if (!establisher.open() ||
+                  !establisher.setNonBlocking() ||
+                  !establisher.connect(addr, resolver.port))
+                establisher.callback->onAbolished();
+              else
+                _sockets.set(establisher, Socket::Poll::connectFlag);
+            }
+            else
+            {
+              Error::setErrorString("Could not resolve hostname");
+              establisher.callback->onAbolished();
+            }
+          }
+          _resolvers.remove(resolver);
+        }
+      }
+
       if (_interrupted)
       {
         Mutex::Guard guard(_interruptMutex);
@@ -341,6 +420,7 @@ void Server::Private::clear()
   _establishers.clear();
   _clients.clear();
   _timers.clear();
+  _resolvers.clear();
   _closingClients.clear();
   _queuedTimers.insert(0, 0);
   _interrupted = false;
@@ -428,6 +508,7 @@ void Server::setReceiveBufferSize(int size) { return _p->setReceiveBufferSize(si
 void Server::setReuseAddress(bool enable) { return _p->setReuseAddress(enable); }
 Server::Listener *Server::listen(uint32 addr, uint16 port, Listener::ICallback &callback) { return _p->listen(addr, port, callback); }
 Server::Establisher *Server::connect(uint32 addr, uint16 port, Establisher::ICallback &callback) { return _p->connect(addr, port, callback); }
+Server::Establisher *Server::connect(const String &host, uint16 port, Establisher::ICallback &callback) { return _p->connect(host, port, callback); }
 Server::Timer *Server::time(int64 interval, Timer::ICallback &callback) { return _p->time(interval, callback); }
 Server::Client *Server::pair(Client::ICallback &callback, Socket &socket) { return _p->pair(callback, socket); }
 void Server::remove(Server::Client &client) { return _p->remove(client); }
