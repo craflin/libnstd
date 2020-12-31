@@ -53,14 +53,13 @@ public:
     Log::Device device;
 
     {
-      _Log::mutex.lock();
+      Mutex::Guard guard(_Log::mutex);
       device = _Log::device;
       if (device != Log::syslog)
       {
         lineFormat = _Log::lineFormat;
         timeFormat = _Log::timeFormat;
       }
-      _Log::mutex.unlock();
     }
 
     // get message
@@ -171,15 +170,14 @@ Log::Device _Log::device = Log::stdOutErr;
 
 void Log::setFormat(const String& lineFormat, const String& timeFormat)
 {
-  _Log::mutex.lock();
+  Mutex::Guard guard(_Log::mutex);
   _Log::lineFormat = lineFormat;
   _Log::timeFormat = timeFormat;
-  _Log::mutex.unlock();
 }
 
 void Log::setDevice(Device device)
 {
-  _Log::mutex.lock();
+  Mutex::Guard guard(_Log::mutex);
   if(_Log::device != device)
   {
 #ifndef _WIN32
@@ -192,7 +190,6 @@ void Log::setDevice(Device device)
       ::openlog(NULL, LOG_CONS|LOG_NDELAY|LOG_PID, LOG_DAEMON);
 #endif
   }
-  _Log::mutex.unlock();
 }
 
 void Log::setLevel(int level)
