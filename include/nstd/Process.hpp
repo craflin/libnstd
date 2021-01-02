@@ -72,9 +72,10 @@ public:
   bool open(const String& executable, const List<String>& args, uint streams = stdoutStream);
 
   /*
-  * Closes the stdin pipe of an opened process.
+  * Closes the streams of an opened process.
+  * @param [in] streams The streams to be closed.
   */
-  void close();
+  void close(uint streams = stdoutStream | stderrStream | stdinStream);
 
   ssize read(void* buffer, usize length);
   ssize read(void* buffer, usize length, uint& streams);
