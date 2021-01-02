@@ -3,93 +3,93 @@
 #include <nstd/String.hpp>
 #include <nstd/Debug.hpp>
 
-void testCallback()
+class MyEmitter : public Callback::Emitter
 {
-  class MyEmitter : public Callback::Emitter
+public:
+  virtual ~MyEmitter() {}
+  void emitMySignal(const String& arg)
   {
-  public:
-    virtual ~MyEmitter() {}
-    void emitMySignal(const String& arg)
-    {
-      emit(&MyEmitter::mySignal, arg);
-    }
-
-    void emitMySignal0()
-    {
-      emit(&MyEmitter::mySignal0);
-    }
-
-    void emitMySignal2(const String& arg0, int arg1)
-    {
-      emit(&MyEmitter::mySignal2, arg0, arg1);
-    }
-
-    void emitMySignal3()
-    {
-      emit<MyEmitter, const String&>(&MyEmitter::mySignal3, _T("test"));
-    }
- 
-  public: // signals
-    void mySignal(String arg) {}
-    void mySignal0() {}
-    void mySignal2(String arg, int arg1) {}
-    void mySignal3(const String& arg) {}
-  };
-
-  class MyReceiver : public Callback::Listener
-  {
-  public:
-    MyReceiver* check;
-    MyEmitter* emitter;
-    int calls;
-
-    MyReceiver() : calls(0) {}
-    virtual ~MyReceiver() {}
-
-  public: // slots
-    virtual void mySlot(String arg)
-    {
-      ASSERT(this == check);
-      ++calls;
-    }
-    void selfDelete(String arg)
-    {
-      ASSERT(this == check);
-      delete this;
-    }
-    void selfDisconnect(String arg)
-    {
-      ASSERT(this == check);
-      Callback::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::selfDisconnect);
-    }
-    void emitterDelete(String arg)
-    {
-      ASSERT(this == check);
-      Callback::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::emitterDelete);
-      delete emitter;
-    }
-    void mySlot0()
-    {
-      ASSERT(this == check);
-      ++calls;
-    }
-  };
-
-  // test simple connect and disconnect
-  {
-    MyEmitter emitter;
-    MyReceiver receiver;
-    receiver.check = &receiver;
-
-    Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Callback::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    emitter.emitMySignal(_T("test"));
-    emitter.emitMySignal2(_T("test"), 123);
-    ASSERT(receiver.calls == 2);
+    emit(&MyEmitter::mySignal, arg);
   }
 
+  void emitMySignal0()
+  {
+    emit(&MyEmitter::mySignal0);
+  }
+
+  void emitMySignal2(const String& arg0, int arg1)
+  {
+    emit(&MyEmitter::mySignal2, arg0, arg1);
+  }
+
+  void emitMySignal3()
+  {
+    emit<MyEmitter, const String&>(&MyEmitter::mySignal3, _T("test"));
+  }
+ 
+public: // signals
+  virtual void mySignal(String arg) {}
+  virtual void mySignal0() {}
+  virtual void mySignal2(String arg, int arg1) {}
+  virtual void mySignal3(const String& arg) {}
+};
+
+class MyReceiver : public Callback::Listener
+{
+public:
+  MyReceiver* check;
+  MyEmitter* emitter;
+  int calls;
+
+  MyReceiver() : calls(0) {}
+  virtual ~MyReceiver() {}
+
+public: // slots
+  virtual void mySlot(String arg)
+  {
+    ASSERT(this == check);
+    ++calls;
+  }
+  void selfDelete(String arg)
+  {
+    ASSERT(this == check);
+    delete this;
+  }
+  void selfDisconnect(String arg)
+  {
+    ASSERT(this == check);
+    Callback::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::selfDisconnect);
+  }
+  void emitterDelete(String arg)
+  {
+    ASSERT(this == check);
+    Callback::disconnect(emitter, &MyEmitter::mySignal, this, &MyReceiver::emitterDelete);
+    delete emitter;
+  }
+  void mySlot0()
+  {
+    ASSERT(this == check);
+    ++calls;
+  }
+};
+
+void testSimpleConnectAndDisconnect()
+{ // test simple connect and disconnect
+  MyEmitter emitter;
+  MyReceiver receiver;
+  receiver.check = &receiver;
+
+  Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+  Callback::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+  Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+  Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
+  emitter.emitMySignal(_T("test"));
+  emitter.emitMySignal2(_T("test"), 123);
+  ASSERT(receiver.calls == 2);
+}
+
+void testCallback()
+{
   // test simple connect and disconnect without args
   {
     MyEmitter emitter;
@@ -279,6 +279,7 @@ void testCallback()
 
 int main(int argc, char* argv[])
 {
-    testCallback();
-    return 0;
+  testSimpleConnectAndDisconnect();
+  testCallback();
+  return 0;
 }
