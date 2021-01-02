@@ -6,6 +6,7 @@ function(add_unit_test name)
     set_property(TARGET ${name} PROPERTY FOLDER "test")
     source_group("" FILES ${ARGN})
     add_test(NAME ${name} COMMAND ${name})
+    set_tests_properties(${name} PROPERTIES TIMEOUT 20)
 endfunction()
 
 add_unit_test(TestArray TestArray.cpp)

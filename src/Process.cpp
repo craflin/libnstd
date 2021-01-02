@@ -656,19 +656,39 @@ bool Process::open(const String& executable, const List<String>& args, uint stre
   return open(executable, (int)args.size(), (tchar**)(const tchar**)argv, streams);
 }
 
-void Process::close()
+void Process::close(uint streams)
 {
 #ifdef _WIN32
-  if(hStdInWrite != INVALID_HANDLE_VALUE)
+  if(streams & stdinStream && hStdInWrite != INVALID_HANDLE_VALUE)
   {
     CloseHandle(hStdInWrite);
     hStdInWrite = INVALID_HANDLE_VALUE;
   }
+  if(streams & stdoutStream && hStdOutRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdOutRead);
+    hStdOutRead = INVALID_HANDLE_VALUE;
+  }
+  if(streams & stderrStream && hStdErrRead != INVALID_HANDLE_VALUE)
+  {
+    CloseHandle(hStdErrRead);
+    hStdErrRead = INVALID_HANDLE_VALUE;
+  }
 #else
-  if(fdStdInWrite)
+  if(streams & stdinStream && fdStdInWrite)
   {
     ::close(fdStdInWrite);
     fdStdInWrite = 0;
+  }
+  if(streams & stdoutStream && fdStdOutRead)
+  {
+    ::close(fdStdOutRead);
+    fdStdOutRead = 0;
+  }
+  if(streams & stderrStream && fdStdErrRead)
+  {
+    ::close(fdStdErrRead);
+    fdStdErrRead = 0;
   }
 #endif
 }

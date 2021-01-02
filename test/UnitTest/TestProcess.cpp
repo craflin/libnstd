@@ -30,7 +30,7 @@ void testProcess()
   {
     Process process;
 #ifdef _WIN32
-    ASSERT(process.open(_T("cmd /C dir"), Process::stdoutStream));
+    ASSERT(process.open(_T("cmd /C echo 123"), Process::stdoutStream));
 #else
     ASSERT(process.open(_T("ls"), Process::stdoutStream));
 #endif
@@ -70,35 +70,36 @@ void testProcess()
     int64 waitDuration = Time::ticks() - start;
     ASSERT(waitDuration > 20);
   }
+}
 
-  // test wait
-  {
-    Process process;
-    Process process2;
+void testWait()
+{
+  Process process;
+  Process process2;
 #ifdef _WIN32
-    ASSERT(process.open(_T("cmd /C dir")) != 0);
-    ASSERT(process2.start(_T("cmd /C \"choice /T 1 /D N >NUL\"")) != 0);
+  ASSERT(process.open(_T("cmd /C echo 123")) != 0);
+  ASSERT(process2.start(_T("cmd /C \"choice /T 1 /D N >NUL\"")) != 0);
 #else
-    ASSERT(process.open(_T("ls")) != 0);
-    ASSERT(process2.start(_T("sleep 1")) != 0);
+  ASSERT(process.open(_T("ls")) != 0);
+  ASSERT(process2.start(_T("sleep 1")) != 0);
 #endif
-    Process* processes[] = {&process2, &process};
-    ASSERT(Process::wait(processes, 2) == &process);
-    uint32 exitCode;
-    ASSERT(process.join(exitCode));
-    ASSERT(exitCode == 0);
-    ASSERT(Process::wait(processes, 1) == &process2);
-    ASSERT(process2.join(exitCode));
+  Process* processes[] = {&process2, &process};
+  ASSERT(Process::wait(processes, 2) == &process);
+  uint32 exitCode;
+  ASSERT(process.join(exitCode));
+  ASSERT(exitCode == 0);
+  ASSERT(Process::wait(processes, 1) == &process2);
+  ASSERT(process2.join(exitCode));
 #ifdef _WIN32
-    ASSERT(exitCode == 2);
+  ASSERT(exitCode == 2);
 #else
-    ASSERT(exitCode == 0);
+  ASSERT(exitCode == 0);
 #endif
-  }
 }
 
 int main(int argc, char* argv[])
 {
   testProcess();
+  testWait();
   return 0;
 }
