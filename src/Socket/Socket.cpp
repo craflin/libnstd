@@ -696,6 +696,7 @@ public:
     ULONG_PTR key;
     uint events;
     SOCKET s;
+    bool completionPortCreated;
   };
 
   struct WaitThreadMessage
@@ -788,7 +789,7 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
     sockInfo->socket = &socket;
     sockInfo->events = 0;
     sockInfo->s = socket.s;
-    VERIFY(CreateIoCompletionPort((HANDLE)socket.s, completionPort, sockInfo->key, 0) == completionPort);
+    sockInfo->completionPortCreated = false;
     keys.append(sockInfo->key, sockInfo);
   }
   else
@@ -813,16 +814,24 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
   uint addedEvents = events & ~sockInfo->events;
   if(addedEvents)
   {
-    if(addedEvents & readFlag)
+    if(addedEvents & (readFlag | writeFlag))
     {
-      WSABUF buf = {};
-      DWORD flags = MSG_PEEK;
-      WSARecv((SOCKET)socket.s, &buf, 1, NULL, &flags, &readOverlapped, NULL);
-    }
-    if(addedEvents & writeFlag)
-    {
-      WSABUF buf = {};
-      WSASend((SOCKET)socket.s, &buf, 1, NULL, 0, &writeOverlapped, NULL);
+      if (!sockInfo->completionPortCreated)
+      {
+        VERIFY(CreateIoCompletionPort((HANDLE)socket.s, completionPort, sockInfo->key, 0) == completionPort);
+        sockInfo->completionPortCreated = true;
+      }
+      if(addedEvents & readFlag)
+      {
+        WSABUF buf = {};
+        DWORD flags = MSG_PEEK;
+        WSARecv((SOCKET)socket.s, &buf, 1, NULL, &flags, &readOverlapped, NULL);
+      }
+      if(addedEvents & writeFlag)
+      {
+        WSABUF buf = {};
+        WSASend((SOCKET)socket.s, &buf, 1, NULL, 0, &writeOverlapped, NULL);
+      }
     }
     if(addedEvents & connectFlag)
     {
@@ -1073,7 +1082,6 @@ void Socket::Poll::Private::remove(Socket& socket)
     detachedSockInfo = 0;
   keys.remove(sockInfo.key);
   sockets.remove(it);
-  // todo: detach socket from iocp?
 }
 
 bool Socket::Poll::Private::poll(Event& event, int64 timeout)
@@ -1168,6 +1176,7 @@ private:
   {
     Socket* socket;
     uint events;
+    SOCKET s;
   };
 
 private:
@@ -1245,6 +1254,7 @@ void Socket::Poll::Private::set(Socket& socket, uint events)
     if(s == INVALID_SOCKET)
       return;
     Private::SocketInfo& sockInfo = sockets.append(&socket, Private::SocketInfo());
+    sockInfo.s = s;
     sockInfo.socket = &socket;
     sockInfo.events = events;
     ev.events = mapEvents(events);
@@ -1260,7 +1270,7 @@ void Socket::Poll::Private::remove(Socket& socket)
     return;
   Private::SocketInfo& sockInfo = *it;
   epoll_event ev;
-  VERIFY(epoll_ctl(fd, EPOLL_CTL_DEL, socket.s, &ev) == 0);
+  VERIFY(epoll_ctl(fd, EPOLL_CTL_DEL, sockInfo.s, &ev) == 0);
   sockets.remove(it);
   selectedSockets.remove(&socket);
 }

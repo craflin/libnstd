@@ -273,10 +273,8 @@ void testHostnameResolving()
   Socket socket;
   ASSERT(socket.open());
   ASSERT(socket.setReuseAddress());
+  ASSERT(socket.bind(Socket::anyAddr, 7266));
   ASSERT(socket.listen());
-  uint32 ip;
-  uint16 port;
-  ASSERT(socket.getSockName(ip, port));
   class Handler : public Server::Establisher::ICallback 
   {
   public:
@@ -288,7 +286,7 @@ void testHostnameResolving()
     }
     void onAbolished() override { ASSERT(false);}
   } handler;
-  handler._server.connect(Socket::getHostName(), port, handler);
+  handler._server.connect(Socket::getHostName(), 7266, handler);
   handler._server.run();
 }
 
