@@ -7,10 +7,8 @@ void testMutex()
   // test recursion
   {
     Mutex mutex;
-    mutex.lock();
-    mutex.lock();
-    mutex.unlock();
-    mutex.unlock();
+    Mutex::Guard guard1(mutex);
+    Mutex::Guard guard2(mutex);
   }
 }
 

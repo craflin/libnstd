@@ -121,8 +121,14 @@ void testSocket()
   }
 }
 
+void testInetAddr()
+{
+  ASSERT(Socket::inetAddr(Socket::getHostName()) == Socket::broadcastAddr);
+}
+
 int main(int argc, char* argv[])
 {
   testSocket();
+  testInetAddr();
   return 0;
 }

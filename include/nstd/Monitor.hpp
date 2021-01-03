@@ -6,6 +6,20 @@
 class Monitor
 {
 public:
+  class Guard
+  {
+  public:
+    Guard(Monitor &monitor) : _monitor(monitor) { monitor.lock(); }
+    ~Guard() { _monitor.unlock(); }
+
+    bool wait() {return _monitor.wait();}
+    bool wait(int64 timeout) {return _monitor.wait(timeout);}
+
+  private:
+    Monitor& _monitor;
+  };
+
+public:
   Monitor();
   ~Monitor();
 

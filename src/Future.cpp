@@ -109,20 +109,21 @@ public:
           if (threadCount < _maxThreads)
           {
             ThreadContext *context = 0;
-            _mutex.lock();
-            for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end;)
             {
-              if (i->_terminated)
-                i = _threads.remove(i);
-              else
-                ++i;
+              Mutex::Guard guard(_mutex);
+              for (PoolList<ThreadContext>::Iterator i = _threads.begin(), end = _threads.end(); i != end;)
+              {
+                if (i->_terminated)
+                  i = _threads.remove(i);
+                else
+                  ++i;
+              }
+              if (_threadCount < _maxThreads)
+              {
+                ++_threadCount;
+                context = &_threads.append();
+              }
             }
-            if (_threadCount < _maxThreads)
-            {
-              ++_threadCount;
-              context = &_threads.append();
-            }
-            _mutex.unlock();
             if (context)
             {
               context->_pool = this;
@@ -133,7 +134,7 @@ public:
         }
         else if (idleThreads > 1 && threadCount > _minThreads && (uint32)(Time::ticks() >> 10) - _idleResetTime > 1)
         { // terminate a worker thread
-          _mutex.lock();
+          Mutex::Guard guard(_mutex);
           if (_threadCount > _minThreads)
           {
             Job job = {0, 0};
@@ -147,7 +148,6 @@ public:
             else
               ++i;
           }
-          _mutex.unlock();
         }
       }
     }

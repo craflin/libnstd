@@ -3,250 +3,301 @@
 #include <nstd/Debug.hpp>
 #include <nstd/Socket/Socket.hpp>
 #include <nstd/Thread.hpp>
+#include <nstd/Memory.hpp>
 
-void testServer()
+void testInterrupt()
 {
-  // test timer
-  {
-    Server server;
-    int userData;
-    Server::Handle* timer = server.createTimer(10, &userData);
-    ASSERT(timer);
-    Server::Event event;
-    for(int i = 0; i < 3; ++i)
-    {
-      ASSERT(server.poll(event));
-      ASSERT(event.type == Server::Event::timerType);
-      ASSERT(event.userData == &userData);
-    }
-    server.close(*timer);
-  }
-
-  // test connect fail
-  {
-    Server server;
-    ASSERT(server.connect(Socket::loopbackAddr, 7266, 0));
-    for(Server::Event event; server.poll(event);)
-    {
-      switch(event.type)
-      {
-      case Server::Event::failType:
-        goto done;
-      default:
-        break;
-      }
-    } done: ;
-  }
-
-  // test listen, connect, read, write and close
-  {
-    Server server;
-    byte testData[100];
-    byte receiveBuffer[231];
-    Server::Handle* client1;
-    Server::Handle* client2;
-    ASSERT(server.listen(7266, 0));
-    client1 = server.connect(Socket::loopbackAddr, 7266, &client1);
-    ASSERT(client1);
-    enum State
-    {
-      connecting1,
-      connecting2,
-      sending1,
-      sending2,
-      closing1,
-      closing2,
-    } state = connecting1;
-    for(Server::Event event; server.poll(event);)
-    {
-      switch(event.type)
-      {
-      case Server::Event::acceptType:
-        ASSERT(state == connecting1 || state == connecting2);
-        client2 = server.accept(*event.handle, &client2);
-        ASSERT(client2);
-        if(state == connecting1)
-          state = connecting2;
-        else
-          state = sending1;
-        break;
-      case Server::Event::openType:
-        ASSERT(state == connecting1 || state == connecting2);
-        ASSERT(event.handle == client1);
-        ASSERT(event.userData == &client1);
-        ASSERT(server.write(*client1, testData, sizeof(testData)));
-        if(state == connecting1)
-          state = connecting2;
-        else
-          state = sending1;
-        break;
-      case Server::Event::readType:
-        ASSERT(state == sending1 || state == sending2 || state == closing1);
-        if(state == sending1)
-        {
-          ASSERT(event.handle == client2);
-          ASSERT(event.userData == &client2);
-          usize size;
-          ASSERT(server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
-          ASSERT(size == sizeof(testData));
-          ASSERT(server.write(*client2, testData, sizeof(testData)));
-          state = sending2;
-        }
-        else if(state == sending2)
-        {
-          ASSERT(event.handle == client1);
-          ASSERT(event.userData == &client1);
-          usize size;
-          ASSERT(server.read(*client1, receiveBuffer, sizeof(receiveBuffer), size));
-          ASSERT(size == sizeof(testData));
-          server.close(*client1);
-          state = closing1;
-        }
-        else
-        {
-          ASSERT(event.handle == client2);
-          ASSERT(event.userData == &client2);
-          usize size;
-          ASSERT(!server.read(*client2, receiveBuffer, sizeof(receiveBuffer), size));
-          state = closing2;
-        }
-        break;
-      case Server::Event::closeType:
-        ASSERT(state == closing2);
-        ASSERT(event.handle == client2);
-        ASSERT(event.userData == &client2);
-        goto done2;
-      default:
-        ASSERT(false);
-      }
-    } done2:;
-    ASSERT(state == closing2);
-  }
-
-  // test listen, connect, connect
-  {
-    Server server;
-    Server::Handle* client1;
-    Server::Handle* client2 = 0;
-    Server::Handle* client3;
-    Server::Handle* client4 = 0;
-    ASSERT(server.listen(7266, 0));
-    client1 = server.connect(Socket::loopbackAddr, 7266, &client1);
-    ASSERT(client1);
-    client3 = server.connect(Socket::loopbackAddr, 7266, &client3);
-    ASSERT(client3);
-    int openCount = 0;
-    for(Server::Event event; server.poll(event);)
-    {
-      switch(event.type)
-      {
-      case Server::Event::acceptType:
-        if(!client2)
-        {
-          client2 = server.accept(*event.handle, &client2);
-          ASSERT(client2);
-        }
-        else
-        {
-          ASSERT(!client4);
-          client4 = server.accept(*event.handle, &client2);
-          ASSERT(client4);
-        }
-        if(client4 && openCount == 2)
-          goto done3;
-        break;
-      case Server::Event::openType:
-        ASSERT(event.handle == client1 || event.handle == client3);
-        ASSERT(event.userData == &client1 || event.userData == &client3);
-        ++openCount;
-        if(client4 && openCount == 2)
-          goto done3;
-        break;
-      default:
-        ASSERT(false);
-      }
-    } done3:;
-    ASSERT(client4 && openCount == 2);
-  }
-
-  // test interrupt
-  {
-    Server server;
-    ASSERT(server.interrupt());
-    Server::Event event;
-    ASSERT(server.poll(event));
-    ASSERT(event.type == Server::Event::interruptType);
-  }
-
-  // test with client from another thread
-  {
-    Server server;
-    ASSERT(server.listen(7266, 0));
-    Thread thread;
-    struct ThreadProc
-    {
-      byte testData[100];
-      bool sent;
-      static uint threadProc(void* data)
-      {
-        ThreadProc* threadData = (ThreadProc*)data;
-        Socket socket;
-        ASSERT(socket.open());
-        ASSERT(socket.connect(Socket::loopbackAddr, 7266));
-        Thread::sleep(42);
-        threadData->sent = true;
-        ASSERT(socket.send(threadData->testData, sizeof(threadData->testData)) == sizeof(threadData->testData));
-        byte receiveData[100];
-        ASSERT(socket.recv(receiveData, sizeof(receiveData)) == sizeof(receiveData));
-        ASSERT(Memory::compare(&receiveData, &threadData->testData, sizeof(receiveData)) == 0);
-        socket.close();
-        return 32;
-      }
-    } threadData;
-    threadData.sent = false;
-    threadData.testData[0] = 42;
-    thread.start(&ThreadProc::threadProc, &threadData);
-    Server::Handle* client = 0;
-    bool closed = false;
-    bool sent = false;
-    byte receiveBuffer[231];
-    usize size;
-    for(Server::Event event; server.poll(event);)
-    {
-      switch(event.type)
-      {
-      case Server::Event::acceptType:
-        ASSERT(!client);
-        client = server.accept(*event.handle, &client);
-        ASSERT(client);
-        break;
-      case Server::Event::readType:
-        ASSERT(event.handle == client);
-        ASSERT(event.userData == &client);
-        ASSERT(threadData.sent);
-        ASSERT(server.read(*client, receiveBuffer, sizeof(receiveBuffer), size) || sent);
-        if(sent)
-          break;
-        ASSERT(size == sizeof(threadData.testData));
-        ASSERT(server.write(*client, threadData.testData, sizeof(threadData.testData)));
-        sent = true;
-        break;
-      case Server::Event::closeType:
-        closed = true;
-        goto done4;
-      default:
-        ASSERT(false);
-      }
-    } done4:;
-    ASSERT(client);
-    ASSERT(sent);
-    ASSERT(closed);
-    ASSERT(thread.join() == 32);
-  }
+  Server server;
+  server.interrupt();
+  server.run();
 }
 
-int main(int argc, char* argv[])
+void testTimer()
 {
-  testServer();
+  class Handler : public Server::Timer::ICallback
+  {
+  public:
+    Server _server;
+    Server::Timer *_timer;
+    usize _activations = 0;
+    void onActivated() override
+    {
+      ++_activations;
+      if (_activations == 1)
+        return;
+      if (_activations == 2)
+      {
+        _server.remove(*_timer);
+        _server.interrupt();
+      }
+      else
+        ASSERT(false);
+    }
+  } handler;
+  handler._timer = handler._server.time(10, handler);
+  ASSERT(handler._timer);
+  handler._server.run();
+}
+
+void testFailingConnect()
+{
+  class Handler : public Server::Establisher::ICallback
+  {
+  public:
+    Server _server;
+    Server::Client::ICallback *onConnected(Server::Client &client) override
+    {
+      ASSERT(false);
+      return 0;
+    }
+    void onAbolished() { _server.interrupt(); }
+  } handler;
+  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  handler._server.run();
+}
+
+void testListenConnectReadWriteAndClose()
+{
+  static enum State {
+    connecting1,
+    connecting2,
+    sending1,
+    sending2,
+    closing1,
+    closing2,
+  } _state = connecting1;
+  static byte _testData[100];
+  Memory::fill(_testData, 'a', sizeof(_testData));
+  class Client1 : public Server::Client::ICallback
+  {
+  public:
+    Server &_server;
+    Server::Client *_client;
+    Client1(Server &server) : _server(server) {}
+    void onRead() override
+    {
+      ASSERT(_state == sending2);
+      usize size;
+      byte receiveBuffer[231];
+      ASSERT(_client->read(receiveBuffer, sizeof(receiveBuffer), size));
+      ASSERT(size == sizeof(_testData));
+      _server.remove(*_client);
+      _state = closing1;
+    }
+    void onWrite() override{};
+    void onClosed() override{};
+  };
+  class Client2 : public Server::Client::ICallback
+  {
+  public:
+    Server &_server;
+    Server::Client *_client;
+    Client2(Server &server) : _server(server) {}
+    void onRead() override
+    {
+      ASSERT(_state == sending1 || _state == closing1);
+      if (_state == sending1)
+      {
+        usize size;
+        byte receiveBuffer[231];
+        ASSERT(_client->read(receiveBuffer, sizeof(receiveBuffer), size));
+        ASSERT(size == sizeof(_testData));
+        ASSERT(_client->write(_testData, sizeof(_testData)));
+        _state = sending2;
+      }
+      else
+      {
+        usize size;
+        byte receiveBuffer[231];
+        ASSERT(!_client->read(receiveBuffer, sizeof(receiveBuffer), size));
+        _state = closing2;
+      }
+    }
+    void onWrite() override{};
+    void onClosed() override
+    {
+      ASSERT(_state == closing2);
+      _server.interrupt();
+    };
+  };
+  class Handler : public Server::Listener::ICallback, public Server::Establisher::ICallback
+  {
+  public:
+    Server _server;
+    Client1 _client1;
+    Client2 _client2;
+    Handler() : _client1(_server), _client2(_server) {}
+    Server::Client::ICallback *onAccepted(Server::Client &client, uint32 ip, uint16 port) override
+    {
+      ASSERT(_state == connecting1 || _state == connecting2);
+      _client2._client = &client;
+      if (_state == connecting1)
+        _state = connecting2;
+      else
+        _state = sending1;
+      return &_client2;
+    }
+    Server::Client::ICallback *onConnected(Server::Client &client) override
+    {
+      ASSERT(_state == connecting1 || _state == connecting2);
+      _client1._client = &client;
+
+      ASSERT(_client1._client->write(_testData, sizeof(_testData)));
+      if (_state == connecting1)
+        _state = connecting2;
+      else
+        _state = sending1;
+      return &_client1;
+    }
+    void onAbolished() override { ASSERT(false); }
+  } handler;
+  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  handler._server.run();
+}
+
+void testListenConnectConnect()
+{
+  class Handler : public Server::Listener::ICallback, public Server::Establisher::ICallback, public Server::Client::ICallback
+  {
+  public:
+    Server _server;
+    Server::Client *_client1;
+    Server::Client *_client2;
+    Server::Client *_client3;
+    Server::Client *_client4;
+    Handler() : _client1(0), _client2(0), _client3(0), _client4(0) {}
+    Server::Client::ICallback *onAccepted(Server::Client &client, uint32 ip, uint16 port) override
+    {
+      if (!_client2)
+        _client2 = &client;
+      else
+      {
+        ASSERT(!_client4);
+        _client4 = &client;
+      }
+      checkShutdown();
+      return this;
+    }
+    Server::Client::ICallback *onConnected(Server::Client &client) override
+    {
+      if (!_client1)
+        _client1 = &client;
+      else
+      {
+        ASSERT(!_client3);
+        _client3 = &client;
+      }
+      checkShutdown();
+      return this;
+    }
+    void onAbolished() override { ASSERT(false); }
+    void checkShutdown()
+    {
+      if (_client1 && _client2 && _client3 && _client4)
+        _server.interrupt();
+    }
+    void onRead() override {}
+    void onWrite() override {}
+    void onClosed() override {}
+  } handler;
+  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  handler._server.run();
+}
+
+void testClientConnect()
+{
+  static byte _testData[100];
+  Memory::fill(_testData, 'a', sizeof(_testData));
+  class Handler : public Server::Listener::ICallback, public Server::Client::ICallback
+  {
+  public:
+    Server _server;
+    Server::Client *_client;
+    bool _received;
+    Handler() : _client(0), _received(false) {}
+    Server::Client::ICallback *onAccepted(Server::Client &client, uint32 ip, uint16 port) override
+    {
+      ASSERT(!_client);
+      _client = &client;
+      return this;
+    }
+    void onRead() override
+    {
+      ASSERT(_client);
+      byte receiveData[312];
+      usize size;
+      if (_received)
+      {
+        ASSERT(!_client->read(receiveData, sizeof(receiveData), size));
+        return;
+      }
+      ASSERT(_client->read(receiveData, sizeof(receiveData), size));
+      _received = true;
+      ASSERT(size == sizeof(_testData));
+      ASSERT(Memory::compare(&receiveData, &_testData, sizeof(_testData)) == 0);
+      ASSERT(_client->write(_testData, sizeof(_testData)));
+    }
+    void onWrite() override {}
+    void onClosed() override
+    {
+      _server.interrupt();
+    }
+  } handler;
+  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
+  Thread thread;
+  struct ThreadProc
+  {
+    static uint threadProc(void *data)
+    {
+      ThreadProc *threadData = (ThreadProc *)data;
+      Socket socket;
+      ASSERT(socket.open());
+      ASSERT(socket.connect(Socket::loopbackAddr, 7266));
+      ASSERT(socket.send(_testData, sizeof(_testData)) == sizeof(_testData));
+      byte receiveData[312];
+      ASSERT(socket.recv(receiveData, sizeof(receiveData)) == sizeof(_testData));
+      ASSERT(Memory::compare(&receiveData, &_testData, sizeof(_testData)) == 0);
+      return 32;
+    }
+  } threadData;
+  thread.start(&ThreadProc::threadProc, &threadData);
+  handler._server.run();
+  ASSERT(thread.join() == 32);
+}
+
+void testHostnameResolving()
+{
+  Socket socket;
+  ASSERT(socket.open());
+  ASSERT(socket.setReuseAddress());
+  ASSERT(socket.bind(Socket::anyAddr, 7266));
+  ASSERT(socket.listen());
+  class Handler : public Server::Establisher::ICallback 
+  {
+  public:
+    Server _server;
+    Server::Client::ICallback *onConnected(Server::Client &client) override
+    {
+      _server.interrupt();
+      return 0;
+    }
+    void onAbolished() override { ASSERT(false);}
+  } handler;
+  handler._server.connect(Socket::getHostName(), 7266, handler);
+  handler._server.run();
+}
+
+int main(int argc, char *argv[])
+{
+  testInterrupt();
+  testTimer();
+  testFailingConnect();
+  testListenConnectReadWriteAndClose();
+  testListenConnectConnect();
+  testClientConnect();
+  testHostnameResolving();
   return 0;
 }
