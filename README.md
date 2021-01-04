@@ -72,7 +72,7 @@ Supported Platforms
 * Windows x86/x86_64 (since Windows Vista / Server 2008)
 * Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
 * Linux i686/x86_64
-* Linux armv61
+* Linux armv7l
 
 Motivation
 ----------
