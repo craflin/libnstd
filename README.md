@@ -32,7 +32,7 @@ programming and common design patterns. Right now it consists of following heade
     * [Atomic.hpp](include/nstd/Atomic.hpp): Abstraction layer of atomic functions.
     * [Mutex.hpp](include/nstd/Mutex.hpp): Abstraction layer of a native mutual exclusion feature.
     * [Semaphore.hpp](include/nstd/Semaphore.hpp): Abstraction layer of a native semaphore construct.
-    * [Signal.hpp](include/nstd/Signal.hpp): Abstraction layer of a native signal construct.
+    * [Signal.hpp](include/nstd/Signal.hpp): Abstraction layer of a native thread signal construct.
     * [Monitor.hpp](include/nstd/Monitor.hpp): Abstraction layer of a native monitor construct.
     * [Future.hpp](include/nstd/Future.hpp): Asynchronous function calls with global thread pool.
 * Input/Output
@@ -47,7 +47,7 @@ programming and common design patterns. Right now it consists of following heade
     * [Callback.hpp](include/nstd/Callback.hpp): Base classes for objects that emit or receive signals.
 * Sockets (optional)
     * [Socket.hpp](include/nstd/Socket/Socket.hpp): An abstraction layer of native sockets.
-    * [Server.hpp](include/nstd/Socket/Server.hpp): An asynchronous TCP/IP server multiplexer.
+    * [Server.hpp](include/nstd/Socket/Server.hpp): A TCP/IP server based on non-blocking I/O.
 * Documents (optional)
     * [Json.hpp](include/nstd/Document/Json.hpp): A JSON document parser.
     * [Xml.hpp](include/nstd/Document/Xml.hpp): A basic XML document parser.
@@ -71,7 +71,6 @@ Supported Platforms
 
 * Windows x86/x86_64 (since Windows Vista / Server 2008)
 * Windows x86/x86_64 Unicode (since Windows Vista / Server 2008)
-* Cygwin i686 (since Windows Vista / Server 2008) (might not work anymore)
 * Linux i686/x86_64
 * Linux armv61
 
@@ -86,13 +85,12 @@ Having used and seen various libraries, I consider STL to have some serious flaw
 * The interface of STL containers would be a lot better if insert functions would return the inserted element or an iterator. The interface of associative containers based on std::pair is quite cumbersome. 'unordered' containers could easily remember the insertion order without significant additional costs.
 * The C++11 std::thread class features thread detaching, which cannot safely be combined with dynamic library unloading.
 * The C++14 std::variant class requires complex typedefs to be used and it does not help you to convert between types.
-* It is not low-level enough. There are some atomic data types, but how do you use them on shared memory for instance without in-place new operations that cannot even grantee a simple a well defined memory layout. Using STL you get little sense for how it translate to operating system API calls.
+* It is not low-level enough. There are some atomic data types, but how do you use them on shared memory for instance without in-place new operations that cannot even grantee a well defined memory layout. Using STL you get little insight of how it translates to operating system API calls.
 * Compilation of code that uses STL is slow.
 * IDEs have a hard time understanding it. Helpers from IDEs like tool tips for method signatures are barely helpful because of the complexity from the template types.
 * Debugging STL using code is complicated. The STL template source code is barely readable.
 * Code written with STL does not describe itself very well (partly because of obstructing abbreviations). (cout streams to the console, fstream to a file, algorithms on iterators...)
 * STL feels more like feasibility study and C++ core language feature demonstrator than an actual standard library that is supposed to help application developers.
 * It is not getting significantly better with the new iterations of the C++ standard.
-* It fails to provide frequently used functionality like `getopt`, process control, file system management (fixed in C++17?) that is commonly required to write basic applications.
+* It fails to provide frequently used functionality like `getopt`, process control, file system management (finally added in C++17) that is commonly required to write basic applications.
 * The coding style with all lower case and underscore looks and feels outdated.
-

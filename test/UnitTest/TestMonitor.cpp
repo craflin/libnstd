@@ -4,14 +4,14 @@
 #include <nstd/Signal.hpp>
 #include <nstd/Thread.hpp>
 
-void testMonitor()
+void testWait()
 {
   // test wait with timeout - running into a timeout
   {
     Monitor monitor;
     {
       Monitor::Guard guard(monitor);
-      ASSERT(!guard.wait(40));
+      ASSERT(!guard.wait(20));
     }
   }
 
@@ -39,7 +39,7 @@ void testMonitor()
     {
       Monitor::Guard guard(monitor);
       data.setSignal.set();
-      ASSERT(guard.wait(40));
+      ASSERT(guard.wait(2000));
     }
   }
 
@@ -54,13 +54,13 @@ void testMonitor()
     {
       Monitor::Guard guard(monitor);
       data.setSignal.set();
-      ASSERT(guard.wait(40));
+      ASSERT(guard.wait());
     }
   }
 }
 
 int main(int argc, char* argv[])
 {
-  testMonitor();
+  testWait();
   return 0;
 }

@@ -20,6 +20,11 @@ if(WIN32)
         ws2_32
     )
 endif()
+if(MSVC AND UNICODE)
+    target_link_libraries(nstdSocket PUBLIC
+        ntdll
+    )
+endif()
 
 source_group("" FILES ${sources})
 set_property(TARGET nstdSocket PROPERTY FOLDER "src")
