@@ -75,6 +75,11 @@ if(MSVC)
     target_compile_definitions(nstd PRIVATE
         _CRT_SECURE_NO_WARNINGS
     )
+    if(UNICODE)
+        target_compile_definitions(nstd PUBLIC
+            UNICODE _UNICODE
+        )
+    endif()
 endif()
 if(WIN32)
     target_compile_definitions(nstd PRIVATE

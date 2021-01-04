@@ -482,7 +482,7 @@ String Directory::getTempDirectory()
 String Directory::getHomeDirectory()
 {
 #ifdef _WIN32
-    char path[MAX_PATH];
+    TCHAR path[MAX_PATH + 2];
     if (!SHGetSpecialFolderPath(NULL, path, CSIDL_PROFILE, FALSE))
         return String();
     return String::fromCString(path);

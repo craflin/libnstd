@@ -44,11 +44,11 @@ int Debug::printf(const tchar* format, ...)
   {
     tchar buffer[4096];
 #if _UNICODE
-    int result = _vsnwprintf(buffer, sizeof(buffer), format, ap);
+    int result = _vsnwprintf(buffer, sizeof(buffer) / sizeof(tchar), format, ap);
 #else
-    int result = vsnprintf(buffer, sizeof(buffer), format, ap);
+    int result = vsnprintf(buffer, sizeof(buffer) / sizeof(tchar), format, ap);
 #endif
-    if(result >= 0 && result < (int)sizeof(buffer))
+    if(result >= 0 && result < (int)(sizeof(buffer) / sizeof(tchar)))
     {
       OutputDebugString(buffer);
       va_end(ap);

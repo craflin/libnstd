@@ -291,7 +291,7 @@ void Server::Private::run()
             }
             else
             {
-              Error::setErrorString("Could not resolve hostname");
+              Error::setErrorString(_T("Could not resolve hostname"));
               establisher.callback->onAbolished();
             }
           }
