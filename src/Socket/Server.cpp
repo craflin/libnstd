@@ -338,10 +338,7 @@ void Server::Private::run()
       if (client._sendBuffer.isEmpty())
       {
         client._sendBuffer.free();
-        if (client._suspended)
-          _sockets.remove(client);
-        else
-          _sockets.set(client, Socket::Poll::readFlag);
+        _sockets.set(client, client._suspended ? 0 : Socket::Poll::readFlag);
         client._callback->onWrite();
       }
       continue;
@@ -453,7 +450,7 @@ bool Server::Private::ClientImpl::write(const byte *data, usize size, usize *pos
       return true;
     }
     _sendBuffer.append(data + sent, size - sent);
-    _p->_sockets.set(*this, Socket::Poll::writeFlag);
+    _p->_sockets.set(*this, _suspended ? Socket::Poll::writeFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
   }
   else
     _sendBuffer.append(data, size);
@@ -487,16 +484,18 @@ bool Server::Private::ClientImpl::read(byte *buffer, usize maxSize, usize &size)
 
 void Server::Private::ClientImpl::suspend()
 {
+  if (_suspended)
+    return;
   _suspended = true;
-  if (_sendBuffer.isEmpty())
-    _p->_sockets.remove(*this);
+  _p->_sockets.set(*this, _sendBuffer.isEmpty() ? 0 : Socket::Poll::writeFlag);
 }
 
 void Server::Private::ClientImpl::resume()
 {
+  if (!_suspended)
+    return;
   _suspended = false;
-  if (_sendBuffer.isEmpty())
-    _p->_sockets.set(*this, Socket::Poll::readFlag);
+  _p->_sockets.set(*this, _sendBuffer.isEmpty() ? Socket::Poll::readFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
 }
 
 Server::Server() : _p(new Private) {}
