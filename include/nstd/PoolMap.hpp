@@ -73,7 +73,6 @@ public:
   usize size() const {return _size;}
   bool isEmpty() const {return endItem.prev == 0;}
 
-  V& prepend(const T& key) {return insert(_begin, key).item->value;}
   V& append(const T& key) {return insert(_end, key).item->value;}
 
   void clear()
