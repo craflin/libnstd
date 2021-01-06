@@ -168,7 +168,8 @@ private:
 private:
   T* allocateFreeItem()
   {
-    if(!freeItem)
+    Item* item = freeItem;
+    if(!item)
     {
       usize allocatedSize;
       ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item) + sizeof(T), allocatedSize);
@@ -178,17 +179,18 @@ private:
         i < end; 
         i = (Item*)((char*)i + (sizeof(Item) + sizeof(T))))
       {
-        i->prev = freeItem;
-        freeItem = i;
+        i->prev = item;
+        item = i;
       }
+      freeItem = item;
     }
-    return (T*)(freeItem + 1);
+    return (T*)(item + 1);
   }
 
   T& linkFreeItem(T* t)
   {
     Item* item = freeItem;
-    freeItem = freeItem->prev;
+    freeItem = item->prev;
     Item* insertPos = _end.item;
     if((item->prev = insertPos->prev))
       insertPos->prev->next = item;

@@ -3,6 +3,7 @@
 
 #include <nstd/Signal.hpp>
 #include <nstd/Call.hpp>
+
 template <typename A>
 class Future;
 
