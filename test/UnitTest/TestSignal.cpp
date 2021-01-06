@@ -8,7 +8,7 @@ void testSignal()
   // test wait with timeout - running into a timeout
   {
     Signal signal;
-    ASSERT(!signal.wait(40));
+    ASSERT(!signal.wait(20));
   }
 
   // test wait with timeout - not running into a timeout
@@ -31,9 +31,8 @@ void testSignal()
     Signal signal;
     data.testSignal = &signal;
     thread.start(SetSignalProcData::threadProc, &data);
-
     data.setSignal.set();
-    ASSERT(signal.wait(40));
+    ASSERT(signal.wait(2000));
   }
 
   // test wait without timeout
@@ -43,9 +42,8 @@ void testSignal()
     Signal signal;
     data.testSignal = &signal;
     thread.start(SetSignalProcData::threadProc, &data);
-
     data.setSignal.set();
-    ASSERT(signal.wait(40));
+    ASSERT(signal.wait());
   }
 }
 
