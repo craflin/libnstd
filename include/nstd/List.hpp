@@ -139,32 +139,23 @@ public:
 
   Iterator insert(const Iterator& position, const T& value)
   {
-    Item* item;
-    if(freeItem)
-    {
-      item = freeItem;
-      freeItem = freeItem->prev;
-    }
-    else
+    Item* item = freeItem;
+    if(!item)
     {
       usize allocatedSize;
       ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
       itemBlock->next = blocks;
       blocks = itemBlock;
-      item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
-
-      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+      for(Item* i = (Item*)(itemBlock + 1), * end = i + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
       {
-        i->prev = freeItem;
-        freeItem = i;
+        i->prev = item;
+        item = i;
       }
+      freeItem = item;
     }
 
-#ifdef VERIFY
-    VERIFY(new(item) Item(value) == item);
-#else
     new(item) Item(value);
-#endif
+    freeItem = item->prev;
 
     Item* insertPos = position.item;
     if((item->prev = insertPos->prev))
