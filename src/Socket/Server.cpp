@@ -438,6 +438,8 @@ bool Server::Private::ClientImpl::write(const byte *data, usize size, usize *pos
       }
       // no break
     case 0:
+      if (postponed)
+        *postponed = 0;
       _p->_closingClients.append(this);
       return false;
     default:
