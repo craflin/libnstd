@@ -52,6 +52,20 @@ public:
     data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
   }
 
+  String(usize length, tchar c)
+  {
+    usize capacity;
+    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    data->str = (tchar*)((byte*)data + sizeof(Data));
+    tchar* i = (tchar*)data->str;
+    for (tchar* end = i + length; i < end; ++i)
+      *i = c;
+    *i =  _T('\0');
+    data->len = length;
+    data->ref = 1;
+    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+  }
+
   explicit String(usize capacity)
   {
     data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar) + sizeof(Data), capacity);
