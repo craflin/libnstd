@@ -33,8 +33,8 @@ public:
       usize capacity;
       data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
       data->str = (tchar*)((byte*)data + sizeof(Data));
-      Memory::copy((tchar*)data->str, other.data->str, (other.data->len + 1) * sizeof(tchar));
-      data->len = other.data->len;
+      Memory::copy((tchar*)data->str, other.data->str, other.data->len * sizeof(tchar));
+      ((tchar*)data->str)[data->len = other.data->len] = _T('\0');
       data->ref = 1;
       data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
     }
@@ -46,8 +46,7 @@ public:
     data = (Data*)Memory::alloc((length + 1) * sizeof(tchar) + sizeof(Data), capacity);
     data->str = (tchar*)((byte*)data + sizeof(Data));
     Memory::copy((tchar*)data->str, str, length * sizeof(tchar));
-    data->len = length;
-    ((tchar*)data->str)[length] = _T('\0');
+    ((tchar*)data->str)[data->len = length] = _T('\0');
     data->ref = 1;
     data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
   }
@@ -148,8 +147,8 @@ public:
     usize newLen = str.data->len + copy.data->len;
     detach(0, newLen);
     Memory::copy((tchar*)data->str, str.data->str, str.data->len * sizeof(tchar));
-    Memory::copy((tchar*)data->str + str.data->len, copy.data->str, (copy.data->len + 1) * sizeof(tchar));
-    data->len = newLen;
+    Memory::copy((tchar*)data->str + str.data->len, copy.data->str, copy.data->len * sizeof(tchar));
+    ((tchar*)data->str)[data->len = newLen] = _T('\0');
     return *this;
   }
 
@@ -159,8 +158,8 @@ public:
     usize newLen = len + copy.data->len;
     detach(0, newLen);
     Memory::copy((tchar*)data->str, str, len * sizeof(tchar));
-    Memory::copy((tchar*)data->str + len, copy.data->str, (copy.data->len + 1) * sizeof(tchar));
-    data->len = newLen;
+    Memory::copy((tchar*)data->str + len, copy.data->str, copy.data->len * sizeof(tchar));
+    ((tchar*)data->str)[data->len = newLen] = _T('\0');
     return *this;
   }
 
@@ -168,8 +167,8 @@ public:
   {
     usize newLen = data->len + str.data->len;
     detach(data->len, newLen);
-    Memory::copy((tchar*)data->str + data->len, str.data->str, (str.data->len + 1) * sizeof(tchar));
-    data->len = newLen;
+    Memory::copy((tchar*)data->str + data->len, str.data->str, str.data->len * sizeof(tchar));
+    ((tchar*)data->str)[data->len = newLen] = _T('\0');
     return *this;
   }
 
@@ -178,8 +177,7 @@ public:
     usize newLen = data->len + len;
     detach(data->len, newLen);
     Memory::copy((tchar*)data->str + data->len, str, len * sizeof(tchar));
-    ((tchar*)data->str)[newLen] = _T('\0');
-    data->len = newLen;
+    ((tchar*)data->str)[data->len = newLen] = _T('\0');
     return *this;
   }
 
@@ -188,8 +186,7 @@ public:
     usize newLen = data->len + 1;
     detach(data->len, newLen);
     ((tchar*)data->str)[data->len] = c;
-    ((tchar*)data->str)[newLen] = _T('\0');
-    data->len = newLen;
+    ((tchar*)data->str)[data->len = newLen] = _T('\0');
     return *this;
   }
 
@@ -210,8 +207,8 @@ public:
       usize capacity;
       data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
       data->str = (tchar*)((byte*)data + sizeof(Data));
-      Memory::copy((tchar*)data->str, otherData->str, (otherData->len + 1) * sizeof(tchar));
-      data->len = otherData->len;
+      Memory::copy((tchar*)data->str, otherData->str, otherData->len * sizeof(tchar));
+      ((tchar*)data->str)[data->len = otherData->len] = _T('\0');
       data->ref = 1;
       data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
     }
@@ -512,8 +509,7 @@ private:
 #endif
     if(data->ref == 1 && minCapacity <= data->capacity)
     {
-      data->len = copyLength;
-      ((tchar*)data->str)[copyLength] = _T('\0');
+      ((tchar*)data->str)[data->len = copyLength] = _T('\0');
       return;
     }
 
@@ -523,11 +519,13 @@ private:
     if(data->len > 0)
     {
       Memory::copy((tchar*)newData->str, data->str, (data->len < copyLength ? data->len : copyLength) * sizeof(tchar));
-      ((tchar*)newData->str)[copyLength] = _T('\0');
+      ((tchar*)newData->str)[newData->len = copyLength] = _T('\0');
     }
     else
+    {
       *(tchar*)newData->str = _T('\0');
-    newData->len = copyLength;
+      newData->len = copyLength;
+    }
     newData->ref = 1;
     newData->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
 
