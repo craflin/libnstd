@@ -201,6 +201,9 @@ Server::Client *Server::Private::pair(Client::ICallback &callback, Socket &other
 void Server::Private::remove(Client &client_)
 {
   ClientImpl &client = *(ClientImpl *)&client_;
+  for (List<ClientImpl *>::Iterator i = _closingClients.begin(); i != _closingClients.end(); ++i)
+      if (*i == &client)
+          _closingClients.remove(i);
   _sockets.remove(client);
   _clients.remove(client);
 }
@@ -362,7 +365,7 @@ void Server::Private::run()
       _sockets.set(client, Socket::Poll::readFlag);
       client._callback = listener.callback->onAccepted(*(Client *)&client, ip, port);
       if (!client._callback)
-        _clients.remove(client);
+        remove(*(Client *)&client);
       continue;
     }
     else if (pollEvent.flags & Socket::Poll::connectFlag)
@@ -390,7 +393,7 @@ void Server::Private::run()
           _sockets.set(client, Socket::Poll::readFlag);
           client._callback = establisher.callback->onConnected(*(Client *)&client);
           if (!client._callback)
-            _clients.remove(client);
+            remove(*(Client *)&client);
         }
       }
       continue;
