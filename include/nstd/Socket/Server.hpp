@@ -109,7 +109,7 @@ public:
 
   Listener *listen(uint32 addr, uint16 port, Listener::ICallback &callback);
   Establisher *connect(uint32 addr, uint16 port, Establisher::ICallback &callback);
-  Establisher *connect(const String& host, uint16 port, Establisher::ICallback &callback);
+  Establisher *connect(const String &host, uint16 port, Establisher::ICallback &callback);
   Timer *time(int64 interval, Timer::ICallback &callback);
   Client *pair(Client::ICallback &callback, Socket &socket);
 

@@ -135,6 +135,7 @@ Server::Establisher *Server::Private::connect(uint32 addr, uint16 port, Establis
       !socket.connect(addr, port))
     return 0;
   EstablisherImpl &establisher = _establishers.append();
+  establisher.resolver = nullptr;
   establisher.swap(socket);
   establisher.callback = &callback;
   _sockets.set(establisher, Socket::Poll::connectFlag);
@@ -204,6 +205,8 @@ void Server::Private::remove(Client &client_)
   ClientImpl &client = *(ClientImpl *)&client_;
   if (client._callback)
     remove(client);
+  else
+    _closingClients.append(&client);
 }
 
 void Server::Private::remove(ClientImpl &client)
@@ -269,7 +272,10 @@ void Server::Private::run()
     {
       ClientImpl &client = *_closingClients.front();
       _closingClients.removeFront();
-      client._callback->onClosed();
+      if (client._callback)
+        client._callback->onClosed();
+      else
+        remove(client);
     }
 
     if (!_sockets.poll(pollEvent, timeout))
