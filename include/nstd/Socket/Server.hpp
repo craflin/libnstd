@@ -32,6 +32,8 @@ public:
   private:
     Client(const Client &);
     Client &operator=(const Client &);
+    Client();
+    ~Client();
   };
 
   class Listener
@@ -50,6 +52,8 @@ public:
   private:
     Listener(const Listener &);
     Listener &operator=(const Listener &);
+    Listener();
+    ~Listener();
   };
 
   class Establisher
@@ -69,6 +73,8 @@ public:
   private:
     Establisher(const Establisher &);
     Establisher &operator=(const Establisher &);
+    Establisher();
+    ~Establisher();
   };
 
   class Timer
@@ -87,6 +93,8 @@ public:
   private:
     Timer(const Timer &);
     Timer &operator=(const Timer &);
+    Timer();
+    ~Timer();
   };
 
 public:

@@ -3,7 +3,7 @@
 #include <nstd/Socket/Socket.hpp>
 #include <nstd/MultiMap.hpp>
 #include <nstd/PoolList.hpp>
-#include <nstd/List.hpp>
+#include <nstd/HashSet.hpp>
 #include <nstd/Time.hpp>
 #include <nstd/Buffer.hpp>
 #include <nstd/Error.hpp>
@@ -24,8 +24,8 @@ public:
     Client::ICallback *_callback;
     Buffer _sendBuffer;
     bool _suspended;
-    Server::Private *_p;
-    ClientImpl() : _suspended(false) {}
+    Server::Private &_p;
+    ClientImpl(Server::Private &p) : _callback(nullptr), _suspended(false), _p(p) {}
     bool write(const byte *data, usize size, usize *postponed = 0);
     bool read(byte *buffer, usize maxSize, usize &size);
     void suspend();
@@ -73,6 +73,7 @@ public:
   Client *pair(Client::ICallback &callback, Socket &socket);
 
   void remove(Client &client);
+  void remove(ClientImpl &client);
   void remove(Listener &listener);
   void remove(Establisher &establisher);
   void remove(Timer &timer);
@@ -97,7 +98,7 @@ private:
   PoolList<TimerImpl> _timers;
   PoolList<Resolver> _resolvers;
 
-  List<ClientImpl *> _closingClients;
+  HashSet<ClientImpl *> _closingClients;
 
   Mutex _interruptMutex;
   bool _interrupted;
@@ -106,7 +107,7 @@ private:
   uint32 resolve(Resolver *resolver);
 };
 
-Server::Private::Private() : _keepAlive(false), _noDelay(false), _sendBufferSize(0), _receiveBufferSize(0), _reuseAddress(true), _interrupted(false)
+Server::Private::Private() : _keepAlive(false), _noDelay(false), _sendBufferSize(0), _receiveBufferSize(0), _reuseAddress(true), _closingClients(8), _interrupted(false)
 {
   _queuedTimers.insert(0, 0); // add default timeout timer
 }
@@ -191,8 +192,8 @@ Server::Client *Server::Private::pair(Client::ICallback &callback, Socket &other
     otherSocket.close();
     return 0;
   }
-  ClientImpl &client = _clients.append();
-  client._p = this;
+  ClientImpl &client = _clients.append<Server::Private &>(*this);
+  client._callback = &callback;
   client.swap(socket);
   _sockets.set(client, Socket::Poll::readFlag);
   return (Server::Client *)&client;
@@ -201,9 +202,13 @@ Server::Client *Server::Private::pair(Client::ICallback &callback, Socket &other
 void Server::Private::remove(Client &client_)
 {
   ClientImpl &client = *(ClientImpl *)&client_;
-  for (List<ClientImpl *>::Iterator i = _closingClients.begin(); i != _closingClients.end(); ++i)
-      if (*i == &client)
-          _closingClients.remove(i);
+  if (client._callback)
+    remove(client);
+}
+
+void Server::Private::remove(ClientImpl &client)
+{
+  _closingClients.remove(&client);
   _sockets.remove(client);
   _clients.remove(client);
 }
@@ -280,7 +285,7 @@ void Server::Private::run()
         {
           if (resolver.establisher)
           {
-            EstablisherImpl& establisher = *resolver.establisher;
+            EstablisherImpl &establisher = *resolver.establisher;
             establisher.resolver = 0;
             uint32 addr = resolver.future;
             if (addr)
@@ -359,13 +364,12 @@ void Server::Private::run()
           (_sendBufferSize > 0 && !clientSocket.setSendBufferSize(_sendBufferSize)) ||
           (_receiveBufferSize > 0 && !clientSocket.setReceiveBufferSize(_receiveBufferSize)))
         continue;
-      ClientImpl &client = _clients.append();
-      client._p = this;
+      ClientImpl &client = _clients.append<Server::Private &>(*this);
       client.swap(clientSocket);
       _sockets.set(client, Socket::Poll::readFlag);
       client._callback = listener.callback->onAccepted(*(Client *)&client, ip, port);
       if (!client._callback)
-        remove(*(Client *)&client);
+        remove(client);
       continue;
     }
     else if (pollEvent.flags & Socket::Poll::connectFlag)
@@ -387,13 +391,12 @@ void Server::Private::run()
           establisher.callback->onAbolished();
         else
         {
-          ClientImpl &client = _clients.append();
-          client._p = this;
+          ClientImpl &client = _clients.append<Server::Private &>(*this);
           client.swap(establisher);
           _sockets.set(client, Socket::Poll::readFlag);
           client._callback = establisher.callback->onConnected(*(Client *)&client);
           if (!client._callback)
-            remove(*(Client *)&client);
+            remove(client);
         }
       }
       continue;
@@ -443,7 +446,7 @@ bool Server::Private::ClientImpl::write(const byte *data, usize size, usize *pos
     case 0:
       if (postponed)
         *postponed = 0;
-      _p->_closingClients.append(this);
+      _p._closingClients.append(this);
       return false;
     default:
       break;
@@ -455,7 +458,7 @@ bool Server::Private::ClientImpl::write(const byte *data, usize size, usize *pos
       return true;
     }
     _sendBuffer.append(data + sent, size - sent);
-    _p->_sockets.set(*this, _suspended ? Socket::Poll::writeFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
+    _p._sockets.set(*this, _suspended ? Socket::Poll::writeFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
   }
   else
     _sendBuffer.append(data, size);
@@ -477,7 +480,7 @@ bool Server::Private::ClientImpl::read(byte *buffer, usize maxSize, usize &size)
     }
     // no break
   case 0:
-    _p->_closingClients.append(this);
+    _p._closingClients.append(this);
     size = 0;
     return false;
   default:
@@ -492,7 +495,7 @@ void Server::Private::ClientImpl::suspend()
   if (_suspended)
     return;
   _suspended = true;
-  _p->_sockets.set(*this, _sendBuffer.isEmpty() ? 0 : Socket::Poll::writeFlag);
+  _p._sockets.set(*this, _sendBuffer.isEmpty() ? 0 : Socket::Poll::writeFlag);
 }
 
 void Server::Private::ClientImpl::resume()
@@ -500,7 +503,7 @@ void Server::Private::ClientImpl::resume()
   if (!_suspended)
     return;
   _suspended = false;
-  _p->_sockets.set(*this, _sendBuffer.isEmpty() ? Socket::Poll::readFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
+  _p._sockets.set(*this, _sendBuffer.isEmpty() ? Socket::Poll::readFlag : (Socket::Poll::readFlag | Socket::Poll::writeFlag));
 }
 
 Server::Server() : _p(new Private) {}
