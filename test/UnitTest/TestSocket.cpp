@@ -16,11 +16,11 @@ void testSocket()
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
     ASSERT(listener2.setReuseAddress());
-    ASSERT(listener1.bind(Socket::anyAddr, 6212));
-    ASSERT(listener2.bind(Socket::anyAddr, 6212));
-    ASSERT(sender.bind(Socket::anyAddr, 0));
+    ASSERT(listener1.bind(Socket::anyAddress, 6212));
+    ASSERT(listener2.bind(Socket::anyAddress, 6212));
+    ASSERT(sender.bind(Socket::anyAddress, 0));
     ASSERT(sender.setBroadcast());
-    ASSERT(sender.sendTo(testData, sizeof(testData), Socket::broadcastAddr, 6212) == sizeof(testData));
+    ASSERT(sender.sendTo(testData, sizeof(testData), Socket::broadcastAddress, 6212) == sizeof(testData));
     uint32 ip;
     uint16 port;
     ASSERT(listener1.recvFrom(rcvData, sizeof(rcvData), ip, port) == sizeof(rcvData));
@@ -42,11 +42,11 @@ void testSocket()
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
     ASSERT(listener2.setReuseAddress());
-    ASSERT(listener1.bind(Socket::anyAddr, 6212));
-    ASSERT(listener2.bind(Socket::anyAddr, 6212));
+    ASSERT(listener1.bind(Socket::anyAddress, 6212));
+    ASSERT(listener2.bind(Socket::anyAddress, 6212));
     ASSERT(listener1.joinMulticastGroup(multicastAddr));
     ASSERT(listener2.joinMulticastGroup(multicastAddr));
-    ASSERT(sender.bind(Socket::anyAddr, 0));
+    ASSERT(sender.bind(Socket::anyAddress, 0));
     ASSERT(sender.sendTo(testData, sizeof(testData), multicastAddr, 6212) == sizeof(testData));
     uint32 ip;
     uint16 port;
@@ -66,9 +66,9 @@ void testSocket()
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
-    ASSERT(listener1.bind(Socket::anyAddr, 6212));
+    ASSERT(listener1.bind(Socket::anyAddress, 6212));
     ASSERT(listener1.joinMulticastGroup(multicastAddr));
-    ASSERT(sender.bind(Socket::anyAddr, 0));
+    ASSERT(sender.bind(Socket::anyAddress, 0));
     ASSERT(sender.sendTo(testData, sizeof(testData), multicastAddr, 6212) == sizeof(testData));
     uint32 ip;
     uint16 port;
@@ -92,9 +92,9 @@ void testSocket()
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
-    ASSERT(listener1.bind(Socket::anyAddr, 6212));
+    ASSERT(listener1.bind(Socket::anyAddress, 6212));
     ASSERT(listener1.joinMulticastGroup(multicastAddr));
-    ASSERT(sender.bind(Socket::anyAddr, 0));
+    ASSERT(sender.bind(Socket::anyAddress, 0));
     uint32 ip;
     uint16 port;
     Socket::Poll poll;
@@ -110,7 +110,7 @@ void testSocket()
 
   // test inetNtoA
   {
-      ASSERT(Socket::inetNtoA(Socket::loopbackAddr) == _T("127.0.0.1"));
+      ASSERT(Socket::inetNtoA(Socket::loopbackAddress) == _T("127.0.0.1"));
   }
 
   // test getHostByName
@@ -123,7 +123,7 @@ void testSocket()
 
 void testInetAddr()
 {
-  ASSERT(Socket::inetAddr(Socket::getHostName()) == Socket::broadcastAddr);
+  ASSERT(Socket::inetAddr(Socket::getHostName()) == Socket::broadcastAddress);
 }
 
 int main(int argc, char* argv[])

@@ -6,11 +6,11 @@
 class Socket
 {
 public:
-  enum Addr
+  enum Address
   {
-      anyAddr = 0,
-      loopbackAddr = 0x7f000001,
-      broadcastAddr = 0xffffffff,
+      anyAddress = 0,
+      loopbackAddress = 0x7f000001,
+      broadcastAddress = 0xffffffff,
   };
 
   enum Protocol
@@ -49,7 +49,7 @@ public:
   bool setReceiveBufferSize(int size);
   bool setBroadcast();
 
-  bool joinMulticastGroup(uint32 ip, uint32 interfaceIp = anyAddr);
+  bool joinMulticastGroup(uint32 ip, uint32 interfaceIp = anyAddress);
   bool setMulticastLoopback(bool enable);
 
   int getAndResetErrorStatus();
