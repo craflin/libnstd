@@ -25,6 +25,14 @@ public:
   };
 
 public:
+  /**
+   * Strips C/C++ style comments from JSON data without affecting the line in which data is declared.
+   *
+   * @param [in] data The JSON data.
+   * @return  The JSON data with stripped comments.
+   */
+  static String stripComments(const String& data);
+
   static bool parse(const tchar* data, Variant& result);
   static bool parse(const String& data, Variant& result);
 
