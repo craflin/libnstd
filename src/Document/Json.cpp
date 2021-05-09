@@ -506,6 +506,80 @@ bool Json::Private::parse(const tchar* data, Variant& result)
   return true;
 }
 
+String Json::stripComments(const String& data)
+{
+  String result(data.length());
+  tchar* destBuffer = result;
+  tchar* dest = destBuffer;
+  const tchar* src = data;
+  for (;;)
+  {
+  checkStr:;
+    if (!*src)
+      break;
+    if (*src == _T('/'))
+    {
+      if (src[1] == _T('/'))
+      {
+        const tchar* end = String::findOneOf(src, _T("\r\n"));
+        if (end)
+        {
+          src = end;
+          goto checkStr;
+        }
+        goto done;
+      }
+      if (src[1] == _T('*'))
+      {
+        src += 2;
+        for (;;)
+        {
+          const tchar* end = String::findOneOf(src, _T("\r\n*"));
+          if (end)
+          {
+            if (*end == _T('*') && end[1] == _T('/'))
+            {
+              src = end + 2;
+              goto checkStr;
+            }
+            *(dest++) = *(end++);
+            src = end;
+            continue;
+          }
+          else
+            goto done;
+        }
+      }
+    }
+
+    if (*src != _T('"'))
+    {
+      *(dest++) = *(src++);
+      goto checkStr;
+    }
+
+    for(*(dest++) = *(src++);; *(dest++) = *(src++))
+    {
+      if (*src == _T('\\') && src[1])
+      {
+        *(dest++) = *(src++);
+        goto checkStr;
+      }
+      if (*src == _T('"'))
+      {
+        *(dest++) = *(src++);
+        break;
+      }
+      if (!*src)
+        break;
+    }
+  }
+done:;
+  *dest = '\0';
+  result.resize(dest - destBuffer);
+  return result;
+}
+
 bool Json::parse(const tchar* data, Variant& result)
 {
   Private parser;
