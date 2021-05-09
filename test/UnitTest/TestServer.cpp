@@ -52,7 +52,7 @@ void testFailingConnect()
     }
     void onAbolished() { _server.interrupt(); }
   } handler;
-  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddress, 7266, handler));
   handler._server.run();
 }
 
@@ -151,8 +151,8 @@ void testListenConnectReadWriteAndClose()
     }
     void onAbolished() override { ASSERT(false); }
   } handler;
-  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
-  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  ASSERT(handler._server.listen(Socket::anyAddress, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddress, 7266, handler));
   handler._server.run();
 }
 
@@ -201,9 +201,9 @@ void testListenConnectConnect()
     void onWrite() override {}
     void onClosed() override {}
   } handler;
-  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
-  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
-  ASSERT(handler._server.connect(Socket::loopbackAddr, 7266, handler));
+  ASSERT(handler._server.listen(Socket::anyAddress, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddress, 7266, handler));
+  ASSERT(handler._server.connect(Socket::loopbackAddress, 7266, handler));
   handler._server.run();
 }
 
@@ -246,7 +246,7 @@ void testClientConnect()
       _server.interrupt();
     }
   } handler;
-  ASSERT(handler._server.listen(Socket::anyAddr, 7266, handler));
+  ASSERT(handler._server.listen(Socket::anyAddress, 7266, handler));
   Thread thread;
   struct ThreadProc
   {
@@ -255,7 +255,7 @@ void testClientConnect()
       ThreadProc *threadData = (ThreadProc *)data;
       Socket socket;
       ASSERT(socket.open());
-      ASSERT(socket.connect(Socket::loopbackAddr, 7266));
+      ASSERT(socket.connect(Socket::loopbackAddress, 7266));
       ASSERT(socket.send(_testData, sizeof(_testData)) == sizeof(_testData));
       byte receiveData[312];
       ASSERT(socket.recv(receiveData, sizeof(receiveData)) == sizeof(_testData));
@@ -273,7 +273,7 @@ void testHostnameResolving()
   Socket socket;
   ASSERT(socket.open());
   ASSERT(socket.setReuseAddress());
-  ASSERT(socket.bind(Socket::anyAddr, 7266));
+  ASSERT(socket.bind(Socket::anyAddress, 7266));
   ASSERT(socket.listen());
   class Handler : public Server::Establisher::ICallback 
   {

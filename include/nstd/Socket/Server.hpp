@@ -28,6 +28,7 @@ public:
     bool read(byte *buffer, usize maxSize, usize &size);
     void suspend();
     void resume();
+    Socket& getSocket();
 
   private:
     Client(const Client &);

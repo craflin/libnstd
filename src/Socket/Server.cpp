@@ -24,8 +24,8 @@ public:
     Client::ICallback *_callback;
     Buffer _sendBuffer;
     bool _suspended;
-    Server::Private &_p;
-    ClientImpl(Server::Private &p) : _callback(nullptr), _suspended(false), _p(p) {}
+    Server::Private& _p;
+    ClientImpl(Server::Private& p) : _callback(nullptr), _suspended(false), _p(p) {}
     bool write(const byte *data, usize size, usize *postponed = 0);
     bool read(byte *buffer, usize maxSize, usize &size);
     void suspend();
@@ -36,15 +36,19 @@ public:
 
   struct EstablisherImpl : public Socket
   {
-    Establisher::ICallback *callback;
+    Establisher::ICallback& callback;
     Resolver *resolver;
+
+    EstablisherImpl(Establisher::ICallback& callback) : callback(callback), resolver(nullptr) {}
   };
 
   struct TimerImpl
   {
-    Timer::ICallback *callback;
+    Timer::ICallback& callback;
     int64 executionTime;
     int64 interval;
+
+    TimerImpl(Timer::ICallback& callback, int64 executionTime, int64 interval) : callback(callback), executionTime(executionTime), interval(interval) {}
   };
 
   struct Resolver
@@ -52,9 +56,9 @@ public:
     String host;
     uint16 port;
     Future<uint32> future;
-    EstablisherImpl *establisher;
+    EstablisherImpl* establisher;
     bool finished;
-    Resolver() : finished(false) {}
+    Resolver(const String& host, uint16 port, EstablisherImpl& establisher) : host(host), port(port), establisher(&establisher), finished(false) {}
   };
 
 public:
@@ -72,11 +76,10 @@ public:
   Timer *time(int64 interval, Timer::ICallback &callback);
   Client *pair(Client::ICallback &callback, Socket &socket);
 
-  void remove(Client &client);
   void remove(ClientImpl &client);
-  void remove(Listener &listener);
-  void remove(Establisher &establisher);
-  void remove(Timer &timer);
+  void remove(ListenerImpl &listener);
+  void remove(EstablisherImpl &establisher);
+  void remove(TimerImpl &timer);
 
   void run();
   void interrupt();
@@ -105,6 +108,8 @@ private:
 
 private:
   uint32 resolve(Resolver *resolver);
+
+  void deleteClient(ClientImpl& client);
 };
 
 Server::Private::Private() : _keepAlive(false), _noDelay(false), _sendBufferSize(0), _receiveBufferSize(0), _reuseAddress(true), _closingClients(8), _interrupted(false)
@@ -134,10 +139,9 @@ Server::Establisher *Server::Private::connect(uint32 addr, uint16 port, Establis
       !socket.setNonBlocking() ||
       !socket.connect(addr, port))
     return 0;
-  EstablisherImpl &establisher = _establishers.append();
+  EstablisherImpl &establisher = _establishers.append<Establisher::ICallback&>(callback);
   establisher.resolver = nullptr;
   establisher.swap(socket);
-  establisher.callback = &callback;
   _sockets.set(establisher, Socket::Poll::connectFlag);
   return (Server::Establisher *)&establisher;
 }
@@ -145,17 +149,13 @@ Server::Establisher *Server::Private::connect(uint32 addr, uint16 port, Establis
 Server::Establisher *Server::Private::connect(const String &host, uint16 port, Establisher::ICallback &callback)
 {
   uint32 addr = Socket::inetAddr(host, 0);
-  if (addr != Socket::anyAddr && addr != Socket::broadcastAddr)
+  if (addr != Socket::anyAddress && addr != Socket::broadcastAddress)
     return connect(addr, port, callback);
   else
   {
-    EstablisherImpl &establisher = _establishers.append();
-    Resolver &resolver = _resolvers.append();
-    resolver.establisher = &establisher;
-    resolver.host = host;
-    resolver.port = port;
+    EstablisherImpl &establisher = _establishers.append<Establisher::ICallback&>(callback);
+    Resolver &resolver = _resolvers.append<const String&, uint16, EstablisherImpl&>(host, port, establisher);
     establisher.resolver = &resolver;
-    establisher.callback = &callback;
     resolver.future.start(*this, &Private::resolve, &resolver);
     return (Server::Establisher *)&establisher;
   }
@@ -172,10 +172,7 @@ uint32 Server::Private::resolve(Resolver *resolver)
 
 Server::Timer *Server::Private::time(int64 interval, Timer::ICallback &callback)
 {
-  TimerImpl &timer = _timers.append();
-  timer.callback = &callback;
-  timer.executionTime = Time::ticks() + interval;
-  timer.interval = interval;
+  TimerImpl &timer = _timers.append<Timer::ICallback&, int64, int64>(callback, Time::ticks() + interval, interval);
   _queuedTimers.insert(timer.executionTime, &timer);
   return (Server::Timer *)&timer;
 }
@@ -200,41 +197,37 @@ Server::Client *Server::Private::pair(Client::ICallback &callback, Socket &other
   return (Server::Client *)&client;
 }
 
-void Server::Private::remove(Client &client_)
+void Server::Private::remove(ClientImpl &client)
 {
-  ClientImpl &client = *(ClientImpl *)&client_;
   if (client._callback)
-    remove(client);
+    deleteClient(client);
   else
     _closingClients.append(&client);
 }
 
-void Server::Private::remove(ClientImpl &client)
+void Server::Private::deleteClient(ClientImpl& client)
 {
   _closingClients.remove(&client);
   _sockets.remove(client);
   _clients.remove(client);
 }
 
-void Server::Private::remove(Listener &listener_)
+void Server::Private::remove(ListenerImpl &listener)
 {
-  ListenerImpl &listener = *(ListenerImpl *)&listener_;
   _sockets.remove(listener);
   _listeners.remove(listener);
 }
 
-void Server::Private::remove(Establisher &establisher_)
+void Server::Private::remove(EstablisherImpl &establisher)
 {
-  EstablisherImpl &establisher = *(EstablisherImpl *)&establisher_;
   if (establisher.resolver)
     establisher.resolver->establisher = 0;
   _sockets.remove(establisher);
   _establishers.remove(establisher);
 }
 
-void Server::Private::remove(Timer &timer_)
+void Server::Private::remove(TimerImpl &timer)
 {
-  TimerImpl &timer = *(TimerImpl *)&timer_;
   for (MultiMap<int64, TimerImpl *>::Iterator i = _queuedTimers.find(timer.executionTime), end = _queuedTimers.end(); i != end; ++i)
   {
     if (*i == &timer)
@@ -262,7 +255,7 @@ void Server::Private::run()
       {
         timer->executionTime += timer->interval;
         _queuedTimers.insert(timer->executionTime, timer);
-        timer->callback->onActivated();
+        timer->callback.onActivated();
       }
       else
         _queuedTimers.insert(now + 300 * 1000, 0); // keep "default timeout" timer
@@ -275,7 +268,7 @@ void Server::Private::run()
       if (client._callback)
         client._callback->onClosed();
       else
-        remove(client);
+        deleteClient(client);
     }
 
     if (!_sockets.poll(pollEvent, timeout))
@@ -299,14 +292,14 @@ void Server::Private::run()
               if (!establisher.open() ||
                   !establisher.setNonBlocking() ||
                   !establisher.connect(addr, resolver.port))
-                establisher.callback->onAbolished();
+                establisher.callback.onAbolished();
               else
                 _sockets.set(establisher, Socket::Poll::connectFlag);
             }
             else
             {
               Error::setErrorString(_T("Could not resolve hostname"));
-              establisher.callback->onAbolished();
+              establisher.callback.onAbolished();
             }
           }
           _resolvers.remove(resolver);
@@ -375,7 +368,7 @@ void Server::Private::run()
       _sockets.set(client, Socket::Poll::readFlag);
       client._callback = listener.callback->onAccepted(*(Client *)&client, ip, port);
       if (!client._callback)
-        remove(client);
+        deleteClient(client);
       continue;
     }
     else if (pollEvent.flags & Socket::Poll::connectFlag)
@@ -386,7 +379,7 @@ void Server::Private::run()
       if (error)
       {
         Error::setLastError((uint)error);
-        establisher.callback->onAbolished();
+        establisher.callback.onAbolished();
       }
       else
       {
@@ -394,15 +387,15 @@ void Server::Private::run()
             (_noDelay && !establisher.setNoDelay()) ||
             (_sendBufferSize > 0 && !establisher.setSendBufferSize(_sendBufferSize)) ||
             (_receiveBufferSize > 0 && !establisher.setReceiveBufferSize(_receiveBufferSize)))
-          establisher.callback->onAbolished();
+          establisher.callback.onAbolished();
         else
         {
           ClientImpl &client = _clients.append<Server::Private &>(*this);
           client.swap(establisher);
           _sockets.set(client, Socket::Poll::readFlag);
-          client._callback = establisher.callback->onConnected(*(Client *)&client);
+          client._callback = establisher.callback.onConnected(*(Client *)&client);
           if (!client._callback)
-            remove(client);
+            deleteClient(client);
         }
       }
       continue;
@@ -524,10 +517,10 @@ Server::Establisher *Server::connect(uint32 addr, uint16 port, Establisher::ICal
 Server::Establisher *Server::connect(const String &host, uint16 port, Establisher::ICallback &callback) { return _p->connect(host, port, callback); }
 Server::Timer *Server::time(int64 interval, Timer::ICallback &callback) { return _p->time(interval, callback); }
 Server::Client *Server::pair(Client::ICallback &callback, Socket &socket) { return _p->pair(callback, socket); }
-void Server::remove(Server::Client &client) { return _p->remove(client); }
-void Server::remove(Server::Listener &listener) { return _p->remove(listener); }
-void Server::remove(Server::Establisher &establisher) { return _p->remove(establisher); }
-void Server::remove(Server::Timer &timer) { return _p->remove(timer); }
+void Server::remove(Server::Client &client) { return _p->remove(*(Private::ClientImpl *)&client); }
+void Server::remove(Server::Listener &listener) { return _p->remove(*(Private::ListenerImpl *)&listener); }
+void Server::remove(Server::Establisher &establisher) { return _p->remove(*(Private::EstablisherImpl *)&establisher); }
+void Server::remove(Server::Timer &timer) { return _p->remove(*(Private::TimerImpl *)&timer); }
 void Server::run() { return _p->run(); }
 void Server::interrupt() { return _p->interrupt(); }
 void Server::clear() { return _p->clear(); }
@@ -535,3 +528,4 @@ bool Server::Client::write(const byte *data, usize size, usize *postponed) { ret
 bool Server::Client::read(byte *buffer, usize maxSize, usize &size) { return ((Private::ClientImpl *)this)->read(buffer, maxSize, size); }
 void Server::Client::suspend() { return ((Private::ClientImpl *)this)->suspend(); }
 void Server::Client::resume() { return ((Private::ClientImpl *)this)->resume(); }
+Socket& Server::Client::getSocket() { return *((Private::ClientImpl *)this); }
