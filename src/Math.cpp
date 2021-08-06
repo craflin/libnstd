@@ -1,8 +1,12 @@
 
+#include <nstd/Math.hpp>
+
+#ifdef _MSC_VER
+#define __PLACEMENT_NEW_INLINE
+#endif
+
 #include <cstdlib>
 #include <cmath>
-
-#include <nstd/Math.hpp>
 
 uint Math::random() {return rand();}
 uint Math::random(uint seed) {return srand(seed), rand();}
