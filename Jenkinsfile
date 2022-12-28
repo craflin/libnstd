@@ -9,7 +9,7 @@ pipeline {
                 axes {
                     axis {
                         name 'platform'
-                        values 'ubuntu20.04-x86_64', 'ubuntu18.04-x86_64', 'raspbian10-armv7l', 'windows10-x64', 'windows10-x86'
+                        values 'ubuntu22.04-x86_64', 'ubuntu20.04-x86_64', 'ubuntu18.04-x86_64', 'raspbian10-armv7l', 'windows10-x64', 'windows10-x86'
                     }
                 }
                 stages {

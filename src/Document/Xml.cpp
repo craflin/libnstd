@@ -28,7 +28,6 @@ public:
       equalsSignType, // =
       stringType,
       nameType, // attribute or tag name
-      eofType,
     };
 
   public:
@@ -94,8 +93,7 @@ bool Xml::Private::readToken()
     ++pos.pos;
     return true;
   case '\0':
-    token.type = Token::eofType;
-    return true;
+    return syntaxError(pos, _T("Unexpected end of file")), false;
   case '=':
     token.type = Token::equalsSignType;
     ++pos.pos;

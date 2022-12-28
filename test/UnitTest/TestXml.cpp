@@ -15,8 +15,18 @@ void testXml()
   ASSERT(input == output);
 }
 
+void testXmlSyntaxError()
+{
+  Xml::Parser parser;
+  Xml::Element element;
+  String input(_T("<a"));
+  ASSERT(!parser.parse(input, element));
+  ASSERT(parser.getErrorString() == _T("Unexpected end of file"));
+}
+
 int main(int argc, char* argv[])
 {
   testXml();
+  testXmlSyntaxError();
   return 0;
 }
