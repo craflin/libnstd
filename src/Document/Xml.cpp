@@ -285,18 +285,19 @@ bool Xml::Private::parse(const tchar* data, Element& element)
   skipSpace();
   if(*pos.pos == '<' && pos.pos[1] == '?')
   {
-    Position pos = this->pos;
+    Position startPos = pos;
+    pos.pos += 2;
     for(;;)
     {
       const tchar* end = String::findOneOf(pos.pos, _T("\r\n?"));
       if(!end)
-        return this->syntaxError(pos, _T("Unexpected end of file")), false;
+        return this->syntaxError(startPos, _T("Unexpected end of file")), false;
       if(*end == '?' && end[1] == '>')
       {
         pos.pos = end + 2;
         break;
       }
-      pos.pos = end;
+      pos.pos = end + 1;
       skipSpace();
     }
   }
