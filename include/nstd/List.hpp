@@ -173,9 +173,10 @@ public:
   {
     if (list.endItem.prev == 0)
       return position;
-    Iterator result = insert(position, list._begin.item->value);
+    Iterator pos = position;
+    Iterator result = insert(pos, list._begin.item->value);
     for(const Item* i = list._begin.item->next, * end = &list.endItem; i != end; i = i->next)
-      insert(position, i->value);
+      insert(pos, i->value);
     return result;
   }
 
