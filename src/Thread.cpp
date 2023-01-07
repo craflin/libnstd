@@ -105,7 +105,7 @@ void Thread::yield()
 #ifdef _WIN32
   SwitchToThread();
 #else
-  pthread_yield();
+  sched_yield();
 #endif
 }
 
