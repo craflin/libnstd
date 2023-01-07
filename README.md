@@ -3,7 +3,7 @@ libnstd
 
 [![Build Status](http://xaws6t1emwa2m5pr.myfritz.net:8080/buildStatus/icon?job=craflin%2Flibnstd%2Fmaster)](http://xaws6t1emwa2m5pr.myfritz.net:8080/job/craflin/job/libnstd/job/master/)
 
-libnstd is a cross platform non-standard standard library replacement for C++. In contrast to the Standard Template
+libnstd is an experimental cross platform non-standard standard library replacement for C++. In contrast to the Standard Template
 Library (STL) its aim is to provide frequently used features with minimalistic classes and as little usage of templates
 as possible. Code written with libnstd should be easily understandable for everyone with basic knowledge of imperative 
 programming and common design patterns. Right now it consists of following headers:
