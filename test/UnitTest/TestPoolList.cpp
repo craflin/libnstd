@@ -64,7 +64,7 @@ void testNoDefaultConstructor()
   private:
     TestObject2() {}
     TestObject2(const TestObject2&) {}
-    TestObject2& operator=(const TestObject2&) {}
+    TestObject2& operator=(const TestObject2&) {return *this;}
   };
 
   PoolList<TestObject2> pool;
