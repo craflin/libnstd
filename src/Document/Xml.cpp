@@ -2,6 +2,7 @@
 #include <nstd/Error.hpp>
 #include <nstd/File.hpp>
 #include <nstd/Document/Xml.hpp>
+#include <nstd/Unicode.hpp>
 
 Xml::Variant::NullData Xml::Variant::nullData;
 
@@ -210,34 +211,55 @@ void Xml::Private::syntaxError(const Position& pos, const String& error)
 
 String Xml::Private::unescapeString(const String& str)
 {
+  const tchar* srcStart = str;
+  const tchar* src = String::find(srcStart, _T('&'));
+  if(!src)
+    return str;
   String result(str.length());
   tchar* destStart = result;
-  tchar* dest = destStart;
-  for(const tchar* i = str, * end = i + str.length(); i < end;)
-    if(*i == '&')
-    {
-      ++i;
-      const tchar* squenceEnd = String::find(i, _T(';'));
-      if(squenceEnd)
-      {
-        String str;
-        str.attach(i, squenceEnd - i);
-        for(String* j = escapeStrings, * end = escapeStrings + sizeof(escapeStrings) / sizeof(*escapeStrings); j < end; ++j)
-            if(str == *j)
-            {
-                *(dest++) = escapeChars[j - escapeStrings];
-                i = squenceEnd + 1;
-                goto translated;
-            }
-        *(dest++) = *(i++);
-    translated: ;
-        // todo: handle numeric stuff like &11111; &xffff;
-      }
-      else
-        *(dest++) = *(i++);
-    }
+  usize startLen = src - srcStart;
+  Memory::copy(destStart, srcStart, startLen);
+  tchar* dest = destStart + startLen;
+  for(const tchar* srcEnd = srcStart + str.length(); src < srcEnd;)
+    if(*src != '&')
+      *(dest++) = *(src++);
     else
-      *(dest++) = *(i++);
+    {
+      ++src;
+      const tchar* sequenceEnd = String::find(src, _T(';'));
+      if(!sequenceEnd)
+      {
+        *(dest++) = '&';
+        continue;
+      }
+      String str;
+      str.attach(src, sequenceEnd - src);
+      if (*src == '#')
+      {
+        uint unicodeValue;
+        if(str.scanf(_T("#%u"), &unicodeValue) != 1)
+        {
+          *(dest++) = '&';
+          continue;
+        }
+        String val = Unicode::toString(unicodeValue);
+        Memory::copy(dest, (const tchar*)val, val.length() * sizeof(tchar));
+        dest += val.length();
+        src = sequenceEnd + 1;
+        continue;
+      }
+      for(String* j = escapeStrings, * end = escapeStrings + sizeof(escapeStrings) / sizeof(*escapeStrings); j < end; ++j)
+          if(str == *j)
+          {
+              *(dest++) = escapeChars[j - escapeStrings];
+              src = sequenceEnd + 1;
+              goto translated;
+          }
+          *(dest++) = '&';
+          continue;
+        translated:
+          continue;
+    }
   result.resize(dest - destStart);
   return result;
 }
