@@ -230,7 +230,7 @@ public:
 
   int compare(const String& other) const
   {
-    const tchar* s1 = data->str, * s2 = other.data->str;
+    const tchar* s1 = *this, * s2 = other;
     for(; *s1 == *s2; ++s1, ++s2)
       if(!*s1)
         return 0;
@@ -240,7 +240,7 @@ public:
 
   int compare(const String& other, usize len) const
   {
-    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
+    for(const tchar* s1 = *this, * s2 = other, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
       if(!*s1 || *s1 != *s2)
         return (int)*(const utchar*)s1 - *(const utchar*)s2;
     return 0;
@@ -248,7 +248,7 @@ public:
 
   int compareIgnoreCase(const String& other) const
   {
-    const tchar* s1 = data->str, * s2 = other.data->str;
+    const tchar* s1 = *this, * s2 = other;
     tchar c1, c2;
     for(; (c1 = toLowerCase(*s1)) == (c2 = toLowerCase(*s2)); ++s1, ++s2)
       if(!*s1)
@@ -259,7 +259,7 @@ public:
   int compareIgnoreCase(const String& other, usize len) const
   {
     tchar c1, c2;
-    for(const tchar* s1 = data->str, * s2 = other.data->str, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
+    for(const tchar* s1 = *this, * s2 = other, * end1 = s1 + len; s1 < end1; ++s1, ++s2)
       if((c1 = toLowerCase(*s1)) != (c2 = toLowerCase(*s2)) || !*s1)
         return (int)(const utchar&)c1 - (const utchar&)c2;
     return 0;
@@ -270,7 +270,7 @@ public:
 
   const tchar* find(tchar c) const
   {
-    for(const tchar* s = data->str; *s; ++s)
+    for(const tchar* s = data->str, * end = s + data->len; s < end; ++s)
       if(*s == c)
         return s;
     return 0;
@@ -367,7 +367,7 @@ public:
   {
     if(data->len == 0 || equalsIgnoreCase(_T("false")) || *this == _T("0"))
       return false;
-    const tchar* p = data->str;
+    const tchar* p = *this;
     for(; *p == _T('0'); ++p);
     if(*p == _T('.'))
     {

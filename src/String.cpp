@@ -157,35 +157,35 @@ int String::scanf(const tchar* format, ...) const
   va_list ap;
   va_start(ap, format);
 #ifdef _UNICODE
-  result = vswscanf(data->str, format, ap);
+  result = vswscanf(*this, format, ap);
 #else
-  result = vsscanf(data->str, format, ap);
+  result = vsscanf(*this, format, ap);
 #endif
   va_end(ap);
   return result;
 }
 
 #ifdef _UNICODE
-int String::toInt() const {return _wtoi(data->str);}
-uint String::toUInt() const {return wcstoul(data->str, 0, 10);}
-int64 String::toInt64() const {return _wtoll(data->str);}
-uint64 String::toUInt64() const {return wcstoull(data->str, 0, 10);}
-double String::toDouble() const {return _wtof(data->str);}
+int String::toInt() const {return _wtoi(*this);}
+uint String::toUInt() const {return wcstoul(*this, 0, 10);}
+int64 String::toInt64() const {return _wtoll(*this);}
+uint64 String::toUInt64() const {return wcstoull(*this, 0, 10);}
+double String::toDouble() const {return _wtof(*this);}
 #else
-int String::toInt() const {return atoi(data->str);}
-uint String::toUInt() const {return strtoul(data->str, 0, 10);}
-int64 String::toInt64() const {return atoll(data->str);}
-uint64 String::toUInt64() const {return strtoull(data->str, 0, 10);}
-double String::toDouble() const {return atof(data->str);}
+int String::toInt() const {return atoi(*this);}
+uint String::toUInt() const {return strtoul(*this, 0, 10);}
+int64 String::toInt64() const {return atoll(*this);}
+uint64 String::toUInt64() const {return strtoull(*this, 0, 10);}
+double String::toDouble() const {return atof(*this);}
 #endif
 
-const tchar* String::find(tchar c, usize start) const {return start >= data->len ? 0 : _tcschr(data->str + start, c);}
-const tchar* String::find(const tchar* str) const {return _tcsstr(data->str, str);}
-const tchar* String::find(const tchar* str, usize start) const {return start >= data->len ? 0 : _tcsstr(data->str + start, str);}
-const tchar* String::findOneOf(const tchar* chars) const {return _tcspbrk(data->str, chars);}
-const tchar* String::findOneOf(const tchar* chars, usize start) const {return start >= data->len ? 0 : _tcspbrk(data->str + start, chars);}
-const tchar* String::findLast(const tchar* str) const {return String::findLast(data->str, str);}
-const tchar* String::findLastOf(const tchar* chars) const {return String::findLastOf(data->str, chars);}
+const tchar* String::find(tchar c, usize start) const {return start >= data->len ? 0 : _tcschr(*this + start, c);}
+const tchar* String::find(const tchar* str) const {return _tcsstr(*this, str);}
+const tchar* String::find(const tchar* str, usize start) const {return start >= data->len ? 0 : _tcsstr(*this + start, str);}
+const tchar* String::findOneOf(const tchar* chars) const {return _tcspbrk(*this, chars);}
+const tchar* String::findOneOf(const tchar* chars, usize start) const {return start >= data->len ? 0 : _tcspbrk(*this + start, chars);}
+const tchar* String::findLast(const tchar* str) const {return String::findLast(*this, str);}
+const tchar* String::findLastOf(const tchar* chars) const {return String::findLastOf(*this, chars);}
 
 String& String::replace(const String& needle, const String& replacement)
 {
@@ -333,7 +333,7 @@ String String::token(tchar separator, usize& start) const
   const tchar* endStr = find(separator, start);
   if(endStr)
   {
-    usize len = endStr - (data->str + start);
+    usize len = endStr - (*this + start);
     String result = String::substr(start, len);
     start += len + 1;
     return result;
@@ -345,7 +345,7 @@ String String::token(tchar separator, usize& start) const
 
 String String::token(const tchar* separators, usize& start) const
 {
-  const tchar* p = data->str + start;
+  const tchar* p = *this + start;
   const tchar* endStr = _tcspbrk(p, separators);
   if(endStr)
   {
@@ -363,7 +363,7 @@ usize String::split(List<String>& tokens, const tchar* separators, bool skipEmpt
 {
   tokens.clear();
 
-  const tchar* start = data->str;
+  const tchar* start = *this;
   const tchar* p = start, * endStr;
   for(;;)
   {
@@ -399,7 +399,7 @@ usize String::split(HashSet<String>& tokens, const tchar* separators, bool skipE
 {
   tokens.clear();
 
-  const tchar* start = data->str;
+  const tchar* start = *this;
   const tchar* p = start, * endStr;
   for(;;)
   {
