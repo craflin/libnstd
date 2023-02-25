@@ -372,7 +372,7 @@ bool File::flush()
 #endif
 }
 
-String File::dirname(const String& file)
+String File::getDirectoryName(const String& file)
 {
   const tchar* start = file;
   const tchar* pos = &start[file.length() - 1];
@@ -382,7 +382,7 @@ String File::dirname(const String& file)
   return String(_T("."));
 }
 
-String File::basename(const String& file, const String& extension)
+String File::getBaseName(const String& file, const String& extension)
 {
   const tchar* start = file;
   usize fileLen = file.length();
@@ -418,7 +418,7 @@ removeExtension:
   return String(result, resultLen);
 }
 
-String File::extension(const String& file)
+String File::getExtension(const String& file)
 {
   const tchar* start = file;
   usize fileLen = file.length();
@@ -587,7 +587,7 @@ bool File::exists(const String& file)
 bool File::isExecutable(const String& file)
 {
 #ifdef _WIN32
-  String extension = File::extension(file).toLowerCase();
+  String extension = File::getExtension(file).toLowerCase();
   return extension == _T("exe") || extension == _T("com") || extension == _T("bat");
 #else
   struct stat buf;

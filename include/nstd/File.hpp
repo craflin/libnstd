@@ -74,14 +74,14 @@ public:
 
   bool flush();
 
-  static String dirname(const String& file); // TODO: rename getDirname()?
-  static String basename(const String& file, const String& extension = String()); // TODO: rename getBasename()?
+  static String getDirectoryName(const String& file);
+  static String getBaseName(const String& file, const String& extension = String());
   
   /**
   * Get the extension of a file name or path (without the dot).
   * @param  [in] file The file name or path off which to get the extension.
   */
-  static String extension(const String& file); // TODO: rename getExtension()?
+  static String getExtension(const String& file);
 
   static String simplifyPath(const String& path);
   static bool isAbsolutePath(const String& path);
