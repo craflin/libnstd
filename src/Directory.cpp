@@ -287,7 +287,7 @@ bool Directory::exists(const String& dir)
 
 bool Directory::create(const String& dir)
 {
-  String parent = File::dirname(dir);
+  String parent = File::getDirectoryName(dir);
   if(parent != _T(".") && !Directory::exists(parent))
   {
     if(!Directory::create(parent))
@@ -299,7 +299,7 @@ bool Directory::create(const String& dir)
   if(mkdir(dir, S_IRUSR | S_IWUSR | S_IXUSR | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) != 0)
 #endif
   {
-    String basename = File::basename(dir);
+    String basename = File::getBaseName(dir);
     if(basename == _T(".") || basename == _T(".."))
       return true;
   }
@@ -403,7 +403,7 @@ bool Directory::purge(const String& path, bool recursive)
 {
   if(!unlink(path, recursive))
     return false;
-  for (String i = File::dirname(path); i != _T("."); i = File::dirname(i))
+  for (String i = File::getDirectoryName(path); i != _T("."); i = File::getDirectoryName(i))
 #ifdef _WIN32
     if(!RemoveDirectory(i))
       break;

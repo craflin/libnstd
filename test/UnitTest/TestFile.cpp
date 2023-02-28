@@ -124,13 +124,13 @@ void testFile()
 
   // test file name functions
   {
-    ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah")) == _T("test.blah"));
-    ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test")) == _T("test"));
-    ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah"), _T("blah")) == _T("test"));
-    ASSERT(File::basename(_T("c:\\sadasd\\asdas\\test.blah"), _T(".blah")) == _T("test"));
-    ASSERT(File::extension(_T("c:\\sadasd\\asdas\\test.blah")) == _T("blah"));
-    ASSERT(File::dirname(_T("c:\\sadasd\\asdas\\test.blah")) == _T("c:\\sadasd\\asdas"));
-    ASSERT(File::dirname(_T("asdas/test.blah")) == _T("asdas"));
+    ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah")) == _T("test.blah"));
+    ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test")) == _T("test"));
+    ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah"), _T("blah")) == _T("test"));
+    ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah"), _T(".blah")) == _T("test"));
+    ASSERT(File::getExtension(_T("c:\\sadasd\\asdas\\test.blah")) == _T("blah"));
+    ASSERT(File::getDirectoryName(_T("c:\\sadasd\\asdas\\test.blah")) == _T("c:\\sadasd\\asdas"));
+    ASSERT(File::getDirectoryName(_T("asdas/test.blah")) == _T("asdas"));
 
     ASSERT(File::simplifyPath(_T("../../dsadsad/2dsads")) == _T("../../dsadsad/2dsads"));
     ASSERT(File::simplifyPath(_T("..\\..\\dsadsad\\2dsads")) == _T("../../dsadsad/2dsads"));
