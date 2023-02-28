@@ -128,6 +128,11 @@ void testFile()
     ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test")) == _T("test"));
     ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah"), _T("blah")) == _T("test"));
     ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah"), _T(".blah")) == _T("test"));
+    ASSERT(File::getBaseName(_T("c:\\sadasd\\asdas\\test.blah"), _T(".xy")) == _T("test.blah"));
+    ASSERT(File::getStem(_T("c:\\sadasd\\asdas\\test.blah")) == _T("test"));
+    ASSERT(File::getStem(_T("c:\\sadasd\\asdas\\test")) == _T("test"));
+    ASSERT(File::getStem(_T("c:\\sadasd\\asdas\\test.blah"), _T("blah")) == _T("test"));
+    ASSERT(File::getStem(_T("c:\\sadasd\\asdas\\test.blah"), _T(".blah")) == _T("test"));
     ASSERT(File::getExtension(_T("c:\\sadasd\\asdas\\test.blah")) == _T("blah"));
     ASSERT(File::getDirectoryName(_T("c:\\sadasd\\asdas\\test.blah")) == _T("c:\\sadasd\\asdas"));
     ASSERT(File::getDirectoryName(_T("asdas/test.blah")) == _T("asdas"));

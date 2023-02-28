@@ -418,6 +418,33 @@ removeExtension:
   return String(result, resultLen);
 }
 
+String File::getStem(const String& file, const String& extension)
+{
+  if (!extension.isEmpty())
+    return getBaseName(file, extension);
+  const tchar* start = file;
+  usize fileLen = file.length();
+  const tchar* pos = &start[fileLen - 1];
+  const tchar* dot = 0;
+  const tchar* result;
+  for(; pos >= start; --pos)
+    if(*pos == _T('.'))
+      dot = pos;
+    else if(*pos == _T('\\') || *pos == _T('/'))
+    {
+      result = pos + 1;
+      goto removeExtension;
+    }
+  result = start;
+removeExtension:
+  usize resultLen;
+  if (dot)
+    resultLen = (usize)(dot - start) - (usize)(result - start);
+  else
+    resultLen = fileLen - (usize)(result - start);
+  return String(result, resultLen);
+}
+
 String File::getExtension(const String& file)
 {
   const tchar* start = file;

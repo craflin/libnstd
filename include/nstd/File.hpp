@@ -76,6 +76,7 @@ public:
 
   static String getDirectoryName(const String& file);
   static String getBaseName(const String& file, const String& extension = String());
+  static String getStem(const String& file, const String& extension = String());
   
   /**
   * Get the extension of a file name or path (without the dot).
