@@ -121,7 +121,7 @@ private:
 
 #ifdef _MSC_VER
 #pragma warning(disable: 4073) 
-#pragma init_seg(lib)
+#pragma init_seg(compiler)
 Memory::Private Memory::Private::memory;
 #else
 Memory::Private Memory::Private::memory __attribute__ ((init_priority (101)));
