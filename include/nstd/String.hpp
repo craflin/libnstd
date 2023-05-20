@@ -30,31 +30,31 @@ public:
       data = &emptyData;
     else
     {
-      usize capacity;
-      data = (Data*)Memory::alloc((other.data->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
+      usize capacity = other.data->len | 0x3;
+      data = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
       data->str = (tchar*)((byte*)data + sizeof(Data));
       Memory::copy((tchar*)data->str, other.data->str, other.data->len * sizeof(tchar));
       ((tchar*)data->str)[data->len = other.data->len] = _T('\0');
       data->ref = 1;
-      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+      data->capacity = capacity;
     }
   }
 
   String(const tchar* str, usize length)
   {
-    usize capacity;
-    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    usize capacity = length | 0x3;
+    data = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
     data->str = (tchar*)((byte*)data + sizeof(Data));
     Memory::copy((tchar*)data->str, str, length * sizeof(tchar));
     ((tchar*)data->str)[data->len = length] = _T('\0');
     data->ref = 1;
-    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+    data->capacity = capacity;
   }
 
   String(usize length, tchar c)
   {
-    usize capacity;
-    data = (Data*)Memory::alloc((length + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    usize capacity = length | 0x3;
+    data = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
     data->str = (tchar*)((byte*)data + sizeof(Data));
     tchar* i = (tchar*)data->str;
     for (tchar* end = i + length; i < end; ++i)
@@ -62,23 +62,23 @@ public:
     *i =  _T('\0');
     data->len = length;
     data->ref = 1;
-    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+    data->capacity = capacity;
   }
 
   explicit String(usize capacity)
   {
-    data = (Data*)Memory::alloc((capacity + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    data = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
     data->str = (tchar*)((byte*)data + sizeof(Data));
     *((tchar*)data->str) = _T('\0');
     data->len = 0;
     data->ref = 1;
-    data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+    data->capacity = capacity;
   }
 
   ~String()
   {
     if(data->ref && Atomic::decrement(data->ref) == 0)
-      Memory::free(data);
+      delete[] (char*)data;
   }
 
   operator const tchar*() const
@@ -120,7 +120,7 @@ public:
     else
     {
       if(data->ref && Atomic::decrement(data->ref) == 0)
-        Memory::free(data);
+        delete[] (char*)data;
 
       data = &emptyData;
     }
@@ -129,7 +129,7 @@ public:
   void attach(const tchar* str, usize length)
   {
     if(data->ref && Atomic::decrement(data->ref) == 0)
-        Memory::free(data);
+        delete[] (char*)data;
     data = &_data;
     _data.ref = 0;
     _data.str = str;
@@ -197,20 +197,20 @@ public:
     {
       Atomic::increment(otherData->ref);
       if(data->ref && Atomic::decrement(data->ref) == 0)
-        Memory::free(data);
+        delete[] (char*)data;
       data = otherData;
     }
     else
     {
       if(data->ref && Atomic::decrement(data->ref) == 0)
-        Memory::free(data);
-      usize capacity;
-      data = (Data*)Memory::alloc((otherData->len + 1) * sizeof(tchar) + sizeof(Data), capacity);
+        delete[] (char*)data;
+      usize capacity = otherData->len | 0x3;
+      data = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
       data->str = (tchar*)((byte*)data + sizeof(Data));
       Memory::copy((tchar*)data->str, otherData->str, otherData->len * sizeof(tchar));
       ((tchar*)data->str)[data->len = otherData->len] = _T('\0');
       data->ref = 1;
-      data->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+      data->capacity = capacity;
     }
     return *this;
   }
@@ -513,8 +513,8 @@ private:
       return;
     }
 
-    usize capacity;
-    Data* newData = (Data*)Memory::alloc((minCapacity + 1) * sizeof(tchar) + sizeof(Data), capacity);
+    usize capacity = minCapacity | 0x3;
+    Data* newData = (Data*)new char[(capacity + 1) * sizeof(tchar) + sizeof(Data)];
     newData->str = (tchar*)((byte*)newData + sizeof(Data));
     if(data->len > 0)
     {
@@ -527,10 +527,10 @@ private:
       newData->len = copyLength;
     }
     newData->ref = 1;
-    newData->capacity = (capacity - sizeof(Data)) / sizeof(tchar) - 1;
+    newData->capacity = capacity;
 
     if(data->ref && Atomic::decrement(data->ref) == 0)
-      Memory::free(data);
+      delete[] (char*)data;
 
     data = newData;
   }

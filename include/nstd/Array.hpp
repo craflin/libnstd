@@ -54,7 +54,7 @@ public:
     {
       for(T* i = _begin.item, * end = _end.item; i != end; ++i)
         i->~T();
-      Memory::free(_begin.item);
+      delete[] (char*)_begin.item;
     }
   }
 
@@ -98,11 +98,10 @@ public:
   {
     if(size > _capacity || (!_begin.item && size > 0))
     {
-      usize bsize;
       if (size > _capacity)
         _capacity = size;
-      T* newData = (T*)Memory::alloc(sizeof(T) * _capacity, bsize);
-      _capacity = bsize / sizeof(T);
+      _capacity |= 0x03;
+      T* newData = (T*)new char[sizeof(T) * _capacity];
       T* dest = newData;
       if(_begin.item)
       {
@@ -115,7 +114,7 @@ public:
 #endif
           src->~T();
         }
-        Memory::free(_begin.item);
+        delete[] (char*)_begin.item;
       }
       _begin.item = newData;
       _end.item = dest;

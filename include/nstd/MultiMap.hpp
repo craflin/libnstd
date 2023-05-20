@@ -48,7 +48,7 @@ public:
     for(ItemBlock* i = blocks, * next; i; i = next)
     {
       next = i->next;
-      Memory::free(i);
+      delete[] (char*)i;
     }
   }
 
@@ -374,11 +374,10 @@ private:
       Item* item = freeItem;
       if(!item)
       {
-        usize allocatedSize;
-        ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
+        ItemBlock* itemBlock = (ItemBlock*)new char[sizeof(ItemBlock) + sizeof(Item) * 4];
         itemBlock->next = blocks;
         blocks = itemBlock;
-        for(Item* i = (Item*)(itemBlock + 1), * end = i + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+        for(Item* i = (Item*)(itemBlock + 1), * end = i + 4; i < end; ++i)
         {
           i->prev = item;
           item = i;

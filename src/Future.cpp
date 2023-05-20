@@ -266,7 +266,7 @@ inline Future<void>::Private::LockFreeQueue<T>::LockFreeQueue(usize capacity)
   _capacityMask |= _capacityMask >> 16;
   _capacity = _capacityMask + 1;
 
-  _queue = (Node *)Memory::alloc(sizeof(Node) * _capacity);
+  _queue = (Node *)new char[sizeof(Node) * _capacity];
   for (usize i = 0; i < _capacity; ++i)
   {
     _queue[i].tail = i;
@@ -283,7 +283,7 @@ inline Future<void>::Private::LockFreeQueue<T>::~LockFreeQueue()
   for (usize i = _head; i != _tail; ++i)
     (&_queue[i % _capacity].data)->~T();
 
-  Memory::free(_queue);
+  delete[] (char*)_queue;
 }
 
 template <typename T>

@@ -55,14 +55,13 @@ public:
 
   ~HashMap()
   {
-    if(data)
-      Memory::free(data);
+    delete[] (char*)data;
     for(Item* i = _begin.item, * end = &endItem; i != end; i = i->next)
       i->~Item();
     for(ItemBlock* i = blocks, * next; i; i = next)
     {
       next = i->next;
-      Memory::free(i);
+      delete[] (char*)i;
     }
   }
 
@@ -169,9 +168,7 @@ public:
 
     if(!data)
     {
-      usize size;
-      data = (Item**)Memory::alloc(sizeof(Item*) * capacity, size);
-      capacity = size / sizeof(Item*);
+      data = (Item**)new char[sizeof(Item*) * capacity];
       Memory::zero(data, sizeof(Item*) * capacity);
     }
     
@@ -183,13 +180,12 @@ public:
     }
     else
     {
-      usize allocatedSize;
-      ItemBlock* itemBlock = (ItemBlock*)Memory::alloc(sizeof(ItemBlock) + sizeof(Item), allocatedSize);
+      ItemBlock* itemBlock = (ItemBlock*)new char[sizeof(ItemBlock) + sizeof(Item) * 4];
       itemBlock->next = blocks;
       blocks = itemBlock;
       item = (Item*)((char*)itemBlock + sizeof(ItemBlock));
 
-      for(Item* i = item + 1, * end = item + (allocatedSize - sizeof(ItemBlock)) / sizeof(Item); i < end; ++i)
+      for(Item* i = item + 1, * end = item + 4; i < end; ++i)
       {
         i->prev = freeItem;
         freeItem = i;

@@ -50,7 +50,7 @@ public:
 
   Variant(const HashMap<String, Variant>& val)
   {
-    data = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+    data = (Data*)new char[sizeof(Data) + sizeof(HashMap<String, Variant>)];
     HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data + 1);
     new (map) HashMap<String, Variant>(val);
     data->type = mapType;
@@ -59,7 +59,7 @@ public:
 
   Variant(const List<Variant>& val)
   {
-    data = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+    data = (Data*)new char[sizeof(Data) + sizeof(List<Variant>)];
     List<Variant>* list = (List<Variant>*)(data + 1);
     new (list) List<Variant>(val);
     data->type = listType;
@@ -68,7 +68,7 @@ public:
 
   Variant(const Array<Variant>& val)
   {
-    data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+    data = (Data*)new char[sizeof(Data) + sizeof(Array<Variant>)];
     Array<Variant>* array = (Array<Variant>*)(data + 1);
     new (array) Array<Variant>(val);
     data->type = arrayType;
@@ -77,7 +77,7 @@ public:
 
   Variant(const String& val)
   {
-    data = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+    data = (Data*)new char[sizeof(Data) + sizeof(String)];
     String* string = (String*)(data + 1);
     new (string) String(val);
     data->type = stringType;
@@ -96,7 +96,7 @@ public:
       case stringType: ((String*)(data + 1))->~String(); break;
       default: break;
       }
-      Memory::free(data);
+      delete[] (char*)data;
     }
     data = &nullData;
   }
@@ -311,7 +311,7 @@ public:
   {
     if(data->type != mapType || data->ref > 1)
     {
-      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+      Data* newData = (Data*)new char[sizeof(Data) + sizeof(HashMap<String, Variant>)];
       HashMap<String, Variant>* map = (HashMap<String, Variant>*)(newData + 1);
       new (map) HashMap<String, Variant>(((const Variant*)this)->toMap());
       clear();
@@ -328,7 +328,7 @@ public:
     if(data->type != mapType || data->ref > 1)
     {
       clear();
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(HashMap<String, Variant>));
+      data = (Data*)new char[sizeof(Data) + sizeof(HashMap<String, Variant>)];
       HashMap<String, Variant>* map = (HashMap<String, Variant>*)(data + 1);
       new (map) HashMap<String, Variant>(other);
       data->type = mapType;
@@ -351,7 +351,7 @@ public:
   {
     if(data->type != listType || data->ref > 1)
     {
-      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+      Data* newData = (Data*)new char[sizeof(Data) + sizeof(List<Variant>)];
       List<Variant>* list = (List<Variant>*)(newData + 1);
       new (list) List<Variant>(((const Variant*)this)->toList());
       clear();
@@ -368,7 +368,7 @@ public:
     if(data->type != listType || data->ref > 1)
     {
       clear();
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(List<Variant>));
+      data = (Data*)new char[sizeof(Data) + sizeof(List<Variant>)];
       List< Variant>* list = (List<Variant>*)(data + 1);
       new (list) List<Variant>(other);
       data->type = listType;
@@ -391,7 +391,7 @@ public:
   {
     if(data->type != arrayType || data->ref > 1)
     {
-      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+      Data* newData = (Data*)new char[sizeof(Data) + sizeof(Array<Variant>)];
       Array<Variant>* array = (Array<Variant>*)(newData + 1);
       new (array) Array<Variant>(((const Variant*)this)->toArray());
       clear();
@@ -408,7 +408,7 @@ public:
     if(data->type != arrayType || data->ref > 1)
     {
       clear();
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Array<Variant>));
+      data = (Data*)new char[sizeof(Data) + sizeof(Array<Variant>)];
       Array<Variant>* array = (Array<Variant>*)(data + 1);
       new (array) Array<Variant>(other);
       data->type = arrayType;
@@ -423,7 +423,7 @@ public:
   {
     if(data->type != stringType || data->ref > 1)
     {
-      Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+      Data* newData = (Data*)new char[sizeof(Data) + sizeof(String)];
       String* string = (String*)(newData + 1);
       new (string) String(((const Variant*)this)->toString());
       clear();
@@ -456,7 +456,7 @@ public:
     if(data->type != stringType || data->ref > 1)
     {
       clear();
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+      data = (Data*)new char[sizeof(Data) + sizeof(String)];
       String* string = (String*)(data + 1);
       new (string) String(other);
       data->type = stringType;

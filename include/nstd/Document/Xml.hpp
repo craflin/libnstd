@@ -38,7 +38,7 @@ public:
 
     Variant(const Element& val)
     {
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Element));
+      data = (Data*)new char[sizeof(Data) + sizeof(Element)];
       Element* element = (Element*)(data + 1);
       new (element) Element(val);
       data->type = elementType;
@@ -47,7 +47,7 @@ public:
 
     Variant(const String& val)
     {
-      data = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+      data = (Data*)new char[sizeof(Data) + sizeof(String)];
       String* string = (String*)(data + 1);
       new (string) String(val);
       data->type = textType;
@@ -64,7 +64,7 @@ public:
         case textType: ((String*)(data + 1))->~String(); break;
         default: break;
         }
-        Memory::free(data);
+        delete[] (char*)data;
       }
       data = &nullData;
     }
@@ -86,7 +86,7 @@ public:
       if(data->type != textType || data->ref > 1)
       {
         clear();
-        data = (Data*)Memory::alloc(sizeof(Data) + sizeof(String));
+        data = (Data*)new char[sizeof(Data) + sizeof(String)];
         String* string = (String*)(data + 1);
         new (string) String(other);
         data->type = textType;
@@ -112,7 +112,7 @@ public:
       if(data->type != elementType)
       {
         clear();
-        data = (Data*)Memory::alloc(sizeof(Data) + sizeof(Element));
+        data = (Data*)new char[sizeof(Data) + sizeof(Element)];
         Element* element = (Element*)(data + 1);
         new (element) Element;
         data->type = elementType;
@@ -121,7 +121,7 @@ public:
       }
       else if(data->ref > 1)
       {
-        Data* newData = (Data*)Memory::alloc(sizeof(Data) + sizeof(Element));
+        Data* newData = (Data*)new char[sizeof(Data) + sizeof(Element)];
         Element* element = (Element*)(data + 1);
         new (element) Element(*(const Element*)(data + 1));
         clear();
