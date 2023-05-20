@@ -8,24 +8,26 @@ class Buffer
 public:
   Buffer() : buffer(0), bufferStart((byte*)&_capacity), bufferEnd(bufferStart), _capacity(0) {}
 
-  explicit Buffer(usize capacity) 
+  explicit Buffer(usize capacity)
+      : _capacity(capacity)
   {
-    bufferStart = bufferEnd = buffer = (byte*)Memory::alloc(capacity + 1, _capacity); --_capacity;
+    bufferStart = bufferEnd = buffer = (byte*)new char[capacity + 1];
     *bufferEnd = 0;
   }
 
   Buffer(const Buffer& other)
+      : _capacity(other.bufferEnd - other.bufferStart)
   {
-    usize size = other.bufferEnd - other.bufferStart;
-    bufferStart = buffer = (byte*)Memory::alloc(size + 1, _capacity); --_capacity;
-    Memory::copy(buffer, other.bufferStart, size);
-    bufferEnd = bufferStart + size;
+    bufferStart = buffer = (byte*)new char[_capacity + 1];
+    Memory::copy(buffer, other.bufferStart, _capacity);
+    bufferEnd = bufferStart + _capacity;
     *bufferEnd = 0;
   }
 
   Buffer(const byte* data, usize size)
+      : _capacity(size)
   {
-    bufferStart = buffer = (byte*)Memory::alloc(size + 1, _capacity); --_capacity;
+    bufferStart = buffer = (byte*)new char[size + 1];
     Memory::copy(buffer, data, size);
     bufferEnd = bufferStart + size;
     *bufferEnd = 0;
@@ -33,12 +35,12 @@ public:
 
   ~Buffer()
   {
-    Memory::free(buffer);
+    delete[] (char*)buffer;
   }
 
   void attach(byte* data, usize length)
   { 
-    Memory::free(buffer);
+    delete[] (char*)buffer;
     buffer = 0;
     bufferStart = data;
     bufferEnd = data + length;
@@ -52,8 +54,9 @@ public:
     usize size = other.bufferEnd - other.bufferStart;
     if(size > _capacity)
     {
-      Memory::free(buffer);
-      buffer = (byte*)Memory::alloc(size + 1, _capacity); --_capacity;
+      delete[] (char*)buffer;
+      _capacity = size;
+      buffer = (byte*)new char[size + 1];
     }
     else if(!buffer)
       return *this;
@@ -68,8 +71,9 @@ public:
   {
     if(size > _capacity)
     {
-      Memory::free(buffer);
-      buffer = (byte*)Memory::alloc(size + 1, _capacity); --_capacity;
+      delete[] (char*)buffer;
+      _capacity = size;
+      buffer = (byte*)new char[size + 1];
     }
     else if(!buffer)
       return;
@@ -110,10 +114,11 @@ public:
     }
     else
     {
-      byte* newBuffer = (byte*)Memory::alloc(requiredCapacity + 1, _capacity); --_capacity;
+        _capacity = requiredCapacity;
+      byte* newBuffer = (byte*)new char[requiredCapacity + 1];
       Memory::copy(newBuffer, data, size);
       Memory::copy(newBuffer + size, bufferStart, oldSize);
-      Memory::free(buffer);
+      delete [] (char*)buffer;
       bufferStart = buffer = newBuffer;
       bufferEnd = newBuffer+ requiredCapacity;
     }
@@ -140,9 +145,10 @@ public:
   {
     if(size > _capacity)
     {
-      byte* newBuffer = (byte*)Memory::alloc(size + 1, _capacity); --_capacity;
+        _capacity = size;
+      byte* newBuffer = (byte*)new char[size + 1];
       Memory::copy(newBuffer, bufferStart, bufferEnd - bufferStart);
-      Memory::free(buffer);
+      delete[] (char*)buffer;
       bufferStart = buffer = newBuffer;
       bufferEnd = newBuffer + size;
       *bufferEnd = 0;
@@ -187,10 +193,11 @@ public:
   {
     if(capacity <= _capacity)
       return;
-    byte* newBuffer = (byte*)Memory::alloc(capacity + 1, _capacity); --_capacity;
+    _capacity = capacity;
+    byte* newBuffer = (byte*)new char [capacity + 1];
     usize size = bufferEnd - bufferStart;
     Memory::copy(newBuffer, bufferStart, size);
-    Memory::free(buffer);
+    delete[] (char*)buffer;
     bufferStart = buffer = newBuffer;
     bufferEnd = newBuffer + size;
     *bufferEnd = 0;
@@ -227,7 +234,7 @@ public:
 
   void free()
   {
-    Memory::free(buffer);
+    delete[] (char*)buffer;
     buffer = 0;
     bufferStart = bufferEnd = (byte*)&_capacity;
     _capacity = 0;

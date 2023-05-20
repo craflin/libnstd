@@ -10,7 +10,7 @@ programming and common design patterns. Right now it consists of following heade
 
 * [Base.hpp](include/nstd/Base.hpp): Basic data types and allocation operators.
 * [Debug.hpp](include/nstd/Debug.hpp): Low level debugging tools.
-* [Memory.hpp](include/nstd/Memory.hpp): Memory allocation and other memory tools.
+* [Memory.hpp](include/nstd/Memory.hpp): Memory tools.
 * [Error.hpp](include/nstd/Error.hpp): Abstraction layer of operating system error reporting.
 * [Math.hpp](include/nstd/Math.hpp): Basic mathematics functions.
 * Data types

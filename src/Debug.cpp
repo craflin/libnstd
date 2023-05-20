@@ -65,7 +65,7 @@ int Debug::printf(const tchar* format, ...)
     result = _vscprintf(format, ap);
 #endif
     usize maxCount = result + 1;
-    tchar* buffer = (tchar*)Memory::alloc(maxCount * sizeof(tchar));
+    tchar* buffer = (tchar*)new char[maxCount * sizeof(tchar)];
 #ifdef _UNICODE
     result = _vsnwprintf(buffer, maxCount, format, ap);
 #else
@@ -73,7 +73,7 @@ int Debug::printf(const tchar* format, ...)
 #endif
     va_end(ap);
     OutputDebugString(buffer);
-    Memory::free(buffer);
+    delete[] (char*)buffer;
     return result;
   }
 #else
