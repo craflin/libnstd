@@ -305,7 +305,7 @@ bool Xml::Private::parse(const tchar* data, Element& element)
   pos.pos = pos.lineStart = data;
 
   skipSpace();
-  if(*pos.pos == '<' && pos.pos[1] == '?')
+  while(*pos.pos == '<' && pos.pos[1] == '?')
   {
     Position startPos = pos;
     pos.pos += 2;
@@ -322,6 +322,7 @@ bool Xml::Private::parse(const tchar* data, Element& element)
       pos.pos = end + 1;
       skipSpace();
     }
+    skipSpace();
   }
   if(!readToken())
     return false;
