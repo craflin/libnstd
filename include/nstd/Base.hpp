@@ -4,8 +4,11 @@
 #if (defined(_M_AMD64) || defined(__amd64__)) && !defined(_AMD64)
 #define _AMD64
 #endif
-#if defined(__arm__)  && !defined(_ARM)
+#if defined(__arm__) && !defined(_ARM)
 #define _ARM
+#endif
+#if defined(__PPC64__) && !defined(_PPC64)
+#define _PPC64
 #endif
 #if defined(UNICODE) && !defined(_UNICODE)
 #define _UNICODE
@@ -23,7 +26,7 @@ typedef unsigned char byte;
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-#ifdef _AMD64
+#if defined(_AMD64) || defined(_PPC64)
 #ifdef _WIN32
 typedef long long int int64;
 typedef unsigned long long int uint64;
@@ -81,7 +84,7 @@ inline usize hash(uint32 v) {return (usize)v;}
 inline usize hash(int64 v) {return (usize)v;}
 inline usize hash(uint64 v) {return (usize)v;}
 inline usize hash(const void* v) {return (usize)v >> (sizeof(void*) / 4 + 1);}
-#if defined(_WIN32) || !defined(_AMD64)
+#if defined(_WIN32) || (!defined(_AMD64) && !defined(_PPC64))
 inline usize hash(long v) {return (usize)v;}
 inline usize hash(unsigned long v) {return (usize)v;}
 #endif
