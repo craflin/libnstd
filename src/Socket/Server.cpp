@@ -30,6 +30,7 @@ public:
     bool read(byte *buffer, usize maxSize, usize &size);
     void suspend();
     void resume();
+    bool isSuspended() const { return _suspended; }
   };
 
   struct Resolver;
@@ -528,4 +529,5 @@ bool Server::Client::write(const byte *data, usize size, usize *postponed) { ret
 bool Server::Client::read(byte *buffer, usize maxSize, usize &size) { return ((Private::ClientImpl *)this)->read(buffer, maxSize, size); }
 void Server::Client::suspend() { return ((Private::ClientImpl *)this)->suspend(); }
 void Server::Client::resume() { return ((Private::ClientImpl *)this)->resume(); }
+bool Server::Client::isSuspended() const { return ((Private::ClientImpl *)this)->isSuspended(); }
 Socket& Server::Client::getSocket() { return *((Private::ClientImpl *)this); }
