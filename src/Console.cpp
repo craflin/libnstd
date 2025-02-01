@@ -504,7 +504,7 @@ public:
         input.swap(newInput);
       }
       else
-        input.resize(input.size() - 1);
+        input.resize(caretPos);
       promptWrite(prompt.size() + caretPos, _T(" "));
     }
   }
