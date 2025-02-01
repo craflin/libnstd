@@ -18,12 +18,46 @@
 class Error::Private
 {
 public:
+  class Str
+  {
+  public:
+    Str() : _ptr(0), _len(0) {}
+    Str(const String& other)
+    {
+      _len = other.length();
+      _ptr = new tchar[_len + 1];
+      memcpy(_ptr, (const tchar*)other, (_len + 1) * sizeof(tchar));
+    }
+    Str(const Str& other)
+      : _len(other._len)
+    {
+      _ptr = new tchar[_len + 1];
+      memcpy(_ptr, other._ptr, (_len + 1) * sizeof(tchar));
+    }
+    Str& operator=(const Str& other)
+    {
+      delete []_ptr;
+      _len = other._len;
+      _ptr = new tchar[_len + 1];
+      memcpy(_ptr, other._ptr, (_len + 1) * sizeof(tchar));
+      return *this;
+
+    }
+    ~Str() { delete []_ptr;}
+    operator String() const { return _ptr ? String(_ptr, _len) : String(); }
+
+  private:
+    tchar* _ptr;
+    usize _len;
+  };
+
+public:
 #ifdef _WIN32
   static CRITICAL_SECTION cs;
 #else
   static pthread_mutex_t mutex;
 #endif
-  static Map<uint32, String> userErrorStrings;
+  static Map<uint32, Error::Private::Str> userErrorStrings;
   static class Framework
   {
   public:
@@ -53,7 +87,7 @@ CRITICAL_SECTION Error::Private::cs;
 #else
 pthread_mutex_t Error::Private::mutex;
 #endif
-Map<uint32, String> Error::Private::userErrorStrings;
+Map<uint32, Error::Private::Str> Error::Private::userErrorStrings;
 Error::Private::Framework Error::Private::framework;
 
 void Error::setLastError(uint error)
@@ -90,7 +124,7 @@ String Error::getErrorString(uint error)
 #else
     uint32 threadId = (uint32)syscall(__NR_gettid);
 #endif
-    Map<uint32, String>::Iterator it = Private::userErrorStrings.find(threadId);
+    Map<uint32, Error::Private::Str>::Iterator it = Private::userErrorStrings.find(threadId);
     if(it != Private::userErrorStrings.end())
       errorStr = *it;
 #ifdef _WIN32
@@ -136,8 +170,8 @@ void Error::setErrorString(const String& error)
   uint32 threadId = (uint32)syscall(__NR_gettid);
 #endif
 
-  String* threadErrorMsg = 0;
-  for(Map<uint32, String>::Iterator i = Private::userErrorStrings.begin(), end = Private::userErrorStrings.end(), next; i != end; i = next)
+  Error::Private::Str* threadErrorMsg = 0;
+  for(Map<uint32, Error::Private::Str>::Iterator i = Private::userErrorStrings.begin(), end = Private::userErrorStrings.end(), next; i != end; i = next)
   {
     next = i;
     ++next;
