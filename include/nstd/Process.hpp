@@ -2,6 +2,7 @@
 #pragma once
 
 #include <nstd/String.hpp>
+#include <nstd/Map.hpp>
 
 class Process
 {
@@ -14,18 +15,20 @@ public:
   * Start an external process.
   * @param[in]  command The command to start the process. The first word in \c command should be the name of the executable or a path
   *                     to the executable. Further words in \c command are considered to be arguments for the process.
+  * @param[in] environment  Environment variables to be used for new process. The environment variable from the current process will be inherited if the map is empty.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
-  uint32 start(const String& command);
+  uint32 start(const String& command, const Map<String, String>& environment = Map<String, String>());
 
   /**
   * Start an external process.
   * @param[in]  executable  The path to the executable to be started.
   * @param[in]  argc        The amount of parameters in \c argv.
   * @param[in]  argv        Arguments to the process.
+  * @param[in] environment  Environment variables to be used for new process. The environment variable from the current process will be inherited if the map is empty.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
-  uint32 start(const String& executable, int argc, tchar* const argv[]);
+  uint32 start(const String& executable, int argc, tchar* const argv[], const Map<String, String>& environment = Map<String, String>());
 
   /**
   * Get id of the process.
@@ -87,6 +90,7 @@ public:
 
   static String getEnvironmentVariable(const String& name, const String& defaultValue = String());
   static bool setEnvironmentVariable(const String& name, const String& value);
+  static Map<String, String> getEnvironmentVariables();
   static String getExecutablePath();
 
   static Process* wait(Process** processes, usize count);

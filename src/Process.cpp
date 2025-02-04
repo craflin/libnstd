@@ -157,7 +157,7 @@ bool Process::isRunning() const
 #endif
 }
 
-uint32 Process::start(const String& commandLine)
+uint32 Process::start(const String& commandLine, const Map<String, String>& environment)
 {
 #ifdef _WIN32
   if(hProcess != INVALID_HANDLE_VALUE)
@@ -173,9 +173,46 @@ uint32 Process::start(const String& commandLine)
   si.cb = sizeof(si);
   ZeroMemory(&pi, sizeof(pi));
 
-  String args(commandLine);
+  LPTSTR env = NULL;
+  Buffer envBuffer;
+  if (!environment.isEmpty())
+  {
+    usize bufferSize = 1;
+    for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
+    {
+      const String& key = i.key();
+      const String& val = *i;
+      if (key.isEmpty() || val.isEmpty())
+          continue;
+      bufferSize += key.length() + val.length() + 2;
+    }
+    envBuffer.reserve(bufferSize * sizeof(TCHAR));
+    LPTSTR lptEnv = (LPTSTR)(byte*)envBuffer;
+    env = lptEnv;
+    for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
+    {
+      const String& key = i.key();
+      const String& val = *i;
+      if (key.isEmpty() || val.isEmpty())
+        continue;
+      memcpy(lptEnv, (const TCHAR*)key, key.length() * sizeof(TCHAR));
+      lptEnv += key.length();
+      *(lptEnv++) = _T('=');
+      memcpy(lptEnv, (const TCHAR*)val, val.length() * sizeof(TCHAR));
+      lptEnv += val.length();
+      *(lptEnv++) = _T('\0');
+    }
+    *lptEnv = _T('\0');
+  }
 
-  if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi))
+  String args(commandLine);
+  if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, FALSE, 
+#ifdef UNICODE
+      CREATE_UNICODE_ENVIRONMENT
+#else
+      0
+#endif
+      , env, NULL, &si, &pi))
     return 0;
 
   CloseHandle(pi.hThread);
@@ -203,14 +240,14 @@ uint32 Process::start(const String& commandLine)
   for (List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
     argv[i++] = (char*)(const char*)*j;
   argv[i] = 0;
-  return start(command.front(), i + 1, argv);
+  return start(command.front(), i + 1, argv, environment);
 #endif
 }
 
-uint32 Process::start(const String& program, int argc, tchar* const argv[])
+uint32 Process::start(const String& program, int argc, tchar* const argv[], const Map<String, String>& environment)
 {
 #ifdef _WIN32
-  return start(Private::getCommandLine(program, argc, argv));
+  return start(Private::getCommandLine(program, argc, argv), environment);
 #else
   if (pid)
   {
@@ -233,6 +270,21 @@ uint32 Process::start(const String& program, int argc, tchar* const argv[])
     args[0] = program;
   }
 
+  // prepare env of child
+  char** env = ::environ;
+  Array<String> envStringsBuf;
+  if (!environment.isEmpty())
+  {
+    envStringsBuf.reserve(environment.size());
+      for (Map<String, String>::Iterator i = environment.begin(), end = environment.end(); i != end; ++i)
+        envStringsBuf.append(i.key() + "=" + *i);
+    env = (char**)alloca(sizeof(char*) * (envStringsBuf.size() + 1));
+    char** ienv = env;
+    for (Array<String>::Iterator i = envStringsBuf.begin(), end = envStringsBuf.end(); i != end; ++i)
+      *(ienv++) = (char*)(const char*)*i;
+    *ienv = 0;
+  }
+
   // start process
   int r = vfork();
   if (r == -1)
@@ -244,7 +296,7 @@ uint32 Process::start(const String& program, int argc, tchar* const argv[])
   }
   else // child
   {
-    if(execvp(program, (char* const*)args) == -1)
+    if(execvpe(program, (char* const*)args, env) == -1)
     {
       fprintf(stderr, "%s: %s\n", (const char*)program, strerror(errno));
       _exit(EXIT_FAILURE);
@@ -856,7 +908,7 @@ ssize Process::write(const void* buffer, usize len)
 
 String Process::getEnvironmentVariable(const String& name, const String& defaultValue)
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
   String buffer;
   DWORD bufferSize = 256;
   for(;;)
@@ -885,9 +937,57 @@ String Process::getEnvironmentVariable(const String& name, const String& default
 #endif
 }
 
+Map<String, String> Process::getEnvironmentVariables()
+{
+#ifdef _WIN32
+  Map<String, String> result;
+  LPTCH environmentStrings = GetEnvironmentStrings();
+  if (!environmentStrings)
+    return result;
+  struct Guard
+  {
+    LPTCH _environmentStrings;
+    ~Guard() { FreeEnvironmentStrings(_environmentStrings); }
+  } guard = { environmentStrings };
+
+  for (LPTCH i = environmentStrings; *i != '\0'; ++i)
+  {
+    String key;
+    String value;
+
+    for (; *i != '='; ++i)
+      key += *i;
+    ++i;
+    for (; *i != '\0'; ++i)
+        value += *i;
+
+    if (key.isEmpty())
+      continue;
+    result.insert(key, value);
+  }
+  return result;
+#else
+  Map<String, String> result;
+  for (size_t i = 0; environ[i]; ++i)
+  {
+    const char* e = environ[i];
+    const tchar* x = String::find(e, '=');
+    if (!x)
+      continue;
+    String var;
+    var.attach(e, x - e);
+    String value;
+    ++e;
+    value.attach(e, String::length(e));
+    result.insert(var, value);
+  }
+  return result;
+#endif
+}
+
 bool Process::setEnvironmentVariable(const String& name, const String& value)
 {
-#ifdef _MSC_VER
+#ifdef _WIN32
   return SetEnvironmentVariable((const tchar*)name, value.isEmpty() ? 0 : (const tchar*)value) == TRUE;
 #else
   if(value.isEmpty())

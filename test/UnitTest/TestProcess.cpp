@@ -97,9 +97,25 @@ void testWait()
 #endif
 }
 
+void testEnv()
+{
+  Process process;
+  Map<String, String> env;
+  env.insert(_T("ENV_TEST"), _T("42"));
+#ifdef _WIN32
+  process.start(_T("cmd /c \"exit %ENV_TEST%\""), env);
+#else
+  process.start(_T("sh -c \"exit $ENV_TEST\""), env);
+#endif
+  uint32 exitCode = 0;
+  process.join(exitCode);
+  ASSERT(exitCode == 42);
+}
+
 int main(int argc, char* argv[])
 {
   testProcess();
   testWait();
+  testEnv();
   return 0;
 }
