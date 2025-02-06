@@ -689,6 +689,8 @@ public:
   inline bool poll(Event& event, int64 timeout);
   inline bool interrupt();
 
+  String getDebugInfo();
+
 public:
   struct Overlapped : public WSAOVERLAPPED
   {
@@ -779,6 +781,11 @@ void Socket::Poll::Private::clear()
     completionPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, NULL, 1);
     nextKey = 1;
   }
+}
+
+String Socket::Poll::Private::getDebugInfo()
+{
+    return String();
 }
 
 void Socket::Poll::Private::set(Socket& socket, uint events)
@@ -1176,6 +1183,8 @@ public:
   inline bool poll(Event& event, int64 timeout);
   inline bool interrupt();
 
+  String getDebugInfo();
+
 private:
   struct SocketInfo
   {
@@ -1228,6 +1237,20 @@ uint Socket::Poll::Private::unmapEvents(uint32 nativeEvents, uint events)
   if(nativeEvents & EPOLLOUT || (result == 0 && nativeEvents & (EPOLLRDHUP | EPOLLHUP)))
     result |= events & (writeFlag | connectFlag);
   return result;
+}
+
+String Socket::Poll::Private::getDebugInfo()
+{
+    String result("<table>")
+    for (HashMap<Socket*, Private::SocketInfo>::Iterator i = sockets.begin(), end = sockets.end(); i != end; ++i)
+    {
+        const Private::SocketInfo& sockInfo = *i;
+        result += String::fromPrintf("<tr><td>%d</td><td>%d</td></tr>"
+            (int)socket.s,
+            mapEvents(sockInfo.events))
+    }
+    result += "</table>";
+    return result;
 }
 
 void Socket::Poll::Private::set(Socket& socket, uint events)
@@ -1524,3 +1547,4 @@ void Socket::Poll::remove(Socket& socket) {return p->remove(socket);}
 void Socket::Poll::clear() {return p->clear();}
 bool Socket::Poll::poll(Event& event, int64 timeout) {return p->poll(event, timeout);}
 bool Socket::Poll::interrupt() {return p->interrupt();}
+String Socket::Poll::getDebugInfo() {return p->getDebugInfo();}

@@ -98,6 +98,8 @@ public:
     bool poll(Event& event, int64 timeout);
     bool interrupt();
 
+    String getDebugInfo();
+
   private:
     Poll(const Poll&);
     Poll& operator=(const Poll&);

@@ -125,6 +125,8 @@ public:
 
   void clear();
 
+  String getDebugInfo();
+
 private:
   Server(const Server &);
   Server &operator=(const Server &);

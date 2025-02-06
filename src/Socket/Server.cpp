@@ -87,6 +87,8 @@ public:
 
   void clear();
 
+  String getDebugInfo() { return _sockets.getDebugInfo();}
+
 private:
   bool _keepAlive;
   bool _noDelay;
@@ -531,3 +533,6 @@ void Server::Client::suspend() { return ((Private::ClientImpl *)this)->suspend()
 void Server::Client::resume() { return ((Private::ClientImpl *)this)->resume(); }
 bool Server::Client::isSuspended() const { return ((Private::ClientImpl *)this)->isSuspended(); }
 Socket& Server::Client::getSocket() { return *((Private::ClientImpl *)this); }
+
+
+String Server::getDebugInfo() {return _p->getDebugInfo();}
