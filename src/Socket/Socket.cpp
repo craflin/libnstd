@@ -124,6 +124,11 @@ bool Socket::isOpen() const
   return s != INVALID_SOCKET;
 }
 
+int64 Socket::getFileDescriptor() const
+{
+    return (int64)s;
+}
+
 void Socket::swap(Socket& other)
 {
   SOCKET tmp = s;

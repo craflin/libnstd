@@ -29,6 +29,7 @@ public:
     void suspend();
     void resume();
     bool isSuspended() const;
+    usize getSendBufferSize() const;
     Socket& getSocket();
 
   private:

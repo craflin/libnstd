@@ -26,6 +26,7 @@ public:
   bool open(Protocol protocol = tcpProtocol);
   void close();
   bool isOpen() const;
+  int64 getFileDescriptor() const;
 
   void swap(Socket& other);
 
