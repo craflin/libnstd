@@ -473,6 +473,7 @@ public:
   static String fromCString(const char* str, usize len) {return String(str, len);}
   static String fromPrintf(const char* format, ...);
   static String fromHex(const byte* data, usize size);
+  static String fromBase64(const String& base64);
 
   static bool startsWith(const char* in, const String& str) {return compare(in, str.data->str, str.data->len) == 0;}
 

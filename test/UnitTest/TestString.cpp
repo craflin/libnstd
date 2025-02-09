@@ -170,8 +170,19 @@ void testString()
   }
 }
 
+
+void testBase64()
+{
+    ASSERT(String::fromBase64("bGlnaHQgd29yay4=") == "light work.");
+    ASSERT(String::fromBase64("bGlnaHQgd29yaw==") == "light work");
+    ASSERT(String::fromBase64("bGlnaHQgd29y") == "light wor");
+    ASSERT(String::fromBase64("bGlnaHQgd28=") == "light wo");
+    ASSERT(String::fromBase64("bGlnaHQgdw==") == "light w");
+}
+
 int main(int argc, char* argv[])
 {
   testString();
+  testBase64();
   return 0;
 }
