@@ -16,7 +16,7 @@ public:
     int getErrorColumn() const;
     String getErrorString() const;
 
-    bool parse(const tchar* data, Variant& result);
+    bool parse(const char* data, Variant& result);
     bool parse(const String& data, Variant& result);
 
   private:
@@ -33,7 +33,7 @@ public:
    */
   static String stripComments(const String& data);
 
-  static bool parse(const tchar* data, Variant& result);
+  static bool parse(const char* data, Variant& result);
   static bool parse(const String& data, Variant& result);
 
   static String toString(const Variant& data);

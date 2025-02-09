@@ -17,22 +17,11 @@ pipeline {
                         steps {
                             cmakeBuild buildDir: 'build', installation: 'InSearchPath', buildType: 'Release', cmakeArgs: '-G Ninja'
                             cmake workingDir: 'build', arguments: '--build .', installation: 'InSearchPath'
-                            script {
-                                if (platform == 'windows10-x64' || platform ==  'windows10-x86') {
-                                    cmakeBuild buildDir: 'build_unicode', installation: 'InSearchPath', buildType: 'Release', cmakeArgs: '-G Ninja -DUNICODE=ON'
-                                    cmake workingDir: 'build_unicode', arguments: '--build .', installation: 'InSearchPath'
-                                }
-                            }
                         }
                     }
                     stage('Test') {
                         steps {
                             ctest workingDir: 'build', installation: 'InSearchPath', arguments: '--output-on-failure'
-                            script {
-                                if (platform == 'windows10-x64' || platform ==  'windows10-x86') {
-                                    ctest workingDir: 'build_unicode', installation: 'InSearchPath', arguments: '--output-on-failure'
-                                }
-                            }
                         }
                     }
                 }

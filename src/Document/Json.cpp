@@ -11,20 +11,20 @@ public:
   {
   public:
     int line;
-    const tchar* pos;
+    const char* pos;
   };
 
   class Token
   {
   public:
-    tchar token;
+    char token;
     Variant value;
     Position pos;
   };
 
 public:
   Token token;
-  const tchar* start;
+  const char* start;
   Position pos;
 
   int errorLine;
@@ -32,7 +32,7 @@ public:
   String errorString;
 
 public:
-  bool parse(const tchar* data, Variant& result);
+  bool parse(const char* data, Variant& result);
 
   bool parseObject(Variant& result);
   bool parseValue(Variant& result);
@@ -78,7 +78,7 @@ bool Json::Private::readToken()
         switch(*pos.pos)
         {
         case '\0':
-          return syntaxError(pos, _T("Unexpected end of file")), false;
+          return syntaxError(pos, "Unexpected end of file"), false;
         case '\r':
           if(*(++pos.pos) == '\n')
             ++pos.pos;
@@ -130,14 +130,14 @@ bool Json::Private::readToken()
                     ++pos.pos;
                   }
                   else
-                    return syntaxError(pos, _T("Expected hexadecimal digit")), false;
+                    return syntaxError(pos, "Expected hexadecimal digit"), false;
                 uint w1;
-                if(k.scanf(_T("%x"), &w1) != 1)
-                  return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
+                if(k.scanf("%x", &w1) != 1)
+                  return pos.pos -= 4, syntaxError(pos, "Expected hexadecimal number"), false;
                 if((w1 & 0xF800ULL) == 0xD800ULL && (w1 & 0xFC00ULL) == 0xD800ULL)
                 { // this must be an UTF-8 surrogate pair
                   if(*pos.pos != '\\' || pos.pos[1] != 'u')
-                    return syntaxError(pos, _T("Expected UTF-8 surrogate pair")), false;
+                    return syntaxError(pos, "Expected UTF-8 surrogate pair"), false;
                   pos.pos += 2;
                   k.clear();
                   for(int i = 0; i < 4; ++i)
@@ -147,12 +147,12 @@ bool Json::Private::readToken()
                       ++pos.pos;
                     }
                     else
-                      return syntaxError(pos, _T("Expected hexadecimal digit")), false;
+                      return syntaxError(pos, "Expected hexadecimal digit"), false;
                   uint w2;
-                  if(k.scanf(_T("%x"), &w2) != 1)
-                    return pos.pos -= 4, syntaxError(pos, _T("Expected hexadecimal number")), false;
+                  if(k.scanf("%x", &w2) != 1)
+                    return pos.pos -= 4, syntaxError(pos, "Expected hexadecimal number"), false;
                   if((w2 & 0xFC00UL) != 0xDC00UL)
-                    return pos.pos -= 6,syntaxError(pos, _T("Expected UTF-8 surrogate pair")), false;
+                    return pos.pos -= 6,syntaxError(pos, "Expected UTF-8 surrogate pair"), false;
                   Unicode::append(((w2 & 0x3FFULL) | ((uint32)(w1 & 0x3FFULL) << 10)) + 0x10000UL, value);
                 }
                 else
@@ -180,29 +180,29 @@ bool Json::Private::readToken()
     }
     return false; // unreachable
   case 't':
-    if(String::compare(pos.pos, _T("true"), 4) == 0)
+    if(String::compare(pos.pos, "true", 4) == 0)
     {
       pos.pos += 4;
       token.value = true;
       return true;
     }
-    return syntaxError(pos, _T("Expected character")), false;
+    return syntaxError(pos, "Expected character"), false;
   case 'f':
-    if(String::compare(pos.pos, _T("false"), 5) == 0)
+    if(String::compare(pos.pos, "false", 5) == 0)
     {
       pos.pos += 5;
       token.value = false;
       return true;
     }
-    return syntaxError(pos, _T("Expected character")), false;
+    return syntaxError(pos, "Expected character"), false;
   case 'n':
-    if(String::compare(pos.pos, _T("null"), 4) == 0)
+    if(String::compare(pos.pos, "null", 4) == 0)
     {
       pos.pos += 4;
       token.value.clear(); // creates a null variant
       return true;
     }
-    return syntaxError(pos, _T("Expected character")), false;
+    return syntaxError(pos, "Expected character"), false;
   default:
     token.token = '#';
     if(*pos.pos == '-' || String::isDigit(*pos.pos))
@@ -250,14 +250,14 @@ bool Json::Private::readToken()
         return true;
       }
     }
-    return syntaxError(pos, _T("Expected character")), false;
+    return syntaxError(pos, "Expected character"), false;
   }
 }
 
 
 void Json::Private::skipSpace()
 {
-  for(tchar c;;)
+  for(char c;;)
     switch((c = *pos.pos))
     {
     case '\r':
@@ -280,7 +280,7 @@ void Json::Private::skipSpace()
 void Json::Private::syntaxError(const Position& pos, const String& error)
 {
   int column = 1;
-  for(const tchar* p = pos.pos; p > start;)
+  for(const char* p = pos.pos; p > start;)
   {
     --p;
     if(*p == '\n' || *p == '\r')
@@ -295,7 +295,7 @@ void Json::Private::syntaxError(const Position& pos, const String& error)
 bool Json::Private::parseObject(Variant& result)
 {
   if(token.token != '{')
-    return syntaxError(pos, _T("Expected '{'")), false;
+    return syntaxError(pos, "Expected '{'"), false;
   if(!readToken())
     return false;
   HashMap<String, Variant>& object = result.toMap();
@@ -303,12 +303,12 @@ bool Json::Private::parseObject(Variant& result)
   while(token.token != '}')
   {
     if(token.token != '"')
-      return syntaxError(pos, _T("Expected '\"'")), false;
+      return syntaxError(pos, "Expected '\"'"), false;
     key = token.value.toString();
     if(!readToken())
       return false;
     if(token.token != ':')
-      return syntaxError(pos, _T("Expected ':'")), false;
+      return syntaxError(pos, "Expected ':'"), false;
     if(!readToken())
       return false;
     if(!parseValue(object.append(key, Variant())))
@@ -316,7 +316,7 @@ bool Json::Private::parseObject(Variant& result)
     if(token.token == '}')
       break;
     if(token.token != ',')
-      return syntaxError(pos, _T("Expected ','")), false;
+      return syntaxError(pos, "Expected ','"), false;
     if(!readToken())
       return false;
   } 
@@ -328,7 +328,7 @@ bool Json::Private::parseObject(Variant& result)
 bool Json::Private::parseArray(Variant& result)
 {
   if(token.token != '[')
-    return syntaxError(pos, _T("Expected '['")), false;
+    return syntaxError(pos, "Expected '['"), false;
   if(!readToken())
     return false;
   List<Variant>& list = result.toList();
@@ -339,7 +339,7 @@ bool Json::Private::parseArray(Variant& result)
     if(token.token == ']')
       break;
     if(token.token != ',')
-      return syntaxError(pos, _T("Expected ','")), false;
+      return syntaxError(pos, "Expected ','"), false;
     if(!readToken())
       return false;
   }
@@ -368,7 +368,7 @@ bool Json::Private::parseValue(Variant& result)
   case '{':
     return parseObject(result);
   }
-  return syntaxError(pos, _T("Unexpected character")), false;
+  return syntaxError(pos, "Unexpected character"), false;
 }
 
 
@@ -377,9 +377,9 @@ void Json::Private::appendEscapedString(const String& str, String& result)
   usize strLen = str.length();
   result.reserve(result.length() + 2 + strLen * 2);
   result += '"';
-  for(const tchar* start = str, * p = start;;)
+  for(const char* start = str, * p = start;;)
   {
-    const tchar* e = String::findOneOf(p, _T("\"\\"));
+    const char* e = String::findOneOf(p, "\"\\");
     if(!e)
     {
       result.append(p, strLen - (p - start));
@@ -390,10 +390,10 @@ void Json::Private::appendEscapedString(const String& str, String& result)
     switch(*e)
     {
     case '"':
-      result += _T("\\\"");
+      result += "\\\"";
       break;
     case '\\':
-      result += _T("\\\\");
+      result += "\\\\";
       break;
     }
     p = e + 1;
@@ -406,7 +406,7 @@ void Json::Private::appendVariant(const Variant& data, const String& indentation
   switch(data.getType())
   {
   case Variant::nullType:
-    result += _T("null");
+    result += "null";
     return;
   case Variant::boolType:
   case Variant::doubleType:
@@ -423,20 +423,20 @@ void Json::Private::appendVariant(const Variant& data, const String& indentation
     {
       const HashMap<String, Variant>& map = data.toMap();
       if(map.isEmpty())
-        result += _T("{}");
+        result += "{}";
       else
       {
-        result += _T("{\n");
-        String newIndentation = indentation + _T("\t");
+        result += "{\n";
+        String newIndentation = indentation + "\t";
         for(HashMap<String, Variant>::Iterator i = map.begin(), end = map.end();;)
         {
           result += newIndentation;
           appendEscapedString(i.key(), result);
-          result += _T(": ");
+          result += ": ";
           appendVariant(*i, newIndentation, result);
           if(++i == end)
             break;
-          result += _T(",\n");
+          result += ",\n";
         }
         result += '\n';
         result += indentation;
@@ -448,18 +448,18 @@ void Json::Private::appendVariant(const Variant& data, const String& indentation
     {
       const List<Variant>& list = data.toList();
       if(list.isEmpty())
-        result += _T("[]");
+        result += "[]";
       else
       {
-        result += _T("[\n");;
-        String newIndentation = indentation + _T("\t");
+        result += "[\n";
+        String newIndentation = indentation + "\t";
         for(List<Variant>::Iterator i = list.begin(), end = list.end();;)
         {
           result += newIndentation;
           appendVariant(*i, newIndentation, result);
           if(++i == end)
             break;
-          result += _T(",\n");
+          result += ",\n";
         }
         result += '\n';
         result += indentation;
@@ -471,18 +471,18 @@ void Json::Private::appendVariant(const Variant& data, const String& indentation
     {
       const Array<Variant>& array = data.toArray();
       if(array.isEmpty())
-        result += _T("[]");
+        result += "[]";
       else
       {
-        result += _T("[\n");;
-        String newIndentation = indentation + _T("\t");
+        result += "[\n";
+        String newIndentation = indentation + "\t";
         for(Array<Variant>::Iterator i = array.begin(), end = array.end();;)
         {
           result += newIndentation;
           appendVariant(*i, newIndentation, result);
           if(++i == end)
             break;
-          result += _T(",\n");
+          result += ",\n";
         }
         result += '\n';
         result += indentation;
@@ -493,7 +493,7 @@ void Json::Private::appendVariant(const Variant& data, const String& indentation
   }
 }
 
-bool Json::Private::parse(const tchar* data, Variant& result)
+bool Json::Private::parse(const char* data, Variant& result)
 {
   start = data;
   pos.line = 1;
@@ -509,19 +509,19 @@ bool Json::Private::parse(const tchar* data, Variant& result)
 String Json::stripComments(const String& data)
 {
   String result(data.length());
-  tchar* destBuffer = result;
-  tchar* dest = destBuffer;
-  const tchar* src = data;
+  char* destBuffer = result;
+  char* dest = destBuffer;
+  const char* src = data;
   for (;;)
   {
   checkStr:;
     if (!*src)
       break;
-    if (*src == _T('/'))
+    if (*src == '/')
     {
-      if (src[1] == _T('/'))
+      if (src[1] == '/')
       {
-        const tchar* end = String::findOneOf(src, _T("\r\n"));
+        const char* end = String::findOneOf(src, "\r\n");
         if (end)
         {
           src = end;
@@ -529,15 +529,15 @@ String Json::stripComments(const String& data)
         }
         goto done;
       }
-      if (src[1] == _T('*'))
+      if (src[1] == '*')
       {
         src += 2;
         for (;;)
         {
-          const tchar* end = String::findOneOf(src, _T("\r\n*"));
+          const char* end = String::findOneOf(src, "\r\n*");
           if (end)
           {
-            if (*end == _T('*') && end[1] == _T('/'))
+            if (*end == '*' && end[1] == '/')
             {
               src = end + 2;
               goto checkStr;
@@ -552,7 +552,7 @@ String Json::stripComments(const String& data)
       }
     }
 
-    if (*src != _T('"'))
+    if (*src != '"')
     {
       *(dest++) = *(src++);
       goto checkStr;
@@ -560,12 +560,12 @@ String Json::stripComments(const String& data)
 
     for(*(dest++) = *(src++);; *(dest++) = *(src++))
     {
-      if (*src == _T('\\') && src[1])
+      if (*src == '\\' && src[1])
       {
         *(dest++) = *(src++);
         goto checkStr;
       }
-      if (*src == _T('"'))
+      if (*src == '"')
       {
         *(dest++) = *(src++);
         break;
@@ -580,18 +580,18 @@ done:;
   return result;
 }
 
-bool Json::parse(const tchar* data, Variant& result)
+bool Json::parse(const char* data, Variant& result)
 {
   Private parser;
   if(parser.parse(data, result))
     return true;
-  Error::setErrorString(String::fromPrintf(_T("Syntax error at line %d, column %d: %s"), parser.errorLine, parser.errorColumn, (const tchar*)parser.errorString));
+  Error::setErrorString(String::fromPrintf("Syntax error at line %d, column %d: %s", parser.errorLine, parser.errorColumn, (const char*)parser.errorString));
   return false;
 }
 
 bool Json::parse(const String& data, Variant& result)
 {
-  return parse((const tchar*)data, result);
+  return parse((const char*)data, result);
 }
 
 String Json::toString(const Variant& data)
@@ -607,5 +607,5 @@ Json::Parser::~Parser() {delete p;}
 int Json::Parser::getErrorLine() const {return p->errorLine;}
 int Json::Parser::getErrorColumn() const {return p->errorColumn;}
 String Json::Parser::getErrorString() const {return p->errorString;}
-bool Json::Parser::parse(const tchar* data, Variant& result) {return p->parse(data, result);}
+bool Json::Parser::parse(const char* data, Variant& result) {return p->parse(data, result);}
 bool Json::Parser::parse(const String& data, Variant& result) {return p->parse(data, result);}

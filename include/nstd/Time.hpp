@@ -25,7 +25,7 @@ public:
   Time& toUtc();
   Time& toLocal();
 
-  String toString(const tchar* format);
+  String toString(const char* format);
 
   int64 toTimestamp();
 
@@ -50,7 +50,7 @@ public:
   */
   static int64 microTicks();
 
-  static String toString(int64 time, const tchar* format, bool utc = false);
+  static String toString(int64 time, const char* format, bool utc = false);
 
 private:
   class Private;

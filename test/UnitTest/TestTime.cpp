@@ -5,12 +5,12 @@
 
 void testTime()
 {
-  String test = Time::toString(123 * 1000, _T("%Y-%m-%d %H:%M:%S"), true);
-  ASSERT(test == _T("1970-01-01 00:02:03"));
+  String test = Time::toString(123 * 1000, "%Y-%m-%d %H:%M:%S", true);
+  ASSERT(test == "1970-01-01 00:02:03");
 
   {
     Time time(123LL * 1000, true);
-    ASSERT(time.toString(_T("%Y-%m-%d %H:%M:%S")) == test);
+    ASSERT(time.toString("%Y-%m-%d %H:%M:%S") == test);
     ASSERT(time.year == 1970);
     ASSERT(time.month == 1);
     ASSERT(time.day == 1);

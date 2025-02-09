@@ -25,21 +25,21 @@ public:
     Str(const String& other)
     {
       _len = other.length();
-      _ptr = new tchar[_len + 1];
-      memcpy(_ptr, (const tchar*)other, (_len + 1) * sizeof(tchar));
+      _ptr = new char[_len + 1];
+      memcpy(_ptr, (const char*)other, _len + 1);
     }
     Str(const Str& other)
       : _len(other._len)
     {
-      _ptr = new tchar[_len + 1];
-      memcpy(_ptr, other._ptr, (_len + 1) * sizeof(tchar));
+      _ptr = new char[_len + 1];
+      memcpy(_ptr, other._ptr, _len + 1);
     }
     Str& operator=(const Str& other)
     {
       delete []_ptr;
       _len = other._len;
-      _ptr = new tchar[_len + 1];
-      memcpy(_ptr, other._ptr, (_len + 1) * sizeof(tchar));
+      _ptr = new char[_len + 1];
+      memcpy(_ptr, other._ptr, _len + 1);
       return *this;
 
     }
@@ -47,7 +47,7 @@ public:
     operator String() const { return _ptr ? String(_ptr, _len) : String(); }
 
   private:
-    tchar* _ptr;
+    char* _ptr;
     usize _len;
   };
 

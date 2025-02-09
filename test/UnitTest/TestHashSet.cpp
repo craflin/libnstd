@@ -113,33 +113,33 @@ void testHashSet()
     // test append
     HashSet<String> mySet;
     ASSERT(mySet.isEmpty());
-    mySet.append(_T("string1"));
-    mySet.append(_T("string2"));
-    mySet.append(_T("string3"));
+    mySet.append("string1");
+    mySet.append("string2");
+    mySet.append("string3");
     ASSERT(mySet.size() == 3);
     ASSERT(!mySet.isEmpty());
 
     // test find
-    ASSERT(mySet.find(_T("string1")) != mySet.end());
-    ASSERT(mySet.find(_T("string2")) != mySet.end());
-    ASSERT(*mySet.find(_T("string2")) == _T("string2"));
-    ASSERT(mySet.find(_T("string3")) != mySet.end());
-    ASSERT(mySet.find(_T("wdashat")) == mySet.end());
+    ASSERT(mySet.find("string1") != mySet.end());
+    ASSERT(mySet.find("string2") != mySet.end());
+    ASSERT(*mySet.find("string2") == "string2");
+    ASSERT(mySet.find("string3") != mySet.end());
+    ASSERT(mySet.find("wdashat") == mySet.end());
 
     // test list copy constructor
     HashSet<String> mySet2(mySet);
     ASSERT(mySet2.size() == 3);
-    ASSERT(*mySet2.begin() == _T("string1"));
-    ASSERT(*(++HashSet<String>::Iterator(mySet2.begin())) == _T("string2"));
-    ASSERT(mySet2.back() == _T("string3"));
+    ASSERT(*mySet2.begin() == "string1");
+    ASSERT(*(++HashSet<String>::Iterator(mySet2.begin())) == "string2");
+    ASSERT(mySet2.back() == "string3");
 
     // test list copy operator
     HashSet<String> mySet3;
     mySet3 = mySet;
     ASSERT(mySet3.size() == 3);
-    ASSERT(*mySet3.begin() == _T("string1"));
-    ASSERT(*(++HashSet<String>::Iterator(mySet3.begin())) == _T("string2"));
-    ASSERT(mySet3.back() == _T("string3"));
+    ASSERT(*mySet3.begin() == "string1");
+    ASSERT(*(++HashSet<String>::Iterator(mySet3.begin())) == "string2");
+    ASSERT(mySet3.back() == "string3");
   }
 }
 

@@ -10,9 +10,6 @@
 #if defined(__PPC64__) && !defined(_PPC64)
 #define _PPC64
 #endif
-#if defined(UNICODE) && !defined(_UNICODE)
-#define _UNICODE
-#endif
 
 typedef signed char int8;
 typedef short int16;
@@ -45,20 +42,6 @@ typedef unsigned int usize;
 typedef int ssize;
 #endif
 
-#ifdef _UNICODE
-typedef wchar_t tchar;
-typedef unsigned short utchar;
-#ifndef _T
-#define  _T(text) L ## text
-#endif
-#else
-typedef char tchar;
-typedef unsigned char utchar;
-#ifndef _T
-#define  _T(text) text
-#endif
-#endif
-
 void* operator new(usize size);
 void* operator new [](usize size);
 void operator delete(void* buffer);
@@ -66,14 +49,6 @@ void operator delete[](void* buffer);
 
 inline void* operator new(usize, void* buffer) {return buffer;}
 inline void operator delete(void* p, void*) {}
-
-#ifdef _UNICODE
-#define __WFILE__T(x) _T(x)
-#define __WFILE__ __WFILE__T(__FILE__)
-#define __TFILE__ __WFILE__
-#else
-#define __TFILE__ __FILE__
-#endif
 
 inline usize hash(int8 v) {return (usize)v;}
 inline usize hash(uint8 v) {return (usize)v;}

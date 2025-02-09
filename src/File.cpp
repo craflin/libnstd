@@ -296,14 +296,14 @@ bool File::readAll(String& data)
   int64 fileSize = size();
   if(fileSize < 0)
     return false;
-  data.resize((usize)fileSize / sizeof(tchar));
-  ssize dataCount = read((tchar*)data, data.length() * sizeof(tchar));
+  data.resize((usize)fileSize);
+  ssize dataCount = read((char*)data, data.length());
   if(dataCount < 0)
   {
     data.clear();
     return false;
   }
-  data.resize(dataCount / sizeof(tchar));
+  data.resize(dataCount);
   return true;
 }
 
@@ -339,8 +339,8 @@ ssize File::write(const void* buffer, usize len)
 
 bool File::write(const String& data)
 {
-  usize size = data.length() * sizeof(tchar);
-  return write((const byte*)(const tchar*)data, size) == (ssize)size;
+  usize size = data.length();
+  return write((const byte*)(const char*)data, size) == (ssize)size;
 }
 
 int64 File::seek(int64 offset, Position start)
@@ -374,22 +374,22 @@ bool File::flush()
 
 String File::getDirectoryName(const String& file)
 {
-  const tchar* start = file;
-  const tchar* pos = &start[file.length() - 1];
+  const char* start = file;
+  const char* pos = &start[file.length() - 1];
   for(; pos >= start; --pos)
-    if(*pos == _T('\\') || *pos == _T('/'))
+    if(*pos == '\\' || *pos == '/')
       return file.substr(0, pos - start);
-  return String(_T("."));
+  return String(".");
 }
 
 String File::getBaseName(const String& file, const String& extension)
 {
-  const tchar* start = file;
+  const char* start = file;
   usize fileLen = file.length();
-  const tchar* pos = &start[fileLen - 1];
-  const tchar* result;
+  const char* pos = &start[fileLen - 1];
+  const char* result;
   for(; pos >= start; --pos)
-    if(*pos == _T('\\') || *pos == _T('/'))
+    if(*pos == '\\' || *pos == '/')
     {
       result = pos + 1;
       goto removeExtension;
@@ -400,18 +400,18 @@ removeExtension:
   usize extensionLen = extension.length();
   if(extensionLen)
   {
-    const tchar* extensionPtr = extension;
-    if(*extensionPtr == _T('.'))
+    const char* extensionPtr = extension;
+    if(*extensionPtr == '.')
     {
       if(resultLen >= extensionLen)
-        if(String::compare((const tchar*)result + resultLen - extensionLen, extensionPtr) == 0)
+        if(String::compare((const char*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLen);
     }
     else
     {
       usize extensionLenPlus1 = extensionLen + 1;
-      if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == _T('.'))
-        if(String::compare((const tchar*)result + resultLen - extensionLen, extensionPtr) == 0)
+      if(resultLen >= extensionLenPlus1 && result[resultLen - extensionLenPlus1] == '.')
+        if(String::compare((const char*)result + resultLen - extensionLen, extensionPtr) == 0)
           return String(result, resultLen - extensionLenPlus1);
     }
   }
@@ -422,15 +422,15 @@ String File::getStem(const String& file, const String& extension)
 {
   if (!extension.isEmpty())
     return getBaseName(file, extension);
-  const tchar* start = file;
+  const char* start = file;
   usize fileLen = file.length();
-  const tchar* pos = &start[fileLen - 1];
-  const tchar* dot = 0;
-  const tchar* result;
+  const char* pos = &start[fileLen - 1];
+  const char* dot = 0;
+  const char* result;
   for(; pos >= start; --pos)
-    if(*pos == _T('.'))
+    if(*pos == '.')
       dot = pos;
-    else if(*pos == _T('\\') || *pos == _T('/'))
+    else if(*pos == '\\' || *pos == '/')
     {
       result = pos + 1;
       goto removeExtension;
@@ -447,13 +447,13 @@ removeExtension:
 
 String File::getExtension(const String& file)
 {
-  const tchar* start = file;
+  const char* start = file;
   usize fileLen = file.length();
-  const tchar* pos = &start[fileLen - 1];
+  const char* pos = &start[fileLen - 1];
   for(; pos >= start; --pos)
-    if(*pos == _T('.'))
+    if(*pos == '.')
       return String(pos + 1, fileLen - ((usize)(pos - start) + 1));
-    else if(*pos == _T('\\') || *pos == _T('/'))
+    else if(*pos == '\\' || *pos == '/')
       return String();
   return String();
 }
@@ -461,19 +461,19 @@ String File::getExtension(const String& file)
 String File::simplifyPath(const String& path)
 {
   String result(path.length());
-  const tchar* data = path;
-  const tchar* start = data;
-  const tchar* startEnd = start + path.length();
-  const tchar* end;
-  const tchar* chunck;
+  const char* data = path;
+  const char* start = data;
+  const char* startEnd = start + path.length();
+  const char* end;
+  const char* chunck;
   usize chunckLen;
-  bool startsWithSlash = *data == _T('/') || *data == _T('\\');
+  bool startsWithSlash = *data == '/' || *data == '\\';
   for(;;)
   {
-    while(start < startEnd && (*start == _T('/') || *start == _T('\\')))
+    while(start < startEnd && (*start == '/' || *start == '\\'))
       ++start;
     end = start;
-    while(end < startEnd && *end != _T('/') && *end != _T('\\'))
+    while(end < startEnd && *end != '/' && *end != '\\')
       ++end;
 
     if(end == start)
@@ -481,14 +481,14 @@ String File::simplifyPath(const String& path)
 
     chunck = start;
     chunckLen = (usize)(end - start);
-    if(chunckLen == 2 && *chunck == _T('.') && chunck[1] == _T('.') && !result.isEmpty())
+    if(chunckLen == 2 && *chunck == '.' && chunck[1] == '.' && !result.isEmpty())
     {
-      const tchar* data = result;
-      const tchar* pos = data + result.length() - 1;
+      const char* data = result;
+      const char* pos = data + result.length() - 1;
       for(;; --pos)
-        if(pos < data || *pos == _T('/') || *pos == _T('\\'))
+        if(pos < data || *pos == '/' || *pos == '\\')
         {
-          if(String::compare(pos + 1, _T("..")) != 0)
+          if(String::compare(pos + 1, "..") != 0)
           {
             if(pos < data)
               result.resize(0);
@@ -499,11 +499,11 @@ String File::simplifyPath(const String& path)
           break;
         }
     }
-    else if(chunckLen == 1 && *chunck == _T('.'))
+    else if(chunckLen == 1 && *chunck == '.')
       goto cont;
 
     if(!result.isEmpty() || startsWithSlash)
-      result.append(_T('/'));
+      result.append('/');
     result.append(chunck, chunckLen);
 
   cont:
@@ -516,8 +516,8 @@ String File::simplifyPath(const String& path)
 
 bool File::isAbsolutePath(const String& path)
 {
-  const tchar* data = path;
-  return *data == _T('/') || *data == _T('\\') || (path.length() > 2 && data[1] == _T(':') && (data[2] == _T('/') || data[2] == _T('\\')));
+  const char* data = path;
+  return *data == '/' || *data == '\\' || (path.length() > 2 && data[1] == ':' && (data[2] == '/' || data[2] == '\\'));
 }
 
 String File::getRelativePath(const String& from, const String& to)
@@ -525,24 +525,24 @@ String File::getRelativePath(const String& from, const String& to)
   String simFrom = simplifyPath(from);
   String simTo = simplifyPath(to);
   if(simFrom == simTo)
-    return String(_T("."));
-  simFrom.append(_T('/'));
-  if(String::compare((const tchar*)simTo, (const tchar*)simFrom, simFrom.length()) == 0)
-    return String((const tchar*)simTo + simFrom.length(), simTo.length() - simFrom.length());
-  String result(_T("../"));
+    return String(".");
+  simFrom.append('/');
+  if(String::compare((const char*)simTo, (const char*)simFrom, simFrom.length()) == 0)
+    return String((const char*)simTo + simFrom.length(), simTo.length() - simFrom.length());
+  String result("../");
   while(simFrom.length() > 0)
   {
     simFrom.resize(simFrom.length() - 1);
-    const tchar* newEnd = simFrom.findLast(_T('/'));
+    const char* newEnd = simFrom.findLast('/');
     if(!newEnd)
       break;
-    simFrom.resize((newEnd - (const tchar*)simFrom) + 1);
-    if(String::compare((const tchar*)simTo, (const tchar*)simFrom, simFrom.length()) == 0)
+    simFrom.resize((newEnd - (const char*)simFrom) + 1);
+    if(String::compare((const char*)simTo, (const char*)simFrom, simFrom.length()) == 0)
     {
-      result.append(String((const tchar*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
+      result.append(String((const char*)simTo + simFrom.length(), simTo.length() - simFrom.length()));
       return result;
     }
-    result.append(_T("../"));
+    result.append("../");
   }
   return String();
 }
@@ -615,7 +615,7 @@ bool File::isExecutable(const String& file)
 {
 #ifdef _WIN32
   String extension = File::getExtension(file).toLowerCase();
-  return extension == _T("exe") || extension == _T("com") || extension == _T("bat");
+  return extension == "exe" || extension == "com" || extension == "bat";
 #else
   struct stat buf;
   if(stat(file, &buf) != 0)

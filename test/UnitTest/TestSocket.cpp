@@ -36,7 +36,7 @@ void testSocket()
     Socket listener1;
     Socket listener2;
     Socket sender;
-    uint32 multicastAddr = Socket::inetAddr(_T("226.1.2.3"));
+    uint32 multicastAddr = Socket::inetAddr("226.1.2.3");
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(listener2.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
@@ -62,7 +62,7 @@ void testSocket()
     byte rcvData[123];
     Socket listener1;
     Socket sender;
-    uint32 multicastAddr = Socket::inetAddr(_T("226.1.2.3"));
+    uint32 multicastAddr = Socket::inetAddr("226.1.2.3");
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
@@ -88,7 +88,7 @@ void testSocket()
     byte rcvData[123];
     Socket listener1;
     Socket sender;
-    uint32 multicastAddr = Socket::inetAddr(_T("226.1.2.3"));
+    uint32 multicastAddr = Socket::inetAddr("226.1.2.3");
     ASSERT(listener1.open(Socket::udpProtocol));
     ASSERT(sender.open(Socket::udpProtocol));
     ASSERT(listener1.setReuseAddress());
@@ -110,7 +110,7 @@ void testSocket()
 
   // test inetNtoA
   {
-      ASSERT(Socket::inetNtoA(Socket::loopbackAddress) == _T("127.0.0.1"));
+      ASSERT(Socket::inetNtoA(Socket::loopbackAddress) == "127.0.0.1");
   }
 
   // test getHostByName

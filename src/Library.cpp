@@ -34,7 +34,7 @@ bool Library::load(const String& name)
 #ifdef _WIN32
   if(library)
     return false;
-  library = LoadLibrary((const tchar*)name);
+  library = LoadLibrary((const char*)name);
   return library != 0;
 #else
   if(library)
@@ -55,14 +55,14 @@ void* Library::findSymbol(const String& name)
 #ifdef _UNICODE
   char mbname[MAX_PATH];
   usize destChars;
-  if(wcstombs_s(&destChars, mbname, (const tchar*)name, name.length()) != 0)
+  if(wcstombs_s(&destChars, mbname, (const char*)name, name.length()) != 0)
     return 0;
   return (void*)GetProcAddress((HMODULE)library, mbname);
 #else
-  return (void*)GetProcAddress((HMODULE)library, (const tchar*)name);
+  return (void*)GetProcAddress((HMODULE)library, (const char*)name);
 #endif
 #else
-  void* sym = dlsym(library, (const tchar*)name);
+  void* sym = dlsym(library, (const char*)name);
   if(!sym)
   {
     Error::setErrorString(String::fromCString(dlerror()));

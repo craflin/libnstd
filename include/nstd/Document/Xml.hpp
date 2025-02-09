@@ -183,7 +183,7 @@ public:
     int getErrorColumn() const;
     String getErrorString() const;
 
-    bool parse(const tchar* data, Element& element);
+    bool parse(const char* data, Element& element);
     bool parse(const String& data, Element& element);
 
     bool load(const String& file, Element& element);
@@ -194,7 +194,7 @@ public:
   };
 
 public:
-  static bool parse(const tchar* data, Element& element);
+  static bool parse(const char* data, Element& element);
   static bool parse(const String& data, Element& element);
 
   static bool load(const String& file, Element& element);

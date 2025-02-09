@@ -13,24 +13,24 @@ uint threadProc(void* param)
   while(!termSignal->wait(1000))
   {
     if(counter % 5 == 0)
-      Console::errorf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? _T("\n") : _T(" "));
+      Console::errorf("%d%s", counter, ((counter + 1) % 3) == 0 ? "\n" : " ");
     else
-      Console::printf(_T("%d%s"), counter, ((counter + 1) % 3) == 0 ? _T("\n") : _T(" "));
+      Console::printf("%d%s", counter, ((counter + 1) % 3) == 0 ? "\n" : " ");
     ++counter;
   }
   return 0;
 }
 
-int main(int argc, tchar* argv[])
+int main(int argc, char* argv[])
 {
-  String password(_T("root"));
-  String user(_T("root"));
-  String address(_T("127.0.0.1:13211"));
+  String password("root");
+  String user("root");
+  String address("127.0.0.1:13211");
   {
     Process::Option options[] = {
-        {_T('p'), _T("password"), Process::argumentFlag},
-        {_T('u'), _T("user"), Process::argumentFlag},
-        {_T('h'), _T("help"), Process::optionFlag},
+        {'p', "password", Process::argumentFlag},
+        {'u', "user", Process::argumentFlag},
+        {'h', "help", Process::optionFlag},
     };
     Process::Arguments arguments(argc, argv, options);
     int character;
@@ -48,35 +48,35 @@ int main(int argc, tchar* argv[])
         address = argument;
         break;
       case '?':
-        Console::errorf(_T("Unknown option: %s.\n"), (const tchar*)argument);
+        Console::errorf("Unknown option: %s.\n", (const char*)argument);
         return 1;
       case ':':
-        Console::errorf(_T("Option %s required an argument.\n"), (const tchar*)argument);
+        Console::errorf("Option %s required an argument.\n", (const char*)argument);
         return 1;
       default:
-        Console::errorf(_T("Usage: %s [-u <user>] [-p <password>] [<address>]\n"), argv[0]);
+        Console::errorf("Usage: %s [-u <user>] [-p <password>] [<address>]\n", argv[0]);
         return 1;
       }
   }
 
-  Console::printf(_T("user=%s, password=%s, address=%s\n"),
-    (const tchar*)user, (const tchar*)password, (const tchar*)address);
+  Console::printf("user=%s, password=%s, address=%s\n",
+    (const char*)user, (const char*)password, (const char*)address);
 
-  Console::printf(_T("Hello World!\n"));
+  Console::printf("Hello World!\n");
 
   Console::Prompt prompt;
 
-  Log::infof(_T("Hello World!"));
-  Log::warningf(_T("%s"), _T("This is a warning!"));
+  Log::infof("Hello World!");
+  Log::warningf("%s", "This is a warning!");
   
   Thread thread;
   Signal termSignal;
   thread.start(threadProc, &termSignal);
   for(;;)
   {
-    String result = prompt.getLine(_T("test> "));
-    Console::printf(_T("input: %s\n"), (const tchar*)result);
-    if(result == _T("exit"))
+    String result = prompt.getLine("test> ");
+    Console::printf("input: %s\n", (const char*)result);
+    if(result == "exit")
       break;
   }
   termSignal.set();

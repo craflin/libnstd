@@ -7,48 +7,48 @@ void testJson()
 {
   Json::Parser parser;
   Variant data;
-  String input(_T("{\n")
-_T("  \"title\": \"Example Schema\",\n")
-_T("  \"surrogatePair\": \"aa\\uD834\\uDD1Ebb\",\n")
-_T("  \"type\": \"object\",\n")
-_T("  \"properties\": {\n")
-_T("    \"firstName\": {\n")
-_T("      \"type\": \"string\"\n")
-_T("    },\n")
-_T("    \"lastName\": {\n")
-_T("      \"type\": \"string\"\n")
-_T("    },\n")
-_T("    \"age\": {\n")
-_T("      \"description\": \"Age in years\",\n")
-_T("      \"type\": \"integer\",\n")
-_T("      \"minimum\": 0\n")
-_T("    }\n")
-_T("  },\n")
-_T("  \"required\": [\"firstName\", \"lastName\"]\n")
-_T("}\n"));
+  String input("{\n"
+"  \"title\": \"Example Schema\",\n"
+"  \"surrogatePair\": \"aa\\uD834\\uDD1Ebb\",\n"
+"  \"type\": \"object\",\n"
+"  \"properties\": {\n"
+"    \"firstName\": {\n"
+"      \"type\": \"string\"\n"
+"    },\n"
+"    \"lastName\": {\n"
+"      \"type\": \"string\"\n"
+"    },\n"
+"    \"age\": {\n"
+"      \"description\": \"Age in years\",\n"
+"      \"type\": \"integer\",\n"
+"      \"minimum\": 0\n"
+"    }\n"
+"  },\n"
+"  \"required\": [\"firstName\", \"lastName\"]\n"
+"}\n");
   ASSERT(parser.parse(input, data));
-  ASSERT(data.toMap().find(_T("title"))->toString() == _T("Example Schema"));
+  ASSERT(data.toMap().find("title")->toString() == "Example Schema");
   String surrogatePairCheck;
-  surrogatePairCheck.append(_T("aa"));
+  surrogatePairCheck.append("aa");
   Unicode::append(0x1d11e, surrogatePairCheck);
-  surrogatePairCheck.append(_T("bb"));
-  ASSERT(data.toMap().find(_T("surrogatePair"))->toString() == surrogatePairCheck);
-  ASSERT(data.toMap().find(_T("type"))->toString() ==  _T("object"));
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("firstName"))->toMap().find(_T("type"))->toString() == _T("string"));
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("lastName"))->toMap().find(_T("type"))->toString() == _T("string"));
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("age"))->toMap().find(_T("description"))->toString() == _T("Age in years"));
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("age"))->toMap().find(_T("type"))->toString() == _T("integer"));
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("age"))->toMap().find(_T("minimum"))->getType() == Variant::intType);
-  ASSERT(data.toMap().find(_T("properties"))->toMap().find(_T("age"))->toMap().find(_T("minimum"))->toInt() == 0);
-  ASSERT(data.toMap().find(_T("required"))->toList().front().toString() == _T("firstName"));
-  ASSERT(data.toMap().find(_T("required"))->toList().back().toString() == _T("lastName"));
+  surrogatePairCheck.append("bb");
+  ASSERT(data.toMap().find("surrogatePair")->toString() == surrogatePairCheck);
+  ASSERT(data.toMap().find("type")->toString() ==  "object");
+  ASSERT(data.toMap().find("properties")->toMap().find("firstName")->toMap().find("type")->toString() == "string");
+  ASSERT(data.toMap().find("properties")->toMap().find("lastName")->toMap().find("type")->toString() == "string");
+  ASSERT(data.toMap().find("properties")->toMap().find("age")->toMap().find("description")->toString() == "Age in years");
+  ASSERT(data.toMap().find("properties")->toMap().find("age")->toMap().find("type")->toString() == "integer");
+  ASSERT(data.toMap().find("properties")->toMap().find("age")->toMap().find("minimum")->getType() == Variant::intType);
+  ASSERT(data.toMap().find("properties")->toMap().find("age")->toMap().find("minimum")->toInt() == 0);
+  ASSERT(data.toMap().find("required")->toList().front().toString() == "firstName");
+  ASSERT(data.toMap().find("required")->toList().back().toString() == "lastName");
 }
 
 void testStripComments()
 {
-  String input(_T("{\n  \"test\": \"/*\",\n  /*\n*/\n  //\n  //a\n}\n"));
+  String input("{\n  \"test\": \"/*\",\n  /*\n*/\n  //\n  //a\n}\n");
   String stripped = Json::stripComments(input);
-  String check(_T("{\n  \"test\": \"/*\",\n  \n\n  \n  \n}\n"));
+  String check("{\n  \"test\": \"/*\",\n  \n\n  \n  \n}\n");
   ASSERT(stripped == check);
 }
 

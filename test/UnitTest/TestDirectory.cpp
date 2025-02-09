@@ -6,30 +6,30 @@
 
 void testDirectory()
 {
-  Directory::unlink(_T("testDir"), true);
+  Directory::unlink("testDir", true);
 
   // test create directory
-  ASSERT(!Directory::exists(_T("testDir")));
-  ASSERT(Directory::create(_T("testDir")));
+  ASSERT(!Directory::exists("testDir"));
+  ASSERT(Directory::create("testDir"));
 
   // test searching in an empty directory
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*"), false));
+    ASSERT(dir.open("testDir", "*", false));
     String path;
     bool isDir;
     ASSERT(!dir.read(path, isDir));
   }
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), String(), false));
+    ASSERT(dir.open("testDir", String(), false));
     String path;
     bool isDir;
     ASSERT(!dir.read(path, isDir));
   }
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("a*"), false));
+    ASSERT(dir.open("testDir", "a*", false));
     String path;
     bool isDir;
     ASSERT(!dir.read(path, isDir));
@@ -37,27 +37,27 @@ void testDirectory()
 
   // create some test files
   List<String> files;
-  files.append(_T("ab"));
-  files.append(_T("ab.t"));
-  files.append(_T("ab.tx"));
-  files.append(_T("ab.txt"));
-  files.append(_T("ab.txtt"));
+  files.append("ab");
+  files.append("ab.t");
+  files.append("ab.tx");
+  files.append("ab.txt");
+  files.append("ab.txtt");
   files.sort();
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)
-    ASSERT(File().open(String(_T("testDir/")) + *i, File::writeFlag));
+    ASSERT(File().open(String("testDir/") + *i, File::writeFlag));
 
   // create some test dirs
   List<String> dirs;
-  dirs.append(_T("dirA"));
-  dirs.append(_T("dirB"));
+  dirs.append("dirA");
+  dirs.append("dirB");
   dirs.sort();
   for(List<String>::Iterator i = dirs.begin(), end = dirs.end(); i != end; ++i)
-    ASSERT(Directory::create(String(_T("testDir/")) + *i));
+    ASSERT(Directory::create(String("testDir/") + *i));
 
   // search without pattern
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), String(), false));
+    ASSERT(dir.open("testDir", String(), false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -73,7 +73,7 @@ void testDirectory()
   // search for '*'
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*"), false));
+    ASSERT(dir.open("testDir", "*", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -89,7 +89,7 @@ void testDirectory()
   // search without pattern (dirs only)
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), String(), true));
+    ASSERT(dir.open("testDir", String(), true));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -105,7 +105,7 @@ void testDirectory()
   // search for '*' (dirs only)
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*"), true));
+    ASSERT(dir.open("testDir", "*", true));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -121,7 +121,7 @@ void testDirectory()
   // seach for *a?t, should find ab.t
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*b?t"), false));
+    ASSERT(dir.open("testDir", "*b?t", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -130,14 +130,14 @@ void testDirectory()
       (isDir ? foundDirs : foundFiles).append(path);
     foundFiles.sort();
     foundDirs.sort();
-    ASSERT(foundFiles.size() == 1 && foundFiles.front() == _T("ab.t"));
+    ASSERT(foundFiles.size() == 1 && foundFiles.front() == "ab.t");
     ASSERT(foundDirs.isEmpty());
   }
 
   // search for *b.*, should not find ab
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*b.*"), false));
+    ASSERT(dir.open("testDir", "*b.*", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -147,7 +147,7 @@ void testDirectory()
     foundFiles.sort();
     foundDirs.sort();
     for(List<String>::Iterator i = foundFiles.begin(), end = foundFiles.end(); i != end; ++i)
-      ASSERT(*i != _T("ab"));
+      ASSERT(*i != "ab");
     ASSERT(foundFiles.size() == 4);
     ASSERT(foundDirs.isEmpty());
   }
@@ -155,7 +155,7 @@ void testDirectory()
   // search for *.txt, should find ab.txt
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("*.txt"), false));
+    ASSERT(dir.open("testDir", "*.txt", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -171,7 +171,7 @@ void testDirectory()
   // search for a?.*
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("a?.*"), false));
+    ASSERT(dir.open("testDir", "a?.*", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -187,7 +187,7 @@ void testDirectory()
   // search for ab?.*
   {
     Directory dir;
-    ASSERT(dir.open(_T("testDir"), _T("ab?.*"), false));
+    ASSERT(dir.open("testDir", "ab?.*", false));
     String path;
     bool isDir;
     List<String> foundFiles;
@@ -204,39 +204,39 @@ void testDirectory()
   {
     String currentDir = Directory::getCurrentDirectory();
     ASSERT(!currentDir.isEmpty());
-    ASSERT(Directory::change(_T("testDir")));
+    ASSERT(Directory::change("testDir"));
 #ifdef _WIN32
-    ASSERT(Directory::getCurrentDirectory() == currentDir + _T("\\testDir"));
+    ASSERT(Directory::getCurrentDirectory() == currentDir + "\\testDir");
 #else
-    ASSERT(Directory::getCurrentDirectory() == currentDir + _T("/testDir"));
+    ASSERT(Directory::getCurrentDirectory() == currentDir + "/testDir");
 #endif
-    ASSERT(Directory::change(_T("..")));
+    ASSERT(Directory::change(".."));
     ASSERT(Directory::getCurrentDirectory() == currentDir);
   }
 
   // delete test files
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)
-    ASSERT(File::unlink(String(_T("testDir/")) + *i));
+    ASSERT(File::unlink(String("testDir/") + *i));
 
   // delete test dirs
   for(List<String>::Iterator i = dirs.begin(), end = dirs.end(); i != end; ++i)
-    ASSERT(Directory::unlink(String(_T("testDir/")) + *i));
+    ASSERT(Directory::unlink(String("testDir/") + *i));
 
   // delete test dir
-  ASSERT(Directory::create(String(_T("testDir/x/y"))));
-  ASSERT(Directory::create(String(_T("testDir/x2/y"))));
+  ASSERT(Directory::create(String("testDir/x/y")));
+  ASSERT(Directory::create(String("testDir/x2/y")));
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)
-    ASSERT(File().open(String(_T("testDir/")) + *i, File::writeFlag));
-  ASSERT(Directory::unlink(String(_T("testDir")), true));
-  ASSERT(!File::exists(String(_T("testDir"))));
+    ASSERT(File().open(String("testDir/") + *i, File::writeFlag));
+  ASSERT(Directory::unlink(String("testDir"), true));
+  ASSERT(!File::exists(String("testDir")));
 
   // purge test dir
-  ASSERT(Directory::create(String(_T("testDir/x/y1"))));
-  ASSERT(Directory::create(String(_T("testDir/x/y2"))));
+  ASSERT(Directory::create(String("testDir/x/y1")));
+  ASSERT(Directory::create(String("testDir/x/y2")));
   for(List<String>::Iterator i = files.begin(), end = files.end(); i != end; ++i)
-    ASSERT(File().open(String(_T("testDir/x/")) + *i, File::writeFlag));
-  ASSERT(Directory::purge(String(_T("testDir/x")), true));
-  ASSERT(!File::exists(String(_T("testDir"))));
+    ASSERT(File().open(String("testDir/x/") + *i, File::writeFlag));
+  ASSERT(Directory::purge(String("testDir/x"), true));
+  ASSERT(!File::exists(String("testDir")));
 
   // test get temp
   {

@@ -13,8 +13,8 @@ public:
   {
   public:
     int line;
-    const tchar* pos;
-    const tchar* lineStart;
+    const char* pos;
+    const char* lineStart;
   };
 
   class Token
@@ -48,7 +48,7 @@ public:
 public:
   Private() : errorLine(0), errorColumn(0) {}
 
-  bool parse(const tchar* data, Element& element);
+  bool parse(const char* data, Element& element);
 
   bool parseElement(Element& element);
   bool parseText(String& text);
@@ -63,15 +63,15 @@ public:
   static String unescapeString(const String& str);
   static String escapeString(const String& str);
   static String escapeStrings[5];
-  static const tchar* escapeChars;
+  static const char* escapeChars;
 };
 
 class Xml::Parser::Private : public Xml::Private
 {
 };
 
-const tchar* Xml::Private::escapeChars = _T("'\"&<>");
-String Xml::Private::escapeStrings[5] = {String(_T("apos")), String(_T("quot")), String(_T("amp")), String(_T("lt")), String(_T("gt"))};
+const char* Xml::Private::escapeChars = "'\"&<>";
+String Xml::Private::escapeStrings[5] = {String("apos"), String("quot"), String("amp"), String("lt"), String("gt")};
 
 bool Xml::Private::readToken()
 {
@@ -94,7 +94,7 @@ bool Xml::Private::readToken()
     ++pos.pos;
     return true;
   case '\0':
-    return syntaxError(pos, _T("Unexpected end of file")), false;
+    return syntaxError(pos, "Unexpected end of file"), false;
   case '=':
     token.type = Token::equalsSignType;
     ++pos.pos;
@@ -102,13 +102,13 @@ bool Xml::Private::readToken()
   case '"':
   case '\'':
     {
-      tchar endChars[4] = _T("x\r\n");
+      char endChars[4] = "x\r\n";
       *endChars = *pos.pos;
-      const tchar* end = String::findOneOf(pos.pos + 1, endChars);
+      const char* end = String::findOneOf(pos.pos + 1, endChars);
       if(!end)
-        return syntaxError(pos, _T("Unexpected end of file")), false;
+        return syntaxError(pos, "Unexpected end of file"), false;
       if(*end != *pos.pos)
-        return syntaxError(pos, _T("New line in string")), false;
+        return syntaxError(pos, "New line in string"), false;
       String escapedValue;
       escapedValue.attach(pos.pos + 1, end - pos.pos - 1);
       token.value = unescapeString(escapedValue);
@@ -126,11 +126,11 @@ bool Xml::Private::readToken()
     // no break
   default: // attribute or tag name
     {
-      const tchar* end = pos.pos;
+      const char* end = pos.pos;
       while(*end && *end != '/' && *end != '>' && *end != '=' && !String::isSpace(*end))
         ++end;
       if(end == pos.pos)
-        return syntaxError(pos, _T("Expected name")), false;
+        return syntaxError(pos, "Expected name"), false;
       token.value = String(pos.pos, end - pos.pos);
       token.type = Token::nameType;
       pos.pos = end;
@@ -141,7 +141,7 @@ bool Xml::Private::readToken()
 
 void Xml::Private::skipSpace()
 {
-  for(tchar c;;)
+  for(char c;;)
     switch((c = *pos.pos))
     {
     case '\r':
@@ -156,12 +156,12 @@ void Xml::Private::skipSpace()
       pos.lineStart = pos.pos;
       continue;
     case '<':
-      if(String::compare(pos.pos + 1, _T("!--"), 3) == 0)
+      if(String::compare(pos.pos + 1, "!--", 3) == 0)
       {
         pos.pos += 4;
         for(;;)
         {
-          const tchar* end = String::findOneOf(pos.pos, _T("-\n\r"));
+          const char* end = String::findOneOf(pos.pos, "-\n\r");
           if(!end)
           {
             pos.pos = pos.pos + String::length(pos.pos);
@@ -182,7 +182,7 @@ void Xml::Private::skipSpace()
             pos.lineStart = pos.pos;
             continue;
           default:
-            if(String::compare(pos.pos + 1, _T("->"), 2) == 0)
+            if(String::compare(pos.pos + 1, "->", 2) == 0)
             {
               pos.pos = end + 3;
               break;
@@ -211,22 +211,22 @@ void Xml::Private::syntaxError(const Position& pos, const String& error)
 
 String Xml::Private::unescapeString(const String& str)
 {
-  const tchar* srcStart = str;
-  const tchar* src = String::find(srcStart, _T('&'));
+  const char* srcStart = str;
+  const char* src = String::find(srcStart, '&');
   if(!src)
     return str;
   String result(str.length());
-  tchar* destStart = result;
+  char* destStart = result;
   usize startLen = src - srcStart;
-  Memory::copy(destStart, srcStart, startLen * sizeof(tchar));
-  tchar* dest = destStart + startLen;
-  for(const tchar* srcEnd = srcStart + str.length(); src < srcEnd;)
+  Memory::copy(destStart, srcStart, startLen * sizeof(char));
+  char* dest = destStart + startLen;
+  for(const char* srcEnd = srcStart + str.length(); src < srcEnd;)
     if(*src != '&')
       *(dest++) = *(src++);
     else
     {
       ++src;
-      const tchar* sequenceEnd = String::find(src, _T(';'));
+      const char* sequenceEnd = String::find(src, ';');
       if(!sequenceEnd)
       {
         *(dest++) = '&';
@@ -237,13 +237,13 @@ String Xml::Private::unescapeString(const String& str)
       if (*src == '#')
       {
         uint unicodeValue;
-        if(str.scanf(_T("#%u"), &unicodeValue) != 1)
+        if(str.scanf("#%u", &unicodeValue) != 1)
         {
           *(dest++) = '&';
           continue;
         }
         String val = Unicode::toString(unicodeValue);
-        Memory::copy(dest, (const tchar*)val, val.length() * sizeof(tchar));
+        Memory::copy(dest, (const char*)val, val.length() * sizeof(char));
         dest += val.length();
         src = sequenceEnd + 1;
         continue;
@@ -267,10 +267,10 @@ String Xml::Private::unescapeString(const String& str)
 String Xml::Private::escapeString(const String& str)
 {
   String result(str.length() + 200);
-  tchar* destStart = result;
-  tchar* dest = destStart;
-  tchar c;
-  for(const tchar* i = str, * end = i + str.length(); i < end; ++i)
+  char* destStart = result;
+  char* dest = destStart;
+  char c;
+  for(const char* i = str, * end = i + str.length(); i < end; ++i)
   {
     c = *i;
     if((c & 0xc0) || (c & 0xe0) == 0) // c >= 64 || c < 32
@@ -279,7 +279,7 @@ String Xml::Private::escapeString(const String& str)
       continue;
     }
     
-    const tchar* escapeChar = String::find(escapeChars, c);
+    const char* escapeChar = String::find(escapeChars, c);
     if(escapeChar)
     {
       const String& escapeString = escapeStrings[escapeChar - escapeChars];
@@ -288,7 +288,7 @@ String Xml::Private::escapeString(const String& str)
       destStart = result;
       dest = destStart + result.length();
       *(dest++) = '&';
-      Memory::copy(dest, (const tchar*)escapeString, escapeString.length() * sizeof(tchar));
+      Memory::copy(dest, (const char*)escapeString, escapeString.length() * sizeof(char));
       dest += escapeString.length();
       *(dest++) = ';';
     }
@@ -299,7 +299,7 @@ String Xml::Private::escapeString(const String& str)
   return result;
 }
 
-bool Xml::Private::parse(const tchar* data, Element& element)
+bool Xml::Private::parse(const char* data, Element& element)
 {
   pos.line = 1;
   pos.pos = pos.lineStart = data;
@@ -311,9 +311,9 @@ bool Xml::Private::parse(const tchar* data, Element& element)
     pos.pos += 2;
     for(;;)
     {
-      const tchar* end = String::findOneOf(pos.pos, _T("\r\n?"));
+      const char* end = String::findOneOf(pos.pos, "\r\n?");
       if(!end)
-        return this->syntaxError(startPos, _T("Unexpected end of file")), false;
+        return this->syntaxError(startPos, "Unexpected end of file"), false;
       if(*end == '?' && end[1] == '>')
       {
         pos.pos = end + 2;
@@ -327,7 +327,7 @@ bool Xml::Private::parse(const tchar* data, Element& element)
   if(!readToken())
     return false;
   if(token.type != Token::startTagBeginType)
-    return syntaxError(token.pos, _T("Expected '<'")), false;
+    return syntaxError(token.pos, "Expected '<'"), false;
   return parseElement(element);
 }
 
@@ -338,7 +338,7 @@ bool Xml::Private::parseElement(Element& element)
   if(!readToken())
     return false;
   if(token.type != Token::nameType)
-    return syntaxError(token.pos, _T("Expected tag name")), false;
+    return syntaxError(token.pos, "Expected tag name"), false;
   element.type = token.value;
   for(;;)
   {
@@ -354,11 +354,11 @@ bool Xml::Private::parseElement(Element& element)
       if(!readToken())
         return false;
       if(token.type != Token::equalsSignType)
-        return syntaxError(token.pos, _T("Expected '='")), false;
+        return syntaxError(token.pos, "Expected '='"), false;
       if(!readToken())
         return false;
       if(token.type != Token::stringType)
-        return syntaxError(token.pos, _T("Expected string")), false;
+        return syntaxError(token.pos, "Expected string"), false;
       element.attributes.append(attributeName, token.value);
       continue;
     }
@@ -388,26 +388,26 @@ bool Xml::Private::parseElement(Element& element)
   if(!readToken())
     return false;
   if(token.type != Token::nameType)
-    return syntaxError(token.pos, _T("Expected tag name")), false;
+    return syntaxError(token.pos, "Expected tag name"), false;
   if(token.value != element.type)
-    return syntaxError(token.pos, String(_T("Expected end tag of '")) + element.type + _T("'")), false;
+    return syntaxError(token.pos, String("Expected end tag of '") + element.type + ("'")), false;
   if(!readToken())
     return false;
   if(token.type != Token::tagEndType)
-    return syntaxError(token.pos, _T("Expected '>'")), false;
+    return syntaxError(token.pos, "Expected '>'"), false;
   return true;
 }
 
 bool Xml::Private::parseText(String& text)
 {
-  const tchar* start = pos.pos;
+  const char* start = pos.pos;
   for(;;)
   {
-    const tchar* end = String::findOneOf(pos.pos, _T("<\r\n"));
+    const char* end = String::findOneOf(pos.pos, "<\r\n");
     if(!end)
     {
       pos.pos = pos.pos + String::length(pos.pos);
-      return syntaxError(pos, _T("Unexpected end of file")), false;
+      return syntaxError(pos, "Unexpected end of file"), false;
     }
     pos.pos = end;
     switch(*pos.pos)
@@ -454,18 +454,18 @@ bool Xml::Parser::load(const String& filePath, Element& element)
   return p->parse(data, element);
 }
 
-bool Xml::parse(const tchar* data, Element& element)
+bool Xml::parse(const char* data, Element& element)
 {
   Private parser;
   if(parser.parse(data, element))
     return true;
-  Error::setErrorString(String::fromPrintf(_T("Syntax error at line %d, column %d: %s"), parser.errorLine, parser.errorColumn, (const tchar*)parser.errorString));
+  Error::setErrorString(String::fromPrintf("Syntax error at line %d, column %d: %s", parser.errorLine, parser.errorColumn, (const char*)parser.errorString));
   return false;
 }
 
 bool Xml::parse(const String& data, Element& element)
 {
-  return parse((const tchar*)data, element);
+  return parse((const char*)data, element);
 }
 
 bool Xml::load(const String& filePath, Element& element)
@@ -489,7 +489,7 @@ bool Xml::save(const Element& element, const String& filePath)
 
 String Xml::toString(const Element& element)
 {
-  String result(_T("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"));
+  String result("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
   result += element.toString();
   return result;
 }
@@ -503,12 +503,12 @@ String Xml::Element::toString() const
   {
     result.append(' ');
     result.append(i.key());
-    result.append(_T("=\""));
+    result.append("=\"");
     result.append(Xml::Private::escapeString(*i));
     result.append('"');
   }
   if(content.isEmpty())
-    result.append(_T("/>"));
+    result.append("/>");
   else
   {
     result.append('>');
@@ -526,7 +526,7 @@ String Xml::Element::toString() const
       default: ;
       }
     }
-    result.append(_T("</"));
+    result.append("</");
     result.append(type);
     result.append('>');
   }

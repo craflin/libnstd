@@ -32,14 +32,14 @@ class Process::Private
 {
 public:
 #ifdef _WIN32
-  static String getCommandLine(const String& program, int argc, tchar* const argv[])
+  static String getCommandLine(const String& program, int argc, char* const argv[])
   {
     String commandLine = program;
     for (int i = 1; i < argc; ++i)
     {
       commandLine.append(' ');
-      const tchar* arg = argv[i];
-      if (!String::findOneOf(arg, _T(" \t\n\v\"")) && *arg)
+      const char* arg = argv[i];
+      if (!String::findOneOf(arg, " \t\n\v\"") && *arg)
         commandLine.append(arg, String::length(arg));
       else
       {
@@ -48,7 +48,7 @@ public:
         {
           if (*arg == '\\')
           {
-            for (const tchar* p = arg + 1;; ++p)
+            for (const char* p = arg + 1;; ++p)
               if (*p != '\\')
               {
                 usize backslashCount = p - arg;
@@ -62,7 +62,7 @@ public:
                 {
                   commandLine.append(arg, backslashCount);
                   commandLine.append(arg, backslashCount);
-                  commandLine.append(_T("\\\""));
+                  commandLine.append("\\\"");
                   arg = p + 1;
                 }
                 else
@@ -88,21 +88,21 @@ public:
   static void splitCommandLine(const String& commandLine, List<String>& command)
   {
     String arg;
-    for (const tchar* p = commandLine; *p;)
+    for (const char* p = commandLine; *p;)
       switch (*p)
       {
-      case _T('"'):
+      case '"':
         for (++p; *p;)
         {
           switch (*p)
           {
-          case _T('"'):
+          case '"':
             ++p;
             break;
-          case _T('\\'):
-            if (p[1] == _T('"'))
+          case '\\':
+            if (p[1] == '"')
             {
-              arg.append(_T('"'));
+              arg.append('"');
               p += 2;
             }
             continue;
@@ -113,7 +113,7 @@ public:
           break;
         }
         break;
-      case _T(' '):
+      case ' ':
         command.append(arg);
         arg.clear();
         ++p;
@@ -186,7 +186,7 @@ uint32 Process::start(const String& commandLine, const Map<String, String>& envi
           continue;
       bufferSize += key.length() + val.length() + 2;
     }
-    envBuffer.reserve(bufferSize * sizeof(TCHAR));
+    envBuffer.reserve(bufferSize * sizeof(char));
     LPTSTR lptEnv = (LPTSTR)(byte*)envBuffer;
     env = lptEnv;
     for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
@@ -195,18 +195,18 @@ uint32 Process::start(const String& commandLine, const Map<String, String>& envi
       const String& val = *i;
       if (key.isEmpty() || val.isEmpty())
         continue;
-      memcpy(lptEnv, (const TCHAR*)key, key.length() * sizeof(TCHAR));
+      memcpy(lptEnv, (const char*)key, key.length() * sizeof(char));
       lptEnv += key.length();
-      *(lptEnv++) = _T('=');
-      memcpy(lptEnv, (const TCHAR*)val, val.length() * sizeof(TCHAR));
+      *(lptEnv++) = '=';
+      memcpy(lptEnv, (const char*)val, val.length() * sizeof(char));
       lptEnv += val.length();
-      *(lptEnv++) = _T('\0');
+      *(lptEnv++) = '\0';
     }
-    *lptEnv = _T('\0');
+    *lptEnv = '\0';
   }
 
   String args(commandLine);
-  if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, FALSE, 
+  if(!CreateProcess(NULL, (char*)args, NULL, NULL, FALSE, 
 #ifdef UNICODE
       CREATE_UNICODE_ENVIRONMENT
 #else
@@ -244,7 +244,7 @@ uint32 Process::start(const String& commandLine, const Map<String, String>& envi
 #endif
 }
 
-uint32 Process::start(const String& program, int argc, tchar* const argv[], const Map<String, String>& environment)
+uint32 Process::start(const String& program, int argc, char* const argv[], const Map<String, String>& environment)
 {
 #ifdef _WIN32
   return start(Private::getCommandLine(program, argc, argv), environment);
@@ -513,7 +513,7 @@ bool Process::open(const String& commandLine, uint streams)
   {
     String args(commandLine);
 
-    if(!CreateProcess(NULL, (tchar*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+    if(!CreateProcess(NULL, (char*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
       goto error;
   }
 
@@ -576,7 +576,7 @@ error:
 #endif
 }
 
-bool Process::open(const String& executable, int argc, tchar* const argv[], uint streams)
+bool Process::open(const String& executable, int argc, char* const argv[], uint streams)
 {
 #ifdef _WIN32
   return open(Private::getCommandLine(executable, argc, argv), streams);
@@ -702,10 +702,10 @@ error:
 
 bool Process::open(const String& executable, const List<String>& args, uint streams)
 {
-  Array<const tchar*> argv(args.size());
+  Array<const char*> argv(args.size());
   for (List<String>::Iterator i = args.begin(), end = args.end(); i != end; ++i)
-    argv.append((const tchar*)*i);
-  return open(executable, (int)args.size(), (tchar**)(const tchar**)argv, streams);
+    argv.append((const char*)*i);
+  return open(executable, (int)args.size(), (char**)(const char**)argv, streams);
 }
 
 void Process::close(uint streams)
@@ -914,7 +914,7 @@ String Process::getEnvironmentVariable(const String& name, const String& default
   for(;;)
   {
     buffer.resize(bufferSize);
-    DWORD dw = GetEnvironmentVariable((const tchar*)name, (tchar*)buffer, bufferSize);
+    DWORD dw = GetEnvironmentVariable((const char*)name, (char*)buffer, bufferSize);
     if(dw >= bufferSize)
     {
       bufferSize <<= 1;
@@ -930,7 +930,7 @@ String Process::getEnvironmentVariable(const String& name, const String& default
     return buffer;
   }
 #else
-  const tchar* var = getenv((const tchar*)name);
+  const char* var = getenv((const char*)name);
   if(!var)
     return defaultValue;
   return String(var, String::length(var));
@@ -971,7 +971,7 @@ Map<String, String> Process::getEnvironmentVariables()
   for (size_t i = 0; environ[i]; ++i)
   {
     const char* e = environ[i];
-    const tchar* x = String::find(e, '=');
+    const char* x = String::find(e, '=');
     if (!x)
       continue;
     String var;
@@ -988,11 +988,11 @@ Map<String, String> Process::getEnvironmentVariables()
 bool Process::setEnvironmentVariable(const String& name, const String& value)
 {
 #ifdef _WIN32
-  return SetEnvironmentVariable((const tchar*)name, value.isEmpty() ? 0 : (const tchar*)value) == TRUE;
+  return SetEnvironmentVariable((const char*)name, value.isEmpty() ? 0 : (const char*)value) == TRUE;
 #else
   if(value.isEmpty())
-    return unsetenv((const tchar*)name);
-  return setenv((const tchar*)name, (const tchar*)value, 1) == 0;
+    return unsetenv((const char*)name);
+  return setenv((const char*)name, (const char*)value, 1) == 0;
 #endif
 }
 
@@ -1032,12 +1032,12 @@ bool Process::Arguments::read(int& character, String& argument)
         }
         else
         {
-          const tchar* end = String::find(arg, _T('='));
+          const char* end = String::find(arg, '=');
           usize argLen = end ? end - arg : String::length(arg);
           for(const Option* opt = options; opt < optionsEnd; ++opt)
             if(opt->name && String::compare(opt->name, arg, argLen) == 0 && !opt->name[argLen])
             {
-              const tchar* argName = arg;
+              const char* argName = arg;
               character = opt->character;
               arg += end ? argLen + 1 : argLen;
               if(opt->flags & Process::argumentFlag)
@@ -1325,16 +1325,16 @@ void Process::interrupt()
 String Process::getExecutablePath()
 {
 #ifdef _WIN32
-  TCHAR path[MAX_PATH + 1];
+  char path[MAX_PATH + 1];
   DWORD len = GetModuleFileName(NULL, path, sizeof(path) / sizeof(*path));
   if (len != sizeof(path) / sizeof(*path))
     return String::fromCString(path, len);
   Buffer buffer;
-  buffer.resize((MAX_PATH << 1) * sizeof(TCHAR));
+  buffer.resize((MAX_PATH << 1) * sizeof(char));
   for (;;)
   {
-    DWORD len = GetModuleFileName(NULL, (TCHAR*)(byte*)buffer, (DWORD)buffer.size());
-    if (len != buffer.size() / sizeof(TCHAR))
+    DWORD len = GetModuleFileName(NULL, (char*)(byte*)buffer, (DWORD)buffer.size());
+    if (len != buffer.size() / sizeof(char))
       return String::fromCString(path, len);
     buffer.resize(buffer.size() << 1);
   }

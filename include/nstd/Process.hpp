@@ -28,7 +28,7 @@ public:
   * @param[in] environment  Environment variables to be used for new process. The environment variable from the current process will be inherited if the map is empty.
   * @return The process id of the newly started process or \c 0 if an errors occurred.
   */
-  uint32 start(const String& executable, int argc, tchar* const argv[], const Map<String, String>& environment = Map<String, String>());
+  uint32 start(const String& executable, int argc, char* const argv[], const Map<String, String>& environment = Map<String, String>());
 
   /**
   * Get id of the process.
@@ -70,7 +70,7 @@ public:
 
   bool open(const String& command, uint streams = stdoutStream);
 
-  bool open(const String& executable, int argc, tchar* const argv[], uint streams = stdoutStream);
+  bool open(const String& executable, int argc, char* const argv[], uint streams = stdoutStream);
 
   bool open(const String& executable, const List<String>& args, uint streams = stdoutStream);
 
@@ -111,23 +111,23 @@ public:
   struct Option
   {
     int character;
-    const tchar* name;
+    const char* name;
     uint32 flags;
   };
 
   class Arguments
   {
   public:
-    template<usize N> Arguments(int argc, tchar* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(_T("")), inOpt(false), skipOpt(false) {++this->argv;}
+    template<usize N> Arguments(int argc, char* argv[], const Option(&options)[N]) : argv(argv), argvEnd(argv + argc), options(options), optionsEnd(options + N), arg(""), inOpt(false), skipOpt(false) {++this->argv;}
 
     bool read(int& character, String& argument);
 
   private:
-    tchar** argv;
-    tchar** argvEnd;
+    char** argv;
+    char** argvEnd;
     const Option* options;
     const Option* optionsEnd;
-    const tchar* arg;
+    const char* arg;
     bool inOpt;
     bool skipOpt;
 
