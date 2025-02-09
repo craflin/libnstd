@@ -25,31 +25,31 @@ void testFuture()
     static void staticVoidTest2(int check, const String& str1)
     {
       ASSERT(check == 32);
-      ASSERT(str1 == _T("hallo1"));
+      ASSERT(str1 == "hallo1");
     }
 
     static void staticVoidTest3(int check, const String& str1, const String& str2)
     {
       ASSERT(check == 32);
-      ASSERT(str1 == _T("hallo1"));
-      ASSERT(str2 == _T("hallo2"));
+      ASSERT(str1 == "hallo1");
+      ASSERT(str2 == "hallo2");
     }
 
     static void staticVoidTest4(int check, const String& str1, const String& str2, const String& str3)
     {
       ASSERT(check == 32);
-      ASSERT(str1 == _T("hallo1"));
-      ASSERT(str2 == _T("hallo2"));
-      ASSERT(str3 == _T("hallo3"));
+      ASSERT(str1 == "hallo1");
+      ASSERT(str2 == "hallo2");
+      ASSERT(str3 == "hallo3");
     }
 
     static void staticVoidTest5(int check, const String& str1, const String& str2, const String& str3, const String& str4)
     {
       ASSERT(check == 32);
-      ASSERT(str1 == _T("hallo1"));
-      ASSERT(str2 == _T("hallo2"));
-      ASSERT(str3 == _T("hallo3"));
-      ASSERT(str4 == _T("hallo4"));
+      ASSERT(str1 == "hallo1");
+      ASSERT(str2 == "hallo2");
+      ASSERT(str3 == "hallo3");
+      ASSERT(str4 == "hallo4");
     }
 
     void memberVoidTest0()
@@ -67,24 +67,24 @@ void testFuture()
     {
       called = true;
       ASSERT(this->check + check == 42 + 32);
-      ASSERT(str1 == _T("hallo1"));
+      ASSERT(str1 == "hallo1");
     }
 
     void memberVoidTest3(int check, const String& str1, const String& str2)
     {
       called = true;
       ASSERT(this->check + check == 42 + 32);
-      ASSERT(str1 == _T("hallo1"));
-      ASSERT(str2 == _T("hallo2"));
+      ASSERT(str1 == "hallo1");
+      ASSERT(str2 == "hallo2");
     }
 
     void memberVoidTest4(int check, const String& str1, const String& str2, const String& str3)
     {
       called = true;
       ASSERT(this->check + check == 42 + 32);
-      ASSERT(str1 == _T("hallo1"));
-      ASSERT(str2 == _T("hallo2"));
-      ASSERT(str3 == _T("hallo3"));
+      ASSERT(str1 == "hallo1");
+      ASSERT(str2 == "hallo2");
+      ASSERT(str3 == "hallo3");
     }
 
     static usize staticTest0()
@@ -166,25 +166,25 @@ void testFuture()
 
   {
     Future<void> future;
-    future.start(&FutureTest::staticVoidTest2, 32, String(_T("hallo1")));
+    future.start(&FutureTest::staticVoidTest2, 32, String("hallo1"));
     future.join();
   }
 
   {
     Future<void> future;
-    future.start(&FutureTest::staticVoidTest3, 32, String(_T("hallo1")), String(_T("hallo2")));
+    future.start(&FutureTest::staticVoidTest3, 32, String("hallo1"), String("hallo2"));
     future.join();
   }
 
   {
     Future<void> future;
-    future.start(&FutureTest::staticVoidTest4, 32, String(_T("hallo1")), String(_T("hallo2")), String(_T("hallo3")));
+    future.start(&FutureTest::staticVoidTest4, 32, String("hallo1"), String("hallo2"), String("hallo3"));
     future.join();
   }
 
   {
     Future<void> future;
-    future.start(&FutureTest::staticVoidTest5, 32, String(_T("hallo1")), String(_T("hallo2")), String(_T("hallo3")), String(_T("hallo4")));
+    future.start(&FutureTest::staticVoidTest5, 32, String("hallo1"), String("hallo2"), String("hallo3"), String("hallo4"));
     future.join();
   }
 
@@ -207,7 +207,7 @@ void testFuture()
   {
     Future<void> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberVoidTest2, 32, String(_T("hallo1")));
+    future.start(t, &FutureTest::memberVoidTest2, 32, String("hallo1"));
     future.join();
     ASSERT(t.called);
   }
@@ -215,7 +215,7 @@ void testFuture()
   {
     Future<void> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberVoidTest3, 32, String(_T("hallo1")), String(_T("hallo2")));
+    future.start(t, &FutureTest::memberVoidTest3, 32, String("hallo1"), String("hallo2"));
     future.join();
     ASSERT(t.called);
   }
@@ -223,7 +223,7 @@ void testFuture()
   {
     Future<void> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberVoidTest4, 32, String(_T("hallo1")), String(_T("hallo2")), String(_T("hallo3")));
+    future.start(t, &FutureTest::memberVoidTest4, 32, String("hallo1"), String("hallo2"), String("hallo3"));
     future.join();
     ASSERT(t.called);
   }
@@ -237,35 +237,35 @@ void testFuture()
 
   {
     Future<usize> future;
-    future.start(&FutureTest::staticTest1, String(_T("hello")));
+    future.start(&FutureTest::staticTest1, String("hello"));
     future.join();
     ASSERT(future == 5);
   }
 
   {
     Future<usize> future;
-    future.start(&FutureTest::staticTest2, String(_T("hello")), String(_T("hello")));
+    future.start(&FutureTest::staticTest2, String("hello"), String("hello"));
     future.join();
     ASSERT(future == 10);
   }
 
   {
     Future<usize> future;
-    future.start(&FutureTest::staticTest3, String(_T("hello")), String(_T("hello")), String(_T("hello")));
+    future.start(&FutureTest::staticTest3, String("hello"), String("hello"), String("hello"));
     future.join();
     ASSERT(future == 15);
   }
 
   {
     Future<usize> future;
-    future.start(&FutureTest::staticTest4, String(_T("hello")), String(_T("hello")), String(_T("hello")), String(_T("hello")));
+    future.start(&FutureTest::staticTest4, String("hello"), String("hello"), String("hello"), String("hello"));
     future.join();
     ASSERT(future == 20);
   }
 
   {
     Future<usize> future;
-    future.start(&FutureTest::staticTest5, String(_T("hello")), String(_T("hello")), String(_T("hello")), String(_T("hello")), String(_T("hello")));
+    future.start(&FutureTest::staticTest5, String("hello"), String("hello"), String("hello"), String("hello"), String("hello"));
     future.join();
     ASSERT(future == 25);
   }
@@ -273,7 +273,7 @@ void testFuture()
   {
     Future<usize> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberTest1, String(_T("hello")));
+    future.start(t, &FutureTest::memberTest1, String("hello"));
     future.join();
     ASSERT(future == 42 + 5);
   }
@@ -281,7 +281,7 @@ void testFuture()
   {
     Future<usize> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberTest2, String(_T("hello1")), String(_T("hello2")));
+    future.start(t, &FutureTest::memberTest2, String("hello1"), String("hello2"));
     future.join();
     ASSERT(future == 42 + 6 * 2);
   }
@@ -289,7 +289,7 @@ void testFuture()
   {
     Future<usize> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberTest3, String(_T("hello1")), String(_T("hello2")), String(_T("hello3")));
+    future.start(t, &FutureTest::memberTest3, String("hello1"), String("hello2"), String("hello3"));
     future.join();
     ASSERT(future == 42 + 6 * 3);
   }
@@ -297,7 +297,7 @@ void testFuture()
   {
     Future<usize> future;
     FutureTest t;
-    future.start(t, &FutureTest::memberTest4, String(_T("hello1")), String(_T("hello2")), String(_T("hello3")), String(_T("hello4")));
+    future.start(t, &FutureTest::memberTest4, String("hello1"), String("hello2"), String("hello3"), String("hello4"));
     future.join();
     ASSERT(future == 42 + 6 * 4);
   }

@@ -558,7 +558,7 @@ int Socket::getLastError()
 String Socket::getErrorString(int error)
 {
 #ifdef _WIN32
-  TCHAR errorMessage[256];
+  char errorMessage[256];
   DWORD len = FormatMessage(
         FORMAT_MESSAGE_FROM_SYSTEM |
         FORMAT_MESSAGE_IGNORE_INSERTS,
@@ -580,44 +580,19 @@ String Socket::getErrorString(int error)
 
 uint32 Socket::inetAddr(const String& addr, uint16* port)
 {
-  const tchar* portStr = addr.find(':');
+  const char* portStr = addr.find(':');
   if(portStr)
   {
     if(port)
       *port = (uint16)String::toUInt(portStr + 1);
-#ifdef UNICODE
-    in_addr inaddr;
-    LPCWSTR end; 
-    if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
-      return ntohl(INADDR_NONE);
-    return ntohl(inaddr.s_addr);
-#else
-    return ntohl(inet_addr((const tchar*)addr.substr(0, (portStr - (const tchar*)addr) / sizeof(tchar))));
-#endif
+    return ntohl(inet_addr((const char*)addr.substr(0, (portStr - (const char*)addr))));
   }
-#ifdef UNICODE
-  in_addr inaddr;
-  LPCWSTR end; 
-  if(RtlIpv4StringToAddress(addr, FALSE, &end, &inaddr) != 0)
-    return ntohl(INADDR_NONE);
-  return ntohl(inaddr.s_addr);
-#else
-  return ntohl(inet_addr((const tchar*)addr));
-#endif
+  return ntohl(inet_addr((const char*)addr));
 }
 
 String Socket::inetNtoA(uint32 ip)
 {
-#if defined(_WIN32) && defined(UNICODE)
-  in_addr in;
-  in.s_addr = htonl(ip);
-  tchar buf[17];
-  buf[0] = _T('\0');
-  RtlIpv4AddressToString(&in, buf);
-  return String(buf, String::length(buf));
-#else
   return String::fromPrintf("%hu.%hu.%hu.%hu", (uint16)(ip >> 24),  (uint16)((ip >> 16) & 0xff), (uint16)((ip >> 8) & 0xff), (uint16)(ip & 0xff));
-#endif
 }
 
 String Socket::getHostName()
@@ -625,16 +600,7 @@ String Socket::getHostName()
   char name[256];
   if(gethostname(name, sizeof(name)) != 0)
     return String();
-#ifdef UNICODE
-  WCHAR wname[256];
-  int size = MultiByteToWideChar(CP_ACP, 0, name, -1, wname, sizeof(wname)/sizeof(WCHAR));
-  if(!size)
-    return String();
-  return String(wname, size - 1);
-  //return String::fromPrintf(_T("%hu"), name);
-#else
   return String(name, String::length(name));
-#endif
 }
 
 bool Socket::getHostByName(const String& host, uint32& addr)
@@ -645,7 +611,7 @@ bool Socket::getHostByName(const String& host, uint32& addr)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_IPV4;
   ADDRINFOT* ai;
-  if (GetAddrInfo((const tchar*)host, NULL, &hints, &ai) != 0)
+  if (GetAddrInfo((const char*)host, NULL, &hints, &ai) != 0)
     return false;
   for (ADDRINFOT* res = ai; res; res = res->ai_next)
     if(res->ai_family == AF_INET)
@@ -661,7 +627,7 @@ bool Socket::getHostByName(const String& host, uint32& addr)
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = IPPROTO_IP;
   addrinfo* ai;
-  if (getaddrinfo((const tchar*)host, NULL, &hints, &ai) != 0)
+  if (getaddrinfo((const char*)host, NULL, &hints, &ai) != 0)
     return false;
   for (addrinfo* res = ai; res; res = res->ai_next)
     if(res->ai_family == AF_INET)

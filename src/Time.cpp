@@ -192,7 +192,7 @@ int64 Time::microTicks()
 #endif
 }
 
-String Time::toString(const tchar* format)
+String Time::toString(const char* format)
 {
   if(!*format)
     return String();
@@ -208,16 +208,12 @@ String Time::toString(const tchar* format)
   tm.tm_isdst = dst;
 
   String result(256);
-  tchar* buffer;
+  char* buffer;
   usize len;
   for(;;)
   {
     buffer = result;
-#ifdef _UNICODE
-    len = wcsftime(buffer, result.capacity(), format, &tm);
-#else
     len = strftime(buffer, result.capacity(), format, &tm);
-#endif
     if(len > 0)
       break;
     result.reserve(result.capacity() * 2);
@@ -226,7 +222,7 @@ String Time::toString(const tchar* format)
   return result;
 }
 
-String Time::toString(int64 time, const tchar* format, bool utc)
+String Time::toString(int64 time, const char* format, bool utc)
 {
   if(!*format)
     return String();
@@ -235,16 +231,12 @@ String Time::toString(int64 time, const tchar* format, bool utc)
   String result(256);
   if(!tms)
     return result;
-  tchar* buffer;
+  char* buffer;
   usize len;
   for(;;)
   {
     buffer = result;
-#ifdef _UNICODE
-    len = wcsftime(buffer, result.capacity(), format, tms);
-#else
     len = strftime(buffer, result.capacity(), format, tms);
-#endif
     if(len > 0)
       break;
     result.reserve(result.capacity() * 2);

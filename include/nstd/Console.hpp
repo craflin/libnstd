@@ -6,10 +6,10 @@
 class Console
 {
 public:
-  static int print(const tchar* str);
-  static int printf(const tchar* format, ...);
-  static int error(const tchar* str);
-  static int errorf(const tchar* format, ...);
+  static int print(const char* str);
+  static int printf(const char* format, ...);
+  static int error(const char* str);
+  static int errorf(const char* format, ...);
 
   class Prompt
   {

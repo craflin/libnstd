@@ -18,65 +18,65 @@ int main(int argc, char* argv[])
   for (int i = 0; i < 3; ++i)
   {
     {
-      Console::printf(_T("testMapStd...  "));
+      Console::printf("testMapStd...  ");
       int64 startTime = Time::microTicks();
       testMapStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
 
     {
-      Console::printf(_T("testMapNStd... "));
+      Console::printf("testMapNStd... ");
       int64 startTime = Time::microTicks();
       testMapNStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
     {
-      Console::printf(_T("testHashMapStd...  "));
+      Console::printf("testHashMapStd...  ");
       int64 startTime = Time::microTicks();
       testHashMapStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
 
     {
-      Console::printf(_T("testHashMapNStd... "));
+      Console::printf("testHashMapNStd... ");
       int64 startTime = Time::microTicks();
       testHashMapNStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
     {
-      Console::printf(_T("testStringStd...  "));
+      Console::printf("testStringStd...  ");
       int64 startTime = Time::microTicks();
       testStringStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
 
     {
-      Console::printf(_T("testStringNStd... "));
+      Console::printf("testStringNStd... ");
       int64 startTime = Time::microTicks();
       testStringNStd(mapTestIterations);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
 
     {
-      Console::printf(_T("testFutureStd...  "));
+      Console::printf("testFutureStd...  ");
       int64 startTime = Time::microTicks();
       testFutureStd(mapTestIterations / 10);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
 
     {
-      Console::printf(_T("testFutureNStd... "));
+      Console::printf("testFutureNStd... ");
       int64 startTime = Time::microTicks();
       testFutureNStd(mapTestIterations / 10);
       int64 duration = Time::microTicks() - startTime;
-      Console::printf(_T("%lld microseconds\n"), duration);
+      Console::printf("%lld microseconds\n", duration);
     }
   }
 

@@ -82,14 +82,8 @@ public:
     return result;
   }
 
-  static usize length(tchar ch)
+  static usize length(char ch)
   {
-#ifdef _UNICODE
-    if((ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
-      return 1;
-    if((ch & 0xFC00ULL) == 0xD800ULL) // ch <= 0xDBFF
-      return 2;
-#else
     if((ch & 0x80) == 0)
       return 1;
     if((ch & 0xe0) == 0xc0)
@@ -98,26 +92,13 @@ public:
       return 3;
     if((ch & 0xf8) == 0xf0)
       return 4;
-#endif
     return 0;
   }
 
-  static uint32 fromString(const tchar* ch, usize len)
+  static uint32 fromString(const char* ch, usize len)
   {
     if(len == 0)
       return 0;
-#ifdef _UNICODE
-   if((*ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
-     return *(const uint16*)ch;
-    if((*ch & 0xFC00ULL) == 0xD800ULL) // ch <= 0xDBFF
-    {
-     if(len < 2)
-       return 0;
-      return (ch[1] & 0x3FFULL | ((uint32)(*ch & 0x3FFULL) << 10)) + 0x10000UL;
-    }
-    else
-      return *(const uint16*)ch;
-#else
     if((*(const uchar*)ch & 0x80) == 0) // ch < 0x80
       return *(const uchar*)ch;
     usize reqLen = length(*ch);
@@ -134,31 +115,14 @@ public:
     }
     result -= utf8Offsets[reqLen];
     return result;
-#endif
   }
   
   static uint32 fromString(const String& str) {return fromString(str, str.length());}
 
-  static bool isValid(const tchar* ch, usize len)
+  static bool isValid(const char* ch, usize len)
   {
-      for(const tchar* end = ch + len; ch < end;)
+      for(const char* end = ch + len; ch < end;)
       {
-#ifdef _UNICODE
-        if((*ch & 0xF800ULL) != 0xD800ULL) // ch < 0xD800 || ch > 0xDFFF
-        {
-          ++ch;
-          --len;
-          continue;
-        }
-        if(len > 1 && (*ch & 0xFC00ULL) == 0xD800ULL) // ch <= 0xDBFF
-          if((ch[1] & 0xFC00UL) == 0xDC00UL)
-          {
-            ch += 2;
-            len -= 2;
-            continue;
-          }
-        return false;
-#else
         usize minLen = length(*ch);
         if(len < minLen)
           return false;
@@ -183,7 +147,6 @@ public:
         }
         ch += minLen;
         len -= minLen;
-#endif
       }
     return true;
   }

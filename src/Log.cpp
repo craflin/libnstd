@@ -45,7 +45,7 @@ public:
   }
 #endif
 
-  static void vlogf(int level, const tchar* format, va_list& vl)
+  static void vlogf(int level, const char* format, va_list& vl)
   {
     int64 time = Time::time();
     String lineFormat;
@@ -111,41 +111,41 @@ public:
 
     // build line
     String line(data.length() + 200);
-    for(const tchar* p = lineFormat; *p; ++p)
+    for(const char* p = lineFormat; *p; ++p)
     {
-      if(*p == _T('%'))
+      if(*p == '%')
       {
         ++p;
         switch(*p)
         {
-        case _T('%'):
-          line += _T('%');
+        case '%':
+          line += '%';
           break;
-        case _T('m'):
+        case 'm':
           line += data;
           break;
-        case _T('t'):
+        case 't':
           line += Time::toString(time, timeFormat);
           break;
-        case _T('L'):
+        case 'L':
           switch(level)
           {
-          case Log::debug: line += _T("debug"); break;
-          case Log::info: line += _T("info"); break;
-          case Log::warning: line += _T("warning"); break;
-          case Log::error: line += _T("error"); break;
-          case Log::critical: line += _T("critical"); break;
-          default: line += _T("unknown"); break;
+          case Log::debug: line += "debug"; break;
+          case Log::info: line += "info"; break;
+          case Log::warning: line += "warning"; break;
+          case Log::error: line += "error"; break;
+          case Log::critical: line += "critical"; break;
+          default: line += "unknown"; break;
           }
           break;
-        case _T('P'):
+        case 'P':
           line += String::fromInt(Process::getCurrentProcessId());
           break;
-        case _T('T'):
+        case 'T':
           line += String::fromInt(Thread::getCurrentThreadId());
           break;
         default:
-          line += _T('%');
+          line += '%';
           line += *p;
           break;
         }
@@ -153,7 +153,7 @@ public:
       else
         line += *p;
     }
-    line += _T('\n');
+    line += '\n';
     if(level >= Log::warning)
       Console::error(line);
     else
@@ -163,8 +163,8 @@ public:
 } _log;
 
 Mutex _Log::mutex;
-String _Log::lineFormat(_T("[%t] %L: %m"));
-String _Log::timeFormat(_T("%H:%M:%S"));
+String _Log::lineFormat("[%t] %L: %m");
+String _Log::timeFormat("%H:%M:%S");
 int _Log::level = Log::info;
 Log::Device _Log::device = Log::stdOutErr;
 
@@ -197,7 +197,7 @@ void Log::setLevel(int level)
   _Log::level = level;
 }
 
-void Log::logf(int level, const tchar* format, ...)
+void Log::logf(int level, const char* format, ...)
 {
   if(level < _Log::level)
     return;
@@ -207,7 +207,7 @@ void Log::logf(int level, const tchar* format, ...)
   va_end(vl);
 }
 
-void Log::debugf(const tchar* format, ...)
+void Log::debugf(const char* format, ...)
 {
   if(Log::debug < _Log::level)
     return;
@@ -217,7 +217,7 @@ void Log::debugf(const tchar* format, ...)
   va_end(vl);
 }
 
-void Log::infof(const tchar* format, ...)
+void Log::infof(const char* format, ...)
 {
   if(Log::info < _Log::level)
     return;
@@ -227,7 +227,7 @@ void Log::infof(const tchar* format, ...)
   va_end(vl);
 }
 
-void Log::warningf(const tchar* format, ...)
+void Log::warningf(const char* format, ...)
 {
   if(Log::warning < _Log::level)
     return;
@@ -237,7 +237,7 @@ void Log::warningf(const tchar* format, ...)
   va_end(vl);
 }
 
-void Log::errorf(const tchar* format, ...)
+void Log::errorf(const char* format, ...)
 {
   if(Log::error < _Log::level)
     return;

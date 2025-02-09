@@ -22,33 +22,25 @@
 #include <nstd/Memory.hpp>
 #include <nstd/String.hpp>
 
-int Debug::print(const tchar* str)
+int Debug::print(const char* str)
 {
 #ifdef _MSC_VER
   OutputDebugString(str);
-#ifdef _UNICODE
-  return (int)wcslen(str);
-#else
   return (int)strlen(str);
-#endif
 #else
   return fputs(str, stderr);
 #endif
 }
 
-int Debug::printf(const tchar* format, ...)
+int Debug::printf(const char* format, ...)
 {
 #ifdef _MSC_VER
   va_list ap;
   va_start(ap, format);
   {
-    tchar buffer[4096];
-#if _UNICODE
-    int result = _vsnwprintf(buffer, sizeof(buffer) / sizeof(tchar), format, ap);
-#else
-    int result = vsnprintf(buffer, sizeof(buffer) / sizeof(tchar), format, ap);
-#endif
-    if(result >= 0 && result < (int)(sizeof(buffer) / sizeof(tchar)))
+    char buffer[4096];
+    int result = vsnprintf(buffer, sizeof(buffer), format, ap);
+    if(result >= 0 && result < (int)(sizeof(buffer)))
     {
       OutputDebugString(buffer);
       va_end(ap);
@@ -58,19 +50,10 @@ int Debug::printf(const tchar* format, ...)
 
   // buffer was too small
   {
-    int result;
-#ifdef _UNICODE
-    result = _vscwprintf(format, ap);
-#else
-    result = _vscprintf(format, ap);
-#endif
+    int result = _vscprintf(format, ap);
     usize maxCount = result + 1;
-    tchar* buffer = (tchar*)new char[maxCount * sizeof(tchar)];
-#ifdef _UNICODE
-    result = _vsnwprintf(buffer, maxCount, format, ap);
-#else
+    char* buffer = (char*)new char[maxCount];
     result = vsnprintf(buffer, maxCount, format, ap);
-#endif
     va_end(ap);
     OutputDebugString(buffer);
     delete[] (char*)buffer;
@@ -98,7 +81,7 @@ bool Debug::getSourceLine(void* addr, String& file, int& line)
   if(!initialized)
   {
     initialized = true;
-    HMODULE hModule = LoadLibrary(_T("Dbghelp.dll"));
+    HMODULE hModule = LoadLibrary("Dbghelp.dll");
     if(!hModule)
       return false;
     pSymInitialize = (PSymInitialize)GetProcAddress(hModule, "SymInitialize");
@@ -142,18 +125,18 @@ bool Debug::getSourceLine(void* addr, String& file, int& line)
   }
   String addrStr = String::fromCString(*addrStrs);
   free(addrStrs);
-  const tchar* addrStart = addrStr.findLast(_T('['));
-  const tchar* addrEnd = addrStr.findLast(_T(']'));
+  const char* addrStart = addrStr.findLast('[');
+  const char* addrEnd = addrStr.findLast(']');
   if(!addrStart ||!addrEnd || addrEnd < addrStart)
       return false;
   ++addrStart;
   void* relAddr;
-  if(addrStr.substr(addrStart - (const tchar*)addrStr, addrEnd - addrStart).scanf("%p", &relAddr) != 1)
+  if(addrStr.substr(addrStart - (const char*)addrStr, addrEnd - addrStart).scanf("%p", &relAddr) != 1)
       return false;
-  const tchar* binaryEnd = addrStr.findLast(_T('('));
+  const char* binaryEnd = addrStr.findLast('(');
   if(!binaryEnd)
       return false;
-  String bin = addrStr.substr(0, binaryEnd - (const tchar*)addrStr);
+  String bin = addrStr.substr(0, binaryEnd - (const char*)addrStr);
   String cmd = String::fromPrintf("addr2line -e \"%s\" %p", (const char*)bin, relAddr);
   Process process;
   if(!process.open(cmd))
@@ -164,11 +147,11 @@ bool Debug::getSourceLine(void* addr, String& file, int& line)
   if(i < 0)
     return false;
   buf.resize(i);
-  const tchar* fileEnd = buf.findLast(':');
+  const char* fileEnd = buf.findLast(':');
   if(!fileEnd)
       return false;
-  file = buf.substr(0, fileEnd - (const tchar*)buf);
-  if(buf.substr(fileEnd - (const tchar*)buf + 1).scanf("%d", &line) != 1)
+  file = buf.substr(0, fileEnd - (const char*)buf);
+  if(buf.substr(fileEnd - (const char*)buf + 1).scanf("%d", &line) != 1)
       return false;
   return true;
 #endif

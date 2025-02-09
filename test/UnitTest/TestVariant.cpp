@@ -13,10 +13,10 @@ void testVariant()
 
   // test self assign
   {
-    Variant var(String(_T("hallo")));
-    ASSERT(var.toString() == _T("hallo"));
+    Variant var(String("hallo"));
+    ASSERT(var.toString() == "hallo");
     var = var;
-    ASSERT(var.toString() == _T("hallo"));
+    ASSERT(var.toString() == "hallo");
 
     Variant var2(123);
     ASSERT(var2.toInt() == 123);
@@ -33,10 +33,10 @@ void testVariant()
   // test map constructor
   {
     HashMap<String, Variant> map;
-    map.append(_T("dasd"), Variant(String(_T("yes"))));
+    map.append("dasd", Variant(String("yes")));
     Variant var(map);
-    ASSERT(((const Variant&)var).toMap().find(_T("dasd"))->toString() == _T("yes"));
-    ASSERT(var.toMap().find(_T("dasd"))->toString() == _T("yes"));
+    ASSERT(((const Variant&)var).toMap().find("dasd")->toString() == "yes");
+    ASSERT(var.toMap().find("dasd")->toString() == "yes");
   }
 
   // test copy construction of null variant

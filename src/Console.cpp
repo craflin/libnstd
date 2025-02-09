@@ -2,9 +2,6 @@
 #include <cstdarg>
 #include <cstdio>
 #ifdef _MSC_VER
-#include <tchar.h>
-#endif
-#ifdef _MSC_VER
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <io.h>
@@ -36,16 +33,12 @@
 #include <nstd/Process.hpp>
 #endif
 
-int Console::print(const tchar* str)
+int Console::print(const char* str)
 {
-#ifdef _MSC_VER
-  return _fputts(str, stdout);
-#else
   return fputs(str, stdout);
-#endif
 }
 
-int Console::printf(const tchar* format, ...)
+int Console::printf(const char* format, ...)
 {
   va_list ap;
   va_start(ap, format);
@@ -58,24 +51,16 @@ int Console::printf(const tchar* format, ...)
   return result;
 }
 
-int Console::error(const tchar* str)
+int Console::error(const char* str)
 {
-#ifdef _MSC_VER
-  return _fputts(str, stderr);
-#else
   return fputs(str, stderr);
-#endif
 }
 
-int Console::errorf(const tchar* format, ...)
+int Console::errorf(const char* format, ...)
 {
   va_list ap;
   va_start(ap, format);
-#ifdef _UNICODE
-  int result = vfwprintf(stderr, format, ap);
-#else
   int result = vfprintf(stderr, format, ap);
-#endif
   va_end(ap);
   return result;
 }
@@ -93,11 +78,11 @@ static BOOL CreatePipeEx(LPHANDLE lpReadPipe, LPHANDLE lpWritePipe, LPSECURITY_A
   String name;
   static volatile unsigned long pipeCount = 0;
   unsigned long pipeId = InterlockedIncrement(&pipeCount);
-  name.printf(_T("\\\\.\\pipe\\MyAnon.%08x.%08x"), (unsigned int)GetCurrentProcessId(), (unsigned int)pipeId);
-  HANDLE hRead = CreateNamedPipe((const tchar*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
+  name.printf("\\\\.\\pipe\\MyAnon.%08x.%08x", (unsigned int)GetCurrentProcessId(), (unsigned int)pipeId);
+  HANDLE hRead = CreateNamedPipe((const char*)name, PIPE_ACCESS_INBOUND | dwReadMode, PIPE_TYPE_BYTE | PIPE_WAIT, 1, nSize, nSize, 120 * 1000, lpSecurityAttributes);
   if(!hRead)
     return FALSE;
-  HANDLE hWrite = CreateFile((const tchar*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
+  HANDLE hWrite = CreateFile((const char*)name, GENERIC_WRITE, 0, lpSecurityAttributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL | dwWriteMode, NULL);
   if(hWrite == INVALID_HANDLE_VALUE)
   {
     DWORD dwError = GetLastError();
@@ -115,7 +100,7 @@ class Console::Prompt::Private
 {
 public:
 #ifdef _MSC_VER
-  typedef tchar conchar;
+  typedef char conchar;
 #else
   typedef uint32 conchar;
 #endif
@@ -181,14 +166,14 @@ public:
     while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
     {
       DWORD written;
-      VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
-      ASSERT(written == read / sizeof(tchar));
+      VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(char), &written, NULL));
+      ASSERT(written == read / sizeof(char));
     }
     while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
     {
       DWORD written;
-      VERIFY(WriteFile(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
-      ASSERT(written == read / sizeof(tchar));
+      VERIFY(WriteFile(hOriginalStdErr, stderrBuffer, read / sizeof(char), &written, NULL));
+      ASSERT(written == read / sizeof(char));
     }
 
     // enable window events
@@ -397,7 +382,7 @@ public:
 #endif
   }
 
-  void writeConsole(const tchar* data, usize len)
+  void writeConsole(const char* data, usize len)
   {
 #ifdef _MSC_VER
     DWORD written;
@@ -426,7 +411,7 @@ public:
     buffer.append(input);
     ASSERT(clearStr.isEmpty() || clearStr.length() == 1);
     if(!clearStr.isEmpty())
-      buffer.append(*(const tchar*)clearStr);
+      buffer.append(*(const char*)clearStr);
     Array<conchar> wrappedBuffer(buffer.size() + buffer.size() / stdoutScreenWidth * 2 + 2);
     for(usize i = 0, len = buffer.size(); i < len; i += stdoutScreenWidth)
     {
@@ -436,8 +421,8 @@ public:
       wrappedBuffer.append((const conchar*)buffer + i, lineEnd);
       if(lineEnd == stdoutScreenWidth)
       {
-        wrappedBuffer.append(_T('\r'));
-        wrappedBuffer.append(_T('\n'));
+        wrappedBuffer.append('\r');
+        wrappedBuffer.append('\n');
       }
     }
 #ifdef _MSC_VER
@@ -488,7 +473,7 @@ public:
       else
         input.resize(input.size() - 1);
       promptMoveLeft();
-      promptWrite(prompt.size() + caretPos, _T(" "));
+      promptWrite(prompt.size() + caretPos, " ");
     }
   }
 
@@ -505,7 +490,7 @@ public:
       }
       else
         input.resize(caretPos);
-      promptWrite(prompt.size() + caretPos, _T(" "));
+      promptWrite(prompt.size() + caretPos, " ");
     }
   }
 
@@ -599,8 +584,8 @@ public:
       moveCursorPosition(prompt.size() + caretPos, -(ssize)(caretPos + prompt.size()));
       String clearLine(stdoutScreenWidth + 2);
       for(usize i = 0; i < stdoutScreenWidth; ++i)
-        clearLine.append(_T(' '));
-      clearLine.append(_T("\n\r"));
+        clearLine.append(' ');
+      clearLine.append("\n\r");
       String clearCmd(bufferLen + additionalLines * 2
 #ifndef _MSC_VER
         + 10
@@ -612,7 +597,7 @@ public:
       for(usize i = 0; i < additionalLines; ++i)
         clearCmd.append(clearLine);
       for(usize i = 0, count = bufferLen - additionalLines * stdoutScreenWidth; i < count; ++i)
-        clearCmd.append(_T(' '));
+        clearCmd.append(' ');
 #ifndef _MSC_VER
       clearCmd.append("\x1b[?7h");
 #endif
@@ -629,10 +614,10 @@ public:
 #ifndef _MSC_VER
       clearCmd.append("\x1b[?7l");
 #endif
-      clearCmd.append(_T('\r'));
+      clearCmd.append('\r');
       for(usize i = 0, count = bufferLen; i < count; ++i)
-        clearCmd.append(_T(' '));
-      clearCmd.append(_T('\r'));
+        clearCmd.append(' ');
+      clearCmd.append('\r');
 #ifndef _MSC_VER
       clearCmd.append("\x1b[?7h");
 #endif
@@ -646,7 +631,7 @@ public:
     getCursorPosition(x, y);
     stdoutCursorX = x;
     if(stdoutCursorX)
-      writeConsole(_T("\r\n"), 2);
+      writeConsole("\r\n", 2);
   }
 
   void restoreCursorPosition()
@@ -833,23 +818,23 @@ public:
     while(GetOverlappedResult(hStdOutRead, &outOverlapped, &read, FALSE))
     {
         DWORD written;
-        VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
-        ASSERT(written == read / sizeof(tchar));
+        VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(char), &written, NULL));
+        ASSERT(written == read / sizeof(char));
         while(ReadFile(hStdOutRead, stdoutBuffer, sizeof(stdoutBuffer), &read, &outOverlapped))
         {
-          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(tchar), &written, NULL));
-          ASSERT(written == read / sizeof(tchar));
+          VERIFY(WriteConsole(hOriginalStdOut, stdoutBuffer, read / sizeof(char), &written, NULL));
+          ASSERT(written == read / sizeof(char));
         }
     }
     while(GetOverlappedResult(hStdErrRead, &errOverlapped, &read, FALSE))
     {
         DWORD written;
-        VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
-        ASSERT(written == read / sizeof(tchar));
+        VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(char), &written, NULL));
+        ASSERT(written == read / sizeof(char));
         while(ReadFile(hStdErrRead, stderrBuffer, sizeof(stderrBuffer), &read, &errOverlapped))
         {
-          VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(tchar), &written, NULL));
-          ASSERT(written == read / sizeof(tchar));
+          VERIFY(WriteConsole(hOriginalStdErr, stderrBuffer, read / sizeof(char), &written, NULL));
+          ASSERT(written == read / sizeof(char));
         }
     }
 #else
@@ -897,11 +882,11 @@ public:
   }
 
 #ifdef _MSC_VER
-  void handleInput(tchar ch, WORD virtualKeyCode)
+  void handleInput(char ch, WORD virtualKeyCode)
   {
     switch(ch)
     {
-    case _T('\0'):
+    case '\0':
       switch(virtualKeyCode)
       {
       case VK_UP:
@@ -927,12 +912,12 @@ public:
         break;
       }
       break;
-    case _T('\t'):
+    case '\t':
       break;
-    case _T('\r'):
+    case '\r':
       inputComplete = true;
       break;
-    case _T('\b'):
+    case '\b':
       promptRemove();
       break;
     default:
@@ -976,9 +961,9 @@ public:
       uint32 ch = utf8 ? Unicode::fromString(input, len) : *(uchar*)input;
       switch(ch)
       {
-      case _T('\t'):
+      case '\t':
         break;
-      case _T('\r'):
+      case '\r':
         inputComplete = true;
         break;
       case '\b': // backspace
@@ -1013,12 +998,12 @@ public:
     // add new output
 #ifdef _MSC_VER
     DWORD written;
-    VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar), &written, NULL));
-    ASSERT(written == read / sizeof(tchar));
+    VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(char), &written, NULL));
+    ASSERT(written == read / sizeof(char));
     while(ReadFile(hStdRead, buffer, (DWORD)bufferSize, &read, &overlapped))
     {
-      VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(tchar), &written, NULL));
-      ASSERT(written == read / sizeof(tchar));
+      VERIFY(WriteConsole(hOriginalStd, buffer, read / sizeof(char), &written, NULL));
+      ASSERT(written == read / sizeof(char));
     }
 #else
     char buffer[4096];
@@ -1042,7 +1027,7 @@ public:
     return readBufferedChar(buffer);
   }
 
-  usize readNextUnbufferedEscapedSequence(char* buffer, char firstChar, char lastChar)
+  usize readNextUnbufferedEscapedSequence(char* buffer, char firschar, char laschar)
   {
     for(char ch;;)
     {
@@ -1053,7 +1038,7 @@ public:
         buffer[1] = 0;
         usize len = 1 + readUnbufferedEscapedSequence(buffer, buffer + 1);
         char sequenceType = buffer[len - 1];
-        if(sequenceType != lastChar || buffer[1] != firstChar)
+        if(sequenceType != laschar || buffer[1] != firschar)
         {
           bufferedInput.append((byte*)buffer, len);
           continue;
@@ -1187,7 +1172,7 @@ public:
     {
       result.reserve(len);
       for(const conchar* i = data, * end = data + len; i < end; ++i)
-        result.append((const tchar&)*i);
+        result.append((const char&)*i);
     }
 #endif
   }
@@ -1197,12 +1182,12 @@ public:
     result.clear();
     result.reserve(data.length());
 #ifdef _MSC_VER
-    for(const tchar* i = data, * end = i + data.length(); i < end; ++i)
+    for(const char* i = data, * end = i + data.length(); i < end; ++i)
       result.append(*i);
 #else
     if(utf8)
     {
-      for(const tchar* i = data, * end = i + data.length(); i < end;)
+      for(const char* i = data, * end = i + data.length(); i < end;)
       {
         usize len = Unicode::length(*i);
         if(len == 0 || (usize)(end - i) < len)
@@ -1215,7 +1200,7 @@ public:
       }
     }
     else
-      for(const tchar* i = data, * end = i + data.length(); i < end; ++i)
+      for(const char* i = data, * end = i + data.length(); i < end; ++i)
         result.append((const uchar&)*i);
 #endif
   }

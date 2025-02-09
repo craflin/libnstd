@@ -10,9 +10,9 @@ void testProcess()
   {
     Process process;
 #ifdef _WIN32
-    uint32 id = process.start(_T("cmd /C \"choice /T 1 /D N >NUL\""));
+    uint32 id = process.start("cmd /C \"choice /T 1 /D N >NUL\"");
 #else
-    uint32 id = process.start(_T("sleep 1"));
+    uint32 id = process.start("sleep 1");
 #endif
     ASSERT(id != 0);
     ASSERT(process.isRunning());
@@ -30,9 +30,9 @@ void testProcess()
   {
     Process process;
 #ifdef _WIN32
-    ASSERT(process.open(_T("cmd /C echo 123"), Process::stdoutStream));
+    ASSERT(process.open("cmd /C echo 123", Process::stdoutStream));
 #else
-    ASSERT(process.open(_T("ls"), Process::stdoutStream));
+    ASSERT(process.open("ls", Process::stdoutStream));
 #endif
     ASSERT(process.isRunning());
     char buffer[123];
@@ -77,11 +77,11 @@ void testWait()
   Process process;
   Process process2;
 #ifdef _WIN32
-  ASSERT(process.open(_T("cmd /C echo 123")) != 0);
-  ASSERT(process2.start(_T("cmd /C \"choice /T 1 /D N >NUL\"")) != 0);
+  ASSERT(process.open("cmd /C echo 123") != 0);
+  ASSERT(process2.start("cmd /C \"choice /T 1 /D N >NUL\"") != 0);
 #else
-  ASSERT(process.open(_T("ls")) != 0);
-  ASSERT(process2.start(_T("sleep 1")) != 0);
+  ASSERT(process.open("ls") != 0);
+  ASSERT(process2.start("sleep 1") != 0);
 #endif
   Process* processes[] = {&process2, &process};
   ASSERT(Process::wait(processes, 2) == &process);
@@ -101,11 +101,11 @@ void testEnv()
 {
   Process process;
   Map<String, String> env;
-  env.insert(_T("ENV_TEST"), _T("42"));
+  env.insert("ENV_TEST", "42");
 #ifdef _WIN32
-  process.start(_T("cmd /c \"exit %ENV_TEST%\""), env);
+  process.start("cmd /c \"exit %ENV_TEST%\"", env);
 #else
-  process.start(_T("sh -c \"exit $ENV_TEST\""), env);
+  process.start("sh -c \"exit $ENV_TEST\"", env);
 #endif
   uint32 exitCode = 0;
   process.join(exitCode);

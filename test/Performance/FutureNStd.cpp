@@ -22,7 +22,7 @@ void testFutureNStd(int iterations)
   }
   if(result != (int64)iterations * (int64)(iterations - 1) / 2)
   {
-    Console::printf(_T("fail\n"));
+    Console::printf("fail\n");
     Process::exit(1);
   }
 }

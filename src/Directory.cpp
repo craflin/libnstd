@@ -9,11 +9,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <Shlobj.h>
-#ifdef _MSC_VER
-#include <tchar.h>
-#else
-#include <strings.h> // strcasecmp
-#endif
 #else
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -24,13 +19,6 @@
 #include <cerrno>
 #endif
 
-#if defined(_WIN32) && !defined(_MSC_VER)
-#define _tcsrchr strrchr
-#define _tcspbrk strpbrk
-#define _tcsicmp strcasecmp
-#define _tcslen strlen
-#endif
-
 #include <nstd/Directory.hpp>
 #include <nstd/File.hpp>
 #include <nstd/Debug.hpp>
@@ -38,7 +26,6 @@
 Directory::Directory()
 {
 #ifdef _WIN32
-  //Debug::printf(_T("sizeof(WIN32_FIND_DATA)=%d\n"), sizeof(WIN32_FIND_DATA));
   ASSERT(sizeof(ffd) >= sizeof(WIN32_FIND_DATA));
   findFile = INVALID_HANDLE_VALUE;
 #else
@@ -89,12 +76,12 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
   else if(!pattern.isEmpty() && (pattern[pattern.length() - 1] != '*' || (pattern.length() > 1 && pattern[pattern.length() - 2] == '.')))
     this->pattern = pattern;
   if(searchPat.isEmpty())
-    searchPat = _T("*");
+    searchPat = "*";
 
   String searchStr = dirpath;
   searchStr.reserve(dirpath.length() + 1 + pattern.length());
   if(!dirpath.isEmpty())
-    searchStr.append(_T('/'));
+    searchStr.append('/');
   usize searchStrLen = searchStr.length();
   searchStr.append(searchPat);
 
@@ -107,11 +94,11 @@ bool Directory::open(const String& dirpath, const String& pattern, bool dirsOnly
     (LPWIN32_FIND_DATA)ffd, dirsOnly ? FindExSearchLimitToDirectories : FindExSearchNameMatch, NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
   {
-    if(searchPat == _T("*"))
+    if(searchPat == "*")
       return false;
     this->pattern = pattern;
     searchStr.resize(searchStrLen);
-    searchStr.append(_T("*"));
+    searchStr.append("*");
     findFile = FindFirstFileEx(searchStr,
   #if _WIN32_WINNT > 0x0600
       FindExInfoBasic,
@@ -180,27 +167,27 @@ bool Directory::read(String& name, bool& isDir)
     isDir = (((LPWIN32_FIND_DATA)ffd)->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
     if(dirsOnly && !isDir)
       continue;
-    const tchar* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
-    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+    const char* str = ((LPWIN32_FIND_DATA)ffd)->cFileName;
+    if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
       continue;
 
     if(!pattern.isEmpty())
     {
       struct PatternMatcher
       {
-        static bool szWildMatch7(const tchar* pat, const tchar* str) {
-            const tchar* s, * p;
+        static bool szWildMatch7(const char* pat, const char* str) {
+            const char* s, * p;
             bool star = false;
 
         loopStart:
             for (s = str, p = pat; *s; ++s, ++p) {
               switch (*p) {
-                  case _T('?'):
+                  case '?':
                     break;
-                  case _T('*'):
+                  case '*':
                     star = true;
                     str = s, pat = p;
-                    do { ++pat; } while (*pat == _T('*'));
+                    do { ++pat; } while (*pat == '*');
                     if (!*pat) return true;
                     goto loopStart;
                   default:
@@ -208,7 +195,7 @@ bool Directory::read(String& name, bool& isDir)
                     break;
               }
             }
-            while (*p == _T('*')) ++p;
+            while (*p == '*') ++p;
             return !*p;
    
         starCheck:
@@ -222,7 +209,7 @@ bool Directory::read(String& name, bool& isDir)
         continue;
     }
 
-    name = String(str, (uint)_tcslen(str));
+    name = String(str, (uint)strlen(str));
     return true;
   }
 #else
@@ -249,7 +236,7 @@ bool Directory::read(String& name, bool& isDir)
       {
         String path = dirpath;
         if(!dirpath.isEmpty())
-          path.append(_T('/'));
+          path.append('/');
         path.append(str, strlen(str));
         struct stat buff;
         if(stat(path, &buff) == 0 && S_ISDIR(buff.st_mode))
@@ -257,7 +244,7 @@ bool Directory::read(String& name, bool& isDir)
         else if(dirsOnly)
           continue;
       }
-      if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+      if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
         continue;
       name = String(str, strlen(str));
       return true;
@@ -288,7 +275,7 @@ bool Directory::exists(const String& dir)
 bool Directory::create(const String& dir)
 {
   String parent = File::getDirectoryName(dir);
-  if(parent != _T(".") && !Directory::exists(parent))
+  if(parent != "." && !Directory::exists(parent))
   {
     if(!Directory::create(parent))
       return false;
@@ -300,7 +287,7 @@ bool Directory::create(const String& dir)
 #endif
   {
     String basename = File::getBaseName(dir);
-    if(basename == _T(".") || basename == _T(".."))
+    if(basename == "." || basename == "..")
       return true;
   }
   return true;
@@ -314,7 +301,7 @@ bool Directory::unlink(const String& dir, bool recursive)
   if(!recursive || GetLastError() != ERROR_DIR_NOT_EMPTY)
     return false;
   WIN32_FIND_DATA ffd;
-  HANDLE findFile = FindFirstFileEx(dir + _T("/*"),
+  HANDLE findFile = FindFirstFileEx(dir + "/*",
 #if _WIN32_WINNT > 0x0600
     FindExInfoBasic,
 #else
@@ -323,12 +310,12 @@ bool Directory::unlink(const String& dir, bool recursive)
     &ffd, FindExSearchNameMatch, NULL, 0);
   if(findFile == INVALID_HANDLE_VALUE)
     return false;
-  String prefix = dir + _T("/");
+  String prefix = dir + "/";
   do
   {
     bool isDir = (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
-    const tchar* str = ffd.cFileName;
-    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+    const char* str = ffd.cFileName;
+    if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
       continue;
     if(isDir)
     {
@@ -358,7 +345,7 @@ bool Directory::unlink(const String& dir, bool recursive)
   DIR* dp = opendir(dir);
   if(!dp)
     return false;
-  String prefix = dir + _T("/");
+  String prefix = dir + "/";
   errno = 0;
   for(;;)
   {
@@ -374,7 +361,7 @@ bool Directory::unlink(const String& dir, bool recursive)
     }
     const char* const str = dent->d_name;
     bool isDir = dent->d_type == DT_DIR;
-    if(isDir && *str == _T('.') && (str[1] == _T('\0') || (str[1] == _T('.') && str[2] == _T('\0'))))
+    if(isDir && *str == '.' && (str[1] == '\0' || (str[1] == '.' && str[2] == '\0')))
       continue;
     if(isDir)
     {
@@ -403,7 +390,7 @@ bool Directory::purge(const String& path, bool recursive)
 {
   if(!unlink(path, recursive))
     return false;
-  for (String i = File::getDirectoryName(path); i != _T("."); i = File::getDirectoryName(i))
+  for (String i = File::getDirectoryName(path); i != "."; i = File::getDirectoryName(i))
 #ifdef _WIN32
     if(!RemoveDirectory(i))
       break;
@@ -428,14 +415,14 @@ String Directory::getCurrentDirectory()
 #ifdef _WIN32
   String result;
   result.resize(MAX_PATH);
-  DWORD len = GetCurrentDirectory(MAX_PATH + 1, (tchar*)result);
+  DWORD len = GetCurrentDirectory(MAX_PATH + 1, (char*)result);
   if(len <= MAX_PATH)
   {
     result.resize(len);
     return result;
   }
   result.resize(len);
-  DWORD len2 = GetCurrentDirectory(len + 1, (tchar*)result);
+  DWORD len2 = GetCurrentDirectory(len + 1, (char*)result);
   if(len2 <= MAX_PATH)
   {
     result.resize(len2);
@@ -467,7 +454,7 @@ String Directory::getCurrentDirectory()
 String Directory::getTempDirectory()
 {
 #ifdef _WIN32
-  TCHAR buffer[MAX_PATH + 2];
+  char buffer[MAX_PATH + 2];
   DWORD len = GetTempPath(MAX_PATH + 2, buffer);
   if(len == 0)
     return String();
@@ -482,7 +469,7 @@ String Directory::getTempDirectory()
 String Directory::getHomeDirectory()
 {
 #ifdef _WIN32
-    TCHAR path[MAX_PATH + 2];
+    char path[MAX_PATH + 2];
     if (!SHGetSpecialFolderPath(NULL, path, CSIDL_PROFILE, FALSE))
         return String();
     return String::fromCString(path);

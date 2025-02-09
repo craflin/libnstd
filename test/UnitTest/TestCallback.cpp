@@ -24,7 +24,7 @@ public:
 
   void emitMySignal3()
   {
-    emit<MyEmitter, const String&>(&MyEmitter::mySignal3, _T("test"));
+    emit<MyEmitter, const String&>(&MyEmitter::mySignal3, "test");
   }
  
 public: // signals
@@ -83,8 +83,8 @@ void testSimpleConnectAndDisconnect()
   Callback::disconnect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
   Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
   Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-  emitter.emitMySignal(_T("test"));
-  emitter.emitMySignal2(_T("test"), 123);
+  emitter.emitMySignal("test");
+  emitter.emitMySignal2("test", 123);
   ASSERT(receiver.calls == 2);
 }
 
@@ -168,8 +168,8 @@ void testCallback()
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot4);
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver::mySlot);
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver4, &MyReceiver4::mySlot);
-    emitter.emitMySignal(_T("test"));
-    emitter.emitMySignal2(_T("test"), 123);
+    emitter.emitMySignal("test");
+    emitter.emitMySignal2("test", 123);
     ASSERT(receiver3.mySlotCalled == 2);
     ASSERT(receiver3.calls == 3);
     ASSERT(receiver4.calls == 3);
@@ -189,7 +189,7 @@ void testCallback()
     Callback::connect(&emitter, &MyEmitter::mySignal, receiver2, &MyReceiver::mySlot);
     delete receiver2;
 
-    emitter.emitMySignal(_T("test2"));
+    emitter.emitMySignal("test2");
   }
 
   // test destructor of Emitter
@@ -211,8 +211,8 @@ void testCallback()
     receiverSelfDelete->check = receiverSelfDelete;
     Callback::connect(&emitter, &MyEmitter::mySignal, receiverSelfDelete, &MyReceiver::selfDelete);
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver, &MyReceiver::mySlot);
-    emitter.emitMySignal(_T("test2"));
-    emitter.emitMySignal(_T("test2"));
+    emitter.emitMySignal("test2");
+    emitter.emitMySignal("test2");
   }
 
   // test disconnect of receiver in slot
@@ -225,8 +225,8 @@ void testCallback()
     receiver2.check = &receiver2;
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::selfDisconnect);
     Callback::connect(&emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
-    emitter.emitMySignal(_T("test2"));
-    emitter.emitMySignal(_T("test2"));
+    emitter.emitMySignal("test2");
+    emitter.emitMySignal("test2");
   }
 
   // test delete of emitter in slot
@@ -241,8 +241,8 @@ void testCallback()
     Callback::connect(emitter, &MyEmitter::mySignal, &receiver1, &MyReceiver::emitterDelete);
     Callback::connect(emitter, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
     Callback::connect(&emitter2, &MyEmitter::mySignal, &receiver2, &MyReceiver::mySlot);
-    emitter->emitMySignal(_T("test2"));
-    emitter2.emitMySignal(_T("test2"));
+    emitter->emitMySignal("test2");
+    emitter2.emitMySignal("test2");
   }
 
   // test signal/slot with 8 arguments

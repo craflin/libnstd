@@ -33,7 +33,7 @@ public:
   *                          %T - The id of the calling thread.
   * @param  [in] timeFormat     The format of the timestamp similar to the format string of Time::toString.
   */
-  static void setFormat(const String& lineFormat, const String& timeFormat = String(_T("%H:%M:%S")));
+  static void setFormat(const String& lineFormat, const String& timeFormat = String("%H:%M:%S"));
 
   /**
    * Controls how log messages are handled.
@@ -51,9 +51,9 @@ public:
    */
   static void setLevel(int level);
 
-  static void logf(int level, const tchar* format, ...);
-  static void debugf(const tchar* format, ...);
-  static void infof(const tchar* format, ...);
-  static void warningf(const tchar* format, ...);
-  static void errorf(const tchar* format, ...);
+  static void logf(int level, const char* format, ...);
+  static void debugf(const char* format, ...);
+  static void infof(const char* format, ...);
+  static void warningf(const char* format, ...);
+  static void errorf(const char* format, ...);
 };
