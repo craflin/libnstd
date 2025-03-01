@@ -157,6 +157,44 @@ bool Process::isRunning() const
 #endif
 }
 
+#ifdef _WIN32
+namespace {
+
+LPTSTR prepareEnvironment(const Map<String, String>& environment, Buffer& envBuffer)
+{
+  if (environment.isEmpty())
+    return NULL;
+  usize bufferSize = 1;
+  for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
+  {
+    const String& key = i.key();
+    const String& val = *i;
+    if (key.isEmpty() || val.isEmpty())
+        continue;
+    bufferSize += key.length() + val.length() + 2;
+  }
+  envBuffer.reserve(bufferSize * sizeof(char));
+  LPTSTR lptEnv = (LPTSTR)(byte*)envBuffer;
+  for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
+  {
+    const String& key = i.key();
+    const String& val = *i;
+    if (key.isEmpty() || val.isEmpty())
+      continue;
+    memcpy(lptEnv, (const char*)key, key.length() * sizeof(char));
+    lptEnv += key.length();
+    *(lptEnv++) = '=';
+    memcpy(lptEnv, (const char*)val, val.length() * sizeof(char));
+    lptEnv += val.length();
+    *(lptEnv++) = '\0';
+  }
+  *lptEnv = '\0';
+  return (LPTSTR)(byte*)envBuffer;
+}
+
+}
+#endif
+
 uint32 Process::start(const String& commandLine, const Map<String, String>& environment)
 {
 #ifdef _WIN32
@@ -173,46 +211,11 @@ uint32 Process::start(const String& commandLine, const Map<String, String>& envi
   si.cb = sizeof(si);
   ZeroMemory(&pi, sizeof(pi));
 
-  LPTSTR env = NULL;
   Buffer envBuffer;
-  if (!environment.isEmpty())
-  {
-    usize bufferSize = 1;
-    for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
-    {
-      const String& key = i.key();
-      const String& val = *i;
-      if (key.isEmpty() || val.isEmpty())
-          continue;
-      bufferSize += key.length() + val.length() + 2;
-    }
-    envBuffer.reserve(bufferSize * sizeof(char));
-    LPTSTR lptEnv = (LPTSTR)(byte*)envBuffer;
-    env = lptEnv;
-    for (Map<String, String>::Iterator i = environment.begin(); i != environment.end(); ++i)
-    {
-      const String& key = i.key();
-      const String& val = *i;
-      if (key.isEmpty() || val.isEmpty())
-        continue;
-      memcpy(lptEnv, (const char*)key, key.length() * sizeof(char));
-      lptEnv += key.length();
-      *(lptEnv++) = '=';
-      memcpy(lptEnv, (const char*)val, val.length() * sizeof(char));
-      lptEnv += val.length();
-      *(lptEnv++) = '\0';
-    }
-    *lptEnv = '\0';
-  }
+  LPTSTR env = prepareEnvironment(environment, envBuffer);
 
   String args(commandLine);
-  if(!CreateProcess(NULL, (char*)args, NULL, NULL, FALSE, 
-#ifdef UNICODE
-      CREATE_UNICODE_ENVIRONMENT
-#else
-      0
-#endif
-      , env, NULL, &si, &pi))
+  if(!CreateProcess(NULL, (char*)args, NULL, NULL, FALSE, 0, env, NULL, &si, &pi))
     return 0;
 
   CloseHandle(pi.hThread);
@@ -243,6 +246,18 @@ uint32 Process::start(const String& commandLine, const Map<String, String>& envi
   return start(command.front(), i + 1, argv, environment);
 #endif
 }
+
+
+#ifndef _WIN32
+namespace {
+  void prepareEnv(const Map<String, String>& environment, Array<String>& envStringsBuf)
+  {
+    envStringsBuf.reserve(environment.size());
+      for (Map<String, String>::Iterator i = environment.begin(), end = environment.end(); i != end; ++i)
+        envStringsBuf.append(i.key() + "=" + *i);
+  }
+}
+#endif
 
 uint32 Process::start(const String& program, int argc, char* const argv[], const Map<String, String>& environment)
 {
@@ -275,9 +290,7 @@ uint32 Process::start(const String& program, int argc, char* const argv[], const
   Array<String> envStringsBuf;
   if (!environment.isEmpty())
   {
-    envStringsBuf.reserve(environment.size());
-      for (Map<String, String>::Iterator i = environment.begin(), end = environment.end(); i != end; ++i)
-        envStringsBuf.append(i.key() + "=" + *i);
+    prepareEnv(environment, envStringsBuf);
     env = (char**)alloca(sizeof(char*) * (envStringsBuf.size() + 1));
     char** ienv = env;
     for (Array<String>::Iterator i = envStringsBuf.begin(), end = envStringsBuf.end(); i != end; ++i)
@@ -459,7 +472,7 @@ void Process::exit(uint32 exitCode)
 #endif
 }
 
-bool Process::open(const String& commandLine, uint streams)
+bool Process::open(const String& commandLine, uint streams, const Map<String, String>& environment)
 {
 #ifdef _WIN32
   if(hProcess != INVALID_HANDLE_VALUE)
@@ -510,10 +523,14 @@ bool Process::open(const String& commandLine, uint streams)
   else
     si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
 
-  {
-    String args(commandLine);
 
-    if(!CreateProcess(NULL, (char*)args, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi))
+
+  {
+    Buffer envBuffer;
+    LPTSTR env = prepareEnvironment(environment, envBuffer);
+
+    String args(commandLine);
+    if(!CreateProcess(NULL, (char*)args, NULL, NULL, TRUE, 0, env, NULL, &si, &pi))
       goto error;
   }
 
@@ -572,11 +589,11 @@ error:
   for (List<String>::Iterator j = command.begin(), end = command.end(); j != end; ++j)
     argv[i++] = (char*)(const char*)*j;
   argv[i] = 0;
-  return open(command.front(), i + 1, argv, streams);
+  return open(command.front(), i + 1, argv, streams, environment);
 #endif
 }
 
-bool Process::open(const String& executable, int argc, char* const argv[], uint streams)
+bool Process::open(const String& executable, int argc, char* const argv[], uint streams, const Map<String, String>& environment)
 {
 #ifdef _WIN32
   return open(Private::getCommandLine(executable, argc, argv), streams);
@@ -607,75 +624,91 @@ bool Process::open(const String& executable, int argc, char* const argv[], uint 
       goto error;
   }
 
-  // prepare argv of child
-  const char** args;
-  if (argc && !argv[argc - 1])
-    args = (const char**)argv;
-  else
   {
-    if (!argc)
-      ++argc;
-    args = (const char**)alloca(sizeof(const char*) * (argc + 1));
-    args[argc] = 0;
-    for (int i = 1; i < argc; ++i)
-      args[i] = argv[i];
-    args[0] = executable;
-  }
 
-  // start process
-  {
-    int r = vfork();
-    if (r == -1)
-      return false;
-    else if (r != 0) // parent
+    // prepare argv of child
+    const char** args;
+    if (argc && !argv[argc - 1])
+      args = (const char**)argv;
+    else
     {
-      pid = r;
-
-      if (stdoutFds[1])
-        ::close(stdoutFds[1]);
-      if (stderrFds[1])
-        ::close(stderrFds[1]);
-      if (stdinFds[0])
-        ::close(stdinFds[0]);
-
-      fdStdOutRead = stdoutFds[0];
-      fdStdErrRead = stderrFds[0];
-      fdStdInWrite = stdinFds[1];
-
-      return true;
+      if (!argc)
+        ++argc;
+      args = (const char**)alloca(sizeof(const char*) * (argc + 1));
+      args[argc] = 0;
+      for (int i = 1; i < argc; ++i)
+        args[i] = argv[i];
+      args[0] = executable;
     }
-    else // child
+
+    // prepare env of child
+    char** env = ::environ;
+    Array<String> envStringsBuf;
+    if (!environment.isEmpty())
     {
-      if (stdoutFds[1])
-      {
-        dup2(stdoutFds[1], STDOUT_FILENO);
-        ::close(stdoutFds[1]);
-      }
-      if (stderrFds[1])
-      {
-        dup2(stderrFds[1], STDERR_FILENO);
-        ::close(stderrFds[1]);
-      }
-      if (stdinFds[0])
-      {
-        dup2(stdinFds[0], STDIN_FILENO);
-        ::close(stdinFds[0]);
-      }
+      prepareEnv(environment, envStringsBuf);
+      env = (char**)alloca(sizeof(char*) * (envStringsBuf.size() + 1));
+      char** ienv = env;
+      for (Array<String>::Iterator i = envStringsBuf.begin(), end = envStringsBuf.end(); i != end; ++i)
+        *(ienv++) = (char*)(const char*)*i;
+      *ienv = 0;
+    }
 
-      if (stdoutFds[0])
-        ::close(stdoutFds[0]);
-      if (stderrFds[0])
-        ::close(stderrFds[0]);
-      if (stdinFds[1])
-        ::close(stdinFds[1]);
-
-      if (execvp(executable, (char* const*)args) == -1)
+    // start process
+    {
+      int r = vfork();
+      if (r == -1)
+        return false;
+      else if (r != 0) // parent
       {
-        fprintf(stderr, "%s: %s\n", (const char*)executable, strerror(errno));
-        _exit(EXIT_FAILURE);
+        pid = r;
+
+        if (stdoutFds[1])
+          ::close(stdoutFds[1]);
+        if (stderrFds[1])
+          ::close(stderrFds[1]);
+        if (stdinFds[0])
+          ::close(stdinFds[0]);
+
+        fdStdOutRead = stdoutFds[0];
+        fdStdErrRead = stderrFds[0];
+        fdStdInWrite = stdinFds[1];
+
+        return true;
       }
-      ASSERT(false); // unreachable
-      return false;
+      else // child
+      {
+        if (stdoutFds[1])
+        {
+          dup2(stdoutFds[1], STDOUT_FILENO);
+          ::close(stdoutFds[1]);
+        }
+        if (stderrFds[1])
+        {
+          dup2(stderrFds[1], STDERR_FILENO);
+          ::close(stderrFds[1]);
+        }
+        if (stdinFds[0])
+        {
+          dup2(stdinFds[0], STDIN_FILENO);
+          ::close(stdinFds[0]);
+        }
+
+        if (stdoutFds[0])
+          ::close(stdoutFds[0]);
+        if (stderrFds[0])
+          ::close(stderrFds[0]);
+        if (stdinFds[1])
+          ::close(stdinFds[1]);
+
+        if (execvpe(executable, (char* const*)args, env) == -1)
+        {
+          fprintf(stderr, "%s: %s\n", (const char*)executable, strerror(errno));
+          _exit(EXIT_FAILURE);
+        }
+        ASSERT(false); // unreachable
+        return false;
+      }
     }
   }
 error:
@@ -700,7 +733,7 @@ error:
 #endif
 }
 
-bool Process::open(const String& executable, const List<String>& args, uint streams)
+bool Process::open(const String& executable, const List<String>& args, uint streams, const Map<String, String>& environment)
 {
   Array<const char*> argv(args.size());
   for (List<String>::Iterator i = args.begin(), end = args.end(); i != end; ++i)
