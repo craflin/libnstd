@@ -890,11 +890,16 @@ ssize Process::read(void* buffer, usize length, uint& streams)
   timeval tv = {1000, 0};
   for(;;)
   {
-    int i;
-    if((i = select(maxFd + 1, &fdr, 0, 0, &tv)) != 0)
-      return -1;
-    if(i == 0 || (i < 0 && errno == EINTR))
+    int i = select(maxFd + 1, &fdr, 0, 0, &tv);
+    if(i == 0)
       continue;
+    if(i == -1)
+    {
+      if (errno == EINTR)
+        continue;
+      return -1;
+    }
+    break;
   }
   if(streams & stdoutStream && fdStdOutRead && FD_ISSET(fdStdOutRead, &fdr))
   {
