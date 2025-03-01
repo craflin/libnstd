@@ -68,11 +68,11 @@ public:
     stdinStream = 0x04,
   };
 
-  bool open(const String& command, uint streams = stdoutStream);
+  bool open(const String& command, uint streams = stdoutStream, const Map<String, String>& environment = Map<String, String>());
 
-  bool open(const String& executable, int argc, char* const argv[], uint streams = stdoutStream);
+  bool open(const String& executable, int argc, char* const argv[], uint streams = stdoutStream, const Map<String, String>& environment = Map<String, String>());
 
-  bool open(const String& executable, const List<String>& args, uint streams = stdoutStream);
+  bool open(const String& executable, const List<String>& args, uint streams = stdoutStream, const Map<String, String>& environment = Map<String, String>());
 
   /*
   * Closes the streams of an opened process.
