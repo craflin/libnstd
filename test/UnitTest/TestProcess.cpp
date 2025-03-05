@@ -127,11 +127,25 @@ void testOpenEnv()
   ASSERT(exitCode == 42);
 }
 
+void testGetEnvironmentVariables()
+{
+  Map<String, String> envs = Process::getEnvironmentVariables();
+  Map<String, String>::Iterator testVar;
+#ifdef _WIN32
+  testVar = envs.find("Path");
+#else
+  testVar = envs.find("HOME");
+#endif
+  ASSERT(testVar != envs.end());
+  ASSERT(!String::find(*testVar, '='));
+}
+
 int main(int argc, char* argv[])
 {
   testProcess();
   testWait();
   testStartEnv();
   testOpenEnv();
+  testGetEnvironmentVariables();
   return 0;
 }
