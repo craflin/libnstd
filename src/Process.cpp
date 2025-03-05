@@ -1015,8 +1015,8 @@ Map<String, String> Process::getEnvironmentVariables()
     String var;
     var.attach(e, x - e);
     String value;
-    ++e;
-    value.attach(e, String::length(e));
+    ++x;
+    value.attach(x, String::length(x));
     result.insert(var, value);
   }
   return result;
