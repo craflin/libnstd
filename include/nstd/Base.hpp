@@ -10,6 +10,9 @@
 #if defined(__PPC64__) && !defined(_PPC64)
 #define _PPC64
 #endif
+#if defined(__aarch64__) && !defined(_AARCH64)
+#define _AARCH64
+#endif
 
 typedef signed char int8;
 typedef short int16;
@@ -23,7 +26,7 @@ typedef unsigned char byte;
 typedef unsigned char uchar;
 typedef unsigned int uint;
 
-#if defined(_AMD64) || defined(_PPC64)
+#if defined(_AMD64) || defined(_PPC64) || defined(_AARCH64)
 #ifdef _WIN32
 typedef long long int int64;
 typedef unsigned long long int uint64;
@@ -59,7 +62,7 @@ inline usize hash(uint32 v) {return (usize)v;}
 inline usize hash(int64 v) {return (usize)v;}
 inline usize hash(uint64 v) {return (usize)v;}
 inline usize hash(const void* v) {return (usize)v >> (sizeof(void*) / 4 + 1);}
-#if defined(_WIN32) || (!defined(_AMD64) && !defined(_PPC64))
+#if defined(_WIN32) || (!defined(_AMD64) && !defined(_PPC64) && !defined(_AARCH64))
 inline usize hash(long v) {return (usize)v;}
 inline usize hash(unsigned long v) {return (usize)v;}
 #endif
