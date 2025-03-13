@@ -23,11 +23,7 @@ int String::printf(const char* format, ...)
   va_start(ap, format);
 
   {
-#ifdef _UNICODE
-    result = _vsnwprintf((wchar_t*)data->str, data->capacity, format, ap);
-#else
     result = vsnprintf((char*)data->str, data->capacity, format, ap);
-#endif
     if(result >= 0 && (usize)result < data->capacity)
     {
       data->len = result;
@@ -39,11 +35,7 @@ int String::printf(const char* format, ...)
   // buffer was too small: compute size, reserve buffer, print again
   {
 #ifdef _MSC_VER
-#ifdef _UNICODE
-    result = _vscwprintf(format, ap);
-#else
     result = _vscprintf(format, ap);
-#endif
 #else
     result = vsnprintf(0, 0, format, ap);
 #endif
@@ -51,11 +43,7 @@ int String::printf(const char* format, ...)
     if(result < 0)
       return -1;
     detach(0, result);
-#ifdef _UNICODE
-    result = _vsnwprintf((wchar_t*)data->str, result + 1, format, ap);
-#else
     result = vsnprintf((char*)data->str, result + 1, format, ap);
-#endif
     ASSERT(result >= 0);
     data->len = result;
     va_end(ap);
