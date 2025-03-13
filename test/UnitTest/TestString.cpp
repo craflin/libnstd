@@ -63,12 +63,6 @@ void testString()
   copyOfHello.clear();
   ASSERT(copyOfHello.isEmpty());
 
-  // test printf
-  empty.printf("%s %s", (const char*)hello, "world");
-  ASSERT(empty == "hello world");
-  ASSERT(empty != "hello worl2");
-  ASSERT(empty != "hello worl2a");
-
   // test toUpperCase, toLowerCase, isSpace
   for (int i = 0; i < 0x100; ++i)
   {
@@ -170,6 +164,21 @@ void testString()
   }
 }
 
+void testPrintf()
+{
+  String hello("hello");
+  String empty;
+  empty.printf("%s %s", (const char*)hello, "world");
+  ASSERT(empty == "hello world");
+  ASSERT(empty != "hello worl2");
+  ASSERT(empty != "hello worl2a");
+  char buf[512 + 1];
+  Memory::fill(buf, 'b', 3);
+  Memory::fill(buf + 3, 'a', 512 - 3);
+  buf[512] = '\0';
+  empty.printf("%s%s", "bbb", buf + 3);
+  ASSERT(empty == buf);
+}
 
 void testBase64()
 {
@@ -183,6 +192,7 @@ void testBase64()
 int main(int argc, char* argv[])
 {
   testString();
+  testPrintf();
   testBase64();
   return 0;
 }

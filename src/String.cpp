@@ -24,26 +24,30 @@ int String::printf(const char* format, ...)
 
   {
     result = vsnprintf((char*)data->str, data->capacity, format, ap);
+    va_end(ap);
     if(result >= 0 && (usize)result < data->capacity)
     {
       data->len = result;
-      va_end(ap);
       return result;
     }
   }
 
   // buffer was too small: compute size, reserve buffer, print again
   {
+    va_start(ap, format);
 #ifdef _MSC_VER
     result = _vscprintf(format, ap);
 #else
     result = vsnprintf(0, 0, format, ap);
 #endif
+    va_end(ap);
     ASSERT(result >= 0);
     if(result < 0)
       return -1;
     detach(0, result);
+    va_start(ap, format);
     result = vsnprintf((char*)data->str, result + 1, format, ap);
+    va_end(ap);
     ASSERT(result >= 0);
     data->len = result;
     va_end(ap);
@@ -61,26 +65,30 @@ String String::fromPrintf(const char* format, ...)
 
   {
     result = vsnprintf((char*)s.data->str, s.data->capacity, format, ap);
+    va_end(ap);
     if(result >= 0 && (usize)result < s.data->capacity)
     {
       s.data->len = result;
-      va_end(ap);
       return s;
     }
   }
 
   // buffer was too small: compute size, reserve buffer, print again
   {
+    va_start(ap, format);
 #ifdef _MSC_VER
     result = _vscprintf(format, ap);
 #else
     result = vsnprintf(0, 0, format, ap);
 #endif
+    va_end(ap);
     ASSERT(result >= 0);
     if(result < 0)
       return String();
     s.detach(0, result);
+    va_start(ap, format);
     result = vsnprintf((char*)s.data->str, result + 1, format, ap);
+    va_end(ap);
     ASSERT(result >= 0);
     s.data->len = result;
     va_end(ap);
