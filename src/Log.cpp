@@ -67,21 +67,28 @@ public:
     int result;
     {
       usize capacity = data.capacity();
-      result = vsnprintf((char*)data, capacity, format, vl);
+      va_list tmp;
+      va_copy(tmp, vl);
+      result = vsnprintf((char*)data, capacity, format, tmp);
+      va_end(tmp);
       if(result >= 0 && result < (int)capacity)
         data.resize(result);
       else // buffer was too small: compute size, reserve buffer, print again
       {
+        va_copy(tmp, vl);
 #ifdef _MSC_VER
         result = _vscprintf(format, vl);
 #else
         result = vsnprintf(0, 0, format, vl);
 #endif
+        va_end(tmp);
         ASSERT(result >= 0);
         if(result >= 0)
         {
           data.reserve(result);
+          va_copy(tmp, vl);
           result = vsnprintf((char*)data, result + 1, format, vl);
+          va_end(tmp);
           ASSERT(result >= 0);
           if(result >= 0)
             data.resize(result);
