@@ -67,21 +67,13 @@ public:
     int result;
     {
       usize capacity = data.capacity();
-#ifdef _UNICODE
-      result = _vsnwprintf((wchar_t*)data, capacity, format, vl);
-#else
       result = vsnprintf((char*)data, capacity, format, vl);
-#endif
       if(result >= 0 && result < (int)capacity)
         data.resize(result);
       else // buffer was too small: compute size, reserve buffer, print again
       {
 #ifdef _MSC_VER
-#ifdef _UNICODE
-        result = _vscwprintf(format, vl);
-#else
         result = _vscprintf(format, vl);
-#endif
 #else
         result = vsnprintf(0, 0, format, vl);
 #endif
@@ -89,11 +81,7 @@ public:
         if(result >= 0)
         {
           data.reserve(result);
-      #ifdef _UNICODE
-          result = _vsnwprintf((wchar_t*)data, result + 1, format, vl);
-      #else
           result = vsnprintf((char*)data, result + 1, format, vl);
-      #endif
           ASSERT(result >= 0);
           if(result >= 0)
             data.resize(result);
