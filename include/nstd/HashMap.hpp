@@ -88,8 +88,8 @@ public:
   usize size() const {return _size;}
   bool isEmpty() const {return endItem.prev == 0;}
 
-  V& prepend(const T& key, const V& value) {return insert(_begin, key, value).item->value;}
-  V& append(const T& key, const V& value) {return insert(_end, key, value).item->value;}
+  V& prepend(const T& key, const V& value, bool overwrite = true) {return insert(_begin, key, value, overwrite).item->value;}
+  V& append(const T& key, const V& value, bool overwrite = true) {return insert(_end, key, value, overwrite).item->value;}
 
   void clear()
   {
@@ -157,12 +157,13 @@ public:
 
   bool contains(const T& key) const {return find(key) != _end;}
 
-  Iterator insert(const Iterator& position, const T& key, const V& value)
+  Iterator insert(const Iterator& position, const T& key, const V& value, bool overwrite = true)
   {
     Iterator it = find(key);
     if(it != _end)
     {
-      *it = value;
+      if (overwrite)
+        *it = value;
       return it;
     }
 
