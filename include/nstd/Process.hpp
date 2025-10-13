@@ -61,6 +61,12 @@ public:
   */
   bool kill();
 
+  /**
+  * Sends a TERM signal to the process;
+  * @return Whether the TERM signal was successfully sent.
+  */
+  bool terminate();
+
   enum Stream
   {
     stdoutStream = 0x01,
