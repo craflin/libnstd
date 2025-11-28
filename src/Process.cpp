@@ -380,6 +380,21 @@ bool Process::kill()
 #endif
 }
 
+bool Process::terminate()
+{
+#ifdef _WIN32
+  return false;
+#else
+  if(!pid)
+  {
+    errno = EINVAL;
+    return false;
+  }
+  ::kill((pid_t)pid, SIGTERM);
+  return true;
+#endif
+}
+
 bool Process::join(uint32& exitCode)
 {
 #ifdef _WIN32
@@ -868,17 +883,17 @@ ssize Process::read(void* buffer, usize length, uint& streams)
   return i;
 #endif
 #else
-  fd_set fdr;
-  FD_ZERO(&fdr);
+  fd_set fdrAll;
+  FD_ZERO(&fdrAll);
   int maxFd = 0;
   if(streams & stdoutStream && fdStdOutRead)
   {
-    FD_SET(fdStdOutRead, &fdr);
+    FD_SET(fdStdOutRead, &fdrAll);
     maxFd = fdStdOutRead;
   }
   if(streams & stderrStream && fdStdErrRead)
   {
-    FD_SET(fdStdErrRead, &fdr);
+    FD_SET(fdStdErrRead, &fdrAll);
     if(fdStdErrRead > maxFd)
       maxFd = fdStdErrRead;
   }
@@ -888,8 +903,10 @@ ssize Process::read(void* buffer, usize length, uint& streams)
     return -1;
   }
   timeval tv = {1000, 0};
+  fd_set fdr = fdrAll;
   for(;;)
   {
+    fdr = fdrAll;
     int i = select(maxFd + 1, &fdr, 0, 0, &tv);
     if(i == 0)
       continue;
